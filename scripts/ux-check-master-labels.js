@@ -109,15 +109,14 @@ function runValidation() {
     const filePath = path.join(PROTOTYPES_DIR, file);
     const html = fs.readFileSync(filePath, 'utf-8');
     
-    // Check for forbidden shortened labels
+    // Check for forbidden shortened labels in status contexts
     const foundShortened = [];
     FORBIDDEN_SHORTENED.forEach(shortened => {
-      if (html.includes(shortened) && !html.includes('status-label')) {
-        // If it's in status context but without proper markup, it's a violation
-        const regex = new RegExp(`class="[^"]*status[^"]*"[^>]*>[^<]*${shortened}`, 'i');
-        if (regex.test(html)) {
-          foundShortened.push(shortened);
-        }
+      // Look for shortened label appearing in status-related elements (use 's' flag for multiline)
+      // Note: \b word boundary doesn't work with Turkish characters, so we omit it
+      const regex = new RegExp(`(status-label|status-badge|inbox-item-status).*?${shortened}`, 'is');
+      if (regex.test(html)) {
+        foundShortened.push(shortened);
       }
     });
     

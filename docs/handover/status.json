@@ -101,7 +101,7 @@
       "deliverables": "packages/design-tokens; docs/ux/screens.md; docs/ux/content-tr.json",
       "pass_criteria": "Her ana görev üç veya daha az belirgin eylem; metin durumu yanlış umut vermiyor.",
       "status": "IN_PROGRESS",
-      "attempts": 2,
+      "attempts": 3,
       "commit": "b537a4b5737072e6b0f40a65d68da1486b937115",
       "evidence": [],
       "blockers": [],

@@ -1,7 +1,8 @@
 import { describe, it, expect } from 'vitest';
-import { Sender, SimulatedClock, IRNG } from './sender';
-import { Receiver } from './receiver';
+
 import { createMockTransportPair } from './mock-transport';
+import { Receiver } from './receiver';
+import { Sender, SimulatedClock, IRNG } from './sender';
 
 class SeededRNG implements IRNG {
   private seed: number;
@@ -54,7 +55,7 @@ describe('D-08 BLE Resume: Deterministic disconnect and resume with missing chun
       senderFailed = true;
     });
 
-    receiver.on('completed', ({ payload }: { payload: Buffer }) => {
+    receiver.on('completed', () => {
       receiverCompleted = true;
     });
 
@@ -103,7 +104,8 @@ describe('D-08 BLE Resume: Deterministic disconnect and resume with missing chun
     }, rng, clock);
 
     const sender = new Sender(senderTransport, { maxRetries: 5, chunkTimeout: 1200 }, clock, rng);
-    const receiver = new Receiver(receiverTransport, {}, clock);
+    // Receiver is needed for protocol flow; we track sender state for terminal condition
+    void new Receiver(receiverTransport, {}, clock);
 
     let failed = false;
     let completed = false;

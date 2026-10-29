@@ -1,6 +1,10 @@
 import Foundation
 import Crypto
 
+#if canImport(Security)
+import Security
+#endif
+
 /**
  * ADIM 09: X25519 + HKDF-SHA256 + ChaCha20-Poly1305 with AAD
  * 
@@ -81,12 +85,23 @@ public struct SOSMeshCrypto {
         
         // Generate random nonce
         var nonceBytes = Data(count: nonceSize)
+        
+        #if canImport(Security)
         let result = nonceBytes.withUnsafeMutableBytes {
             SecRandomCopyBytes(kSecRandomDefault, nonceSize, $0.baseAddress!)
         }
         guard result == errSecSuccess else {
             throw CryptoError.encryptionFailed
         }
+        #else
+        // Linux fallback: use SystemRandomNumberGenerator
+        var rng = SystemRandomNumberGenerator()
+        var bytes = [UInt8](repeating: 0, count: nonceSize)
+        for i in 0..<nonceSize {
+            bytes[i] = UInt8.random(in: 0...255, using: &rng)
+        }
+        nonceBytes = Data(bytes)
+        #endif
         
         // Derive encryption key using HKDF-SHA256
         let encryptionKey = try deriveEncryptionKey(

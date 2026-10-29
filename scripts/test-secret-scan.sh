@@ -84,9 +84,15 @@ test_pattern "SECRET=boş tespit edilmemeli" "SECRET=" 0
 test_pattern "Telefon +90 tespit edilmeli" "+905551234567" 1
 test_pattern "Telefon +1 tespit edilmeli" "+12025551234" 1
 
-# 40-hex (git commit değil)
-FAKE_HEX="$(LC_ALL=C tr -dc 'a-f0-9' < /dev/urandom | head -c 40)"
-test_pattern "40-hex (commit değil) tespit edilmeli" "hash=$FAKE_HEX" 1
+# 40-hex bağlamında - gerçek sahte token yakalanmalı
+FAKE_HEX_TOKEN="$(LC_ALL=C tr -dc 'a-f0-9' < /dev/urandom | head -c 40)"
+test_pattern "40-hex secret bağlamında tespit edilmeli" "secret=$FAKE_HEX_TOKEN" 1
+test_pattern "40-hex token bağlamında tespit edilmeli" "token:$FAKE_HEX_TOKEN" 1
+
+# Git commit SHA bağlamında - artık yakalanmamalı
+FAKE_COMMIT_SHA="$(LC_ALL=C tr -dc 'a-f0-9' < /dev/urandom | head -c 40)"
+test_pattern "commit SHA tespit edilmemeli" "commit: $FAKE_COMMIT_SHA" 0
+test_pattern "SHA dokumentasyonda tespit edilmemeli" "SHA: $FAKE_COMMIT_SHA" 0
 
 # Temiz dosya
 test_pattern "Temiz dosya tespit edilmemeli" "Bu dosyada secret yok, sadece normal metin." 0

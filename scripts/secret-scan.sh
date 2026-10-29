@@ -11,7 +11,7 @@ PATTERNS=(
   'AIza[A-Za-z0-9_-]{35}'                                   # Google API key
   'AKIA[A-Z0-9]{16}'                                        # AWS access key
   'BEGIN (RSA|DSA|EC|OPENSSH) PRIVATE KEY'                  # Private key header
-  '[0-9a-f]{40,}'                                           # 40+ hex (SHA kontrolü yapılacak)
+  '(key|token|secret|password)["\s:=]+[0-9a-f]{40,}'       # 40+ hex yalnız key/token/secret/password bağlamında
   '\+[1-9][0-9]{7,14}'                                      # E.164 telefon (+90... dahil)
   '[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}'         # E-posta
   '[-+]?[0-9]{1,3}\.[0-9]{4,},\s*[-+]?[0-9]{1,3}\.[0-9]{4,}' # GPS koordinat (lat,lon ≥4 hane)

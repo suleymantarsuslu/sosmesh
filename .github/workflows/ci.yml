@@ -97,10 +97,36 @@ jobs:
       - name: Type check
         run: cd packages/contracts && npx tsc --noEmit
 
+  detect-mobile:
+    name: Detect Mobile Projects
+    runs-on: ubuntu-latest
+    outputs:
+      android: ${{ steps.check.outputs.android }}
+      ios: ${{ steps.check.outputs.ios }}
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      
+      - name: Check mobile projects
+        id: check
+        run: |
+          if [ -f "apps/android/build.gradle" ] || [ -f "apps/android/build.gradle.kts" ]; then
+            echo "android=true" >> $GITHUB_OUTPUT
+          else
+            echo "android=false" >> $GITHUB_OUTPUT
+          fi
+          
+          if [ -d "apps/ios" ] && find apps/ios -name "*.xcodeproj" -type d | grep -q .; then
+            echo "ios=true" >> $GITHUB_OUTPUT
+          else
+            echo "ios=false" >> $GITHUB_OUTPUT
+          fi
+
   android-gradle:
     name: Android Gradle Build
     runs-on: ubuntu-latest
-    if: hashFiles('apps/android/README.md') != ''
+    needs: detect-mobile
+    if: needs.detect-mobile.outputs.android == 'true'
     timeout-minutes: 20
     
     steps:
@@ -134,7 +160,8 @@ jobs:
   ios-xcode:
     name: iOS Xcode Build
     runs-on: macos-latest
-    if: hashFiles('apps/ios/README.md') != ''
+    needs: detect-mobile
+    if: needs.detect-mobile.outputs.ios == 'true'
     timeout-minutes: 30
     
     steps:

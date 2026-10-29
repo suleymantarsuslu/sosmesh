@@ -43,6 +43,24 @@ export class Receiver extends EventEmitter {
     this.transport.on('disconnect', this.handleDisconnect.bind(this));
   }
 
+  public getReceivedChunkSeqs(): number[] {
+    return Array.from(this.chunks.keys()).sort((a, b) => a - b);
+  }
+
+  public sendResumeRequest(msgId: string): void {
+    // RESUME_REQUEST: 1 byte type + 32 bytes msgId hash + variable bitmap
+    const receivedSeqs = this.getReceivedChunkSeqs();
+    const buffer = Buffer.alloc(1 + 32 + receivedSeqs.length * 2);
+    buffer.writeUInt8(MessageType.RESUME_REQUEST, 0);
+    // msgId hash (simplified - use first 32 chars)
+    Buffer.from(msgId.padEnd(32, '0')).copy(buffer, 1, 0, 32);
+    // Write received seq numbers
+    receivedSeqs.forEach((seq, idx) => {
+      buffer.writeUInt16BE(seq, 33 + idx * 2);
+    });
+    this.transport.send(buffer);
+  }
+
   private handleData(data: Buffer): void {
     if (data.length === 0) return;
 

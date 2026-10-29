@@ -1,23 +1,23 @@
-import * as nacl from 'tweetnacl';
-import * as naclUtil from 'tweetnacl-util';
+import { x25519 } from '@noble/curves/ed25519.js';
 import { hkdf } from '@noble/hashes/hkdf.js';
 import { sha256 } from '@noble/hashes/sha2.js';
+import { chacha20poly1305 } from '@noble/ciphers/chacha.js';
+import { randomBytes } from '@noble/hashes/utils.js';
 
 export interface EncryptedPayload {
   keyId: string;
   ephemeralPublicKey: string; // Base64
-  nonce: string; // Base64 24 bytes
-  ciphertext: string; // Base64
-  tag: string; // Base64 16 bytes (included in ciphertext for ChaCha20-Poly1305)
+  nonce: string; // Base64 12 bytes (IETF ChaCha20-Poly1305)
+  ciphertext: string; // Base64 (includes 16-byte Poly1305 tag)
 }
 
 export interface CryptoConfig {
   keyId: string;
-  serverPublicKey: string; // Base64 X25519 public key
+  serverPublicKey: string; // Base64 X25519 public key (32 bytes)
 }
 
 export interface ServerCryptoConfig extends CryptoConfig {
-  serverPrivateKey: string; // Base64 X25519 private key (server-side only)
+  serverPrivateKey: string; // Base64 X25519 private key (32 bytes)
 }
 
 export enum CryptoError {
@@ -49,33 +49,76 @@ export const CRYPTO_ERROR_MESSAGES = {
   },
 };
 
-const INFO_STRING = 'SOSMesh-v1-payload-encryption';
+const PROTOCOL_VERSION = 'v1';
 
 /**
- * Derives encryption and authentication keys using HKDF-SHA256
+ * Derives encryption key using HKDF-SHA256
+ * Info string includes protocol version and key ID for domain separation
  */
-function deriveKeys(sharedSecret: Uint8Array, nonce: Uint8Array): {
-  encryptionKey: Uint8Array;
-} {
+function deriveEncryptionKey(
+  sharedSecret: Uint8Array,
+  salt: Uint8Array,
+  keyId: string
+): Uint8Array {
+  const info = new TextEncoder().encode(`SOSMesh-${PROTOCOL_VERSION}-${keyId}-encryption`);
   // HKDF-SHA256: 32 bytes for ChaCha20-Poly1305 key
-  const info = naclUtil.decodeUTF8(INFO_STRING);
-  const derived = hkdf(sha256, sharedSecret, nonce, info, 32);
-  return {
-    encryptionKey: derived,
-  };
+  return hkdf(sha256, sharedSecret, salt, info, 32);
 }
 
 /**
- * Encrypts a payload using X25519 + HKDF + ChaCha20-Poly1305
+ * Creates canonical JSON string for AAD
+ * Ensures consistent serialization across platforms
+ */
+function createAAD(envelope: any, keyId: string, protocolVersion: string): Uint8Array {
+  // Create AAD object with deterministic order
+  // Sort keys recursively for consistent serialization
+  const sortKeys = (obj: any): any => {
+    if (obj === null || typeof obj !== 'object') return obj;
+    if (Array.isArray(obj)) return obj.map(sortKeys);
+    
+    const sorted: any = {};
+    Object.keys(obj).sort().forEach(key => {
+      sorted[key] = sortKeys(obj[key]);
+    });
+    return sorted;
+  };
+
+  const aadObject = sortKeys({
+    envelope: envelope,
+    keyId: keyId,
+    protocol: protocolVersion
+  });
+
+  // Canonical JSON: no whitespace
+  const canonicalJSON = JSON.stringify(aadObject);
+  return new TextEncoder().encode(canonicalJSON);
+}
+
+/**
+ * Base64 encode
+ */
+function toBase64(bytes: Uint8Array): string {
+  return Buffer.from(bytes).toString('base64');
+}
+
+/**
+ * Base64 decode
+ */
+function fromBase64(str: string): Uint8Array {
+  return new Uint8Array(Buffer.from(str, 'base64'));
+}
+
+/**
+ * Encrypts a payload using X25519 + HKDF + IETF ChaCha20-Poly1305
  * 
  * @param payload - The plaintext payload object
- * @param aad - Associated authenticated data (envelope metadata)
+ * @param envelope - Envelope metadata (used as AAD)
  * @param config - Crypto configuration with server public key
  * @returns Encrypted payload
  */
 export function encryptPayload(
   payload: any,
-  aad: any,
+  envelope: any,
   config: CryptoConfig
 ): EncryptedPayload {
   // Validate key ID
@@ -83,48 +126,42 @@ export function encryptPayload(
     throw new Error(`Production key ID ${config.keyId} requires secure key management`);
   }
 
-  // Generate ephemeral key pair
-  const ephemeralKeyPair = nacl.box.keyPair();
+  // Generate ephemeral X25519 key pair (32 bytes private key)
+  const ephemeralPrivateKey = randomBytes(32);
+  const ephemeralPublicKey = x25519.getPublicKey(ephemeralPrivateKey);
 
   // Decode server public key
-  const serverPublicKey = naclUtil.decodeBase64(config.serverPublicKey);
+  const serverPublicKey = fromBase64(config.serverPublicKey);
 
-  // Perform X25519 key agreement
-  const sharedSecret = nacl.scalarMult(ephemeralKeyPair.secretKey, serverPublicKey);
+  // Perform X25519 key agreement (ECDH)
+  const sharedSecret = x25519.getSharedSecret(ephemeralPrivateKey, serverPublicKey);
 
-  // Generate random 192-bit nonce
-  const nonce = nacl.randomBytes(24);
+  // Generate random 96-bit nonce for IETF ChaCha20-Poly1305
+  const nonce = randomBytes(12);
 
-  // Derive encryption key using HKDF
-  const { encryptionKey } = deriveKeys(sharedSecret, nonce);
+  // Derive encryption key using HKDF (salt = nonce, info = versioned + key id)
+  const encryptionKey = deriveEncryptionKey(sharedSecret, nonce, config.keyId);
+
+  // Create AAD from envelope metadata
+  const aad = createAAD(envelope, config.keyId, PROTOCOL_VERSION);
 
   // Serialize payload
-  // Note: AAD binding would require a different crypto library (e.g., libsodium with AEAD)
-  // For now, we're using tweetnacl's secretbox (XSalsa20-Poly1305) which doesn't support AAD
-  // TODO: Implement proper AAD binding in future version
-  const plaintextBytes = naclUtil.decodeUTF8(JSON.stringify(payload));
+  const plaintextBytes = new TextEncoder().encode(JSON.stringify(payload));
 
-  // Encrypt with XSalsa20-Poly1305 (via secretbox)
-  // secretbox returns: [16-byte nonce prepended + ciphertext + 16-byte poly1305 tag appended]
-  // But we're using our own nonce, so secretbox returns just [ciphertext + tag]
-  const ciphertextWithTag = nacl.secretbox(plaintextBytes, nonce, encryptionKey);
-
-  // For API compatibility, we store the whole box as "ciphertext" and an empty "tag"
-  // (the tag is already included in the box)
-  const ciphertext = ciphertextWithTag;
-  const tag = new Uint8Array(0); // Empty for compatibility
+  // Encrypt with IETF ChaCha20-Poly1305 (AAD authenticated)
+  const cipher = chacha20poly1305(encryptionKey, nonce, aad);
+  const ciphertextWithTag = cipher.encrypt(plaintextBytes);
 
   // Securely zero out sensitive data
+  ephemeralPrivateKey.fill(0);
   sharedSecret.fill(0);
-  ephemeralKeyPair.secretKey.fill(0);
   encryptionKey.fill(0);
 
   return {
     keyId: config.keyId,
-    ephemeralPublicKey: naclUtil.encodeBase64(ephemeralKeyPair.publicKey),
-    nonce: naclUtil.encodeBase64(nonce),
-    ciphertext: naclUtil.encodeBase64(ciphertext),
-    tag: naclUtil.encodeBase64(tag),
+    ephemeralPublicKey: toBase64(ephemeralPublicKey),
+    nonce: toBase64(nonce),
+    ciphertext: toBase64(ciphertextWithTag), // Includes 16-byte Poly1305 tag
   };
 }
 
@@ -132,13 +169,13 @@ export function encryptPayload(
  * Decrypts an encrypted payload (server-side only)
  * 
  * @param encryptedPayload - The encrypted payload
- * @param aad - Associated authenticated data (must match encryption AAD)
+ * @param envelope - Envelope metadata (must match encryption AAD)
  * @param config - Server crypto configuration with private key
  * @returns Decrypted payload object
  */
 export function decryptPayload(
   encryptedPayload: EncryptedPayload,
-  aad: any,
+  envelope: any,
   config: ServerCryptoConfig
 ): any {
   // Validate key ID match
@@ -147,32 +184,39 @@ export function decryptPayload(
   }
 
   // Decode components
-  const ephemeralPublicKey = naclUtil.decodeBase64(encryptedPayload.ephemeralPublicKey);
-  const nonce = naclUtil.decodeBase64(encryptedPayload.nonce);
-  const ciphertext = naclUtil.decodeBase64(encryptedPayload.ciphertext);
-  const serverPrivateKey = naclUtil.decodeBase64(config.serverPrivateKey);
+  const ephemeralPublicKey = fromBase64(encryptedPayload.ephemeralPublicKey);
+  const nonce = fromBase64(encryptedPayload.nonce);
+  const ciphertextWithTag = fromBase64(encryptedPayload.ciphertext);
+  const serverPrivateKey = fromBase64(config.serverPrivateKey);
 
   // Perform X25519 key agreement
-  const sharedSecret = nacl.scalarMult(serverPrivateKey, ephemeralPublicKey);
+  const sharedSecret = x25519.getSharedSecret(serverPrivateKey, ephemeralPublicKey);
 
   // Derive encryption key using HKDF
-  const { encryptionKey } = deriveKeys(sharedSecret, nonce);
+  const encryptionKey = deriveEncryptionKey(sharedSecret, nonce, config.keyId);
 
-  // Decrypt with XSalsa20-Poly1305 (secretbox.open)
-  // ciphertext already includes the tag
-  const plaintextBytes = nacl.secretbox.open(ciphertext, nonce, encryptionKey);
+  // Create AAD from envelope metadata (must match encryption AAD)
+  const aad = createAAD(envelope, config.keyId, PROTOCOL_VERSION);
 
-  if (!plaintextBytes) {
+  try {
+    // Decrypt with IETF ChaCha20-Poly1305
+    const decipher = chacha20poly1305(encryptionKey, nonce, aad);
+    const plaintextBytes = decipher.decrypt(ciphertextWithTag);
+
+    // Securely zero out sensitive data
+    sharedSecret.fill(0);
+    serverPrivateKey.fill(0);
+    encryptionKey.fill(0);
+
+    const plaintext = new TextDecoder().decode(plaintextBytes);
+    return JSON.parse(plaintext);
+  } catch (error) {
+    // Securely zero out sensitive data even on error
+    sharedSecret.fill(0);
+    serverPrivateKey.fill(0);
+    encryptionKey.fill(0);
     throw new Error(CryptoError.DECRYPTION_FAILED);
   }
-
-  // Securely zero out sensitive data
-  sharedSecret.fill(0);
-  serverPrivateKey.fill(0);
-  encryptionKey.fill(0);
-
-  const plaintext = naclUtil.encodeUTF8(plaintextBytes);
-  return JSON.parse(plaintext);
 }
 
 /**

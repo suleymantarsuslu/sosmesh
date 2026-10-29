@@ -39,8 +39,7 @@ describe('Crypto - Encryption and Decryption', () => {
     expect(encrypted.ephemeralPublicKey).toBeTruthy();
     expect(encrypted.nonce).toBeTruthy();
     expect(encrypted.ciphertext).toBeTruthy();
-    // Note: tag is included in ciphertext for secretbox, so separate tag field may be empty
-    expect(encrypted).toHaveProperty('tag');
+    // Note: tag is included in ciphertext for ChaCha20-Poly1305 (last 16 bytes)
 
     const decrypted = decryptPayload(encrypted, envelope, config);
 
@@ -84,10 +83,15 @@ describe('Crypto - Encryption and Decryption', () => {
   it('should fail decryption with tampered tag', () => {
     const encrypted = encryptPayload(payload, envelope, config);
 
-    // Tamper with tag
+    // Tamper with last 16 bytes (Poly1305 tag) of ciphertext
+    const ciphertextBytes = Buffer.from(encrypted.ciphertext, 'base64');
+    if (ciphertextBytes.length > 16) {
+      // Flip a bit in the tag (last 16 bytes)
+      ciphertextBytes[ciphertextBytes.length - 1] ^= 0x01;
+    }
     const tamperedEncrypted = {
       ...encrypted,
-      tag: encrypted.tag.replace(/A/g, 'B'),
+      ciphertext: ciphertextBytes.toString('base64'),
     };
 
     expect(() => decryptPayload(tamperedEncrypted, envelope, config))

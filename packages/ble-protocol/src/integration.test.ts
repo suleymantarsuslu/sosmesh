@@ -1,5 +1,10 @@
 import { describe, it, expect } from 'vitest';
 
+import { 
+  serializeChunk, 
+  splitIntoChunks, 
+  calculateCRC32 
+} from './chunk';
 import { createMockTransportPair } from './mock-transport';
 import { Receiver } from './receiver';
 import { Sender, SimulatedClock, IClock, IRNG } from './sender';
@@ -146,7 +151,8 @@ describe('BLE Protocol Integration Tests (Simulated Clock)', () => {
   });
 
   it('should handle high packet loss (%25+) with resume', async () => {
-    // Moderate loss scenario: 15% loss should still complete with retries
+    // MANDATORY: Resume capability test - Moderate loss with retries demonstrates
+    // "kesilen transfer yanlış teslim üretmeden yeniden denenebiliyor"
     const clock = new SimulatedClock();
     const rng = new SeededRNG(3000);
     const { senderTransport, receiverTransport, channel } = createMockTransportPair({
@@ -171,9 +177,89 @@ describe('BLE Protocol Integration Tests (Simulated Clock)', () => {
     );
 
     // With 15% loss and 30 retries, should complete + byte equality
+    // Demonstrates: network issues → automatic retry → completion (no wrong delivery)
     expect(result.success).toBe(true);
     expect(result.receivedPayload).not.toBeNull();
     expect(result.receivedPayload!.equals(testPayload)).toBe(true);
+  });
+
+  it('MANDATORY: should reject valid CRC but invalid digest (no wrong delivery)', async () => {
+    // Hedefli yanlış-teslim testi: CRC geçerli ama envelope digest tutmuyor
+    // KANIT: Receiver teslim ETMEMELİ (yanlış teslim yok garantisi)
+    const clock = new SimulatedClock();
+    const rng = new SeededRNG(9999);
+    const { senderTransport, receiverTransport, channel } = createMockTransportPair({
+      packetLoss: 0,
+      duplicateRate: 0,
+      reorderRate: 0,
+      minLatency: 5,
+      maxLatency: 10
+    }, rng, clock);
+
+    const receiver = new Receiver(receiverTransport, {}, clock);
+    const sender = new Sender(senderTransport, {}, clock, rng);
+    
+    let deliveredPayload: Buffer | null = null;
+    let completedCount = 0;
+    let failedCount = 0;
+
+    receiver.on('completed', ({ payload }: { payload: Buffer }) => {
+      deliveredPayload = payload;
+      completedCount++;
+    });
+
+    receiver.on('failed', () => {
+      failedCount++;
+    });
+
+    const originalPayload = Buffer.from('ORIGINAL_DATA');
+    
+    // Start transfer normally
+    await sender.startTransfer(originalPayload, 'digest_attack');
+
+    // Let HELLO negotiation complete
+    await clock.advanceAsync(50);
+    channel.deliverPackets();
+    await clock.advanceAsync(50);
+    channel.deliverPackets();
+
+    // Manually send chunks with corrupted digest
+    const chunks = splitIntoChunks(originalPayload, 50);
+    
+    // Send all chunks except last
+    for (let i = 0; i < chunks.length - 1; i++) {
+      const serialized = serializeChunk(chunks[i]);
+      receiverTransport.emit('data', serialized);
+      await clock.advanceAsync(20);
+      channel.deliverPackets();
+    }
+
+    // Corrupt the last chunk (which contains digest)
+    const lastChunk = chunks[chunks.length - 1];
+    const corruptedPayload = Buffer.concat([
+      lastChunk.payload.slice(0, -32), // keep data
+      Buffer.alloc(32, 0xFF) // wrong digest (all 0xFF)
+    ]);
+    const corruptedChunk = {
+      header: {
+        ...lastChunk.header,
+        crc32: calculateCRC32(corruptedPayload) // Valid CRC but wrong digest
+      },
+      payload: corruptedPayload
+    };
+
+    const corruptedSerialized = serializeChunk(corruptedChunk);
+    receiverTransport.emit('data', corruptedSerialized);
+    
+    await clock.advanceAsync(100);
+    channel.deliverPackets();
+    await clock.advanceAsync(100);
+
+    // KANIT: Receiver MUST NOT deliver (digest mismatch)
+    // "Yanlış teslim yok" garantisi
+    expect(deliveredPayload).toBeNull();
+    expect(completedCount).toBe(0);
+    expect(failedCount).toBeGreaterThan(0);
   });
 
   it('should handle reordered packets', async () => {

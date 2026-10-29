@@ -157,6 +157,11 @@
         "4": "Viewed",
         "5": "Processing"
       }
+    },
+    "cancel": {
+      "button": "Cancel",
+      "countdown": "seconds",
+      "cancelled": "SOS not sent"
     }
   },
   "a11y": {

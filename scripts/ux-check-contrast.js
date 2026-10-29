@@ -45,17 +45,17 @@ function getContrastRatio(hex1, hex2) {
 }
 
 function runNegativeTest() {
-  console.log('🧪 Running NEGATIVE TEST: injecting low-contrast token...\n');
+  console.log('🧪 Running NEGATIVE TEST: injecting low-contrast TEXT pair...\n');
   
   const tokens = JSON.parse(fs.readFileSync(TOKENS_PATH, 'utf-8'));
   const backup = JSON.stringify(tokens);
   
-  // Inject a low-contrast color
-  tokens.colors.light.text.disabled = '#F0F0F0';  // Very light, will fail on white
+  // Inject a low-contrast TEXT color (not border, which would be exempt)
+  tokens.colors.light.text.primary = '#999999';  // Low contrast with white
   fs.writeFileSync(TOKENS_PATH, JSON.stringify(tokens, null, 2));
   
-  console.log('✓ Injected low-contrast color (text.disabled = #F0F0F0)');
-  console.log('✓ Running contrast check (should FAIL)...\n');
+  console.log('✓ Injected low-contrast TEXT color (text.primary = #999999 on white)');
+  console.log('✓ Running contrast check (should FAIL on text pair)...\n');
   
   try {
     const result = runContrastCheck();
@@ -65,9 +65,10 @@ function runNegativeTest() {
     
     if (result.failures === 0) {
       console.error('\n❌ NEGATIVE TEST FAILED: Expected failures but got none!');
+      console.error('   Text contrast violations should not be exempt!');
       process.exit(1);
     } else {
-      console.log(`\n✅ NEGATIVE TEST PASSED: Correctly detected ${result.failures} failures`);
+      console.log(`\n✅ NEGATIVE TEST PASSED: Correctly detected ${result.failures} text contrast failures`);
       console.log('✓ Restored original tokens.json');
       process.exit(0);
     }
@@ -79,14 +80,11 @@ function runNegativeTest() {
 }
 
 // WCAG exempt pairs (with reasoning)
+// Only non-text UI components can be exempt from 4.5:1
 const EXEMPT_PAIRS = [
   {
     pattern: /border.*surface/i,
-    reason: 'Borders are non-text UI components. WCAG 1.4.11 allows 3:1 for active UI but decorative borders may have lower contrast.',
-  },
-  {
-    pattern: /warning/i,
-    reason: 'Warning color onText may not meet 4.5:1 but warning uses icons+text for redundant encoding per WCAG 1.4.1.',
+    reason: 'Decorative borders are non-text UI components. WCAG 1.4.11 requires 3:1 for active UI components, decorative may be lower.',
   },
 ];
 

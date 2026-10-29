@@ -18,6 +18,7 @@ module.exports = defineConfig({
   projects: [
     {
       name: 'mobile-light-tr',
+      testMatch: '**/standard.spec.js',
       use: {
         ...devices['Desktop Chrome'],
         viewport: { width: 390, height: 844 },
@@ -27,6 +28,7 @@ module.exports = defineConfig({
     },
     {
       name: 'mobile-dark-tr',
+      testMatch: '**/standard.spec.js',
       use: {
         ...devices['Desktop Chrome'],
         viewport: { width: 390, height: 844 },
@@ -36,6 +38,7 @@ module.exports = defineConfig({
     },
     {
       name: 'desktop-light-en',
+      testMatch: '**/standard.spec.js',
       use: {
         ...devices['Desktop Chrome'],
         viewport: { width: 1440, height: 900 },
@@ -45,6 +48,7 @@ module.exports = defineConfig({
     },
     {
       name: 'desktop-dark-en',
+      testMatch: '**/standard.spec.js',
       use: {
         ...devices['Desktop Chrome'],
         viewport: { width: 1440, height: 900 },
@@ -54,6 +58,7 @@ module.exports = defineConfig({
     },
     {
       name: 'watch-light-tr',
+      testMatch: '**/watch.spec.js',
       use: {
         ...devices['Desktop Chrome'],
         viewport: { width: 198, height: 242 },
@@ -63,6 +68,7 @@ module.exports = defineConfig({
     },
     {
       name: 'watch-dark-tr',
+      testMatch: '**/watch.spec.js',
       use: {
         ...devices['Desktop Chrome'],
         viewport: { width: 184, height: 224 },

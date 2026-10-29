@@ -136,6 +136,70 @@
       color: var(--color-text-disabled);
       font-size: 10px;
     }
+    
+    .cancel-dialog {
+      display: none;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: var(--space-4);
+      text-align: center;
+    }
+    
+    .cancel-dialog.visible {
+      display: flex;
+    }
+    
+    .cancel-countdown {
+      font-size: var(--type-fontSize-3xl);
+      font-weight: var(--type-fontWeight-bold);
+      color: var(--color-sos);
+      margin-bottom: var(--space-3);
+    }
+    
+    .cancel-message {
+      font-size: var(--type-fontSize-sm);
+      margin-bottom: var(--space-4);
+      color: var(--color-text-secondary);
+    }
+    
+    .cancel-button {
+      width: 100%;
+      min-height: 44px;
+      padding: var(--space-3);
+      background: var(--color-surface-tertiary);
+      border: 2px solid var(--color-sos);
+      border-radius: var(--radius-base);
+      color: var(--color-sos);
+      font-size: var(--type-fontSize-base);
+      font-weight: var(--type-fontWeight-semibold);
+      cursor: pointer;
+      touch-action: manipulation;
+    }
+    
+    .cancelled-screen {
+      display: none;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: var(--space-4);
+      text-align: center;
+    }
+    
+    .cancelled-screen.visible {
+      display: flex;
+    }
+    
+    .cancelled-icon {
+      font-size: 48px;
+      margin-bottom: var(--space-3);
+    }
+    
+    .cancelled-message {
+      font-size: var(--type-fontSize-lg);
+      font-weight: var(--type-fontWeight-semibold);
+      color: var(--color-text-primary);
+    }
   </style>
 </head>
 <body>
@@ -146,36 +210,47 @@
     <p class="watch-instructions">3 sn basılı tut</p>
   </div>
   
+  <div class="cancel-dialog" id="cancelDialog">
+    <div class="cancel-countdown" id="countdown" aria-live="polite" aria-atomic="true">3</div>
+    <div class="cancel-message">SOS gönderiliyor...</div>
+    <button class="cancel-button" id="cancelButton">İptal</button>
+  </div>
+  
+  <div class="cancelled-screen" id="cancelledScreen">
+    <div class="cancelled-icon">✖</div>
+    <div class="cancelled-message">SOS gönderilmedi</div>
+  </div>
+  
   <div class="status-screen" id="statusScreen">
     <h2 class="status-title">Durum</h2>
     
     <div class="status-item">
       <div class="status-icon">1</div>
-      <div class="status-label">Kayıtlı</div>
+      <div class="status-label" style="font-size: 9px; line-height: 1.2;">CİHAZDA<br/>KAYITLI</div>
       <div class="status-time">14:23</div>
     </div>
     
     <div class="status-item">
       <div class="status-icon">2</div>
-      <div class="status-label">Aktarıldı</div>
+      <div class="status-label" style="font-size: 9px; line-height: 1.2;">YAKIN CİHAZA<br/>AKTARILDI</div>
       <div class="status-time">14:24</div>
     </div>
     
     <div class="status-item">
       <div class="status-icon">3</div>
-      <div class="status-label">Sunucuda</div>
+      <div class="status-label" style="font-size: 9px; line-height: 1.2;">SUNUCUYA<br/>ULAŞTI</div>
       <div class="status-time">14:24</div>
     </div>
     
     <div class="status-item">
       <div class="status-icon">4</div>
-      <div class="status-label">Görüldü</div>
+      <div class="status-label" style="font-size: 9px; line-height: 1.2;">OPERATÖR<br/>GÖRDÜ</div>
       <div class="status-time">14:26</div>
     </div>
     
     <div class="status-item">
       <div class="status-icon" style="background: var(--color-offline);">5</div>
-      <div class="status-label" style="color: var(--color-text-disabled);">İşlemde</div>
+      <div class="status-label" style="color: var(--color-text-disabled); font-size: 9px; line-height: 1.2;">VAKA İŞLEME<br/>ALINDI</div>
       <div class="status-time">—</div>
     </div>
   </div>
@@ -183,16 +258,23 @@
   <script>
     const sosButtonWatch = document.getElementById('sosButtonWatch');
     const sosScreen = document.getElementById('sosScreen');
+    const cancelDialog = document.getElementById('cancelDialog');
+    const cancelledScreen = document.getElementById('cancelledScreen');
     const statusScreen = document.getElementById('statusScreen');
+    const countdownEl = document.getElementById('countdown');
+    const cancelButton = document.getElementById('cancelButton');
     
     let holdTimer;
+    let countdownTimer;
+    let countdownValue = 3;
     
     sosButtonWatch.addEventListener('pointerdown', (e) => {
       e.preventDefault();
       holdTimer = setTimeout(() => {
-        // Simulate SOS sent
+        // Show cancel dialog with countdown
         sosScreen.style.display = 'none';
-        statusScreen.classList.add('visible');
+        cancelDialog.classList.add('visible');
+        startCountdown();
       }, 3000);
     });
     
@@ -200,12 +282,50 @@
       clearTimeout(holdTimer);
     });
     
-    // Toggle between screens for demo
-    document.addEventListener('dblclick', () => {
-      if (sosScreen.style.display === 'none') {
+    sosButtonWatch.addEventListener('pointercancel', () => {
+      clearTimeout(holdTimer);
+    });
+    
+    function startCountdown() {
+      countdownValue = 3;
+      countdownEl.textContent = countdownValue;
+      
+      countdownTimer = setInterval(() => {
+        countdownValue--;
+        if (countdownValue > 0) {
+          countdownEl.textContent = countdownValue;
+        } else {
+          clearInterval(countdownTimer);
+          // Send SOS
+          cancelDialog.classList.remove('visible');
+          statusScreen.classList.add('visible');
+        }
+      }, 1000);
+    }
+    
+    cancelButton.addEventListener('click', () => {
+      clearInterval(countdownTimer);
+      cancelDialog.classList.remove('visible');
+      cancelledScreen.classList.add('visible');
+      
+      // Return to SOS screen after 2 seconds
+      setTimeout(() => {
+        cancelledScreen.classList.remove('visible');
         sosScreen.style.display = 'flex';
-        statusScreen.classList.remove('visible');
+      }, 2000);
+    });
+    
+    // Toggle between screens for demo (double-tap)
+    let lastTap = 0;
+    document.addEventListener('touchend', (e) => {
+      const now = Date.now();
+      if (now - lastTap < 300) {
+        if (sosScreen.style.display === 'none' && !cancelDialog.classList.contains('visible') && !cancelledScreen.classList.contains('visible')) {
+          sosScreen.style.display = 'flex';
+          statusScreen.classList.remove('visible');
+        }
       }
+      lastTap = now;
     });
   </script>
 </body>

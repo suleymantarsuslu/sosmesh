@@ -285,13 +285,15 @@ public struct SOSMeshCrypto {
             return "[\(items.joined(separator: ","))]"
         } else if let string = obj as? String {
             return "\"\(string)\""
+        } else if let boolValue = obj as? Bool {
+            return boolValue ? "true" : "false"
+        } else if let number = obj as? Int {
+            return "\(number)"
+        } else if let number = obj as? Double {
+            return "\(number)"
         } else if let number = obj as? NSNumber {
-            // Distinguish between Bool and numeric types
-            if CFGetTypeID(number) == CFBooleanGetTypeID() {
-                return number.boolValue ? "true" : "false"
-            } else {
-                return "\(number)"
-            }
+            // NSNumber fallback (mainly for Darwin)
+            return "\(number)"
         } else {
             return "null"
         }

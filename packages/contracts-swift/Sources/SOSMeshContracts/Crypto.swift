@@ -139,38 +139,6 @@ public struct SOSMeshCrypto {
         return try encryptDeterministic(payload, envelope: envelope, config: config, ephemeralPrivateKeyData: ephemeralPrivateKey.rawRepresentation, nonceData: nonceBytes)
     }
     
-    // Old encryptPayload body removed - now uses encryptDeterministic
-    private static func oldEncryptPayload(
-        
-        // Derive encryption key using HKDF-SHA256
-        let encryptionKey = try deriveEncryptionKey(
-            sharedSecret: sharedSecret,
-            salt: nonceBytes,
-            keyId: config.keyId
-        )
-        
-        // Create AAD (Associated Authenticated Data)
-        let aad = try createAAD(envelope: envelope, keyId: config.keyId)
-        
-        // Encrypt with ChaCha20-Poly1305
-        let sealedBox = try ChaChaPoly.seal(
-            payload,
-            using: SymmetricKey(data: encryptionKey),
-            nonce: ChaChaPoly.Nonce(data: nonceBytes),
-            authenticating: aad
-        )
-        
-        // Combine ciphertext + tag
-        let ciphertextWithTag = sealedBox.ciphertext + sealedBox.tag
-        
-        return EncryptedPayload(
-            ciphertext: ciphertextWithTag.base64EncodedString(),
-            nonce: nonceBytes.base64EncodedString(),
-            ephemeralPublicKey: ephemeralPublicKey.rawRepresentation.base64EncodedString(),
-            keyId: config.keyId
-        )
-    }
-    
     /**
      * Decrypt payload with server's private key.
      *

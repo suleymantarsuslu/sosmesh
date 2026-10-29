@@ -125,7 +125,7 @@ jobs:
       
       - name: Setup Gradle cache
         if: steps.check-android.outputs.exists == 'true'
-        uses: gradle/actions/setup-gradle@v3
+        uses: gradle/actions/setup-gradle@v5
       
       - name: Lint Kotlin
         if: steps.check-android.outputs.exists == 'true'

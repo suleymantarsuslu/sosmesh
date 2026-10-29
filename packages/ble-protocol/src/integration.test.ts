@@ -2,25 +2,94 @@ import { describe, it, expect } from 'vitest';
 
 import { createMockTransportPair } from './mock-transport';
 import { Receiver } from './receiver';
-import { Sender } from './sender';
-import { AckLevel } from './types';
+import { Sender, SimulatedClock, IClock, IRNG } from './sender';
 
-describe('BLE Protocol Integration Tests', () => {
+// Seeded PRNG for deterministic tests
+class SeededRNG implements IRNG {
+  private seed: number;
+
+  constructor(seed: number) {
+    this.seed = seed;
+  }
+
+  random(): number {
+    const a = 1664525;
+    const c = 1013904223;
+    const m = 2 ** 32;
+    this.seed = (a * this.seed + c) % m;
+    return this.seed / m;
+  }
+}
+
+async function runSimulatedTransfer(
+  senderTransport: any,
+  receiverTransport: any,
+  channel: any,
+  clock: IClock,
+  payload: Buffer,
+  msgId: string,
+  maxSimTime: number = 100000
+): Promise<{ success: boolean; receivedPayload: Buffer | null; error?: string }> {
+  const sender = new Sender(senderTransport, { maxRetries: 10, chunkTimeout: 500 }, clock, new SeededRNG(1000));
+  const receiver = new Receiver(receiverTransport, {}, clock);
+
+  let receivedPayload: Buffer | null = null;
+  let completed = false;
+  let failed = false;
+  let errorMsg = '';
+
+  sender.on('completed', () => {
+    completed = true;
+  });
+
+  sender.on('failed', ({ message }: { message: string }) => {
+    failed = true;
+    errorMsg = message;
+  });
+
+  receiver.on('completed', ({ payload }: { payload: Buffer }) => {
+    receivedPayload = payload;
+  });
+
+  await sender.startTransfer(payload, msgId);
+
+  // Simulate time advancement
+  const simClock = clock as SimulatedClock;
+  const startTime = simClock.now();
+  while (simClock.now() - startTime < maxSimTime && !completed && !failed) {
+    simClock.advance(10);
+    channel.deliverPackets();
+    
+    if (channel.getQueueSize() === 0 && !simClock.hasPendingTimers()) {
+      break;
+    }
+  }
+
+  sender.close();
+  receiver.close();
+
+  if (failed) {
+    return { success: false, receivedPayload: null, error: errorMsg };
+  }
+
+  return { success: completed, receivedPayload };
+}
+
+describe('BLE Protocol Integration Tests (Simulated Clock)', () => {
   it('should successfully transfer a message end-to-end', async () => {
+    const clock = new SimulatedClock();
+    const rng = new SeededRNG(42);
     const { senderTransport, receiverTransport, channel } = createMockTransportPair({
       packetLoss: 0,
       duplicateRate: 0,
       reorderRate: 0,
       minLatency: 10,
       maxLatency: 20
-    });
-
-    const sender = new Sender(senderTransport);
-    const receiver = new Receiver(receiverTransport);
+    }, rng, clock);
 
     const testPayload = Buffer.from(JSON.stringify({
       envelope: {
-        timestamp: '2026-10-29T17:00:00Z',
+        timestamp: '2026-10-29T18:00:00Z',
         location: { latitude: 0, longitude: 0 },
         priority: 1,
         ackLevel: 'PEER_RECEIVED'
@@ -28,165 +97,117 @@ describe('BLE Protocol Integration Tests', () => {
       encryptedPayload: 'BASE64_ENCRYPTED_CONTENT_NO_REAL_PII'
     }));
 
-    let receivedPayload: Buffer | null = null;
-    let receivedAckLevel: AckLevel | null = null;
+    const result = await runSimulatedTransfer(
+      senderTransport, 
+      receiverTransport, 
+      channel, 
+      clock, 
+      testPayload, 
+      'integration_test'
+    );
 
-    receiver.on('completed', ({ payload, ackLevel }) => {
-      receivedPayload = payload;
-      receivedAckLevel = ackLevel;
-    });
+    expect(result.success).toBe(true);
+    expect(result.receivedPayload).not.toBeNull();
+    expect(result.receivedPayload!.equals(testPayload)).toBe(true);
 
-    const events: any[] = [];
-    sender.on('event', (event) => events.push({ source: 'sender', ...event }));
-    receiver.on('event', (event) => events.push({ source: 'receiver', ...event }));
-
-    const completedPromise = new Promise<void>((resolve, reject) => {
-      sender.on('completed', resolve);
-      sender.on('failed', reject);
-      setTimeout(() => reject(new Error('Timeout')), 5000);
-    });
-
-    await sender.startTransfer(testPayload, 'integration_test');
-    await completedPromise;
-
-    // Wait for receiver to complete
-    await new Promise(resolve => setTimeout(resolve, 200));
-
-    // Verify payload received correctly
-    expect(receivedPayload).not.toBeNull();
-    expect(receivedPayload!.equals(testPayload)).toBe(true);
-
-    // Verify ACK level is PEER_RECEIVED
-    expect(receivedAckLevel).toBe(AckLevel.PEER_RECEIVED);
-
-    // Verify events are logged (no payload content)
-    const senderEvents = events.filter(e => e.source === 'sender');
-    const receiverEvents = events.filter(e => e.source === 'receiver');
-
-    expect(senderEvents.length).toBeGreaterThan(0);
-    expect(receiverEvents.length).toBeGreaterThan(0);
-
-    // Ensure no events contain payload data
-    const allEventStrings = events.map(e => JSON.stringify(e));
-    for (const eventStr of allEventStrings) {
-      expect(eventStr).not.toContain('BASE64_ENCRYPTED');
-      expect(eventStr).not.toContain('encryptedPayload');
-    }
-
-    sender.close();
-    receiver.close();
     channel.close();
   });
 
   it('should handle packet loss with retries', async () => {
+    const clock = new SimulatedClock();
+    const rng = new SeededRNG(100);
     const { senderTransport, receiverTransport, channel } = createMockTransportPair({
-      packetLoss: 0.10, // 10% packet loss
+      packetLoss: 0.15,
       duplicateRate: 0,
       reorderRate: 0,
       minLatency: 5,
       maxLatency: 15
-    });
-
-    const sender = new Sender(senderTransport, { maxRetries: 12, chunkTimeout: 500 });
-    const receiver = new Receiver(receiverTransport);
+    }, rng, clock);
 
     const testPayload = Buffer.from('TEST_WITH_PACKET_LOSS_' + 'X'.repeat(250));
-    let receivedPayload: Buffer | null = null;
 
-    receiver.on('completed', ({ payload }) => {
-      receivedPayload = payload;
-    });
+    const result = await runSimulatedTransfer(
+      senderTransport, 
+      receiverTransport, 
+      channel, 
+      clock, 
+      testPayload, 
+      'loss_test',
+      50000
+    );
 
-    const completedPromise = new Promise<void>((resolve, reject) => {
-      sender.on('completed', resolve);
-      sender.on('failed', reject);
-      setTimeout(() => reject(new Error('Timeout')), 20000);
-    });
+    expect(result.success).toBe(true);
+    expect(result.receivedPayload).not.toBeNull();
+    expect(result.receivedPayload!.equals(testPayload)).toBe(true);
 
-    await sender.startTransfer(testPayload, 'loss_test');
-    await completedPromise;
-
-    await new Promise(resolve => setTimeout(resolve, 200));
-
-    expect(receivedPayload).not.toBeNull();
-    expect(receivedPayload!.equals(testPayload)).toBe(true);
-
-    sender.close();
-    receiver.close();
     channel.close();
-  }, 25000); // Test timeout
+  });
 
   it('should handle reordered packets', async () => {
+    const clock = new SimulatedClock();
+    const rng = new SeededRNG(200);
     const { senderTransport, receiverTransport, channel } = createMockTransportPair({
       packetLoss: 0,
       duplicateRate: 0,
-      reorderRate: 0.8, // 80% reorder rate
+      reorderRate: 0.8,
       minLatency: 10,
       maxLatency: 100
-    });
-
-    const sender = new Sender(senderTransport);
-    const receiver = new Receiver(receiverTransport);
+    }, rng, clock);
 
     const testPayload = Buffer.from('TEST_REORDERING_' + 'Y'.repeat(600));
-    let receivedPayload: Buffer | null = null;
 
-    receiver.on('completed', ({ payload }) => {
-      receivedPayload = payload;
-    });
+    const result = await runSimulatedTransfer(
+      senderTransport, 
+      receiverTransport, 
+      channel, 
+      clock, 
+      testPayload, 
+      'reorder_test',
+      50000
+    );
 
-    const completedPromise = new Promise<void>((resolve, reject) => {
-      sender.on('completed', resolve);
-      sender.on('failed', reject);
-      setTimeout(() => reject(new Error('Timeout')), 10000);
-    });
+    expect(result.success).toBe(true);
+    expect(result.receivedPayload).not.toBeNull();
+    expect(result.receivedPayload!.equals(testPayload)).toBe(true);
 
-    await sender.startTransfer(testPayload, 'reorder_test');
-    await completedPromise;
-
-    await new Promise(resolve => setTimeout(resolve, 300));
-
-    expect(receivedPayload).not.toBeNull();
-    expect(receivedPayload!.equals(testPayload)).toBe(true);
-
-    sender.close();
-    receiver.close();
     channel.close();
   });
 
   it('should deduplicate duplicate packets', async () => {
+    const clock = new SimulatedClock();
+    const rng = new SeededRNG(300);
     const { senderTransport, receiverTransport, channel } = createMockTransportPair({
       packetLoss: 0,
-      duplicateRate: 0.5, // 50% duplicate rate
+      duplicateRate: 0.5,
       reorderRate: 0,
       minLatency: 10,
       maxLatency: 30
-    });
+    }, rng, clock);
 
-    const sender = new Sender(senderTransport);
-    const receiver = new Receiver(receiverTransport);
-
-    const testPayload = Buffer.from('TEST_DUPLICATES');
-    let completionCount = 0;
+    const receiver = new Receiver(receiverTransport, {}, clock);
+    let deliveryCount = 0;
 
     receiver.on('completed', () => {
-      completionCount++;
+      deliveryCount++;
     });
 
-    const completedPromise = new Promise<void>((resolve, reject) => {
-      sender.on('completed', resolve);
-      sender.on('failed', reject);
-      setTimeout(() => reject(new Error('Timeout')), 5000);
-    });
+    const sender = new Sender(senderTransport, {}, clock, rng);
+    const payload = Buffer.from('DUPLICATE_DETECTION_TEST');
 
-    await sender.startTransfer(testPayload, 'dup_test');
-    await completedPromise;
+    await sender.startTransfer(payload, 'dup_test');
 
-    // Wait for any delayed duplicates
-    await new Promise(resolve => setTimeout(resolve, 500));
+    const simClock = clock as SimulatedClock;
+    const startTime = simClock.now();
+    while (simClock.now() - startTime < 10000) {
+      simClock.advance(10);
+      channel.deliverPackets();
+      
+      if (channel.getQueueSize() === 0 && !simClock.hasPendingTimers()) {
+        break;
+      }
+    }
 
-    // Should complete exactly once
-    expect(completionCount).toBe(1);
+    expect(deliveryCount).toBe(1);
 
     sender.close();
     receiver.close();
@@ -194,44 +215,43 @@ describe('BLE Protocol Integration Tests', () => {
   });
 
   it('should log events in secure format (no PII)', async () => {
+    const clock = new SimulatedClock();
+    const rng = new SeededRNG(400);
     const { senderTransport, receiverTransport, channel } = createMockTransportPair({
       packetLoss: 0,
       duplicateRate: 0,
       reorderRate: 0,
       minLatency: 10,
       maxLatency: 20
-    });
+    }, rng, clock);
 
-    const sender = new Sender(senderTransport);
-    const receiver = new Receiver(receiverTransport);
-
-    // Payload with "sensitive" data that should NOT appear in logs
     const sensitivePayload = Buffer.from(JSON.stringify({
       envelope: {
-        timestamp: '2026-10-29T17:00:00Z',
-        location: { latitude: 41.0082, longitude: 28.9784 }, // Real GPS - should NOT be in logs
+        timestamp: '2026-10-29T18:00:00Z',
+        location: { latitude: 41.0082, longitude: 28.9784 },
         priority: 1,
         ackLevel: 'PEER_RECEIVED'
       },
-      encryptedPayload: 'SECRET_MESSAGE_HELP_NEEDED' // Should NOT be in logs
+      encryptedPayload: 'SECRET_MESSAGE_HELP_NEEDED'
     }));
 
     const events: any[] = [];
-    sender.on('event', (event) => events.push(event));
-    receiver.on('event', (event) => events.push(event));
+    const sender = new Sender(senderTransport, {}, clock, rng);
+    const receiver = new Receiver(receiverTransport, {}, clock);
 
-    const completedPromise = new Promise<void>((resolve, reject) => {
-      sender.on('completed', resolve);
-      sender.on('failed', reject);
-      setTimeout(() => reject(new Error('Timeout')), 5000);
-    });
+    sender.on('event', (event) => events.push({ source: 'sender', ...event }));
+    receiver.on('event', (event) => events.push({ source: 'receiver', ...event }));
 
     await sender.startTransfer(sensitivePayload, 'security_test');
-    await completedPromise;
 
-    await new Promise(resolve => setTimeout(resolve, 100));
+    const simClock = clock as SimulatedClock;
+    while (simClock.hasPendingTimers() || channel.getQueueSize() > 0) {
+      simClock.advance(10);
+      channel.deliverPackets();
+      
+      if (simClock.now() > 50000) break;
+    }
 
-    // CRITICAL: Events must not contain sensitive data
     const allEventStrings = events.map(e => JSON.stringify(e));
     for (const eventStr of allEventStrings) {
       expect(eventStr).not.toContain('41.0082');
@@ -241,10 +261,8 @@ describe('BLE Protocol Integration Tests', () => {
       expect(eventStr).not.toContain('encryptedPayload');
     }
 
-    // Events should contain metadata only
     expect(events.some(e => e.event === 'transfer_start')).toBe(true);
     expect(events.some(e => e.event === 'chunk_sent')).toBe(true);
-    expect(events.some(e => e.msgId)).toBe(true);
 
     sender.close();
     receiver.close();

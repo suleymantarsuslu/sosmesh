@@ -1,27 +1,23 @@
 import { EventEmitter } from 'events';
 
-import { 
-  deserializeChunk, 
-  assembleChunks, 
-  calculateDigest, 
+import {
+  Chunk,
+  assembleChunks,
+  deserializeChunk,
   extractDigestFromLastChunk,
-  verifyDigest,
-  Chunk 
+  verifyDigest
 } from './chunk';
-import { ITransport, IClock, SystemClock } from './sender';
-import { 
-  TransferState, 
-  MessageType, 
-  ErrorCode, 
-  TransferConfig, 
+import { IClock, ITransport, SystemClock } from './sender';
+import {
+  AckLevel,
   DEFAULT_CONFIG,
+  ErrorCode,
   HelloMessage,
-  HelloAckMessage,
-  AckMessage,
-  NackMessage,
-  TransferEvent,
+  MessageType,
   PROTOCOL_VERSION,
-  AckLevel
+  TransferConfig,
+  TransferEvent,
+  TransferState
 } from './types';
 
 export class Receiver extends EventEmitter {

@@ -1,24 +1,21 @@
 import { EventEmitter } from 'events';
 
-import { 
-  splitIntoChunks, 
-  serializeChunk, 
-  calculateDigest, 
+import {
+  Chunk,
+  calculateDigest,
   createLastChunkWithDigest,
-  Chunk 
+  serializeChunk,
+  splitIntoChunks
 } from './chunk';
-import { 
-  TransferState, 
-  MessageType, 
-  ErrorCode, 
-  TransferConfig, 
+import {
   DEFAULT_CONFIG,
+  ErrorCode,
   HelloMessage,
-  HelloAckMessage,
-  AckMessage,
-  NackMessage,
+  MessageType,
+  PROTOCOL_VERSION,
+  TransferConfig,
   TransferEvent,
-  PROTOCOL_VERSION
+  TransferState
 } from './types';
 
 export interface ITransport {
@@ -47,6 +44,50 @@ export class SystemClock implements IClock {
   }
   clearTimeout(timer: NodeJS.Timeout): void {
     clearTimeout(timer);
+  }
+}
+
+export class SimulatedClock implements IClock {
+  private currentTime = 0;
+  private timers: Array<{ id: number; fireAt: number; fn: () => void }> = [];
+  private nextId = 1;
+
+  now(): number {
+    return this.currentTime;
+  }
+
+  setTimeout(fn: () => void, ms: number): any {
+    const id = this.nextId++;
+    this.timers.push({ id, fireAt: this.currentTime + ms, fn });
+    return id;
+  }
+
+  clearTimeout(id: any): void {
+    this.timers = this.timers.filter(t => t.id !== id);
+  }
+
+  advance(ms: number): void {
+    const targetTime = this.currentTime + ms;
+    while (this.timers.length > 0) {
+      const nextTimer = this.timers.reduce((earliest, t) => 
+        t.fireAt < earliest.fireAt ? t : earliest
+      );
+      
+      if (nextTimer.fireAt > targetTime) break;
+      
+      this.currentTime = nextTimer.fireAt;
+      this.timers = this.timers.filter(t => t.id !== nextTimer.id);
+      nextTimer.fn();
+    }
+    this.currentTime = targetTime;
+  }
+
+  tick(): void {
+    this.advance(10);
+  }
+
+  hasPendingTimers(): boolean {
+    return this.timers.length > 0;
   }
 }
 
@@ -183,7 +224,6 @@ export class Sender extends EventEmitter {
     
     // Replace last chunk with digest-enhanced version
     const lastSeq = normalChunks.length - 1;
-    const lastChunkData = normalChunks[lastSeq].payload;
     this.chunks = normalChunks.slice(0, -1);
     this.chunks.push(
       createLastChunkWithDigest(this.originalPayload!, chunkSize, lastSeq, normalChunks.length)

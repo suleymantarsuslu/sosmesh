@@ -9,9 +9,15 @@ let package = Package(
             name: "SOSMeshContracts",
             targets: ["SOSMeshContracts"]),
     ],
+    dependencies: [
+        .package(url: "https://github.com/apple/swift-crypto.git", from: "3.0.0"),
+    ],
     targets: [
         .target(
-            name: "SOSMeshContracts"),
+            name: "SOSMeshContracts",
+            dependencies: [
+                .product(name: "Crypto", package: "swift-crypto"),
+            ]),
         .testTarget(
             name: "SOSMeshContractsTests",
             dependencies: ["SOSMeshContracts"]),

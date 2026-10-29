@@ -1,5 +1,10 @@
 import Foundation
+
+#if canImport(CryptoKit)
 import CryptoKit
+#else
+import Crypto
+#endif
 
 public struct BleProtocol {
     public static let protocolVersion: UInt8 = 0x01
@@ -31,7 +36,11 @@ public struct BleProtocol {
     }
     
     public static func calculateSHA256(_ data: Data) -> Data {
-        let hash = SHA256.hash(data: data)
+        #if canImport(CryptoKit)
+        let hash = CryptoKit.SHA256.hash(data: data)
+        #else
+        let hash = Crypto.SHA256.hash(data: data)
+        #endif
         return Data(hash)
     }
     

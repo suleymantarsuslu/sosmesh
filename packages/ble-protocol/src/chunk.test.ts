@@ -1,3 +1,6 @@
+import * as fs from 'fs';
+import * as path from 'path';
+
 import { describe, it, expect } from 'vitest';
 
 import {
@@ -23,7 +26,7 @@ const testVectors: {
     expected_seqs?: number[];
   }>;
 } = JSON.parse(
-  require('fs').readFileSync(require('path').join(__dirname, '../../fixtures/ble/test-vectors.json'), 'utf-8')
+  fs.readFileSync(path.join(__dirname, '../../fixtures/ble/test-vectors.json'), 'utf-8')
 );
 
 describe('BLE Protocol Chunking', () => {

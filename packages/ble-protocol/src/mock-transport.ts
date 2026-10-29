@@ -1,6 +1,6 @@
 import { EventEmitter } from 'events';
 
-import { ITransport, IRNG, SystemRNG } from './sender';
+import { ITransport, IRNG, SystemRNG, IClock, SystemClock } from './sender';
 
 export interface MockChannelConfig {
   packetLoss: number; // 0.0 - 1.0
@@ -61,22 +61,25 @@ interface QueuedPacket {
 
 export class MockChannel {
   private queue: QueuedPacket[] = [];
-  private disconnectTimer: NodeJS.Timeout | null = null;
-  private processingTimer: NodeJS.Timeout | null = null;
+  private disconnectTimer: any = null;
+  private processingTimer: any = null;
   private startTime: number;
   private rng: IRNG;
+  private clock: IClock;
 
   constructor(
     private config: MockChannelConfig,
     private senderTransport: MockTransport,
     private receiverTransport: MockTransport,
-    rng: IRNG = new SystemRNG()
+    rng: IRNG = new SystemRNG(),
+    clock: IClock = new SystemClock()
   ) {
-    this.startTime = Date.now();
+    this.startTime = clock.now();
     this.rng = rng;
+    this.clock = clock;
 
     if (config.disconnectAfter !== undefined && config.disconnectAfter > 0) {
-      this.disconnectTimer = setTimeout(() => {
+      this.disconnectTimer = this.clock.setTimeout(() => {
         this.triggerDisconnect();
       }, config.disconnectAfter);
     }
@@ -86,10 +89,12 @@ export class MockChannel {
 
   sendFromSender(data: Buffer): void {
     this.processPacket(data, 'receiver');
+    this.deliverPackets(); // Immediate delivery check for simulated clock
   }
 
   sendFromReceiver(data: Buffer): void {
     this.processPacket(data, 'sender');
+    this.deliverPackets(); // Immediate delivery check for simulated clock
   }
 
   private processPacket(data: Buffer, destination: 'sender' | 'receiver'): void {
@@ -100,7 +105,7 @@ export class MockChannel {
 
     const latency = this.config.minLatency + 
                     this.rng.random() * (this.config.maxLatency - this.config.minLatency);
-    const deliverAt = Date.now() + latency;
+    const deliverAt = this.clock.now() + latency;
 
     // Queue packet
     this.queue.push({ data, deliverAt, destination });
@@ -111,7 +116,7 @@ export class MockChannel {
                          this.rng.random() * (this.config.maxLatency - this.config.minLatency);
       this.queue.push({ 
         data: Buffer.from(data), 
-        deliverAt: Date.now() + dupLatency,
+        deliverAt: this.clock.now() + dupLatency,
         destination
       });
     }
@@ -134,13 +139,11 @@ export class MockChannel {
   }
 
   private startProcessing(): void {
-    this.processingTimer = setInterval(() => {
-      this.deliverPackets();
-    }, 10); // Check every 10ms
+    // No real-time timer for simulated clock
   }
 
-  private deliverPackets(): void {
-    const now = Date.now();
+  deliverPackets(): void {
+    const now = this.clock.now();
     const toDeliver: QueuedPacket[] = [];
     const remaining: QueuedPacket[] = [];
 
@@ -170,12 +173,8 @@ export class MockChannel {
 
   close(): void {
     if (this.disconnectTimer) {
-      clearTimeout(this.disconnectTimer);
+      this.clock.clearTimeout(this.disconnectTimer);
       this.disconnectTimer = null;
-    }
-    if (this.processingTimer) {
-      clearInterval(this.processingTimer);
-      this.processingTimer = null;
     }
     this.queue = [];
   }
@@ -187,23 +186,29 @@ export class MockChannel {
 
 export function createMockTransportPair(
   channelConfig: MockChannelConfig,
-  rng: IRNG = new SystemRNG()
+  rng: IRNG = new SystemRNG(),
+  clock: IClock = new SystemClock()
 ): { 
   senderTransport: MockTransport; 
   receiverTransport: MockTransport; 
-  channel: MockChannel 
+  channel: MockChannel;
+  clock: IClock;
 } {
-  let channel: MockChannel;
+  const channel = new MockChannel(channelConfig, 
+    new MockTransport('sender', (data: Buffer) => {
+      channel.sendFromSender(data);
+    }), 
+    new MockTransport('receiver', (data: Buffer) => {
+      channel.sendFromReceiver(data);
+    }), 
+    rng, 
+    clock
+  );
 
-  const senderTransport = new MockTransport('sender', (data: Buffer) => {
-    channel.sendFromSender(data);
-  });
-
-  const receiverTransport = new MockTransport('receiver', (data: Buffer) => {
-    channel.sendFromReceiver(data);
-  });
-
-  channel = new MockChannel(channelConfig, senderTransport, receiverTransport, rng);
-
-  return { senderTransport, receiverTransport, channel };
+  return { 
+    senderTransport: channel['senderTransport'], 
+    receiverTransport: channel['receiverTransport'], 
+    channel, 
+    clock 
+  };
 }

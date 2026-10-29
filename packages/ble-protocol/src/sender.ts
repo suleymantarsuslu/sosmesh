@@ -59,6 +59,7 @@ export class SimulatedClock implements IClock {
   setTimeout(fn: () => void, ms: number): any {
     const id = this.nextId++;
     this.timers.push({ id, fireAt: this.currentTime + ms, fn });
+    this.timers.sort((a, b) => a.fireAt - b.fireAt);
     return id;
   }
 
@@ -68,17 +69,14 @@ export class SimulatedClock implements IClock {
 
   advance(ms: number): void {
     const targetTime = this.currentTime + ms;
-    while (this.timers.length > 0) {
-      const nextTimer = this.timers.reduce((earliest, t) => 
-        t.fireAt < earliest.fireAt ? t : earliest
-      );
-      
-      if (nextTimer.fireAt > targetTime) break;
-      
-      this.currentTime = nextTimer.fireAt;
-      this.timers = this.timers.filter(t => t.id !== nextTimer.id);
-      nextTimer.fn();
+    
+    while (this.timers.length > 0 && this.timers[0].fireAt <= targetTime) {
+      const timer = this.timers.shift()!;
+      this.currentTime = timer.fireAt;
+      timer.fn();
+      this.timers.sort((a, b) => a.fireAt - b.fireAt);
     }
+    
     this.currentTime = targetTime;
   }
 

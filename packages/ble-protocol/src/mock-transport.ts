@@ -194,21 +194,26 @@ export function createMockTransportPair(
   channel: MockChannel;
   clock: IClock;
 } {
-  const channel = new MockChannel(channelConfig, 
-    new MockTransport('sender', (data: Buffer) => {
-      channel.sendFromSender(data);
-    }), 
-    new MockTransport('receiver', (data: Buffer) => {
-      channel.sendFromReceiver(data);
-    }), 
-    rng, 
-    clock
-  );
+  let channelRef: MockChannel;
+
+  const senderTransport = new MockTransport('sender', (data: Buffer) => {
+    if (channelRef) {
+      channelRef.sendFromSender(data);
+    }
+  });
+
+  const receiverTransport = new MockTransport('receiver', (data: Buffer) => {
+    if (channelRef) {
+      channelRef.sendFromReceiver(data);
+    }
+  });
+
+  channelRef = new MockChannel(channelConfig, senderTransport, receiverTransport, rng, clock);
 
   return { 
-    senderTransport: channel['senderTransport'], 
-    receiverTransport: channel['receiverTransport'], 
-    channel, 
+    senderTransport, 
+    receiverTransport, 
+    channel: channelRef, 
     clock 
   };
 }

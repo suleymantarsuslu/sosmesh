@@ -37,7 +37,12 @@ export class MockTransport extends EventEmitter implements ITransport {
   triggerDisconnect(): void {
     if (!this.closed) {
       this.emit('disconnect');
+      this.closed = true;
     }
+  }
+
+  reconnect(): void {
+    this.closed = false;
   }
 
   close(): void {
@@ -61,11 +66,13 @@ interface QueuedPacket {
 
 export class MockChannel {
   private queue: QueuedPacket[] = [];
-  private disconnectTimer: any = null;
-  private processingTimer: any = null;
+  private disconnectTimer: NodeJS.Timeout | null = null;
+  private processingTimer: NodeJS.Timeout | null = null;
   private startTime: number;
   private rng: IRNG;
   private clock: IClock;
+  private deliveredDataPacketsToReceiver = 0;
+  private disconnectAfterDeliveredPackets?: number;
 
   constructor(
     private config: MockChannelConfig,
@@ -159,11 +166,30 @@ export class MockChannel {
 
     for (const packet of toDeliver) {
       if (packet.destination === 'receiver' && !this.receiverTransport.isClosed()) {
-        this.receiverTransport.receiveData(packet.data);
+        // Check if this is a data packet
+        const isDataPacket = packet.data.length >= 20;
+        if (isDataPacket && this.disconnectAfterDeliveredPackets !== undefined) {
+          this.deliveredDataPacketsToReceiver++;
+          // Deliver this packet first
+          this.receiverTransport.receiveData(packet.data);
+          // Then check if we should disconnect
+          if (this.deliveredDataPacketsToReceiver >= this.disconnectAfterDeliveredPackets) {
+            this.triggerDisconnect();
+            // Stop delivering more packets after disconnect
+            break;
+          }
+        } else {
+          this.receiverTransport.receiveData(packet.data);
+        }
       } else if (packet.destination === 'sender' && !this.senderTransport.isClosed()) {
         this.senderTransport.receiveData(packet.data);
       }
     }
+  }
+
+  setDisconnectAfterDeliveredPackets(count: number): void {
+    this.disconnectAfterDeliveredPackets = count;
+    this.deliveredDataPacketsToReceiver = 0;
   }
 
   private triggerDisconnect(): void {

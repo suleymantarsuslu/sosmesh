@@ -125,16 +125,24 @@ INCIDENT_OPENED    → Vaka açıldı (backend)
 
 ### 6. Resume Mekanizması
 
-Disconnect durumunda:
+**Mevcut Durum (v1):**  
+Protokol `RESUME_REQUEST` message type tanımlı ancak henüz implement edilmemiş. Şu anki versiyon **per-chunk retry** ile implicit resume sağlar:
+- Kayıp chunk'lar otomatik retry ile tekrar gönderilir
+- ~15%'ye kadar paket kaybında güvenilir teslim
+- >15% kayıpta başarı garanti edilemez
+
+**Gelecek Geliştirme (v2 için):**  
+Disconnect durumunda explicit resume:
 ```
 Receiver → Sender: RESUME_REQUEST
   message_id: opaque identifier
   received_chunks: bitmap or list of seq numbers
   
-Sender: Eksik chunk'ları yeniden gönder
+Sender: Yalnızca eksik chunk'ları yeniden gönder
 ```
 
-**Resume Window:** 60 saniye içinde yeniden bağlanırsa resume mümkün
+**Target Resume Window:** 60 saniye içinde yeniden bağlanırsa resume mümkün  
+**D-08 Notu:** Test coverage şu anda retry-based implicit resume'u doğrular; explicit RESUME_REQUEST v2 için plannendi.
 
 ### 7. Backpressure ve Flow Control
 

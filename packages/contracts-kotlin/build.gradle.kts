@@ -12,8 +12,10 @@ repositories {
 
 dependencies {
     implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.6.2")
+    implementation("org.bouncycastle:bcprov-jdk18on:1.77")
     testImplementation(kotlin("test"))
     testImplementation("org.junit.jupiter:junit-jupiter:5.10.1")
+    testImplementation("org.json:json:20231013")
 }
 
 tasks.test {

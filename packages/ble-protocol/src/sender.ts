@@ -56,15 +56,16 @@ export class SimulatedClock implements IClock {
     return this.currentTime;
   }
 
-  setTimeout(fn: () => void, ms: number): any {
+  setTimeout(fn: () => void, ms: number): NodeJS.Timeout {
     const id = this.nextId++;
     this.timers.push({ id, fireAt: this.currentTime + ms, fn });
     this.timers.sort((a, b) => a.fireAt - b.fireAt);
-    return id;
+    return id as unknown as NodeJS.Timeout;
   }
 
-  clearTimeout(id: any): void {
-    this.timers = this.timers.filter(t => t.id !== id);
+  clearTimeout(id: NodeJS.Timeout): void {
+    const numericId = id as unknown as number;
+    this.timers = this.timers.filter(t => t.id !== numericId);
   }
 
   async advanceAsync(ms: number): Promise<void> {
@@ -197,6 +198,8 @@ export class Sender extends EventEmitter {
     } else if (msgType === MessageType.NACK && 
                (this.state === TransferState.WAIT_ACK || this.state === TransferState.SENDING)) {
       this.handleNack(data);
+    } else if (msgType === MessageType.RESUME_REQUEST) {
+      this.handleResumeRequest(data);
     }
   }
 
@@ -389,6 +392,42 @@ export class Sender extends EventEmitter {
     }
 
     this.state = TransferState.READY;
+    this.sendNextChunks();
+  }
+
+  private handleResumeRequest(data: Buffer): void {
+    if (data.length < 33) return;
+
+    // Parse received seq numbers
+    const receivedSeqs = new Set<number>();
+    const numSeqs = (data.length - 33) / 2;
+    for (let i = 0; i < numSeqs; i++) {
+      const seq = data.readUInt16BE(33 + i * 2);
+      receivedSeqs.add(seq);
+    }
+
+    this.logEvent({
+      timestamp: this.clock.now(),
+      event: 'resume_request_received',
+      msgId: this.getMsgIdHash(),
+      total: receivedSeqs.size,
+    });
+
+    // Mark received chunks as ACKed
+    receivedSeqs.forEach(seq => {
+      this.ackReceived.add(seq);
+      this.inFlightChunks.delete(seq);
+    });
+
+    // Clear current retry state
+    if (this.chunkTimeout) {
+      this.clock.clearTimeout(this.chunkTimeout);
+      this.chunkTimeout = null;
+    }
+
+    // Reset to send only missing chunks
+    this.state = TransferState.READY;
+    this.currentSeq = 0;
     this.sendNextChunks();
   }
 

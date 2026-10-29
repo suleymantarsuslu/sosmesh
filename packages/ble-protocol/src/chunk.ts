@@ -1,6 +1,6 @@
 import { createHash } from 'crypto';
 
-import CRC32 from 'crc-32';
+import * as CRC32 from 'crc-32';
 
 export interface ChunkHeader {
   seq: number;
@@ -32,107 +32,98 @@ export function splitIntoChunks(data: Buffer, chunkSize: number): Chunk[] {
     const start = i * chunkSize;
     const end = Math.min(start + chunkSize, data.length);
     const payload = data.slice(start, end);
-    
-    let flags = 0;
-    if (i === 0) flags |= ChunkFlags.FIRST_CHUNK;
-    if (i === totalChunks - 1) flags |= ChunkFlags.LAST_CHUNK;
+    const crc = calculateCRC32(payload);
 
-    const header: ChunkHeader = {
-      seq: i,
-      total: totalChunks,
-      crc32: calculateCRC32(payload),
-      flags,
-    };
-
-    chunks.push({ header, payload });
+    chunks.push({
+      header: {
+        seq: i,
+        total: totalChunks,
+        crc32: crc,
+        flags: i === totalChunks - 1 ? ChunkFlags.LAST_CHUNK : 0
+      },
+      payload
+    });
   }
 
   return chunks;
 }
 
 export function serializeChunk(chunk: Chunk): Buffer {
-  const buffer = Buffer.alloc(CHUNK_HEADER_SIZE + chunk.payload.length);
-  
-  buffer.writeUInt16BE(chunk.header.seq, 0);
-  buffer.writeUInt16BE(chunk.header.total, 2);
-  buffer.writeUInt32BE(chunk.header.crc32, 4);
-  buffer.writeUInt8(chunk.header.flags, 8);
-  // bytes 9-11: reserved (0x00)
-  
-  chunk.payload.copy(buffer, CHUNK_HEADER_SIZE);
-  
-  return buffer;
+  const header = Buffer.alloc(CHUNK_HEADER_SIZE);
+  header.writeUInt16BE(chunk.header.seq, 0);
+  header.writeUInt16BE(chunk.header.total, 2);
+  header.writeUInt32BE(chunk.header.crc32, 4);
+  header.writeUInt8(chunk.header.flags, 8);
+  header.writeUInt16BE(chunk.payload.length, 9);
+  header.writeUInt8(0, 11); // reserved
+  return Buffer.concat([header, chunk.payload]);
 }
 
-export function deserializeChunk(buffer: Buffer): Chunk {
-  if (buffer.length < CHUNK_HEADER_SIZE) {
-    throw new Error('Buffer too small for chunk header');
+export function deserializeChunk(data: Buffer): Chunk | null {
+  if (data.length < CHUNK_HEADER_SIZE) {
+    return null;
   }
 
-  const header: ChunkHeader = {
-    seq: buffer.readUInt16BE(0),
-    total: buffer.readUInt16BE(2),
-    crc32: buffer.readUInt32BE(4),
-    flags: buffer.readUInt8(8),
+  const seq = data.readUInt16BE(0);
+  const total = data.readUInt16BE(2);
+  const crc32 = data.readUInt32BE(4);
+  const flags = data.readUInt8(8);
+  const payloadLen = data.readUInt16BE(9);
+
+  if (data.length < CHUNK_HEADER_SIZE + payloadLen) {
+    return null;
+  }
+
+  const payload = data.slice(CHUNK_HEADER_SIZE, CHUNK_HEADER_SIZE + payloadLen);
+
+  return {
+    header: { seq, total, crc32, flags },
+    payload
   };
-
-  const payload = buffer.slice(CHUNK_HEADER_SIZE);
-
-  // Verify CRC
-  const actualCRC = calculateCRC32(payload);
-  if (actualCRC !== header.crc32) {
-    throw new Error(`CRC mismatch: expected ${header.crc32}, got ${actualCRC}`);
-  }
-
-  return { header, payload };
 }
 
 export function assembleChunks(chunks: Chunk[]): Buffer {
-  // Sort by sequence
-  const sorted = [...chunks].sort((a, b) => a.header.seq - b.header.seq);
-  
-  // Validate sequence continuity
-  for (let i = 0; i < sorted.length; i++) {
-    if (sorted[i].header.seq !== i) {
-      throw new Error(`Missing chunk ${i}`);
-    }
-  }
-
-  // Concatenate payloads
-  const buffers = sorted.map(c => c.payload);
-  return Buffer.concat(buffers);
+  const sorted = chunks.sort((a, b) => a.header.seq - b.header.seq);
+  return Buffer.concat(sorted.map(c => c.payload));
 }
 
-export function createLastChunkWithDigest(data: Buffer, chunkSize: number, seq: number, total: number): Chunk {
-  const digest = calculateDigest(data);
-  const payload = Buffer.concat([digest, data.slice(seq * chunkSize)]);
+export function extractDigestFromLastChunk(lastChunk: Chunk): Buffer | null {
+  if (!(lastChunk.header.flags & ChunkFlags.LAST_CHUNK)) {
+    return null;
+  }
+  if (lastChunk.payload.length < 32) {
+    return null;
+  }
+  return lastChunk.payload.slice(-32);
+}
+
+export function verifyDigest(assembled: Buffer, digest: Buffer): boolean {
+  const computed = calculateDigest(assembled);
+  return computed.equals(digest);
+}
+
+export function createLastChunkWithDigest(
+  fullPayload: Buffer,
+  chunkSize: number,
+  seq: number,
+  total: number
+): Chunk {
+  const digest = calculateDigest(fullPayload);
   
-  const header: ChunkHeader = {
-    seq,
-    total,
-    crc32: calculateCRC32(payload),
-    flags: ChunkFlags.LAST_CHUNK,
+  const dataStart = seq * chunkSize;
+  const dataEnd = Math.min(dataStart + chunkSize - 32, fullPayload.length);
+  const chunkData = fullPayload.slice(dataStart, dataEnd);
+  
+  const payload = Buffer.concat([chunkData, digest]);
+  const crc = calculateCRC32(payload);
+
+  return {
+    header: {
+      seq,
+      total,
+      crc32: crc,
+      flags: ChunkFlags.LAST_CHUNK
+    },
+    payload
   };
-
-  return { header, payload };
-}
-
-export function extractDigestFromLastChunk(chunk: Chunk): { digest: Buffer; data: Buffer } {
-  if (!(chunk.header.flags & ChunkFlags.LAST_CHUNK)) {
-    throw new Error('Not a last chunk');
-  }
-
-  if (chunk.payload.length < 32) {
-    throw new Error('Last chunk too small for digest');
-  }
-
-  const digest = chunk.payload.slice(0, 32);
-  const data = chunk.payload.slice(32);
-
-  return { digest, data };
-}
-
-export function verifyDigest(assembledData: Buffer, expectedDigest: Buffer): boolean {
-  const actualDigest = calculateDigest(assembledData);
-  return actualDigest.equals(expectedDigest);
 }

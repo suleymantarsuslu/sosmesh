@@ -194,7 +194,7 @@ export function createMockTransportPair(
   channel: MockChannel;
   clock: IClock;
 } {
-  let channelRef: MockChannel;
+  const channelRef: MockChannel = null as any;
 
   const senderTransport = new MockTransport('sender', (data: Buffer) => {
     if (channelRef) {
@@ -208,12 +208,15 @@ export function createMockTransportPair(
     }
   });
 
-  channelRef = new MockChannel(channelConfig, senderTransport, receiverTransport, rng, clock);
+  const channel = new MockChannel(channelConfig, senderTransport, receiverTransport, rng, clock);
+
+  // Reassign channelRef via cast
+  (channelRef as any) = channel;
 
   return { 
     senderTransport, 
     receiverTransport, 
-    channel: channelRef, 
+    channel, 
     clock 
   };
 }

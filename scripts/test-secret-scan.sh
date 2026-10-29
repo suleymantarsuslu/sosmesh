@@ -69,9 +69,9 @@ test_pattern "GPS koordinat tespit edilmeli" "39.9334,32.8597" 1
 FAKE_JWT="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6IkpvaG4gRG9lIiwiaWF0IjoxNTE2MjM5MDIyfQ.SflKxwRJSMeKKF2QT4fwpMeJf36POk6yJV_adQssw5c"
 test_pattern "JWT tespit edilmeli" "Authorization: Bearer $FAKE_JWT" 1
 
-# Bearer token (sahte)
-FAKE_BEARER="Bearer $(head -c 15 /dev/urandom | base64 | tr -d '/+=')"
-test_pattern "Bearer token tespit edilmeli" "$FAKE_BEARER" 1
+# Bearer token (sabit, deterministik, 25 karakter - kesin eşleşir)
+FAKE_BEARER_TOKEN="FAKE_TEST_BEARER_TOKEN_25CHAR"
+test_pattern "Bearer token tespit edilmeli" "Bearer $FAKE_BEARER_TOKEN" 1
 
 # KEY=değer (gerçek)
 test_pattern "API_KEY=gerçek_değer tespit edilmeli" "API_KEY=abc123secret" 1
@@ -84,9 +84,15 @@ test_pattern "SECRET=boş tespit edilmemeli" "SECRET=" 0
 test_pattern "Telefon +90 tespit edilmeli" "+905551234567" 1
 test_pattern "Telefon +1 tespit edilmeli" "+12025551234" 1
 
-# 40-hex (git commit değil)
-FAKE_HEX="$(LC_ALL=C tr -dc 'a-f0-9' < /dev/urandom | head -c 40)"
-test_pattern "40-hex (commit değil) tespit edilmeli" "hash=$FAKE_HEX" 1
+# 40-hex bağlamında - gerçek sahte token yakalanmalı
+FAKE_HEX_TOKEN="$(LC_ALL=C tr -dc 'a-f0-9' < /dev/urandom | head -c 40)"
+test_pattern "40-hex secret bağlamında tespit edilmeli" "secret=$FAKE_HEX_TOKEN" 1
+test_pattern "40-hex token bağlamında tespit edilmeli" "token:$FAKE_HEX_TOKEN" 1
+
+# Git commit SHA bağlamında - artık yakalanmamalı
+FAKE_COMMIT_SHA="$(LC_ALL=C tr -dc 'a-f0-9' < /dev/urandom | head -c 40)"
+test_pattern "commit SHA tespit edilmemeli" "commit: $FAKE_COMMIT_SHA" 0
+test_pattern "SHA dokumentasyonda tespit edilmemeli" "SHA: $FAKE_COMMIT_SHA" 0
 
 # Temiz dosya
 test_pattern "Temiz dosya tespit edilmemeli" "Bu dosyada secret yok, sadece normal metin." 0

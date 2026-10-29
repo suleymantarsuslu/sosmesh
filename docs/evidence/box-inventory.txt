@@ -1,0 +1,61 @@
+# box inventory 2026-10-29T13:06:30+03:00
+## uname/os
+Linux grok-bot-vm-157208325 6.12.94+ #1 SMP PREEMPT_DYNAMIC Mon Oct 19 19:23:48 UTC 2026 x86_64 GNU/Linux
+PRETTY_NAME="Debian GNU/Linux 13 (trixie)"
+## node
+path: /usr/bin/node
+v20.19.2
+## pnpm
+path: /usr/bin/pnpm
+10.34.6
+## npm
+path: /usr/local/bin/npm
+11.21.1
+## java
+yok
+## javac
+yok
+## gradle
+yok
+## docker
+yok
+## git
+path: /usr/bin/git
+git version 2.47.3
+## gh
+path: /usr/local/bin/gh
+gh version 2.103.0 (2026-10-21)
+https://github.com/cli/cli/releases/tag/v2.103.0
+## python3
+path: /usr/bin/python3
+Python 3.13.5
+## python
+yok
+## kotlin
+yok
+## kotlinc
+yok
+## swift
+yok
+## xcodebuild
+yok
+## adb
+yok
+## sdkmanager
+yok
+## cursor
+yok
+## cursor-agent
+yok
+## Android SDK env/paths
+ANDROID/JAVA_HOME env yok
+ls: cannot access '/home/box/Android': No such file or directory
+ls: cannot access '/opt/android*': No such file or directory
+ls: cannot access '/usr/lib/android-sdk': No such file or directory
+## Meta/LLAMA env names (isim only)
+META_APP_SECRET
+META_APP_ID
+## docker daemon
+--: line 1: docker: command not found
+## gh auth
+You are not logged into any GitHub hosts. To log in, run: gh auth login

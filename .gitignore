@@ -1,0 +1,70 @@
+# Secrets
+.env
+.env.*
+!.env.example
+
+# Keystore/Signing
+*.keystore
+*.jks
+*.p12
+*.mobileprovision
+
+# Dependencies
+node_modules/
+.pnp
+.pnp.js
+
+# Build outputs
+/build/
+/dist/
+/out/
+/.next/
+/target/
+*.apk
+*.aab
+*.ipa
+*.app
+*.dSYM
+
+# Android
+/apps/android/.gradle/
+/apps/android/build/
+/apps/android/app/build/
+/apps/android/local.properties
+/apps/android/.cxx/
+/apps/android/.externalNativeBuild/
+
+# iOS/macOS
+/apps/ios/build/
+/apps/ios/Pods/
+/apps/ios/*.xcworkspace/xcuserdata/
+/apps/watchos/build/
+
+# Logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+lerna-debug.log*
+
+# OS
+.DS_Store
+Thumbs.db
+*~
+
+# IDEs
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Testing
+/coverage/
+/.nyc_output/
+*.lcov
+
+# Temporary
+.tmp/
+tmp/
+temp/

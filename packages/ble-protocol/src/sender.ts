@@ -197,6 +197,9 @@ export class Sender extends EventEmitter {
     } else if (msgType === MessageType.NACK && 
                (this.state === TransferState.WAIT_ACK || this.state === TransferState.SENDING)) {
       this.handleNack(data);
+    } else if (msgType === MessageType.RESUME_REQUEST && 
+               this.state === TransferState.RESUMING) {
+      this.handleResumeRequest(data);
     }
   }
 
@@ -392,6 +395,48 @@ export class Sender extends EventEmitter {
     this.sendNextChunks();
   }
 
+  private handleResumeRequest(data: Buffer): void {
+    if (data.length < 19) return;
+
+    const receivedCount = data.readUInt16BE(1);
+    const transferId = data.slice(3, 19);
+    
+    if (!this.nonce || !transferId.equals(this.nonce)) {
+      this.logEvent({ 
+        timestamp: this.clock.now(), 
+        event: 'resume_rejected', 
+        msgId: this.getMsgIdHash(),
+        error: 'Transfer ID mismatch' 
+      });
+      return;
+    }
+
+    const receivedSeqs = new Set<number>();
+    for (let i = 0; i < receivedCount; i++) {
+      const seq = data.readUInt16BE(19 + i * 2);
+      receivedSeqs.add(seq);
+    }
+
+    this.ackReceived = receivedSeqs;
+    this.inFlightChunks.clear();
+    this.currentSeq = 0;
+
+    if (this.chunkTimeout) {
+      this.clock.clearTimeout(this.chunkTimeout);
+      this.chunkTimeout = null;
+    }
+
+    this.logEvent({ 
+      timestamp: this.clock.now(), 
+      event: 'resume_accepted', 
+      msgId: this.getMsgIdHash(),
+      total: this.chunks.length 
+    });
+
+    this.state = TransferState.READY;
+    this.sendNextChunks();
+  }
+
   private complete(): void {
     this.state = TransferState.COMPLETED;
     this.logEvent({ 
@@ -422,7 +467,22 @@ export class Sender extends EventEmitter {
     if (this.state === TransferState.COMPLETED || this.state === TransferState.FAILED) {
       return;
     }
-    this.fail(ErrorCode.GENERIC_TIMEOUT, 'Transport disconnected');
+    
+    if (this.chunks.length > 0) {
+      this.state = TransferState.RESUMING;
+      if (this.chunkTimeout) {
+        this.clock.clearTimeout(this.chunkTimeout);
+        this.chunkTimeout = null;
+      }
+      this.logEvent({ 
+        timestamp: this.clock.now(), 
+        event: 'disconnect_resumable', 
+        msgId: this.getMsgIdHash(),
+        total: this.chunks.length 
+      });
+    } else {
+      this.fail(ErrorCode.GENERIC_TIMEOUT, 'Transport disconnected');
+    }
   }
 
   private getMsgIdHash(): string {

@@ -383,4 +383,304 @@ describe('BLE Protocol Integration Tests (Simulated Clock)', () => {
     expect(events.some(e => e.event === 'transfer_start')).toBe(true);
     expect(events.length).toBeGreaterThan(0);
   });
+
+  it('resume after disconnect retransmits only missing chunks', async () => {
+    const clock = new SimulatedClock();
+    const rng = new SeededRNG(5000);
+    const { senderTransport, receiverTransport, channel } = createMockTransportPair({
+      packetLoss: 0,
+      duplicateRate: 0,
+      reorderRate: 0,
+      minLatency: 10,
+      maxLatency: 20
+    }, rng, clock);
+
+    const sender = new Sender(senderTransport, { maxRetries: 20 }, clock, rng);
+    const receiver = new Receiver(receiverTransport, {}, clock);
+
+    const testPayload = Buffer.from('RESUME_TEST_' + 'X'.repeat(1000));
+    let deliveredPayload: Buffer | null = null;
+    let deliveryCount = 0;
+
+    receiver.on('completed', ({ payload }: { payload: Buffer }) => {
+      deliveredPayload = payload;
+      deliveryCount++;
+    });
+
+    const sentChunks = new Set<number>();
+    sender.on('event', (event: any) => {
+      if (event.event === 'chunk_sent') {
+        sentChunks.add(event.seq);
+      }
+    });
+
+    await sender.startTransfer(testPayload, 'resume_test');
+
+    while (sender['chunks'].length === 0 && clock.now() < 5000) {
+      await clock.advanceAsync(100);
+      channel.deliverPackets();
+    }
+
+    expect(sender['chunks'].length).toBeGreaterThan(0);
+
+    senderTransport.triggerDisconnect();
+    receiverTransport.triggerDisconnect();
+    
+    await clock.advanceAsync(100);
+
+    expect(sender.getState()).toBe('RESUMING');
+    expect(receiver.getState()).toBe('RESUMING');
+
+    channel.reconnect();
+    
+    sentChunks.clear();
+    
+    await receiver.requestResume();
+    await clock.advanceAsync(100);
+    channel.deliverPackets();
+
+    while (clock.now() < 200000 && !deliveredPayload) {
+      await clock.advanceAsync(10);
+      channel.deliverPackets();
+      
+      if (channel.getQueueSize() === 0 && !clock.hasPendingTimers()) {
+        await clock.advanceAsync(100);
+        if (deliveredPayload) break;
+        await Promise.resolve();
+        if (!clock.hasPendingTimers() && channel.getQueueSize() === 0) break;
+      }
+    }
+
+    expect(deliveredPayload).not.toBeNull();
+    expect(deliveredPayload!.equals(testPayload)).toBe(true);
+    expect(deliveryCount).toBe(1);
+  });
+
+  it('no false delivery before resume completes', async () => {
+    const clock = new SimulatedClock();
+    const rng = new SeededRNG(6000);
+    const { senderTransport, receiverTransport, channel } = createMockTransportPair({
+      packetLoss: 0,
+      duplicateRate: 0,
+      reorderRate: 0,
+      minLatency: 10,
+      maxLatency: 20
+    }, rng, clock);
+
+    const sender = new Sender(senderTransport, { maxRetries: 20 }, clock, rng);
+    const receiver = new Receiver(receiverTransport, {}, clock);
+
+    const testPayload = Buffer.from('NO_FALSE_DELIVERY_' + 'Y'.repeat(1000));
+    let deliveryCount = 0;
+
+    const senderEvents: string[] = [];
+    const receiverEvents: string[] = [];
+
+    sender.on('event', (event: any) => {
+      senderEvents.push(event.event);
+    });
+
+    receiver.on('event', (event: any) => {
+      receiverEvents.push(event.event);
+    });
+
+    receiver.on('completed', () => {
+      deliveryCount++;
+    });
+
+    await sender.startTransfer(testPayload, 'no_false_delivery');
+
+    while (sender['chunks'].length === 0 && clock.now() < 5000) {
+      await clock.advanceAsync(100);
+      channel.deliverPackets();
+    }
+
+    expect(sender['chunks'].length).toBeGreaterThan(0);
+
+    senderTransport.triggerDisconnect();
+    receiverTransport.triggerDisconnect();
+
+    await clock.advanceAsync(500);
+
+    expect(deliveryCount).toBe(0);
+    expect(receiver.getState()).toBe('RESUMING');
+    expect(sender.getState()).toBe('RESUMING');
+
+    channel.reconnect();
+    
+    senderEvents.length = 0;
+    receiverEvents.length = 0;
+    
+    await receiver.requestResume();
+    await clock.advanceAsync(50);
+    channel.deliverPackets();
+    await clock.advanceAsync(50);
+    channel.deliverPackets();
+
+    while (clock.now() < 200000 && deliveryCount === 0) {
+      await clock.advanceAsync(10);
+      channel.deliverPackets();
+      
+      if (channel.getQueueSize() === 0 && !clock.hasPendingTimers()) {
+        await clock.advanceAsync(100);
+        if (deliveryCount > 0) break;
+        await Promise.resolve();
+        if (!clock.hasPendingTimers() && channel.getQueueSize() === 0) break;
+      }
+    }
+
+    expect(senderEvents.includes('resume_accepted') || senderEvents.includes('resume_rejected')).toBe(true);
+    expect(deliveryCount).toBe(1);
+  });
+
+  it('high loss causes FAILED then resume then COMPLETED with strict state', async () => {
+    const clock = new SimulatedClock();
+    const rng = new SeededRNG(7000);
+    const { senderTransport, receiverTransport, channel } = createMockTransportPair({
+      packetLoss: 0.30,
+      duplicateRate: 0,
+      reorderRate: 0,
+      minLatency: 5,
+      maxLatency: 15
+    }, rng, clock);
+
+    const sender = new Sender(senderTransport, { maxRetries: 2, chunkTimeout: 1000 }, clock, rng);
+    const receiver = new Receiver(receiverTransport, {}, clock);
+
+    const testPayload = Buffer.from('HIGH_LOSS_RESUME_' + 'Z'.repeat(300));
+    let senderFailed = false;
+
+    sender.on('failed', () => {
+      senderFailed = true;
+    });
+
+    receiver.on('completed', ({ payload }: { payload: Buffer }) => {
+      void payload;
+    });
+
+    await sender.startTransfer(testPayload, 'high_loss_test');
+
+    const maxTime = 250000;
+    while (clock.now() < maxTime && !senderFailed) {
+      await clock.advanceAsync(10);
+      channel.deliverPackets();
+      
+      if (channel.getQueueSize() === 0 && !clock.hasPendingTimers()) {
+        await clock.advanceAsync(100);
+        await Promise.resolve();
+        if (!clock.hasPendingTimers() && channel.getQueueSize() === 0) break;
+      }
+    }
+
+    expect(senderFailed).toBe(true);
+    expect(sender.getState()).toBe('FAILED');
+
+    const { senderTransport: newSenderTransport, receiverTransport: newReceiverTransport, channel: newChannel } = createMockTransportPair({
+      packetLoss: 0,
+      duplicateRate: 0,
+      reorderRate: 0,
+      minLatency: 5,
+      maxLatency: 15
+    }, new SeededRNG(7001), clock);
+
+    const newSender = new Sender(newSenderTransport, { maxRetries: 20 }, clock, new SeededRNG(7001));
+    const newReceiver = new Receiver(newReceiverTransport, {}, clock);
+
+    let newDeliveryCount = 0;
+    let newDeliveredPayload: Buffer | null = null;
+    let newCompleted = false;
+
+    newSender.on('completed', () => {
+      newCompleted = true;
+    });
+
+    newReceiver.on('completed', ({ payload }: { payload: Buffer }) => {
+      newDeliveredPayload = payload;
+      newDeliveryCount++;
+    });
+
+    await newSender.startTransfer(testPayload, 'high_loss_retry');
+
+    const maxTime2 = clock.now() + 200000;
+    while (clock.now() < maxTime2 && !newCompleted) {
+      await clock.advanceAsync(10);
+      newChannel.deliverPackets();
+      
+      if (newChannel.getQueueSize() === 0 && !clock.hasPendingTimers()) {
+        await clock.advanceAsync(100);
+        if (newCompleted) break;
+        await Promise.resolve();
+        if (!clock.hasPendingTimers() && newChannel.getQueueSize() === 0) break;
+      }
+    }
+
+    expect(newDeliveredPayload).not.toBeNull();
+    expect(newDeliveredPayload!.equals(testPayload)).toBe(true);
+    expect(newDeliveryCount).toBe(1);
+    expect(newSender.getState()).toBe('COMPLETED');
+  });
+
+  it('rejects resume request with wrong transfer ID', async () => {
+    const clock = new SimulatedClock();
+    const rng = new SeededRNG(8000);
+    const { senderTransport, receiverTransport, channel } = createMockTransportPair({
+      packetLoss: 0,
+      duplicateRate: 0,
+      reorderRate: 0,
+      minLatency: 10,
+      maxLatency: 20
+    }, rng, clock);
+
+    const sender = new Sender(senderTransport, {}, clock, rng);
+
+    const testPayload = Buffer.from('WRONG_TRANSFER_ID_TEST_' + 'W'.repeat(1000));
+    let resumeRejected = false;
+
+    sender.on('event', (event: any) => {
+      if (event.event === 'resume_rejected') {
+        resumeRejected = true;
+      }
+    });
+
+    await sender.startTransfer(testPayload, 'wrong_id_test');
+
+    while (sender['chunks'].length === 0 && clock.now() < 5000) {
+      await clock.advanceAsync(100);
+      channel.deliverPackets();
+    }
+
+    expect(sender['chunks'].length).toBeGreaterThan(0);
+
+    senderTransport.triggerDisconnect();
+    receiverTransport.triggerDisconnect();
+
+    expect(sender.getState()).toBe('RESUMING');
+
+    await clock.advanceAsync(500);
+    channel.reconnect();
+
+    const wrongTransferId = Buffer.alloc(16, 0xFF);
+    const buffer = Buffer.alloc(3 + 16 + 2);
+    buffer.writeUInt8(0x20, 0);
+    buffer.writeUInt16BE(0, 1);
+    wrongTransferId.copy(buffer, 3);
+
+    senderTransport.receiveData(buffer);
+    await clock.advanceAsync(100);
+    channel.deliverPackets();
+
+    expect(resumeRejected).toBe(true);
+
+    const sentChunksAfterBadResume = new Set<number>();
+    sender.on('event', (event: any) => {
+      if (event.event === 'chunk_sent') {
+        sentChunksAfterBadResume.add(event.seq);
+      }
+    });
+
+    await clock.advanceAsync(500);
+    channel.deliverPackets();
+
+    expect(sentChunksAfterBadResume.size).toBe(0);
+  });
 });

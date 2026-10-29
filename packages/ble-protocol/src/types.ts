@@ -82,6 +82,12 @@ export interface NackMessage {
   reason: ErrorCode;
 }
 
+export interface ResumeRequestMessage {
+  type: MessageType.RESUME_REQUEST;
+  transferId: Buffer;
+  receivedSeqs: number[];
+}
+
 export interface TransferEvent {
   timestamp: number;
   event: string;

@@ -29,6 +29,7 @@ export class Receiver extends EventEmitter {
   private receivedDigest: Buffer | null = null;
   private negotiatedMTU = 0;
   private clock: IClock;
+  private currentTransferId: Buffer | null = null;
 
   constructor(
     private transport: ITransport,
@@ -69,6 +70,7 @@ export class Receiver extends EventEmitter {
       mtu: data.readUInt16BE(18)
     };
 
+    this.currentTransferId = hello.nonce;
     this.logEvent({ timestamp: this.clock.now(), event: 'hello_received', msgId: '00000000' });
 
     if (hello.version !== PROTOCOL_VERSION) {
@@ -296,7 +298,18 @@ export class Receiver extends EventEmitter {
     if (this.state === TransferState.COMPLETED || this.state === TransferState.FAILED) {
       return;
     }
-    this.fail(ErrorCode.GENERIC_TIMEOUT, 'Transport disconnected');
+    
+    if (this.chunks.size > 0 && this.expectedTotal > 0) {
+      this.state = TransferState.RESUMING;
+      this.logEvent({ 
+        timestamp: this.clock.now(), 
+        event: 'disconnect_resumable', 
+        msgId: this.getMsgIdHashFromChunks(),
+        total: this.expectedTotal 
+      });
+    } else {
+      this.fail(ErrorCode.GENERIC_TIMEOUT, 'Transport disconnected');
+    }
   }
 
   private getMsgIdHash(chunk: Chunk): string {
@@ -331,5 +344,32 @@ export class Receiver extends EventEmitter {
 
   close(): void {
     this.transport.close();
+  }
+
+  async requestResume(): Promise<void> {
+    if (this.state !== TransferState.RESUMING || !this.currentTransferId) {
+      return;
+    }
+
+    const receivedSeqs = Array.from(this.chunks.keys()).sort((a, b) => a - b);
+    
+    const buffer = Buffer.alloc(1 + 2 + 16 + receivedSeqs.length * 2);
+    buffer.writeUInt8(MessageType.RESUME_REQUEST, 0);
+    buffer.writeUInt16BE(receivedSeqs.length, 1);
+    this.currentTransferId.copy(buffer, 3);
+    
+    for (let i = 0; i < receivedSeqs.length; i++) {
+      buffer.writeUInt16BE(receivedSeqs[i], 19 + i * 2);
+    }
+
+    await this.transport.send(buffer);
+    this.state = TransferState.READY;
+    
+    this.logEvent({ 
+      timestamp: this.clock.now(), 
+      event: 'resume_requested', 
+      msgId: this.getMsgIdHashFromChunks(),
+      total: this.expectedTotal 
+    });
   }
 }

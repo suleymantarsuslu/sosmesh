@@ -66,6 +66,9 @@ export class MockChannel {
   private startTime: number;
   private rng: IRNG;
   private clock: IClock;
+  private disconnectAfterPackets: number | null = null;
+  private deliveredPacketCount = 0;
+  private isDisconnected = false;
 
   constructor(
     private config: MockChannelConfig,
@@ -160,15 +163,32 @@ export class MockChannel {
     for (const packet of toDeliver) {
       if (packet.destination === 'receiver' && !this.receiverTransport.isClosed()) {
         this.receiverTransport.receiveData(packet.data);
+        this.deliveredPacketCount++;
       } else if (packet.destination === 'sender' && !this.senderTransport.isClosed()) {
         this.senderTransport.receiveData(packet.data);
+        this.deliveredPacketCount++;
+      }
+
+      if (this.disconnectAfterPackets !== null && 
+          this.deliveredPacketCount >= this.disconnectAfterPackets &&
+          !this.isDisconnected) {
+        this.triggerDisconnect();
       }
     }
   }
 
   private triggerDisconnect(): void {
+    this.isDisconnected = true;
     this.senderTransport.triggerDisconnect();
     this.receiverTransport.triggerDisconnect();
+  }
+
+  reconnect(): void {
+    this.isDisconnected = false;
+  }
+
+  setDisconnectAfterDeliveredPackets(count: number): void {
+    this.disconnectAfterPackets = count;
   }
 
   close(): void {

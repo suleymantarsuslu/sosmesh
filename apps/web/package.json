@@ -1,0 +1,17 @@
+{
+  "name": "@sosmesh/web",
+  "version": "0.1.0",
+  "private": true,
+  "description": "SOSMesh Next.js operator dashboard",
+  "scripts": {
+    "build": "echo 'Web build not yet implemented'",
+    "dev": "echo 'Web dev server not yet implemented'",
+    "start": "echo 'Web start not yet implemented'",
+    "lint": "echo 'Web lint not yet implemented'",
+    "lint:fix": "echo 'Web lint:fix not yet implemented'",
+    "test": "echo 'Web tests not yet implemented'",
+    "clean": "rm -rf .next"
+  },
+  "dependencies": {},
+  "devDependencies": {}
+}

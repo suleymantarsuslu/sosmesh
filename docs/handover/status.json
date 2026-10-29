@@ -129,7 +129,7 @@
       ],
       "deliverables": "workspace, compose.yaml, .env.example, README.md, scripts/bootstrap",
       "pass_criteria": "İlk kurulum tekrarlanabilir, secret repoda yok.",
-      "status": "NOT_STARTED",
+      "status": "IN_PROGRESS",
       "attempts": 0,
       "commit": null,
       "evidence": [],

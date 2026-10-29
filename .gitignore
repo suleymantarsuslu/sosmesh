@@ -10,7 +10,12 @@ uploads/
 *.keystore
 *.jks
 *.p12
+*.p8
+*.cer
 *.mobileprovision
+*.provisionprofile
+google-services.json
+GoogleService-Info.plist
 
 # Dependencies
 node_modules/

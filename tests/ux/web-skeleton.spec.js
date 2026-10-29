@@ -3,8 +3,8 @@
  * Tests Next.js homepage for accessibility violations
  */
 
-const { test, expect } = require('@playwright/test');
 const AxeBuilder = require('@axe-core/playwright').default;
+const { test, expect } = require('@playwright/test');
 
 test.describe('Web Skeleton Accessibility', () => {
   test('should have no axe violations on homepage', async ({ page }) => {

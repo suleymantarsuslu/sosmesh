@@ -4,6 +4,8 @@
  * Kullanım: node scripts/count-scenarios.js docs/tests/m0-acceptance.feature
  */
 
+/* eslint-disable import/no-unresolved */
+
 const fs = require('fs');
 const path = require('path');
 

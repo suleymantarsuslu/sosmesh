@@ -160,7 +160,6 @@ function runContrastCheck() {
   console.log(`Total pairs: ${pairs.length}\n`);
   
   let failures = 0;
-  let exemptions = 0;
   const results = [];
   
   pairs.forEach(pair => {
@@ -188,7 +187,6 @@ function runContrastCheck() {
       console.log(`   ${pair.fg} / ${pair.bg}`);
       console.log(`   Ratio: ${ratio.toFixed(2)} (required: ${pair.minRatio})\n`);
     } else if (!pass && exemptReason) {
-      exemptions++;
       console.log(`${symbol} ${pair.name} [EXEMPT]`);
       console.log(`   ${pair.fg} / ${pair.bg}`);
       console.log(`   Ratio: ${ratio.toFixed(2)} (required: ${pair.minRatio})`);

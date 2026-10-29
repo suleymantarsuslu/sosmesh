@@ -3,10 +3,11 @@
  * Tests watch-specific prototypes
  */
 
-const { test, expect } = require('@playwright/test');
-const AxeBuilder = require('@axe-core/playwright').default;
 const fs = require('fs');
 const path = require('path');
+
+const { test, expect } = require('@playwright/test');
+const AxeBuilder = require('@axe-core/playwright').default;
 
 // Artifact directory
 const ARTIFACTS_DIR = '/opt/cursor/artifacts/adim04';

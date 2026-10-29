@@ -150,8 +150,8 @@ describe('BLE Protocol Integration Tests (Simulated Clock)', () => {
     expect(result.receivedPayload!.equals(testPayload)).toBe(true);
   });
 
-  it('should handle high packet loss (%25+) with resume', async () => {
-    // MANDATORY: Resume capability test - Moderate loss with retries demonstrates
+  it('should handle moderate packet loss (15%) with resume', async () => {
+    // Resume capability test - Moderate loss with retries demonstrates
     // "kesilen transfer yanlış teslim üretmeden yeniden denenebiliyor"
     const clock = new SimulatedClock();
     const rng = new SeededRNG(3000);
@@ -182,6 +182,7 @@ describe('BLE Protocol Integration Tests (Simulated Clock)', () => {
     expect(result.receivedPayload).not.toBeNull();
     expect(result.receivedPayload!.equals(testPayload)).toBe(true);
   });
+
 
   it('MANDATORY: should reject valid CRC but invalid digest (no wrong delivery)', async () => {
     // Hedefli yanlış-teslim testi: CRC geçerli ama envelope digest tutmuyor

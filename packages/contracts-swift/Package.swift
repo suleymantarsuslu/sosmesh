@@ -20,6 +20,7 @@ let package = Package(
             ]),
         .testTarget(
             name: "SOSMeshContractsTests",
-            dependencies: ["SOSMeshContracts"]),
+            dependencies: ["SOSMeshContracts"],
+            resources: [.copy("Resources")]),
     ]
 )

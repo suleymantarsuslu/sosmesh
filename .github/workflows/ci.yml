@@ -199,6 +199,55 @@ jobs:
             -sdk iphonesimulator \
             -destination 'platform=iOS Simulator,name=iPhone 15'
 
+  cross-language-contracts:
+    name: Cross-Language Contract Tests
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+      
+      - name: Install pnpm
+        uses: pnpm/action-setup@v3
+      
+      - name: Setup Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'temurin'
+          java-version: '17'
+      
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+      
+      - name: Run TypeScript contract tests
+        run: cd packages/contracts && pnpm test
+      
+      - name: Write TypeScript canonical JSON outputs
+        run: cd packages/contracts && pnpm write-canonical
+      
+      - name: Run Kotlin contract tests
+        run: |
+          cd packages/contracts-kotlin
+          ./gradlew test --no-daemon
+      
+      - name: Run Swift contract tests
+        run: |
+          echo "=== Swift Contract Tests ==="
+          which swift
+          swift --version
+          cd packages/contracts-swift
+          export SOURCE_ROOT="${GITHUB_WORKSPACE}"
+          swift test
+      
+      - name: Compare canonical JSON outputs (TypeScript vs Kotlin vs Swift)
+        run: bash scripts/compare-canonical-json.sh
+
   secret-scan:
     name: Secret Scan
     runs-on: ubuntu-latest

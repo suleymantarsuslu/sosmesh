@@ -1,0 +1,14 @@
+{
+  "version": 1,
+  "id": "880e8400-e29b-41d4-a716-446655440003",
+  "envelope": {
+    "timestamp": "NOT_A_VALID_TIMESTAMP",
+    "location": {
+      "latitude": 39.9334,
+      "longitude": 32.8597
+    },
+    "priority": 1,
+    "ackLevel": "DEVICE_STORED"
+  },
+  "encryptedPayload": "PAYLOAD"
+}

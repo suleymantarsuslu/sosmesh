@@ -1,0 +1,73 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://sosmesh.local/schemas/common.schema.json",
+  "title": "SOSMesh Common Schema Definitions",
+  "definitions": {
+    "timestamp": {
+      "type": "string",
+      "format": "date-time",
+      "description": "ISO 8601 timestamp"
+    },
+    "uuid": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$",
+      "description": "UUID v4"
+    },
+    "version": {
+      "type": "integer",
+      "const": 1,
+      "description": "Protocol version"
+    },
+    "accuracy": {
+      "type": "number",
+      "minimum": 0,
+      "description": "GPS accuracy in meters"
+    },
+    "ackLevel": {
+      "type": "string",
+      "enum": [
+        "DEVICE_STORED",
+        "PEER_RECEIVED",
+        "RELAY_FORWARDED",
+        "SERVER_RECEIVED",
+        "OPERATOR_VIEWED",
+        "INCIDENT_OPENED"
+      ],
+      "description": "Acknowledgment level - peer ACK != server/operator read"
+    },
+    "incidentState": {
+      "type": "string",
+      "enum": [
+        "PENDING",
+        "ASSIGNED",
+        "IN_PROGRESS",
+        "RESOLVED",
+        "CANCELLED"
+      ]
+    },
+    "transportError": {
+      "type": "object",
+      "required": ["code", "message"],
+      "properties": {
+        "code": {
+          "type": "string",
+          "enum": [
+            "NETWORK_UNAVAILABLE",
+            "TIMEOUT",
+            "INVALID_PAYLOAD",
+            "ENCRYPTION_FAILED",
+            "RELAY_REFUSED",
+            "SERVER_ERROR",
+            "UNAUTHORIZED"
+          ]
+        },
+        "message": {
+          "type": "string"
+        },
+        "retryable": {
+          "type": "boolean"
+        }
+      }
+    }
+  }
+}

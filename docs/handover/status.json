@@ -129,11 +129,14 @@
       ],
       "deliverables": "workspace, compose.yaml, .env.example, README.md, scripts/bootstrap",
       "pass_criteria": "İlk kurulum tekrarlanabilir, secret repoda yok.",
-      "status": "IN_PROGRESS",
+      "status": "PASS",
       "attempts": 2,
-      "commit": null,
+      "commit": "0bbc5a4d925984103981de9af29ba30f8d15e0be",
       "evidence": [],
-      "blockers": [],
+      "blockers": [
+        "docker compose up NOT_TESTED (daemon yok)",
+        "LICENSE kullanıcı kararı bekliyor"
+      ],
       "last_checked_at": null,
       "goal": "Tek komutla gelişebilen, kopyalanabilen repo iskeleti kur.",
       "cursor_tasks": [

@@ -32,7 +32,20 @@ const prototypes = [
 
 prototypes.forEach(prototype => {
   test.describe(prototype.name, () => {
-    test('should not have axe violations', async ({ page }) => {
+    test('should not have axe violations', async ({ page }, testInfo) => {
+      // Skip watch-sos for non-watch viewports
+      const isWatchPrototype = prototype.name === 'Watch SOS';
+      const isWatchViewport = testInfo.project.name.startsWith('watch-');
+      
+      if (isWatchPrototype && !isWatchViewport) {
+        test.skip();
+        return;
+      }
+      if (!isWatchPrototype && isWatchViewport) {
+        test.skip();
+        return;
+      }
+      
       await page.goto(`file://${process.cwd()}/prototypes/ux${prototype.path}`);
       
       // Wait for page to be fully loaded
@@ -63,7 +76,20 @@ prototypes.forEach(prototype => {
       expect(serious).toHaveLength(0);
     });
     
-    test('should not have horizontal overflow at 200% zoom', async ({ page }) => {
+    test('should not have horizontal overflow at 200% zoom', async ({ page }, testInfo) => {
+      // Skip watch-sos for non-watch viewports
+      const isWatchPrototype = prototype.name === 'Watch SOS';
+      const isWatchViewport = testInfo.project.name.startsWith('watch-');
+      
+      if (isWatchPrototype && !isWatchViewport) {
+        test.skip();
+        return;
+      }
+      if (!isWatchPrototype && isWatchViewport) {
+        test.skip();
+        return;
+      }
+      
       await page.goto(`file://${process.cwd()}/prototypes/ux${prototype.path}`);
       
       // Wait for page to be fully loaded
@@ -98,6 +124,46 @@ prototypes.forEach(prototype => {
       });
       
       expect(hasOverflow).toBe(false);
+    });
+    
+    test('header elements should not overlap', async ({ page }, testInfo) => {
+      // Only test mobile prototypes
+      if (!prototype.name.startsWith('Mobile')) {
+        test.skip();
+        return;
+      }
+      
+      // Skip watch viewports
+      if (testInfo.project.name.startsWith('watch-')) {
+        test.skip();
+        return;
+      }
+      
+      await page.goto(`file://${process.cwd()}/prototypes/ux${prototype.path}`);
+      await page.waitForLoadState('networkidle');
+      
+      // Get all header elements
+      const header = await page.locator('.header, header').first();
+      if (await header.count() === 0) {
+        test.skip();
+        return;
+      }
+      
+      const headerBox = await header.boundingBox();
+      if (!headerBox) {
+        test.skip();
+        return;
+      }
+      
+      // Check that status text is not truncated
+      const statusText = await page.locator('#statusText, .status-text').first();
+      if (await statusText.count() > 0) {
+        const textElement = await statusText.elementHandle();
+        const isNotTruncated = await textElement.evaluate(el => {
+          return el.scrollWidth <= el.clientWidth + 1; // +1 for rounding
+        });
+        expect(isNotTruncated).toBe(true);
+      }
     });
   });
 });

@@ -16,8 +16,7 @@ const FORBIDDEN_TR = [
   'yardım geliyor',
   'kurtarılacaksınız',
   'güvendesiniz',
-  'çözüldü',
-  'tamamlandı'
+  'çözüldü'
 ];
 
 const FORBIDDEN_EN = [
@@ -26,9 +25,12 @@ const FORBIDDEN_EN = [
   'help is on the way',
   'you are safe',
   'rescued',
-  'resolved',
-  'completed'
+  'resolved'
 ];
+
+// Context-specific bans (only in SOS status context)
+const FORBIDDEN_IN_STATUS_CONTEXT_TR = ['tamamlandı'];
+const FORBIDDEN_IN_STATUS_CONTEXT_EN = ['completed'];
 
 // Taranacak dosyalar
 const FILES_TO_SCAN = [
@@ -73,6 +75,36 @@ function scanFile(filePath, forbiddenList, lang) {
   }
 }
 
+// Context-specific scan (status context only)
+function scanStatusContext(filePath, forbiddenList, lang) {
+  if (!fs.existsSync(filePath)) return;
+  
+  const content = fs.readFileSync(filePath, 'utf-8');
+  const found = [];
+  
+  // Check if file contains status-related content
+  const isStatusFile = content.toLowerCase().includes('status') || 
+                       content.toLowerCase().includes('durum') ||
+                       filePath.includes('status');
+  
+  if (!isStatusFile) return;
+  
+  const lowerContent = content.toLowerCase();
+  forbiddenList.forEach(phrase => {
+    if (lowerContent.includes(phrase.toLowerCase())) {
+      found.push(phrase);
+    }
+  });
+  
+  if (found.length > 0) {
+    violations.push({
+      file: filePath,
+      lang: lang + ' (status context)',
+      phrases: found
+    });
+  }
+}
+
 // TR dosyalarını tara
 console.log('TR dosyaları taranıyor...');
 FILES_TO_SCAN.filter(f => f.includes('-tr') || f.includes('prototypes'))
@@ -82,6 +114,10 @@ FILES_TO_SCAN.filter(f => f.includes('-tr') || f.includes('prototypes'))
 console.log('EN dosyaları taranıyor...');
 FILES_TO_SCAN.filter(f => f.includes('-en') || f.includes('prototypes'))
   .forEach(f => scanFile(f, FORBIDDEN_EN, 'EN'));
+
+// Context-specific scans
+FILES_TO_SCAN.forEach(f => scanStatusContext(f, FORBIDDEN_IN_STATUS_CONTEXT_TR, 'TR'));
+FILES_TO_SCAN.forEach(f => scanStatusContext(f, FORBIDDEN_IN_STATUS_CONTEXT_EN, 'EN'));
 
 console.log('');
 

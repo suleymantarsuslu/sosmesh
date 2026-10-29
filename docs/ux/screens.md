@@ -410,7 +410,7 @@ graph TD
 2. **YAKIN CİHAZA AKTARILDI** / **TRANSFERRED TO NEARBY DEVICE**
 3. **SUNUCUYA ULAŞTI** / **REACHED SERVER**
 4. **OPERATÖR GÖRDÜ** / **OPERATOR VIEWED**
-5. **VAKA İŞLEM SÜRÜYOR** / **CASE IN PROGRESS**
+5. **VAKA İŞLEME ALINDI** / **CASE IN PROGRESS**
 
 **Uyarı (her ekranda):**
 > "Bu durum bilgisi 'yardım gelecek' veya 'güvendesiniz' anlamına gelmez. 112'yi aramayı unutmayın."

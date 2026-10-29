@@ -52,5 +52,23 @@ module.exports = defineConfig({
         locale: 'en-US',
       },
     },
+    {
+      name: 'watch-light-tr',
+      use: {
+        ...devices['Desktop Chrome'],
+        viewport: { width: 198, height: 242 },
+        colorScheme: 'light',
+        locale: 'tr-TR',
+      },
+    },
+    {
+      name: 'watch-dark-tr',
+      use: {
+        ...devices['Desktop Chrome'],
+        viewport: { width: 184, height: 224 },
+        colorScheme: 'dark',
+        locale: 'tr-TR',
+      },
+    },
   ],
 });

@@ -16,11 +16,12 @@
       font-family: var(--type-fontFamily-base);
       background: var(--color-surface-primary);
       color: var(--color-text-primary);
-      width: 198px;
-      height: 242px;
+      max-width: 100%;
+      min-height: 100vh;
       display: flex;
       flex-direction: column;
-      overflow: hidden;
+      overflow-x: hidden;
+      overflow-y: auto;
     }
     
     .watch-screen {
@@ -33,8 +34,10 @@
     }
     
     .sos-button-watch {
-      width: 120px;
-      height: 120px;
+      width: min(120px, 60vw);
+      height: min(120px, 60vw);
+      max-width: 120px;
+      max-height: 120px;
       border-radius: var(--radius-full);
       background: linear-gradient(135deg, var(--color-sos) 0%, var(--color-danger) 100%);
       color: var(--color-text-onSos);

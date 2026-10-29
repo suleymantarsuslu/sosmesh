@@ -144,31 +144,6 @@
       fill: currentColor;
     }
     
-    .theme-toggle {
-      position: fixed;
-      top: var(--space-4);
-      right: var(--space-4);
-      padding: var(--space-2);
-      background: var(--color-surface-tertiary);
-      border: 1px solid var(--color-border);
-      border-radius: var(--radius-base);
-      cursor: pointer;
-      min-width: var(--touch-default);
-      min-height: var(--touch-default);
-    }
-    
-    .lang-toggle {
-      position: fixed;
-      bottom: calc(var(--touch-default) + var(--space-16));
-      right: var(--space-4);
-      padding: var(--space-2);
-      background: var(--color-surface-tertiary);
-      border: 1px solid var(--color-border);
-      border-radius: var(--radius-base);
-      cursor: pointer;
-      min-width: var(--touch-default);
-      min-height: var(--touch-default);
-    }
   </style>
 </head>
 <body>
@@ -210,33 +185,9 @@
     </a>
   </nav>
   
-  <button class="theme-toggle" id="themeToggle" aria-label="Temayı değiştir">🌓</button>
-  <button class="lang-toggle" id="langToggle" aria-label="TR - Dili değiştir">TR</button>
   
   <script>
-    // Theme toggle
-    const themeToggle = document.getElementById('themeToggle');
     const html = document.documentElement;
-    
-    themeToggle.addEventListener('click', () => {
-      const currentTheme = html.getAttribute('data-theme');
-      const newTheme = currentTheme === 'light' ? 'dark' : 'light';
-      html.setAttribute('data-theme', newTheme);
-      themeToggle.textContent = newTheme === 'light' ? '🌓' : '☀️';
-    });
-    
-    // Lang toggle
-    const langToggle = document.getElementById('langToggle');
-    langToggle.addEventListener('click', () => {
-      const currentLang = html.getAttribute('lang');
-      const newLang = currentLang === 'tr' ? 'en' : 'tr';
-      html.setAttribute('lang', newLang);
-      langToggle.textContent = newLang.toUpperCase();
-      
-      // Simple i18n (simplified for prototype)
-      const statusText = document.getElementById('statusText');
-      statusText.textContent = newLang === 'tr' ? 'Çevrimiçi' : 'Online';
-    });
     
     // SOS button hold behavior (simplified)
     let holdTimer;

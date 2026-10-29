@@ -22,4 +22,8 @@ describe('HealthController', () => {
     expect(result).toHaveProperty('status', 'ok');
     expect(result).toHaveProperty('timestamp');
   });
+
+  it('CI gate proof: intentional test failure', () => {
+    expect(true).toBe(false);
+  });
 });

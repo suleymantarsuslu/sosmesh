@@ -1,0 +1,67 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "SOSMesh Design Tokens",
+  "type": "object",
+  "required": ["colors", "typography", "spacing", "radius", "elevation", "focusRing", "minTouchTarget"],
+  "properties": {
+    "colors": {
+      "type": "object",
+      "required": ["light", "dark"],
+      "properties": {
+        "light": { "$ref": "#/definitions/colorPalette" },
+        "dark": { "$ref": "#/definitions/colorPalette" }
+      }
+    },
+    "typography": {
+      "type": "object",
+      "required": ["fontFamily", "fontSize", "fontWeight", "lineHeight"],
+      "properties": {
+        "fontFamily": { "type": "object" },
+        "fontSize": { "type": "object" },
+        "fontWeight": { "type": "object" },
+        "lineHeight": { "type": "object" },
+        "letterSpacing": { "type": "object" }
+      }
+    },
+    "spacing": { "type": "object" },
+    "radius": { "type": "object" },
+    "elevation": { "type": "object" },
+    "focusRing": {
+      "type": "object",
+      "required": ["width", "offset", "style"],
+      "properties": {
+        "width": { "type": "string" },
+        "offset": { "type": "string" },
+        "style": { "type": "string" }
+      }
+    },
+    "minTouchTarget": {
+      "type": "object",
+      "required": ["default", "sosButton"],
+      "properties": {
+        "default": { "type": "string" },
+        "sosButton": { "type": "object" }
+      }
+    },
+    "breakpoints": { "type": "object" },
+    "animation": { "type": "object" }
+  },
+  "definitions": {
+    "colorPalette": {
+      "type": "object",
+      "required": ["sos", "danger", "warning", "success", "offline", "info", "surface", "text"],
+      "properties": {
+        "sos": { "type": "string", "pattern": "^#[0-9A-Fa-f]{6}$" },
+        "danger": { "type": "string", "pattern": "^#[0-9A-Fa-f]{6}$" },
+        "warning": { "type": "string", "pattern": "^#[0-9A-Fa-f]{6}$" },
+        "success": { "type": "string", "pattern": "^#[0-9A-Fa-f]{6}$" },
+        "offline": { "type": "string", "pattern": "^#[0-9A-Fa-f]{6}$" },
+        "info": { "type": "string", "pattern": "^#[0-9A-Fa-f]{6}$" },
+        "surface": { "type": "object" },
+        "text": { "type": "object" },
+        "border": { "type": "string" },
+        "focus": { "type": "string" }
+      }
+    }
+  }
+}

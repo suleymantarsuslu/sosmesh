@@ -1,0 +1,176 @@
+{
+  "app": {
+    "name": "SOSMesh",
+    "tagline": "Acil durum mesh ağı"
+  },
+  "common": {
+    "yes": "Evet",
+    "no": "Hayır",
+    "cancel": "İptal",
+    "retry": "Tekrar Dene",
+    "close": "Kapat",
+    "save": "Kaydet",
+    "loading": "Yükleniyor...",
+    "error": "Hata oluştu"
+  },
+  "nav": {
+    "home": "Ana Sayfa",
+    "status": "Durum",
+    "relay": "Relay",
+    "settings": "Ayarlar",
+    "dashboard": "Panel",
+    "map": "Harita",
+    "inbox": "Gelen Kutusu",
+    "cases": "Vakalar",
+    "teams": "Ekipler",
+    "admin": "Yönetim"
+  },
+  "sos": {
+    "button": {
+      "label": "SOS",
+      "aria": "SOS gönder, basılı tutun",
+      "holdInstructions": "3 saniye basılı tutun"
+    },
+    "confirm": {
+      "title": "SOS Gönder",
+      "message": "SOS göndermek istediğinize emin misiniz?",
+      "yes": "Evet, Gönder",
+      "no": "Hayır, İptal"
+    },
+    "sending": "Gönderiliyor...",
+    "sent": "SOS gönderildi",
+    "failed": "Gönderilemedi",
+    "searchingDevices": "Yakın cihazlar aranıyor...",
+    "form": {
+      "location": "Konum",
+      "message": "Mesaj (isteğe bağlı)",
+      "placeholder": "Ek bilgi girebilirsiniz"
+    }
+  },
+  "status": {
+    "title": "Mesaj Durumu",
+    "empty": "Henüz SOS gönderilmedi",
+    "failed": "Durum yüklenemedi",
+    "timeline": {
+      "1": "CİHAZDA KAYITLI",
+      "2": "YAKIN CİHAZA AKTARILDI",
+      "3": "SUNUCUYA ULAŞTI",
+      "4": "OPERATÖR GÖRDÜ",
+      "5": "VAKA İŞLEME ALINDI"
+    },
+    "disclaimer": "Bu durum bilgisi teknik bilgidir, müdahale garantisi vermez. 112'yi aramayı unutmayın."
+  },
+  "relay": {
+    "title": "Relay Modu",
+    "toggle": {
+      "on": "Açık",
+      "off": "Kapalı",
+      "aria": "Relay modunu aç/kapat"
+    },
+    "description": "Relay modu aktifken cihazınız başkalarının SOS mesajlarını aktarır.",
+    "warning": "Pil tüketimi artar",
+    "active": "Relay çalışıyor",
+    "inactive": "Relay kapalı"
+  },
+  "settings": {
+    "title": "Ayarlar",
+    "permissions": {
+      "title": "İzinler",
+      "location": "Konum",
+      "bluetooth": "Bluetooth",
+      "notifications": "Bildirimler",
+      "required": "Gerekli",
+      "denied": "İzin gerekli. Ayarlara git."
+    },
+    "language": {
+      "title": "Dil",
+      "tr": "Türkçe",
+      "en": "English"
+    },
+    "theme": {
+      "title": "Tema",
+      "light": "Açık",
+      "dark": "Koyu",
+      "auto": "Otomatik"
+    },
+    "about": {
+      "title": "Hakkında",
+      "version": "Versiyon",
+      "licenses": "Lisanslar"
+    }
+  },
+  "states": {
+    "empty": "Henüz veri yok",
+    "loading": "Yükleniyor...",
+    "error": "Yüklenemedi. Tekrar dene.",
+    "offline": "İnternet bağlantısı yok",
+    "offlineMode": "Çevrimdışı mod — Yalnız yakın cihazlara gönderilecek",
+    "permissionDenied": "İzin gerekli. Ayarlara git.",
+    "lowBattery": "Pil düşük (%10 altı)",
+    "lowBatteryRelay": "Pil %10'un altında — Relay otomatik kapandı"
+  },
+  "web": {
+    "dashboard": {
+      "title": "Panel",
+      "widgets": {
+        "totalCases": "Toplam Vakalar",
+        "activeCases": "Aktif Vakalar",
+        "avgResponseTime": "Ortalama Yanıt Süresi"
+      },
+      "recentCases": "Son Vakalar",
+      "empty": "Henüz vaka yok"
+    },
+    "map": {
+      "title": "Harita",
+      "aria": "SOS konumları haritası",
+      "cluster": "{{count}} SOS"
+    },
+    "inbox": {
+      "title": "Gelen Kutusu",
+      "empty": "Gelen kutusu boş",
+      "aria": "SOS gelen kutusu"
+    },
+    "cases": {
+      "title": "Vakalar",
+      "detail": "Vaka Detayı",
+      "aiSuggestion": "AI Önerisi",
+      "riskLevel": "Risk Seviyesi",
+      "suggestedResources": "Önerilen Kaynaklar",
+      "similarCases": "Benzer Vakalar",
+      "notes": "Notlar",
+      "addNote": "Not Ekle"
+    }
+  },
+  "watch": {
+    "sos": {
+      "button": "SOS",
+      "hold": "Basılı tut",
+      "sent": "Gönderildi",
+      "haptic": "SOS gönderildi"
+    },
+    "status": {
+      "title": "Durum",
+      "compact": {
+        "1": "Kayıtlı",
+        "2": "Aktarıldı",
+        "3": "Sunucuda",
+        "4": "Görüldü",
+        "5": "İşlemde"
+      }
+    },
+    "cancel": {
+      "button": "İptal",
+      "countdown": "saniye",
+      "cancelled": "SOS gönderilmedi"
+    }
+  },
+  "a11y": {
+    "skipToMain": "Ana içeriğe geç",
+    "menu": "Menü",
+    "closeMenu": "Menüyü kapat"
+  },
+  "warnings": {
+    "not112": "SOSMesh, 112'nin yerine geçmez. Acil durumlarda 112'yi arayın.",
+    "noFalseHope": "Durum güncellemeleri yalnızca teknik bilgidir, yardım garantisi vermez."
+  }
+}

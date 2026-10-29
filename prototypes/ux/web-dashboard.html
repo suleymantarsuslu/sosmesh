@@ -1,0 +1,351 @@
+<!DOCTYPE html>
+<html lang="tr" data-theme="light">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>SOSMesh — Operatör Paneli</title>
+  <link rel="stylesheet" href="../../packages/design-tokens/tokens.css">
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+    
+    body {
+      font-family: var(--type-fontFamily-base);
+      font-size: var(--type-fontSize-base);
+      line-height: var(--type-lineHeight-normal);
+      background: var(--color-surface-primary);
+      color: var(--color-text-primary);
+      display: flex;
+      height: 100vh;
+      overflow: hidden;
+    }
+    
+    .sidebar {
+      width: 240px;
+      background: var(--color-surface-secondary);
+      box-shadow: var(--elevation-2);
+      display: flex;
+      flex-direction: column;
+    }
+    
+    .sidebar-header {
+      padding: var(--space-6);
+      border-bottom: 1px solid var(--color-border);
+    }
+    
+    .logo {
+      font-size: var(--type-fontSize-2xl);
+      font-weight: var(--type-fontWeight-bold);
+      color: var(--color-sos);
+    }
+    
+    .sidebar-nav {
+      flex: 1;
+      padding: var(--space-4) 0;
+    }
+    
+    .nav-item {
+      display: flex;
+      align-items: center;
+      gap: var(--space-3);
+      padding: var(--space-3) var(--space-6);
+      color: var(--color-text-secondary);
+      text-decoration: none;
+      transition: background 150ms, color 150ms;
+      min-height: var(--touch-default);
+    }
+    
+    .nav-item:hover {
+      background: var(--color-surface-tertiary);
+    }
+    
+    .nav-item.active {
+      background: var(--color-surface-tertiary);
+      color: var(--color-text-primary);
+      font-weight: var(--type-fontWeight-semibold);
+    }
+    
+    .nav-icon {
+      width: 20px;
+      height: 20px;
+      fill: currentColor;
+    }
+    
+    .sidebar-footer {
+      padding: var(--space-4);
+      border-top: 1px solid var(--color-border);
+      font-size: var(--type-fontSize-sm);
+      color: var(--color-text-secondary);
+    }
+    
+    .main-container {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+    }
+    
+    .top-bar {
+      padding: var(--space-4) var(--space-6);
+      background: var(--color-surface-secondary);
+      box-shadow: var(--elevation-1);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    
+    .top-bar h1 {
+      font-size: var(--type-fontSize-2xl);
+      font-weight: var(--type-fontWeight-semibold);
+    }
+    
+    .user-menu {
+      display: flex;
+      align-items: center;
+      gap: var(--space-3);
+    }
+    
+    .user-avatar {
+      width: 40px;
+      height: 40px;
+      border-radius: var(--radius-full);
+      background: var(--color-info);
+      color: white;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: var(--type-fontWeight-semibold);
+    }
+    
+    .main-content {
+      flex: 1;
+      padding: var(--space-6);
+      overflow-y: auto;
+    }
+    
+    .widgets {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+      gap: var(--space-6);
+      margin-bottom: var(--space-8);
+    }
+    
+    .widget {
+      padding: var(--space-6);
+      background: var(--color-surface-secondary);
+      border-radius: var(--radius-md);
+      box-shadow: var(--elevation-2);
+    }
+    
+    .widget-title {
+      font-size: var(--type-fontSize-sm);
+      color: var(--color-text-secondary);
+      margin-bottom: var(--space-2);
+    }
+    
+    .widget-value {
+      font-size: var(--type-fontSize-4xl);
+      font-weight: var(--type-fontWeight-bold);
+      color: var(--color-sos);
+    }
+    
+    .widget-label {
+      font-size: var(--type-fontSize-xs);
+      color: var(--color-text-secondary);
+      margin-top: var(--space-1);
+    }
+    
+    .cases-table {
+      background: var(--color-surface-secondary);
+      border-radius: var(--radius-md);
+      box-shadow: var(--elevation-2);
+      overflow: hidden;
+    }
+    
+    .table-header {
+      padding: var(--space-4) var(--space-6);
+      border-bottom: 1px solid var(--color-border);
+    }
+    
+    .table-header h2 {
+      font-size: var(--type-fontSize-xl);
+      font-weight: var(--type-fontWeight-semibold);
+    }
+    
+    table {
+      width: 100%;
+      border-collapse: collapse;
+    }
+    
+    th {
+      padding: var(--space-3) var(--space-6);
+      text-align: left;
+      font-size: var(--type-fontSize-sm);
+      font-weight: var(--type-fontWeight-semibold);
+      color: var(--color-text-secondary);
+      background: var(--color-surface-tertiary);
+      border-bottom: 1px solid var(--color-border);
+    }
+    
+    td {
+      padding: var(--space-4) var(--space-6);
+      border-bottom: 1px solid var(--color-border);
+      font-size: var(--type-fontSize-sm);
+    }
+    
+    tr:last-child td {
+      border-bottom: none;
+    }
+    
+    tr:hover {
+      background: var(--color-surface-tertiary);
+    }
+    
+    .status-badge {
+      display: inline-block;
+      padding: var(--space-1) var(--space-3);
+      border-radius: var(--radius-full);
+      font-size: var(--type-fontSize-xs);
+      font-weight: var(--type-fontWeight-semibold);
+    }
+    
+    .status-badge.new {
+      background: var(--color-danger);
+      color: white;
+    }
+    
+    .status-badge.viewed {
+      background: var(--color-warning);
+      color: var(--color-text-primary);
+    }
+    
+    .status-badge.processing {
+      background: var(--color-info);
+      color: white;
+    }
+    
+    .skip-link {
+      position: absolute;
+      top: -40px;
+      left: 0;
+      background: var(--color-sos);
+      color: white;
+      padding: var(--space-2) var(--space-4);
+      text-decoration: none;
+      border-radius: var(--radius-base);
+    }
+    
+    .skip-link:focus {
+      top: var(--space-2);
+    }
+  </style>
+</head>
+<body>
+  <a href="#main-content" class="skip-link">Ana içeriğe geç</a>
+  
+  <aside class="sidebar" role="navigation" aria-label="Ana navigasyon">
+    <div class="sidebar-header">
+      <div class="logo">SOSMesh</div>
+    </div>
+    
+    <nav class="sidebar-nav">
+      <a href="web-dashboard.html" class="nav-item active">
+        <svg class="nav-icon" viewBox="0 0 24 24"><path d="M3 13h8V3H3v10zm0 8h8v-6H3v6zm10 0h8V11h-8v10zm0-18v6h8V3h-8z"/></svg>
+        <span>Panel</span>
+      </a>
+      <a href="#" class="nav-item">
+        <svg class="nav-icon" viewBox="0 0 24 24"><path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z"/></svg>
+        <span>Harita</span>
+      </a>
+      <a href="#" class="nav-item">
+        <svg class="nav-icon" viewBox="0 0 24 24"><path d="M20 4H4c-1.1 0-1.99.9-1.99 2L2 18c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2zm0 4l-8 5-8-5V6l8 5 8-5v2z"/></svg>
+        <span>Gelen Kutusu</span>
+      </a>
+      <a href="#" class="nav-item">
+        <svg class="nav-icon" viewBox="0 0 24 24"><path d="M19 3h-4.18C14.4 1.84 13.3 1 12 1c-1.3 0-2.4.84-2.82 2H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm-7 0c.55 0 1 .45 1 1s-.45 1-1 1-1-.45-1-1 .45-1 1-1zm2 14H7v-2h7v2zm3-4H7v-2h10v2zm0-4H7V7h10v2z"/></svg>
+        <span>Vakalar</span>
+      </a>
+    </nav>
+    
+    <div class="sidebar-footer">
+      v1.0.0 — 2026
+    </div>
+  </aside>
+  
+  <div class="main-container">
+    <header class="top-bar">
+      <h1>Panel</h1>
+      <div class="user-menu">
+        <div class="user-avatar" aria-label="Kullanıcı menüsü">O</div>
+      </div>
+    </header>
+    
+    <main class="main-content" id="main-content" role="main" tabindex="0">
+      <div class="widgets">
+        <div class="widget">
+          <div class="widget-title">Toplam Vakalar</div>
+          <div class="widget-value">127</div>
+          <div class="widget-label">Son 30 gün</div>
+        </div>
+        
+        <div class="widget">
+          <div class="widget-title">Aktif Vakalar</div>
+          <div class="widget-value">8</div>
+          <div class="widget-label">İşlem bekliyor</div>
+        </div>
+        
+        <div class="widget">
+          <div class="widget-title">Ortalama Yanıt Süresi</div>
+          <div class="widget-value">3.2</div>
+          <div class="widget-label">dakika</div>
+        </div>
+      </div>
+      
+      <div class="cases-table">
+        <div class="table-header">
+          <h2>Son Vakalar</h2>
+        </div>
+        
+        <table>
+          <caption class="sr-only">Son SOS vakaları listesi</caption>
+          <thead>
+            <tr>
+              <th>ID</th>
+              <th>Durum</th>
+              <th>Konum</th>
+              <th>Zaman</th>
+              <th>Operatör</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>#8472</td>
+              <td><span class="status-badge new">Yeni</span></td>
+              <td>Ankara, Çankaya</td>
+              <td>14:32</td>
+              <td>—</td>
+            </tr>
+            <tr>
+              <td>#8471</td>
+              <td><span class="status-badge viewed">OPERATÖR GÖRDÜ</span></td>
+              <td>İstanbul, Kadıköy</td>
+              <td>13:58</td>
+              <td>Ahmet K.</td>
+            </tr>
+            <tr>
+              <td>#8470</td>
+              <td><span class="status-badge processing">VAKA İŞLEME ALINDI</span></td>
+              <td>İzmir, Karşıyaka</td>
+              <td>13:24</td>
+              <td>Ayşe M.</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </main>
+  </div>
+</body>
+</html>

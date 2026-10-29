@@ -1,0 +1,45 @@
+{
+  "name": "sosmesh-monorepo",
+  "version": "0.1.0",
+  "private": true,
+  "description": "SOSMesh emergency mesh network monorepo",
+  "author": "SOSMesh Team",
+  "license": "SEE LICENSE FILE",
+  "engines": {
+    "node": ">=20.0.0",
+    "pnpm": ">=8.0.0"
+  },
+  "scripts": {
+    "build": "pnpm -r build",
+    "dev": "pnpm -r --parallel dev",
+    "lint": "pnpm -r lint && pnpm lint:root",
+    "lint:root": "eslint --ext .js,.ts .",
+    "lint:fix": "pnpm -r lint:fix && eslint --ext .js,.ts . --fix",
+    "format": "prettier --write \"**/*.{js,ts,tsx,json,md,yaml,yml}\"",
+    "format:check": "prettier --check \"**/*.{js,ts,tsx,json,md,yaml,yml}\"",
+    "test": "pnpm -r test",
+    "ux:build-tokens": "node scripts/ux-build-tokens.js",
+    "ux:check-forbidden": "node scripts/ux-forbidden-copy.js",
+    "ux:check-i18n": "node scripts/ux-check-i18n-keys.js",
+    "ux:check-contrast": "node scripts/ux-check-contrast.js",
+    "ux:test-a11y": "playwright test",
+    "test:a11y:web": "playwright test --config=playwright.web.config.js",
+    "test:secret-scan": "bash scripts/secret-scan.sh",
+    "test:cycles": "bash scripts/check-dependency-cycles.sh",
+    "clean": "pnpm -r clean && rm -rf node_modules",
+    "bootstrap": "bash scripts/bootstrap.sh"
+  },
+  "devDependencies": {
+    "@axe-core/playwright": "^4.8.2",
+    "@playwright/test": "^1.40.1",
+    "@typescript-eslint/eslint-plugin": "^6.21.0",
+    "@typescript-eslint/parser": "^6.21.0",
+    "ajv": "^8.12.0",
+    "eslint": "^8.56.0",
+    "eslint-config-prettier": "^9.1.0",
+    "eslint-plugin-import": "^2.29.1",
+    "prettier": "^3.2.5",
+    "typescript": "^5.3.3",
+    "yaml": "^2.9.1"
+  }
+}

@@ -1,0 +1,23 @@
+{
+  "name": "@sosmesh/contracts",
+  "version": "0.1.0",
+  "private": true,
+  "description": "SOSMesh shared JSON schemas and TypeScript types",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "scripts": {
+    "build": "tsc",
+    "generate:types": "echo 'Type generation not yet implemented' && exit 0",
+    "lint": "eslint \"src/**/*.ts\"",
+    "lint:fix": "eslint \"src/**/*.ts\" --fix",
+    "test": "echo 'Contracts tests not yet implemented' && exit 0",
+    "clean": "rm -rf dist"
+  },
+  "dependencies": {},
+  "devDependencies": {
+    "@typescript-eslint/eslint-plugin": "^6.21.0",
+    "@typescript-eslint/parser": "^6.21.0",
+    "eslint": "^8.56.0",
+    "typescript": "^5.3.3"
+  }
+}

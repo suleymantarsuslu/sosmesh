@@ -3,6 +3,7 @@ import { EventEmitter } from 'events';
 import {
   Chunk,
   assembleChunks,
+  calculateCRC32,
   deserializeChunk,
   extractDigestFromLastChunk,
   verifyDigest
@@ -112,6 +113,31 @@ export class Receiver extends EventEmitter {
     try {
       const chunk = deserializeChunk(data);
       
+      // Early return if deserialization failed
+      if (!chunk) {
+        this.logEvent({ 
+          timestamp: this.clock.now(), 
+          event: 'chunk_error', 
+          msgId: '00000000',
+          seq: 0,
+          error: 'Deserialization failed' 
+        });
+        return;
+      }
+
+      // Verify CRC
+      const crc = calculateCRC32(chunk.payload);
+      if (chunk.header.crc32 !== crc) {
+        await this.sendNack(chunk.header.seq, ErrorCode.CRC_MISMATCH);
+        this.logEvent({ 
+          timestamp: this.clock.now(), 
+          event: 'crc_mismatch', 
+          msgId: this.getMsgIdHash(chunk),
+          seq: chunk.header.seq 
+        });
+        return;
+      }
+
       // First chunk sets expected total
       if (this.expectedTotal === 0) {
         this.expectedTotal = chunk.header.total;
@@ -195,7 +221,13 @@ export class Receiver extends EventEmitter {
 
       // Extract digest from last chunk
       const lastChunk = orderedChunks[orderedChunks.length - 1];
-      const { digest, data: lastData } = extractDigestFromLastChunk(lastChunk);
+      const extracted = extractDigestFromLastChunk(lastChunk);
+      
+      if (!extracted) {
+        throw new Error('Failed to extract digest from last chunk');
+      }
+      
+      const { digest, data: lastData } = extracted;
       this.receivedDigest = digest;
 
       // Assemble message (replace last chunk payload with extracted data)

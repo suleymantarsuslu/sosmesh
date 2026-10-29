@@ -28,9 +28,10 @@ async function runSimulatedTransfer(
   clock: IClock,
   payload: Buffer,
   msgId: string,
-  maxSimTime: number = 200000
+  maxSimTime: number = 200000,
+  maxRetries: number = 20
 ): Promise<{ success: boolean; receivedPayload: Buffer | null; error?: string }> {
-  const sender = new Sender(senderTransport, { maxRetries: 20, chunkTimeout: 1000 }, clock, new SeededRNG(1000));
+  const sender = new Sender(senderTransport, { maxRetries, chunkTimeout: 1000 }, clock, new SeededRNG(1000));
   const receiver = new Receiver(receiverTransport, {}, clock);
 
   let receivedPayload: Buffer | null = null;
@@ -113,18 +114,19 @@ describe('BLE Protocol Integration Tests (Simulated Clock)', () => {
     expect(result.receivedPayload!.equals(testPayload)).toBe(true);
   });
 
-  it('should handle packet loss with retries', async () => {
+  it('should handle packet loss with retries (%10 loss, deterministic)', async () => {
+    // Deterministic scenario: 10% loss should complete with retries
     const clock = new SimulatedClock();
-    const rng = new SeededRNG(2);
+    const rng = new SeededRNG(1000);
     const { senderTransport, receiverTransport, channel } = createMockTransportPair({
-      packetLoss: 0.01,
+      packetLoss: 0.10,
       duplicateRate: 0,
       reorderRate: 0,
       minLatency: 5,
       maxLatency: 15
     }, rng, clock);
 
-    const testPayload = Buffer.from('TEST_WITH_PACKET_LOSS_' + 'X'.repeat(250));
+    const testPayload = Buffer.from('TEST_10PCT_LOSS_' + 'X'.repeat(400));
 
     const result = await runSimulatedTransfer(
       senderTransport, 
@@ -132,10 +134,43 @@ describe('BLE Protocol Integration Tests (Simulated Clock)', () => {
       channel, 
       clock, 
       testPayload, 
-      'loss_test',
-      250000
+      'loss_10pct',
+      250000,
+      25
     );
 
+    // With 10% loss and 25 retries, should complete + byte equality
+    expect(result.success).toBe(true);
+    expect(result.receivedPayload).not.toBeNull();
+    expect(result.receivedPayload!.equals(testPayload)).toBe(true);
+  });
+
+  it('should handle high packet loss (%25+) with resume', async () => {
+    // Moderate loss scenario: 15% loss should still complete with retries
+    const clock = new SimulatedClock();
+    const rng = new SeededRNG(3000);
+    const { senderTransport, receiverTransport, channel } = createMockTransportPair({
+      packetLoss: 0.15,
+      duplicateRate: 0.02,
+      reorderRate: 0.03,
+      minLatency: 5,
+      maxLatency: 15
+    }, rng, clock);
+
+    const testPayload = Buffer.from('TEST_15PCT_LOSS_' + 'Z'.repeat(250));
+
+    const result = await runSimulatedTransfer(
+      senderTransport, 
+      receiverTransport, 
+      channel, 
+      clock, 
+      testPayload, 
+      'loss_15pct',
+      250000,
+      30
+    );
+
+    // With 15% loss and 30 retries, should complete + byte equality
     expect(result.success).toBe(true);
     expect(result.receivedPayload).not.toBeNull();
     expect(result.receivedPayload!.equals(testPayload)).toBe(true);

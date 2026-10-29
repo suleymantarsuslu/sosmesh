@@ -7,18 +7,18 @@ final class BleProtocolTests: XCTestCase {
     private var testVectors: [String: Any]?
     
     override func setUp() async throws {
-        // Use #filePath to get absolute path to this test file, then navigate to repo root
+        // Use #filePath to get absolute path to this test file
+        // Real location: packages/fixtures/ble/test-vectors.json (from git ls-files)
         let testFileURL = URL(fileURLWithPath: #filePath)
         // From Tests/SOSMeshContractsTests/BleProtocolTests.swift
-        // Go up: BleProtocolTests.swift -> SOSMeshContractsTests -> Tests -> contracts-swift -> packages -> repo_root
-        let repoRoot = testFileURL
+        // Go up: BleProtocolTests.swift -> SOSMeshContractsTests -> Tests -> contracts-swift -> packages
+        let packagesDir = testFileURL
             .deletingLastPathComponent()  // -> SOSMeshContractsTests/
             .deletingLastPathComponent()  // -> Tests/
             .deletingLastPathComponent()  // -> contracts-swift/
             .deletingLastPathComponent()  // -> packages/
-            .deletingLastPathComponent()  // -> repo root
         
-        let fixturesURL = repoRoot
+        let fixturesURL = packagesDir
             .appendingPathComponent("fixtures")
             .appendingPathComponent("ble")
             .appendingPathComponent("test-vectors.json")

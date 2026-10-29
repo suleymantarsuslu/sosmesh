@@ -34,12 +34,16 @@ export function splitIntoChunks(data: Buffer, chunkSize: number): Chunk[] {
     const payload = data.slice(start, end);
     const crc = calculateCRC32(payload);
 
+    let flags = 0;
+    if (i === 0) flags |= ChunkFlags.FIRST_CHUNK;
+    if (i === totalChunks - 1) flags |= ChunkFlags.LAST_CHUNK;
+
     chunks.push({
       header: {
         seq: i,
         total: totalChunks,
         crc32: crc,
-        flags: i === totalChunks - 1 ? ChunkFlags.LAST_CHUNK : 0
+        flags
       },
       payload
     });
@@ -87,14 +91,16 @@ export function assembleChunks(chunks: Chunk[]): Buffer {
   return Buffer.concat(sorted.map(c => c.payload));
 }
 
-export function extractDigestFromLastChunk(lastChunk: Chunk): Buffer | null {
+export function extractDigestFromLastChunk(lastChunk: Chunk): { digest: Buffer; data: Buffer } | null {
   if (!(lastChunk.header.flags & ChunkFlags.LAST_CHUNK)) {
     return null;
   }
   if (lastChunk.payload.length < 32) {
     return null;
   }
-  return lastChunk.payload.slice(-32);
+  const digest = lastChunk.payload.slice(-32);
+  const data = lastChunk.payload.slice(0, -32);
+  return { digest, data };
 }
 
 export function verifyDigest(assembled: Buffer, digest: Buffer): boolean {

@@ -7,7 +7,7 @@
   Arka Plan:
     Varsayalım ki sistem ayakta ve sağlıklı
     Ve API "/health" endpoint'i 200 dönüyor
-    Ve yapılandırılmış Meta AI servisi erişilebilir (yoksa BLOCKED_SECRET)
+    Ve Meta AI servisi erişilebilir (yoksa BLOCKED_SECRET, anahtar geçerliliği/kotası B-05)
 
   @U1 @device-required
   Senaryo: Afetzede offline SOS oluşturur
@@ -97,7 +97,7 @@
     Ve operatör panelde canlı feed'de yeni SOS görürse
     Ve operatör vakayı açarsa
     O zaman API "OPERATOR_SEEN" event kaydeder
-    Ve operatörde AI sınıflandırma önerisi görünür (sunucu tarafı Meta API anahtarı yapılandırılmışsa)
+    Ve operatörde AI sınıflandırma önerisi görünür (`MODEL_API_KEY` varsa; B-05 doğrulanmadı)
     Ve operatör durumu "VAKA İŞLEME ALINDI" güncelleyebilir
     Ve Android A'da durum sırası doğru: CİHAZDA KAYITLI → YAKIN CİHAZA AKTARILDI → SUNUCUYA ULAŞTI → OPERATÖR GÖRDÜ → VAKA İŞLEME ALINDI
     Ve hiçbir adımda UI **"Ekip yolda"** veya **"Güvendesiniz"** demez
@@ -144,9 +144,9 @@
   @U3 @ai
   Senaryo: Meta AI SOS'u sınıflandırır (yalnızca destekleyici öneri)
     Diyelim ki "/v1/ingest" başarılı
-    Ve sunucu tarafı Meta API anahtarı mevcut
+    Ve `MODEL_API_KEY` env değişkeni mevcut (server-only, anahtar geçerliliği B-05'te doğrulanmadı)
     Eğer AI worker yeni SOS'u işlerse
-    Ve yapılandırılmış Meta model kimliği ile prompt gönderirse
+    Ve `META_MODEL` (örn. muse-spark-1.3) ile `META_BASE_URL` (https://api.meta.ai/v1) üzerinden prompt gönderirse
     O zaman AI JSON cevabı şu şemada döner: categories, persons_estimate, injuries_reported, needs, urgency_suggestion, uncertainty, quoted_evidence, location_unknown, language
     Ve bu çıktı `ai_analyses` tablosuna yazılır
     Ve operatör panelde "AI Önerisi" bölümünde görür
@@ -154,7 +154,7 @@
 
   @U3 @ai @negative
   Senaryo: Meta API anahtarı yoksa AI adımı atlanır
-    Diyelim ki sunucu tarafı Meta API anahtarı (adı ADIM 20'de ADR ile kesinleşir) env değişkeninde yok
+    Diyelim ki `MODEL_API_KEY` env değişkeni yok
     Eğer AI worker SOS'u işlemeye çalışırsa
     O zaman AI adımı **BLOCKED_SECRET** olarak işaretlenir
     Ve ham vaka **kaybolmaz**; AI alanı null kalır

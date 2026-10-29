@@ -52,8 +52,8 @@ Bu tablo master plan bölüm 07'deki kullanım senaryolarının feature dosyası
 | **Offline yolda Meta çağrısı yok** | §20 AI, kritik yol | Offline yolda Meta API çağrısı yapılmaz | @M0 @negative | 16, 20 | Device + E2E | NOT_STARTED |
 | **Operatör vaka görüntüleme** | §21, §23 panel | Operatör panelde vaka görüntüler | @U3 | 21, 23 | E2E | NOT_STARTED |
 | RBAC — yetkisiz erişim | §21 auth | Yetkisiz rol vaka göremez | @U3 @negative | 21 | E2E + Unit | NOT_STARTED |
-| **Meta AI sınıflandırma (U3 destekleyici)** | §20 AI (U3 alt bileşeni) | Meta AI SOS'u sınıflandırır | @U3 @ai | 20 | E2E + Unit | NOT_STARTED |
-| AI anahtar yoksa BLOCKED_SECRET | §20 AI, B-05 | Meta API anahtarı yoksa AI adımı atlanır | @U3 @ai @negative | 20, 24 | E2E | NOT_STARTED |
+| **Meta AI sınıflandırma (U3 destekleyici)** | §20 AI (U3 alt bileşeni) | Meta AI SOS'u sınıflandırır; `META_MODEL` (örn. muse-spark-1.3), `MODEL_API_KEY` (server-only, B-05 doğrulanmadı) | @U3 @ai | 20 | E2E + Unit | NOT_STARTED |
+| AI anahtar yoksa BLOCKED_SECRET | §20 AI, B-05 | `MODEL_API_KEY` env yoksa AI adımı atlanır | @U3 @ai @negative | 20, 24 | E2E | NOT_STARTED |
 | AI timeout/5xx hatası | §20 AI | Meta AI timeout veya 5xx hatası | @U3 @ai @negative | 20 | E2E + Unit | NOT_STARTED |
 | **AI halüsinasyon önleme** | §20 AI, §45 eval | AI halüsinasyon — uydurma | @U3 @ai @negative | 20, 45 | E2E + Manual | NOT_STARTED |
 | **Saat SOS → telefon (U4)** | §37 watchOS, §35 Wear OS | Saat offline SOS'u telefona gönderir | @U4 @post-m0 | 35, 37 | Device | NOT_STARTED |

@@ -42,7 +42,7 @@
       "deliverables": "docs/product/prd.md; docs/tests/m0-acceptance.feature; docs/risk-register.md",
       "pass_criteria": "M0 doğrulanabilir ve açık bir demo kapsamına sahip.",
       "status": "IN_PROGRESS",
-      "attempts": 1,
+      "attempts": 2,
       "commit": null,
       "evidence": [],
       "blockers": [],

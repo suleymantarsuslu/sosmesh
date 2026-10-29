@@ -210,7 +210,8 @@ Aşağıdaki ifadeler **hiçbir UI/bildirimde/dokümantasyonda kanıtsız kullan
 4. Operatör orijinal mesaj, GPS, zaman damgası görür
 5. **AI Destekleyici Sınıflandırma (Opsiyonel):**
    - Backend AI worker `/v1/ingest` sonrası SOS'u queue'dan alır
-   - Yapılandırılmış Meta model kimliği ile prompt gönderir: "Aşağıdaki acil durum metnini sınıflandır; açıkça söylenmeyenleri UYDURMA"
+   - `META_BASE_URL` (https://api.meta.ai/v1) üzerinden `META_MODEL` (örn. muse-spark-1.3) ile prompt gönderir: "Aşağıdaki acil durum metnini sınıflandır; açıkça söylenmeyenleri UYDURMA"
+   - `MODEL_API_KEY` env değişkeni kullanılır (server-only; **anahtar geçerliliği/kotası B-05'te doğrulanmadı**)
    - AI cevabı JSON Schema ile validate edilir: `categories[]`, `persons_estimate`, `injuries_reported`, `needs[]`, `urgency_suggestion`, `uncertainty`, `quoted_evidence`, `location_unknown`, `language`
    - Belirsizlik bayrakları (`uncertainty`, `location_unknown`) kontrol edilir
    - AI çıktısı `ai_analyses` tablosuna yazılır, vaka ile ilişkilendirilir

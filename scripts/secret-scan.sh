@@ -41,12 +41,12 @@ if [ $# -gt 0 ]; then
   FILES=("$@")
   echo "Taranıyor: ${#FILES[@]} dosya (custom list)"
 else
-  # git ls-files'tan yalnız test script'leri hariç tut
+  # git ls-files'tan yalnız test script'leri ve lockfile'ları hariç tut
   mapfile -d '' ALL_FILES < <(git ls-files -z 2>/dev/null || find . -type f -print0)
   FILES=()
   for FILE in "${ALL_FILES[@]}"; do
-    # Yalnız scripts/test-*.sh hariç tut (ADR-004 dahil tüm md'ler taranmalı)
-    if [[ "$FILE" == scripts/test-*.sh ]]; then
+    # Yalnız scripts/test-*.sh ve pnpm-lock.yaml hariç tut (ADR-004 dahil tüm md'ler taranmalı)
+    if [[ "$FILE" == scripts/test-*.sh ]] || [[ "$FILE" == "pnpm-lock.yaml" ]]; then
       continue
     fi
     FILES+=("$FILE")

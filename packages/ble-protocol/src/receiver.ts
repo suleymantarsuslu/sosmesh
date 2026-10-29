@@ -204,15 +204,16 @@ export class Receiver extends EventEmitter {
         await this.verifyAndComplete();
       }
 
-    } catch (error: any) {
+    } catch (error: unknown) {
       // CRC mismatch or other error
       const seq = data.length >= 2 ? data.readUInt16BE(0) : 0;
+      const errorMessage = error instanceof Error ? error.message : String(error);
       this.logEvent({ 
         timestamp: this.clock.now(), 
         event: 'chunk_error', 
         msgId: '00000000',
         seq,
-        error: error.message 
+        error: errorMessage
       });
       await this.sendNack(seq, ErrorCode.CRC_MISMATCH);
     }
@@ -277,8 +278,9 @@ export class Receiver extends EventEmitter {
         ackLevel: AckLevel.PEER_RECEIVED 
       });
 
-    } catch (error: any) {
-      this.fail(ErrorCode.DIGEST_INVALID, `Verification failed: ${error.message}`);
+    } catch (error: unknown) {
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+      this.fail(ErrorCode.DIGEST_INVALID, `Verification failed: ${errorMessage}`);
     }
   }
 

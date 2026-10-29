@@ -27,9 +27,9 @@ class SeededRNG implements IRNG {
 }
 
 async function runSimulatedTransfer(
-  senderTransport: any,
-  receiverTransport: any,
-  channel: any,
+  senderTransport: MockTransport,
+  receiverTransport: MockTransport,
+  channel: MockChannel,
   clock: IClock,
   payload: Buffer,
   msgId: string,
@@ -350,7 +350,7 @@ describe('BLE Protocol Integration Tests (Simulated Clock)', () => {
       encryptedPayload: 'SECRET_MESSAGE_HELP_NEEDED'
     }));
 
-    const events: any[] = [];
+    const events: Array<{ source: string; [key: string]: unknown }> = [];
     const sender = new Sender(senderTransport, {}, clock, rng);
     const receiver = new Receiver(receiverTransport, {}, clock);
 

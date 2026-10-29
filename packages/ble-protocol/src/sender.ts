@@ -56,15 +56,16 @@ export class SimulatedClock implements IClock {
     return this.currentTime;
   }
 
-  setTimeout(fn: () => void, ms: number): any {
+  setTimeout(fn: () => void, ms: number): NodeJS.Timeout {
     const id = this.nextId++;
     this.timers.push({ id, fireAt: this.currentTime + ms, fn });
     this.timers.sort((a, b) => a.fireAt - b.fireAt);
-    return id;
+    return id as unknown as NodeJS.Timeout;
   }
 
-  clearTimeout(id: any): void {
-    this.timers = this.timers.filter(t => t.id !== id);
+  clearTimeout(id: NodeJS.Timeout): void {
+    const numericId = id as unknown as number;
+    this.timers = this.timers.filter(t => t.id !== numericId);
   }
 
   async advanceAsync(ms: number): Promise<void> {

@@ -66,8 +66,8 @@ interface QueuedPacket {
 
 export class MockChannel {
   private queue: QueuedPacket[] = [];
-  private disconnectTimer: any = null;
-  private processingTimer: any = null;
+  private disconnectTimer: NodeJS.Timeout | null = null;
+  private processingTimer: NodeJS.Timeout | null = null;
   private startTime: number;
   private rng: IRNG;
   private clock: IClock;

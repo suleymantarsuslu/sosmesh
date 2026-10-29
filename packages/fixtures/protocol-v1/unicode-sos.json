@@ -1,0 +1,17 @@
+{
+  "version": 1,
+  "id": "660e8400-e29b-41d4-a716-446655440001",
+  "envelope": {
+    "timestamp": "2026-10-29T17:00:00Z",
+    "location": {
+      "latitude": 41.0082,
+      "longitude": 28.9784,
+      "accuracy": 15.0
+    },
+    "priority": 2,
+    "ackLevel": "PEER_RECEIVED",
+    "relayCount": 1
+  },
+  "encryptedPayload": "TEST_PAYLOAD_İÇİNDE_TÜRKÇE_KARAKTER_VE_EMOJI_🚨_ÇŞĞÜÖİ==",
+  "signature": "مرحبا_RTL_TEST_SIGNATURE"
+}

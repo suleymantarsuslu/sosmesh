@@ -1,0 +1,17 @@
+{
+  "version": 1,
+  "id": "550e8400-e29b-41d4-a716-446655440000",
+  "envelope": {
+    "timestamp": "2026-10-29T16:00:00Z",
+    "location": {
+      "latitude": 39.9334,
+      "longitude": 32.8597,
+      "accuracy": 10.5
+    },
+    "priority": 1,
+    "ackLevel": "DEVICE_STORED",
+    "relayCount": 0
+  },
+  "encryptedPayload": "ENCRYPTED_TEST_PAYLOAD_BASE64==",
+  "signature": "FAKE_SIGNATURE_FOR_TESTING"
+}

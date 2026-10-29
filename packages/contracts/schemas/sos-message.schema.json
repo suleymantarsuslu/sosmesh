@@ -1,0 +1,68 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://sosmesh.local/schemas/sos-message.schema.json",
+  "title": "SOSMesh SOS Message",
+  "type": "object",
+  "required": ["version", "id", "envelope", "encryptedPayload"],
+  "properties": {
+    "version": {
+      "$ref": "common.schema.json#/definitions/version"
+    },
+    "id": {
+      "$ref": "common.schema.json#/definitions/uuid"
+    },
+    "envelope": {
+      "type": "object",
+      "required": ["timestamp", "location", "priority", "ackLevel"],
+      "properties": {
+        "timestamp": {
+          "$ref": "common.schema.json#/definitions/timestamp"
+        },
+        "location": {
+          "type": "object",
+          "required": ["latitude", "longitude"],
+          "properties": {
+            "latitude": {
+              "type": "number",
+              "minimum": -90,
+              "maximum": 90
+            },
+            "longitude": {
+              "type": "number",
+              "minimum": -180,
+              "maximum": 180
+            },
+            "accuracy": {
+              "$ref": "common.schema.json#/definitions/accuracy"
+            }
+          }
+        },
+        "priority": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 5,
+          "description": "1=highest, 5=lowest"
+        },
+        "ackLevel": {
+          "$ref": "common.schema.json#/definitions/ackLevel"
+        },
+        "relayCount": {
+          "type": "integer",
+          "minimum": 0,
+          "description": "Number of relay hops"
+        }
+      },
+      "description": "Public envelope visible to relays"
+    },
+    "encryptedPayload": {
+      "type": "string",
+      "minLength": 1,
+      "description": "Encrypted sensitive message text, opaque to relays"
+    },
+    "signature": {
+      "type": "string",
+      "description": "Message signature for integrity"
+    }
+  },
+  "additionalProperties": false
+}

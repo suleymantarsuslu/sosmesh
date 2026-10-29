@@ -199,6 +199,49 @@ jobs:
             -sdk iphonesimulator \
             -destination 'platform=iOS Simulator,name=iPhone 15'
 
+  cross-language-contracts:
+    name: Cross-Language Contract Tests
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+      
+      - name: Install pnpm
+        uses: pnpm/action-setup@v3
+      
+      - name: Setup Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'temurin'
+          java-version: '17'
+      
+      - name: Setup Swift
+        uses: swift-actions/setup-swift@v2
+        with:
+          swift-version: '5.9'
+      
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+      
+      - name: Run TypeScript contract tests
+        run: cd packages/contracts && pnpm test
+      
+      - name: Run Kotlin contract tests
+        run: |
+          cd packages/contracts-kotlin
+          chmod +x gradlew || gradle wrapper
+          ./gradlew test
+      
+      - name: Run Swift contract tests
+        run: cd packages/contracts-swift && swift test
+
   secret-scan:
     name: Secret Scan
     runs-on: ubuntu-latest

@@ -158,7 +158,7 @@
       ],
       "deliverables": ".github/workflows, scripts/verify.sh, docs/quality-gates.md",
       "pass_criteria": "CI kilidi gerçek; sahte/skip test başarı sayılmıyor.",
-      "status": "NOT_STARTED",
+      "status": "IN_PROGRESS",
       "attempts": 0,
       "commit": null,
       "evidence": [],

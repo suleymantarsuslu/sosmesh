@@ -1,0 +1,221 @@
+name: CI
+
+on:
+  push:
+    branches: [main, dev]
+  pull_request:
+    branches: [main, dev]
+
+jobs:
+  verify:
+    name: Verify Quality Gates
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+      
+      - name: Install pnpm
+        uses: pnpm/action-setup@v3
+        with:
+          version: 8
+      
+      - name: Get pnpm store directory
+        shell: bash
+        run: |
+          echo "STORE_PATH=$(pnpm store path --silent)" >> $GITHUB_ENV
+      
+      - name: Setup pnpm cache
+        uses: actions/cache@v4
+        with:
+          path: ${{ env.STORE_PATH }}
+          key: ${{ runner.os }}-pnpm-store-${{ hashFiles('**/pnpm-lock.yaml') }}
+          restore-keys: |
+            ${{ runner.os }}-pnpm-store-
+      
+      - name: Install Playwright browsers
+        run: npx playwright install --with-deps chromium
+      
+      - name: Run verification script
+        run: bash scripts/verify.sh
+      
+      - name: Upload test reports
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: test-reports
+          path: reports/
+          retention-days: 30
+      
+      - name: Upload Playwright report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-report
+          path: playwright-report/
+          retention-days: 30
+      
+      - name: Generate coverage summary
+        if: always()
+        run: |
+          if [ -f coverage/coverage-summary.json ]; then
+            echo "## Test Coverage" >> $GITHUB_STEP_SUMMARY
+            cat coverage/coverage-summary.json >> $GITHUB_STEP_SUMMARY
+          fi
+
+  contracts:
+    name: Contracts Type Check
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+      
+      - name: Install pnpm
+        uses: pnpm/action-setup@v3
+        with:
+          version: 8
+      
+      - name: Install dependencies
+        run: cd packages/contracts && pnpm install --frozen-lockfile
+      
+      - name: Build contracts
+        run: cd packages/contracts && pnpm build
+      
+      - name: Type check
+        run: cd packages/contracts && npx tsc --noEmit
+
+  android-gradle:
+    name: Android Gradle Build
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      
+      - name: Check if Android project exists
+        id: check-android
+        run: |
+          if [ -f "apps/android/build.gradle" ] || [ -f "apps/android/build.gradle.kts" ]; then
+            echo "exists=true" >> $GITHUB_OUTPUT
+          else
+            echo "exists=false" >> $GITHUB_OUTPUT
+            echo "::notice::Android project not found - skipping Android build"
+          fi
+      
+      - name: Setup JDK 17
+        if: steps.check-android.outputs.exists == 'true'
+        uses: actions/setup-java@v4
+        with:
+          java-version: '17'
+          distribution: 'temurin'
+      
+      - name: Setup Gradle cache
+        if: steps.check-android.outputs.exists == 'true'
+        uses: gradle/actions/setup-gradle@v3
+      
+      - name: Lint Kotlin
+        if: steps.check-android.outputs.exists == 'true'
+        run: cd apps/android && ./gradlew ktlintCheck
+      
+      - name: Build debug APK
+        if: steps.check-android.outputs.exists == 'true'
+        run: cd apps/android && ./gradlew assembleDebug
+      
+      - name: Run unit tests
+        if: steps.check-android.outputs.exists == 'true'
+        run: cd apps/android && ./gradlew testDebugUnitTest
+      
+      - name: Upload APK
+        if: steps.check-android.outputs.exists == 'true'
+        uses: actions/upload-artifact@v4
+        with:
+          name: android-debug-apk
+          path: apps/android/app/build/outputs/apk/debug/*.apk
+
+  ios-xcode:
+    name: iOS Xcode Build
+    runs-on: macos-latest
+    timeout-minutes: 30
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      
+      - name: Check if iOS project exists
+        id: check-ios
+        run: |
+          if [ -d "apps/ios" ] && ([ -n "$(find apps/ios -name '*.xcodeproj' -o -name '*.xcworkspace' 2>/dev/null)" ]); then
+            echo "exists=true" >> $GITHUB_OUTPUT
+          else
+            echo "exists=false" >> $GITHUB_OUTPUT
+            echo "::notice::iOS project not found - skipping iOS build"
+          fi
+      
+      - name: Setup Xcode
+        if: steps.check-ios.outputs.exists == 'true'
+        uses: maxim-lobanov/setup-xcode@v1
+        with:
+          xcode-version: '15.2'
+      
+      - name: Install CocoaPods
+        if: steps.check-ios.outputs.exists == 'true'
+        run: cd apps/ios && pod install
+      
+      - name: Lint Swift
+        if: steps.check-ios.outputs.exists == 'true'
+        run: |
+          if command -v swiftlint &> /dev/null; then
+            cd apps/ios && swiftlint lint --strict
+          else
+            echo "SwiftLint not installed, skipping"
+          fi
+      
+      - name: Build iOS app
+        if: steps.check-ios.outputs.exists == 'true'
+        run: |
+          cd apps/ios
+          xcodebuild \
+            -workspace SOSMesh.xcworkspace \
+            -scheme SOSMesh-iOS \
+            -sdk iphonesimulator \
+            -destination 'platform=iOS Simulator,name=iPhone 15' \
+            clean build
+      
+      - name: Run tests
+        if: steps.check-ios.outputs.exists == 'true'
+        run: |
+          cd apps/ios
+          xcodebuild test \
+            -workspace SOSMesh.xcworkspace \
+            -scheme SOSMesh-iOS \
+            -sdk iphonesimulator \
+            -destination 'platform=iOS Simulator,name=iPhone 15'
+
+  secret-scan:
+    name: Secret Scan
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      
+      - name: Run secret scan
+        run: bash scripts/secret-scan.sh
+      
+      - name: Test secret scan
+        run: bash scripts/test-secret-scan.sh

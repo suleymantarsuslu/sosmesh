@@ -17,7 +17,7 @@
   --color-light-surface-tertiary: #E0E0E0;
   --color-light-text-primary: #212121;
   --color-light-text-secondary: #616161;
-  --color-light-text-disabled: #9E9E9E;
+  --color-light-text-disabled: #616161;
   --color-light-text-onSos: #FFFFFF;
   --color-light-text-onDanger: #FFFFFF;
   --color-light-text-onSuccess: #FFFFFF;
@@ -119,7 +119,7 @@
   --color-dark-surface-tertiary: #2C2C2C;
   --color-dark-text-primary: #FFFFFF;
   --color-dark-text-secondary: #B0B0B0;
-  --color-dark-text-disabled: #757575;
+  --color-dark-text-disabled: #B0B0B0;
   --color-dark-text-onSos: #000000;
   --color-dark-text-onDanger: #000000;
   --color-dark-text-onSuccess: #000000;
@@ -141,7 +141,7 @@
   --color-surface-tertiary: #E0E0E0;
   --color-text-primary: #212121;
   --color-text-secondary: #616161;
-  --color-text-disabled: #9E9E9E;
+  --color-text-disabled: #616161;
   --color-text-onSos: #FFFFFF;
   --color-text-onDanger: #FFFFFF;
   --color-text-onSuccess: #FFFFFF;
@@ -162,7 +162,7 @@
   --color-surface-tertiary: #2C2C2C;
   --color-text-primary: #FFFFFF;
   --color-text-secondary: #B0B0B0;
-  --color-text-disabled: #757575;
+  --color-text-disabled: #616161;
   --color-text-onSos: #000000;
   --color-text-onDanger: #000000;
   --color-text-onSuccess: #000000;

@@ -15,7 +15,9 @@ const FORBIDDEN_TR = [
   'teslim edildi',
   'yardım geliyor',
   'kurtarılacaksınız',
-  'güvendesiniz'
+  'güvendesiniz',
+  'çözüldü',
+  'tamamlandı'
 ];
 
 const FORBIDDEN_EN = [
@@ -23,7 +25,9 @@ const FORBIDDEN_EN = [
   'read by',
   'help is on the way',
   'you are safe',
-  'rescued'
+  'rescued',
+  'resolved',
+  'completed'
 ];
 
 // Taranacak dosyalar

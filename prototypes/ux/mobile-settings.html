@@ -1,0 +1,270 @@
+<!DOCTYPE html>
+<html lang="tr" data-theme="light">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0">
+  <title>SOSMesh — Ayarlar</title>
+  <link rel="stylesheet" href="../../packages/design-tokens/tokens.css">
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+    
+    body {
+      font-family: var(--type-fontFamily-base);
+      font-size: var(--type-fontSize-base);
+      line-height: var(--type-lineHeight-normal);
+      background: var(--color-surface-primary);
+      color: var(--color-text-primary);
+      max-width: 430px;
+      margin: 0 auto;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+    }
+    
+    .header {
+      padding: var(--space-4);
+      background: var(--color-surface-secondary);
+      box-shadow: var(--elevation-2);
+      text-align: center;
+    }
+    
+    .header h1 {
+      font-size: var(--type-fontSize-xl);
+      font-weight: var(--type-fontWeight-semibold);
+    }
+    
+    .main {
+      flex: 1;
+      overflow-y: auto;
+    }
+    
+    .section {
+      border-bottom: 1px solid var(--color-border);
+      padding: var(--space-4);
+    }
+    
+    .section-title {
+      font-size: var(--type-fontSize-sm);
+      font-weight: var(--type-fontWeight-semibold);
+      color: var(--color-text-secondary);
+      text-transform: uppercase;
+      letter-spacing: var(--type-letterSpacing-wide);
+      margin-bottom: var(--space-3);
+    }
+    
+    .setting-item {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: var(--space-3) 0;
+      min-height: var(--touch-default);
+    }
+    
+    .setting-label {
+      flex: 1;
+    }
+    
+    .setting-label-main {
+      font-weight: var(--type-fontWeight-medium);
+      margin-bottom: var(--space-1);
+    }
+    
+    .setting-label-sub {
+      font-size: var(--type-fontSize-sm);
+      color: var(--color-text-secondary);
+    }
+    
+    .toggle {
+      width: 48px;
+      height: 28px;
+      background: var(--color-offline);
+      border-radius: var(--radius-full);
+      position: relative;
+      cursor: pointer;
+      transition: background 250ms;
+    }
+    
+    .toggle.active {
+      background: var(--color-success);
+    }
+    
+    .toggle-thumb {
+      width: 24px;
+      height: 24px;
+      background: white;
+      border-radius: var(--radius-full);
+      position: absolute;
+      top: 2px;
+      left: 2px;
+      box-shadow: var(--elevation-2);
+      transition: transform 250ms;
+    }
+    
+    .toggle.active .toggle-thumb {
+      transform: translateX(20px);
+    }
+    
+    .select {
+      padding: var(--space-2) var(--space-3);
+      background: var(--color-surface-secondary);
+      border: 1px solid var(--color-border);
+      border-radius: var(--radius-base);
+      color: var(--color-text-primary);
+      font-size: var(--type-fontSize-base);
+      min-height: var(--touch-default);
+    }
+    
+    .bottom-nav {
+      display: flex;
+      justify-content: space-around;
+      background: var(--color-surface-secondary);
+      box-shadow: var(--elevation-3);
+      padding: var(--space-2) 0;
+    }
+    
+    .nav-item {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: var(--space-1);
+      padding: var(--space-2);
+      color: var(--color-text-secondary);
+      text-decoration: none;
+      font-size: var(--type-fontSize-xs);
+      min-height: var(--touch-default);
+    }
+    
+    .nav-item.active {
+      color: var(--color-sos);
+    }
+    
+    .nav-icon {
+      width: 24px;
+      height: 24px;
+      fill: currentColor;
+    }
+  </style>
+</head>
+<body>
+  <div class="header">
+    <h1>Ayarlar</h1>
+  </div>
+  
+  <main class="main" role="main">
+    <section class="section">
+      <h2 class="section-title">İzinler</h2>
+      
+      <div class="setting-item">
+        <div class="setting-label">
+          <div class="setting-label-main">Konum</div>
+          <div class="setting-label-sub">GPS koordinatları paylaşımı</div>
+        </div>
+        <button class="toggle active" role="switch" aria-checked="true" aria-label="Konum izni">
+          <div class="toggle-thumb"></div>
+        </button>
+      </div>
+      
+      <div class="setting-item">
+        <div class="setting-label">
+          <div class="setting-label-main">Bluetooth</div>
+          <div class="setting-label-sub">Mesh ağ bağlantısı</div>
+        </div>
+        <button class="toggle active" role="switch" aria-checked="true" aria-label="Bluetooth izni">
+          <div class="toggle-thumb"></div>
+        </button>
+      </div>
+      
+      <div class="setting-item">
+        <div class="setting-label">
+          <div class="setting-label-main">Bildirimler</div>
+          <div class="setting-label-sub">SOS durumu güncellemeleri</div>
+        </div>
+        <button class="toggle" role="switch" aria-checked="false" aria-label="Bildirim izni">
+          <div class="toggle-thumb"></div>
+        </button>
+      </div>
+    </section>
+    
+    <section class="section">
+      <h2 class="section-title">Dil</h2>
+      
+      <div class="setting-item">
+        <div class="setting-label">
+          <div class="setting-label-main">Arayüz Dili</div>
+        </div>
+        <select class="select" aria-label="Dil seçimi">
+          <option value="tr">Türkçe</option>
+          <option value="en">English</option>
+        </select>
+      </div>
+    </section>
+    
+    <section class="section">
+      <h2 class="section-title">Tema</h2>
+      
+      <div class="setting-item">
+        <div class="setting-label">
+          <div class="setting-label-main">Görünüm</div>
+        </div>
+        <select class="select" aria-label="Tema seçimi">
+          <option value="light">Açık</option>
+          <option value="dark">Koyu</option>
+          <option value="auto">Otomatik</option>
+        </select>
+      </div>
+    </section>
+    
+    <section class="section">
+      <h2 class="section-title">Hakkında</h2>
+      
+      <div class="setting-item">
+        <div class="setting-label">
+          <div class="setting-label-main">Versiyon</div>
+          <div class="setting-label-sub">1.0.0 (build 1)</div>
+        </div>
+      </div>
+      
+      <div class="setting-item">
+        <button class="setting-label" style="text-align: left; background: none; border: none; cursor: pointer; padding: 0;">
+          <div class="setting-label-main">Lisanslar</div>
+          <div class="setting-label-sub">Açık kaynak lisansları</div>
+        </button>
+      </div>
+    </section>
+  </main>
+  
+  <nav class="bottom-nav" role="navigation" aria-label="Ana navigasyon">
+    <a href="mobile-home.html" class="nav-item">
+      <svg class="nav-icon" viewBox="0 0 24 24"><path d="M10 20v-6h4v6h5v-8h3L12 3 2 12h3v8z"/></svg>
+      <span>Ana Sayfa</span>
+    </a>
+    <a href="mobile-status.html" class="nav-item">
+      <svg class="nav-icon" viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/></svg>
+      <span>Durum</span>
+    </a>
+    <a href="mobile-relay.html" class="nav-item">
+      <svg class="nav-icon" viewBox="0 0 24 24"><path d="M17.65 6.35C16.2 4.9 14.21 4 12 4c-4.42 0-7.99 3.58-7.99 8s3.57 8 7.99 8c3.73 0 6.84-2.55 7.73-6h-2.08c-.82 2.33-3.04 4-5.65 4-3.31 0-6-2.69-6-6s2.69-6 6-6c1.66 0 3.14.69 4.22 1.78L13 11h7V4l-2.35 2.35z"/></svg>
+      <span>Relay</span>
+    </a>
+    <a href="mobile-settings.html" class="nav-item active">
+      <svg class="nav-icon" viewBox="0 0 24 24"><path d="M19.14 12.94c.04-.3.06-.61.06-.94 0-.32-.02-.64-.07-.94l2.03-1.58c.18-.14.23-.41.12-.61l-1.92-3.32c-.12-.22-.37-.29-.59-.22l-2.39.96c-.5-.38-1.03-.7-1.62-.94l-.36-2.54c-.04-.24-.24-.41-.48-.41h-3.84c-.24 0-.43.17-.47.41l-.36 2.54c-.59.24-1.13.57-1.62.94l-2.39-.96c-.22-.08-.47 0-.59.22L2.74 8.87c-.12.21-.08.47.12.61l2.03 1.58c-.05.3-.09.63-.09.94s.02.64.07.94l-2.03 1.58c-.18.14-.23.41-.12.61l1.92 3.32c.12.22.37.29.59.22l2.39-.96c.5.38 1.03.7 1.62.94l.36 2.54c.05.24.24.41.48.41h3.84c.24 0 .44-.17.47-.41l.36-2.54c.59-.24 1.13-.56 1.62-.94l2.39.96c.22.08.47 0 .59-.22l1.92-3.32c.12-.22.07-.47-.12-.61l-2.01-1.58zM12 15.6c-1.98 0-3.6-1.62-3.6-3.6s1.62-3.6 3.6-3.6 3.6 1.62 3.6 3.6-1.62 3.6-3.6 3.6z"/></svg>
+      <span>Ayarlar</span>
+    </a>
+  </nav>
+  
+  <script>
+    document.querySelectorAll('.toggle').forEach(toggle => {
+      toggle.addEventListener('click', () => {
+        toggle.classList.toggle('active');
+        const isActive = toggle.classList.contains('active');
+        toggle.setAttribute('aria-checked', isActive);
+      });
+    });
+  </script>
+</body>
+</html>

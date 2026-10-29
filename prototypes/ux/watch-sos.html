@@ -1,0 +1,209 @@
+<!DOCTYPE html>
+<html lang="tr" data-theme="light">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=198, initial-scale=1.0">
+  <title>SOSMesh — Saat SOS</title>
+  <link rel="stylesheet" href="../../packages/design-tokens/tokens.css">
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+    
+    body {
+      font-family: var(--type-fontFamily-base);
+      background: var(--color-surface-primary);
+      color: var(--color-text-primary);
+      width: 198px;
+      height: 242px;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+    }
+    
+    .watch-screen {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: var(--space-3);
+    }
+    
+    .sos-button-watch {
+      width: 120px;
+      height: 120px;
+      border-radius: var(--radius-full);
+      background: linear-gradient(135deg, var(--color-sos) 0%, var(--color-danger) 100%);
+      color: var(--color-text-onSos);
+      font-size: var(--type-fontSize-2xl);
+      font-weight: var(--type-fontWeight-bold);
+      border: none;
+      cursor: pointer;
+      box-shadow: var(--elevation-3);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      position: relative;
+    }
+    
+    .progress-ring {
+      position: absolute;
+      top: -4px;
+      left: -4px;
+      width: 128px;
+      height: 128px;
+    }
+    
+    .progress-ring circle {
+      fill: none;
+      stroke: white;
+      stroke-width: 3;
+      stroke-dasharray: 402;
+      stroke-dashoffset: 402;
+      transform-origin: center;
+      animation: progress-watch 3s linear forwards;
+    }
+    
+    @keyframes progress-watch {
+      to {
+        stroke-dashoffset: 0;
+      }
+    }
+    
+    .watch-instructions {
+      margin-top: var(--space-3);
+      text-align: center;
+      color: var(--color-text-secondary);
+      font-size: 11px;
+    }
+    
+    .status-screen {
+      display: none;
+      flex-direction: column;
+      padding: var(--space-3);
+      overflow-y: auto;
+    }
+    
+    .status-screen.visible {
+      display: flex;
+    }
+    
+    .status-title {
+      font-size: var(--type-fontSize-base);
+      font-weight: var(--type-fontWeight-semibold);
+      margin-bottom: var(--space-3);
+      text-align: center;
+    }
+    
+    .status-item {
+      display: flex;
+      align-items: center;
+      gap: var(--space-2);
+      padding: var(--space-2) 0;
+      border-bottom: 1px solid var(--color-border);
+      font-size: 11px;
+    }
+    
+    .status-item:last-child {
+      border-bottom: none;
+    }
+    
+    .status-icon {
+      width: 16px;
+      height: 16px;
+      border-radius: var(--radius-full);
+      background: var(--color-success);
+      color: white;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 9px;
+      flex-shrink: 0;
+    }
+    
+    .status-label {
+      flex: 1;
+      font-weight: var(--type-fontWeight-medium);
+    }
+    
+    .status-time {
+      color: var(--color-text-disabled);
+      font-size: 10px;
+    }
+  </style>
+</head>
+<body>
+  <div class="watch-screen" id="sosScreen">
+    <button class="sos-button-watch" id="sosButtonWatch" aria-label="SOS gönder, 3 saniye basılı tut">
+      <span>SOS</span>
+    </button>
+    <p class="watch-instructions">3 sn basılı tut</p>
+  </div>
+  
+  <div class="status-screen" id="statusScreen">
+    <h2 class="status-title">Durum</h2>
+    
+    <div class="status-item">
+      <div class="status-icon">1</div>
+      <div class="status-label">Kayıtlı</div>
+      <div class="status-time">14:23</div>
+    </div>
+    
+    <div class="status-item">
+      <div class="status-icon">2</div>
+      <div class="status-label">Aktarıldı</div>
+      <div class="status-time">14:24</div>
+    </div>
+    
+    <div class="status-item">
+      <div class="status-icon">3</div>
+      <div class="status-label">Sunucuda</div>
+      <div class="status-time">14:24</div>
+    </div>
+    
+    <div class="status-item">
+      <div class="status-icon">4</div>
+      <div class="status-label">Görüldü</div>
+      <div class="status-time">14:26</div>
+    </div>
+    
+    <div class="status-item">
+      <div class="status-icon" style="background: var(--color-offline);">5</div>
+      <div class="status-label" style="color: var(--color-text-disabled);">İşlemde</div>
+      <div class="status-time">—</div>
+    </div>
+  </div>
+  
+  <script>
+    const sosButtonWatch = document.getElementById('sosButtonWatch');
+    const sosScreen = document.getElementById('sosScreen');
+    const statusScreen = document.getElementById('statusScreen');
+    
+    let holdTimer;
+    
+    sosButtonWatch.addEventListener('pointerdown', (e) => {
+      e.preventDefault();
+      holdTimer = setTimeout(() => {
+        // Simulate SOS sent
+        sosScreen.style.display = 'none';
+        statusScreen.classList.add('visible');
+      }, 3000);
+    });
+    
+    sosButtonWatch.addEventListener('pointerup', () => {
+      clearTimeout(holdTimer);
+    });
+    
+    // Toggle between screens for demo
+    document.addEventListener('dblclick', () => {
+      if (sosScreen.style.display === 'none') {
+        sosScreen.style.display = 'flex';
+        statusScreen.classList.remove('visible');
+      }
+    });
+  </script>
+</body>
+</html>

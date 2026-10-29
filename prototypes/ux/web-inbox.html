@@ -1,0 +1,264 @@
+<!DOCTYPE html>
+<html lang="tr" data-theme="light">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>SOSMesh — Gelen Kutusu</title>
+  <link rel="stylesheet" href="../../packages/design-tokens/tokens.css">
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+    
+    body {
+      font-family: var(--type-fontFamily-base);
+      font-size: var(--type-fontSize-base);
+      line-height: var(--type-lineHeight-normal);
+      background: var(--color-surface-primary);
+      color: var(--color-text-primary);
+      display: flex;
+      height: 100vh;
+      overflow-x: auto;
+      overflow-y: hidden;
+    }
+    
+    .inbox-container {
+      display: flex;
+      flex: 1;
+    }
+    
+    .inbox-list {
+      min-width: 240px;
+      width: 480px;
+      max-width: 100%;
+      background: var(--color-surface-secondary);
+      border-right: 1px solid var(--color-border);
+      display: flex;
+      flex-direction: column;
+      flex-shrink: 0;
+    }
+    
+    .inbox-header {
+      padding: var(--space-6);
+      border-bottom: 1px solid var(--color-border);
+    }
+    
+    .inbox-header h1 {
+      font-size: var(--type-fontSize-2xl);
+      font-weight: var(--type-fontWeight-semibold);
+    }
+    
+    .inbox-items {
+      flex: 1;
+      overflow-y: auto;
+    }
+    
+    .inbox-item {
+      padding: var(--space-4) var(--space-6);
+      border-bottom: 1px solid var(--color-border);
+      cursor: pointer;
+      transition: background 150ms;
+    }
+    
+    .inbox-item:hover {
+      background: var(--color-surface-tertiary);
+    }
+    
+    .inbox-item.active {
+      background: var(--color-surface-tertiary);
+      border-left: 4px solid var(--color-sos);
+    }
+    
+    .inbox-item-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: var(--space-2);
+    }
+    
+    .inbox-item-id {
+      font-weight: var(--type-fontWeight-semibold);
+    }
+    
+    .inbox-item-time {
+      font-size: var(--type-fontSize-sm);
+      color: var(--color-text-disabled);
+    }
+    
+    .inbox-item-location {
+      font-size: var(--type-fontSize-sm);
+      color: var(--color-text-secondary);
+      margin-bottom: var(--space-1);
+    }
+    
+    .inbox-item-status {
+      display: inline-block;
+      padding: var(--space-1) var(--space-2);
+      border-radius: var(--radius-sm);
+      font-size: var(--type-fontSize-xs);
+      font-weight: var(--type-fontWeight-semibold);
+      background: var(--color-danger);
+      color: white;
+    }
+    
+    .inbox-detail {
+      flex: 1;
+      padding: var(--space-6);
+      overflow-y: auto;
+    }
+    
+    .detail-header {
+      margin-bottom: var(--space-8);
+    }
+    
+    .detail-header h2 {
+      font-size: var(--type-fontSize-3xl);
+      margin-bottom: var(--space-4);
+    }
+    
+    .detail-meta {
+      display: flex;
+      gap: var(--space-6);
+      color: var(--color-text-secondary);
+      font-size: var(--type-fontSize-sm);
+    }
+    
+    .detail-section {
+      margin-bottom: var(--space-8);
+    }
+    
+    .detail-section h3 {
+      font-size: var(--type-fontSize-xl);
+      margin-bottom: var(--space-4);
+    }
+    
+    .timeline {
+      position: relative;
+      padding-left: var(--space-8);
+    }
+    
+    .timeline::before {
+      content: '';
+      position: absolute;
+      left: 16px;
+      top: 24px;
+      bottom: 24px;
+      width: 2px;
+      background: var(--color-border);
+    }
+    
+    .timeline-item {
+      position: relative;
+      margin-bottom: var(--space-6);
+    }
+    
+    .timeline-icon {
+      position: absolute;
+      left: -32px;
+      top: 0;
+      width: 32px;
+      height: 32px;
+      border-radius: var(--radius-full);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: var(--color-success);
+      color: white;
+      font-size: var(--type-fontSize-sm);
+    }
+    
+    .timeline-label {
+      font-weight: var(--type-fontWeight-semibold);
+      margin-bottom: var(--space-1);
+    }
+    
+    .timeline-time {
+      font-size: var(--type-fontSize-sm);
+      color: var(--color-text-disabled);
+    }
+  </style>
+</head>
+<body>
+  <div class="inbox-container">
+    <aside class="inbox-list" role="complementary" aria-label="SOS listesi">
+      <div class="inbox-header">
+        <h1>Gelen Kutusu</h1>
+      </div>
+      
+      <div class="inbox-items" role="list">
+        <div class="inbox-item active" role="listitem">
+          <div class="inbox-item-header">
+            <span class="inbox-item-id">#8472</span>
+            <span class="inbox-item-time">14:32</span>
+          </div>
+          <div class="inbox-item-location">📍 Ankara, Çankaya</div>
+          <span class="inbox-item-status">Yeni</span>
+        </div>
+        
+        <div class="inbox-item" role="listitem">
+          <div class="inbox-item-header">
+            <span class="inbox-item-id">#8471</span>
+            <span class="inbox-item-time">13:58</span>
+          </div>
+          <div class="inbox-item-location">📍 İstanbul, Kadıköy</div>
+          <span class="inbox-item-status">Görüldü</span>
+        </div>
+        
+        <div class="inbox-item" role="listitem">
+          <div class="inbox-item-header">
+            <span class="inbox-item-id">#8470</span>
+            <span class="inbox-item-time">13:24</span>
+          </div>
+          <div class="inbox-item-location">📍 İzmir, Karşıyaka</div>
+          <span class="inbox-item-status">İşlemde</span>
+        </div>
+      </div>
+    </aside>
+    
+    <main class="inbox-detail" role="main">
+      <div class="detail-header">
+        <h2>SOS #8472</h2>
+        <div class="detail-meta">
+          <span>📍 Ankara, Çankaya</span>
+          <span>🕒 14:32:18</span>
+          <span>📱 BLE Mesh</span>
+        </div>
+      </div>
+      
+      <section class="detail-section">
+        <h3>Durum Zaman Çizelgesi</h3>
+        <div class="timeline">
+          <div class="timeline-item">
+            <div class="timeline-icon">1</div>
+            <div class="timeline-label">CİHAZDA KAYITLI</div>
+            <div class="timeline-time">14:32:18</div>
+          </div>
+          
+          <div class="timeline-item">
+            <div class="timeline-icon">2</div>
+            <div class="timeline-label">YAKIN CİHAZA AKTARILDI</div>
+            <div class="timeline-time">14:32:45</div>
+          </div>
+          
+          <div class="timeline-item">
+            <div class="timeline-icon">3</div>
+            <div class="timeline-label">SUNUCUYA ULAŞTI</div>
+            <div class="timeline-time">14:33:12</div>
+          </div>
+        </div>
+      </section>
+      
+      <section class="detail-section">
+        <h3>Notlar</h3>
+        <textarea 
+          style="width: 100%; min-height: 120px; padding: var(--space-3); border: 1px solid var(--color-border); border-radius: var(--radius-base); font-family: inherit; font-size: var(--type-fontSize-base);"
+          placeholder="Operatör notları ekleyin..."
+          aria-label="Operatör notları"
+        ></textarea>
+      </section>
+    </main>
+  </div>
+</body>
+</html>

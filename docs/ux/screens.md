@@ -27,7 +27,9 @@
 | Web Map | SOS konumunu gör | 2 (harita → marker seç) | ✅ |
 | Web Inbox | SOS detayını aç | 2 (liste → detay) | ✅ |
 | Web Cases | AI öneri gör | 3 (vaka → detay → öneri) | ✅ |
-| Saat SOS | SOS gönder | 1 (basılı tut, onaysız) | ✅ |
+| Web Teams | Ekip üyesi ekle | 3 (teams → üye seç → kaydet) | ✅ |
+| Web Admin | İzin düzenle | 3 (admin → kullanıcı → rol değiştir) | ✅ |
+| Saat SOS | SOS gönder | 3 (basılı tut → ilerleme → gönder/iptal) | ✅ |
 | Saat Status | Durum görüntüle | 1 (açıldığında görünür) | ✅ |
 
 ---
@@ -303,13 +305,13 @@ graph TD
 
 ### 4.1 Saat SOS
 
-**Amaç:** Hızlı SOS göndermek.
+**Amaç:** Hızlı SOS göndermek (kazara tetiklemeyi önle).
 
-**Birincil Eylem:** Basılı tut (onaysız)
+**Birincil Eylem:** Basılı tut (3 saniye) → iptal penceresi
 
 **Layout:**
 - **SOS Button:** Tam ekran, kırmızı
-- **İnteraksiyon:** 2 saniye basılı tut → gönder (onay YOK, acil durum)
+- **İnteraksiyon:** 3 saniye basılı tut → ilerleme halkası → geri sayım + iptal butonu
 
 **A11y:**
 - Haptic: Güçlü vibrasyon
@@ -327,6 +329,54 @@ graph TD
 
 **A11y:**
 - VoiceOver/TalkBack: Her durum okunabilir
+
+---
+
+### 4.5 Web Ekipler (Teams)
+
+**Amaç:** Ekip üyelerini ve görev dağıtımını yönetmek.
+
+**Birincil Eylem:** Ekip üyesi ekle/çıkar
+
+**Layout:**
+- **Ekip listesi:** İsim, rol, durum (aktif/pasif)
+- **Görev dağıtımı:** Drag-and-drop ekip üyesi atama
+- **İstatistikler:** Ekip başına ortalama yanıt süresi
+
+**Durumlar:**
+- **Empty:** "Henüz ekip üyesi eklenmedi"
+- **Loading:** Skeleton loader
+- **Error:** "Ekip verileri yüklenemedi"
+- **Offline:** "İnternet bağlantısı yok"
+- **Permission Denied:** "Yönetici izni gerekli"
+
+**A11y:**
+- ARIA labels: `role="list"`, `aria-label="Ekip üyeleri"`
+- Klavye: Tab ile navigasyon, Enter ile düzenle
+
+---
+
+### 4.6 Web Yönetim (Admin)
+
+**Amaç:** Sistem ayarlarını ve kullanıcı izinlerini yönetmek.
+
+**Birincil Eylem:** Kullanıcı izinlerini düzenle
+
+**Layout:**
+- **Kullanıcı yönetimi:** İzin rolleri (admin, operatör, görüntüleyici)
+- **Sistem ayarları:** AI model seçimi, relay politikası
+- **Audit log:** Sistem değişikliği kayıtları
+
+**Durumlar:**
+- **Empty:** "Audit log boş"
+- **Loading:** Skeleton loader
+- **Error:** "Ayarlar yüklenemedi"
+- **Offline:** "İnternet bağlantısı yok"
+- **Permission Denied:** "Sadece admin erişebilir"
+
+**A11y:**
+- Form validation: Hata mesajları `aria-describedby` ile
+- Checkboxlar: `role="checkbox"`, `aria-checked`
 
 ---
 
@@ -360,7 +410,7 @@ graph TD
 2. **YAKIN CİHAZA AKTARILDI** / **TRANSFERRED TO NEARBY DEVICE**
 3. **SUNUCUYA ULAŞTI** / **REACHED SERVER**
 4. **OPERATÖR GÖRDÜ** / **OPERATOR VIEWED**
-5. **VAKA İŞLEME ALINDI** / **CASE PROCESSED**
+5. **VAKA İŞLEM SÜRÜYOR** / **CASE IN PROGRESS**
 
 **Uyarı (her ekranda):**
 > "Bu durum bilgisi 'yardım gelecek' veya 'güvendesiniz' anlamına gelmez. 112'yi aramayı unutmayın."

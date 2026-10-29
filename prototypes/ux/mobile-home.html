@@ -18,11 +18,12 @@
       line-height: var(--type-lineHeight-normal);
       background: var(--color-surface-primary);
       color: var(--color-text-primary);
-      max-width: 430px;
+      max-width: 100%;
       margin: 0 auto;
       min-height: 100vh;
       display: flex;
       flex-direction: column;
+      overflow-x: hidden;
     }
     
     .header {
@@ -210,7 +211,7 @@
   </nav>
   
   <button class="theme-toggle" id="themeToggle" aria-label="Temayı değiştir">🌓</button>
-  <button class="lang-toggle" id="langToggle" aria-label="Dili değiştir">TR</button>
+  <button class="lang-toggle" id="langToggle" aria-label="TR - Dili değiştir">TR</button>
   
   <script>
     // Theme toggle

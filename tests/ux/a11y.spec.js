@@ -21,9 +21,13 @@ test.beforeAll(async () => {
 // Prototypes to test
 const prototypes = [
   { path: '/mobile-home.html', name: 'Mobile Home' },
+  { path: '/mobile-sos.html', name: 'Mobile SOS' },
   { path: '/mobile-status.html', name: 'Mobile Status' },
   { path: '/mobile-relay.html', name: 'Mobile Relay' },
+  { path: '/mobile-settings.html', name: 'Mobile Settings' },
   { path: '/web-dashboard.html', name: 'Web Dashboard' },
+  { path: '/web-inbox.html', name: 'Web Inbox' },
+  { path: '/watch-sos.html', name: 'Watch SOS' },
 ];
 
 prototypes.forEach(prototype => {

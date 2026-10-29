@@ -19,7 +19,7 @@ module.exports = defineConfig({
     {
       name: 'mobile-light-tr',
       use: {
-        ...devices['iPhone 13 Pro'],
+        ...devices['Desktop Chrome'],
         viewport: { width: 390, height: 844 },
         colorScheme: 'light',
         locale: 'tr-TR',
@@ -28,7 +28,7 @@ module.exports = defineConfig({
     {
       name: 'mobile-dark-tr',
       use: {
-        ...devices['iPhone 13 Pro'],
+        ...devices['Desktop Chrome'],
         viewport: { width: 390, height: 844 },
         colorScheme: 'dark',
         locale: 'tr-TR',

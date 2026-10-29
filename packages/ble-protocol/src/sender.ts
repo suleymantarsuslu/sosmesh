@@ -67,6 +67,21 @@ export class SimulatedClock implements IClock {
     this.timers = this.timers.filter(t => t.id !== id);
   }
 
+  async advanceAsync(ms: number): Promise<void> {
+    const targetTime = this.currentTime + ms;
+    
+    while (this.timers.length > 0 && this.timers[0].fireAt <= targetTime) {
+      const timer = this.timers.shift()!;
+      this.currentTime = timer.fireAt;
+      timer.fn();
+      await Promise.resolve(); // Flush microtask queue
+      this.timers.sort((a, b) => a.fireAt - b.fireAt);
+    }
+    
+    this.currentTime = targetTime;
+    await Promise.resolve(); // Final flush
+  }
+
   advance(ms: number): void {
     const targetTime = this.currentTime + ms;
     

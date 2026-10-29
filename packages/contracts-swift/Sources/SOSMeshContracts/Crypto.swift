@@ -54,6 +54,51 @@ public struct SOSMeshCrypto {
     private static let tagSize = 16 // 128 bits Poly1305
     
     /**
+     * @internal
+     * Test-only deterministic encryption with fixed ephemeral key and nonce.
+     * DO NOT USE IN PRODUCTION - for golden test vectors only.
+     */
+    public static func encryptDeterministic(
+        _ payload: Data,
+        envelope: [String: Any],
+        config: CryptoConfig,
+        ephemeralPrivateKeyData: Data,
+        nonceData: Data
+    ) throws -> EncryptedPayload {
+        guard ephemeralPrivateKeyData.count == 32 else {
+            throw CryptoError.invalidKey
+        }
+        guard nonceData.count == 12 else {
+            throw CryptoError.encryptionFailed
+        }
+        
+        let ephemeralPrivateKey = try Curve25519.KeyAgreement.PrivateKey(rawRepresentation: ephemeralPrivateKeyData)
+        let ephemeralPublicKey = ephemeralPrivateKey.publicKey
+        
+        guard let serverPublicKeyData = Data(base64Encoded: config.serverPublicKey),
+              serverPublicKeyData.count == 32 else {
+            throw CryptoError.invalidKey
+        }
+        
+        let serverPublicKey = try Curve25519.KeyAgreement.PublicKey(rawRepresentation: serverPublicKeyData)
+        let sharedSecret = try ephemeralPrivateKey.sharedSecretFromKeyAgreement(with: serverPublicKey)
+        let encryptionKey = deriveEncryptionKey(sharedSecret: sharedSecret, salt: nonceData, keyId: config.keyId)
+        let aad = try createAAD(envelope: envelope, keyId: config.keyId, protocolVersion: protocolVersion)
+        
+        let nonce = try ChaChaPoly.Nonce(data: nonceData)
+        let sealedBox = try ChaChaPoly.seal(payload, using: SymmetricKey(data: encryptionKey), nonce: nonce, authenticating: aad)
+        
+        let ciphertextWithTag = sealedBox.ciphertext + sealedBox.tag
+        
+        return EncryptedPayload(
+            ciphertext: ciphertextWithTag.base64EncodedString(),
+            nonce: nonceData.base64EncodedString(),
+            ephemeralPublicKey: ephemeralPublicKey.rawRepresentation.base64EncodedString(),
+            keyId: config.keyId
+        )
+    }
+
+    /**
      * Encrypt payload with server's pinned public key.
      *
      * - Parameters:
@@ -70,18 +115,6 @@ public struct SOSMeshCrypto {
     ) throws -> EncryptedPayload {
         // Generate ephemeral X25519 keypair
         let ephemeralPrivateKey = Curve25519.KeyAgreement.PrivateKey()
-        let ephemeralPublicKey = ephemeralPrivateKey.publicKey
-        
-        // Parse server public key
-        guard let serverPublicKeyData = Data(base64Encoded: config.serverPublicKey),
-              serverPublicKeyData.count == 32 else {
-            throw CryptoError.invalidKey
-        }
-        
-        let serverPublicKey = try Curve25519.KeyAgreement.PublicKey(rawRepresentation: serverPublicKeyData)
-        
-        // Perform X25519 ECDH
-        let sharedSecret = try ephemeralPrivateKey.sharedSecretFromKeyAgreement(with: serverPublicKey)
         
         // Generate random nonce
         var nonceBytes = Data(count: nonceSize)
@@ -102,6 +135,12 @@ public struct SOSMeshCrypto {
         }
         nonceBytes = Data(bytes)
         #endif
+        
+        return try encryptDeterministic(payload, envelope: envelope, config: config, ephemeralPrivateKeyData: ephemeralPrivateKey.rawRepresentation, nonceData: nonceBytes)
+    }
+    
+    // Old encryptPayload body removed - now uses encryptDeterministic
+    private static func oldEncryptPayload(
         
         // Derive encryption key using HKDF-SHA256
         let encryptionKey = try deriveEncryptionKey(

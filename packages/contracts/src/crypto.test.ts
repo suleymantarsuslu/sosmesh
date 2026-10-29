@@ -70,7 +70,11 @@ describe('Crypto - Encryption and Decryption', () => {
   it('should fail decryption with tampered ciphertext', () => {
     const encrypted = encryptPayload(payload, envelope, config);
 
-    // Tamper with ciphertext
+    // First verify unmodified decryption succeeds
+    const decrypted = decryptPayload(encrypted, envelope, config);
+    expect(decrypted).toEqual(payload);
+
+    // Then test tampered ciphertext fails
     const tamperedEncrypted = {
       ...encrypted,
       ciphertext: encrypted.ciphertext.replace(/A/g, 'B'),
@@ -83,7 +87,11 @@ describe('Crypto - Encryption and Decryption', () => {
   it('should fail decryption with tampered tag', () => {
     const encrypted = encryptPayload(payload, envelope, config);
 
-    // Tamper with last 16 bytes (Poly1305 tag) of ciphertext
+    // First verify unmodified decryption succeeds
+    const decrypted = decryptPayload(encrypted, envelope, config);
+    expect(decrypted).toEqual(payload);
+
+    // Then test tampered tag fails
     const ciphertextBytes = Buffer.from(encrypted.ciphertext, 'base64');
     if (ciphertextBytes.length > 16) {
       // Flip a bit in the tag (last 16 bytes)
@@ -101,7 +109,11 @@ describe('Crypto - Encryption and Decryption', () => {
   it('should fail decryption with tampered AAD', () => {
     const encrypted = encryptPayload(payload, envelope, config);
 
-    // Tamper with AAD
+    // First verify unmodified decryption succeeds
+    const decrypted = decryptPayload(encrypted, envelope, config);
+    expect(decrypted).toEqual(payload);
+
+    // Then test tampered AAD fails
     const tamperedEnvelope = {
       ...envelope,
       priority: 2, // Changed from 1
@@ -114,10 +126,17 @@ describe('Crypto - Encryption and Decryption', () => {
   it('should fail decryption with tampered nonce', () => {
     const encrypted = encryptPayload(payload, envelope, config);
 
-    // Tamper with nonce
+    // First verify unmodified decryption succeeds
+    const decrypted = decryptPayload(encrypted, envelope, config);
+    expect(decrypted).toEqual(payload);
+
+    // Then test tampered nonce fails
+    const nonceBytes = Buffer.from(encrypted.nonce, 'base64');
+    // Flip first byte
+    nonceBytes[0] ^= 0xFF;
     const tamperedEncrypted = {
       ...encrypted,
-      nonce: encrypted.nonce.replace(/A/g, 'B'),
+      nonce: nonceBytes.toString('base64'),
     };
 
     expect(() => decryptPayload(tamperedEncrypted, envelope, config))

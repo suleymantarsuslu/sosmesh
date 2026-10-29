@@ -1,3 +1,6 @@
+# Uploads
+uploads/
+
 # Secrets
 .env
 .env.*

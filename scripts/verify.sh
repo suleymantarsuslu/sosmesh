@@ -109,7 +109,21 @@ fi
 
 # 7. Web a11y test
 echo "7/18: pnpm test:a11y:web"
-if pnpm test:a11y:web > "$REPORTS_DIR/a11y-web.log" 2>&1; then
+# Ensure port 3000 is free before starting
+PORT_CHECK_FAILED=false
+if lsof -ti:3000 >/dev/null 2>&1; then
+  echo -e "${YELLOW}Port 3000 is still in use before a11y-web test. Cleaning up...${NC}"
+  lsof -ti:3000 | xargs -r kill -9 2>/dev/null || true
+  sleep 2
+  if lsof -ti:3000 >/dev/null 2>&1; then
+    echo -e "${RED}❌ Failed to free port 3000${NC}" | tee "$REPORTS_DIR/a11y-web.log"
+    PORT_CHECK_FAILED=true
+  fi
+fi
+
+if [ "$PORT_CHECK_FAILED" = true ]; then
+  check_exit "a11y-web" 1
+elif pnpm test:a11y:web > "$REPORTS_DIR/a11y-web.log" 2>&1; then
   check_exit "a11y-web" 0
 else
   EXIT_CODE=$?

@@ -69,8 +69,8 @@ test_pattern "GPS koordinat tespit edilmeli" "39.9334,32.8597" 1
 FAKE_JWT="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6IkpvaG4gRG9lIiwiaWF0IjoxNTE2MjM5MDIyfQ.SflKxwRJSMeKKF2QT4fwpMeJf36POk6yJV_adQssw5c"
 test_pattern "JWT tespit edilmeli" "Authorization: Bearer $FAKE_JWT" 1
 
-# Bearer token (sahte, 25 karakter)
-FAKE_BEARER_TOKEN="$(LC_ALL=C tr -dc 'A-Za-z0-9_.-' < /dev/urandom | head -c 25)"
+# Bearer token (sabit, deterministik, 25 karakter - kesin eşleşir)
+FAKE_BEARER_TOKEN="FAKE_TEST_BEARER_TOKEN_25CHAR"
 test_pattern "Bearer token tespit edilmeli" "Bearer $FAKE_BEARER_TOKEN" 1
 
 # KEY=değer (gerçek)

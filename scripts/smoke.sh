@@ -9,34 +9,56 @@ echo ""
 
 API_PORT=3001
 WEB_PORT=3000
-API_PID=""
-WEB_PID=""
+API_PGID=""
+WEB_PGID=""
 
 cleanup() {
   echo ""
   echo "Cleaning up processes..."
   
-  # Kill API process and its children
-  if [ -n "$API_PID" ] && kill -0 "$API_PID" 2>/dev/null; then
-    # Kill process group to ensure children are terminated
-    kill -TERM -"$API_PID" 2>/dev/null || kill "$API_PID" 2>/dev/null || true
-    sleep 1
+  # Kill API process group
+  if [ -n "$API_PGID" ]; then
+    echo "Terminating API process group $API_PGID..."
+    kill -TERM -$API_PGID 2>/dev/null || true
+    sleep 2
     # Force kill if still running
-    kill -0 "$API_PID" 2>/dev/null && kill -9 "$API_PID" 2>/dev/null || true
+    kill -9 -$API_PGID 2>/dev/null || true
   fi
   
-  # Kill WEB process and its children
-  if [ -n "$WEB_PID" ] && kill -0 "$WEB_PID" 2>/dev/null; then
-    # Kill process group to ensure children (next-server) are terminated
-    kill -TERM -"$WEB_PID" 2>/dev/null || kill "$WEB_PID" 2>/dev/null || true
-    sleep 1
+  # Kill WEB process group
+  if [ -n "$WEB_PGID" ]; then
+    echo "Terminating WEB process group $WEB_PGID..."
+    kill -TERM -$WEB_PGID 2>/dev/null || true
+    sleep 2
     # Force kill if still running
-    kill -0 "$WEB_PID" 2>/dev/null && kill -9 "$WEB_PID" 2>/dev/null || true
+    kill -9 -$WEB_PGID 2>/dev/null || true
   fi
   
-  # Additional cleanup: kill any remaining processes on ports
-  lsof -ti:$API_PORT 2>/dev/null | xargs -r kill -9 2>/dev/null || true
-  lsof -ti:$WEB_PORT 2>/dev/null | xargs -r kill -9 2>/dev/null || true
+  # Wait for ports to be released (max 10 seconds)
+  echo "Waiting for ports to be released..."
+  for i in {1..10}; do
+    API_IN_USE=false
+    WEB_IN_USE=false
+    
+    if lsof -ti:$API_PORT >/dev/null 2>&1; then
+      API_IN_USE=true
+      lsof -ti:$API_PORT | xargs -r kill -9 2>/dev/null || true
+    fi
+    
+    if lsof -ti:$WEB_PORT >/dev/null 2>&1; then
+      WEB_IN_USE=true
+      lsof -ti:$WEB_PORT | xargs -r kill -9 2>/dev/null || true
+    fi
+    
+    if ! $API_IN_USE && ! $WEB_IN_USE; then
+      echo "Ports released successfully"
+      return 0
+    fi
+    
+    sleep 1
+  done
+  
+  echo "Warning: Some ports may still be in use"
 }
 
 trap cleanup EXIT
@@ -53,11 +75,11 @@ if [ ! -d "apps/web/.next" ]; then
   exit 1
 fi
 
-# Start API
+# Start API in its own process group
 echo "Starting API on port $API_PORT..."
 cd apps/api
-PORT=$API_PORT node dist/main.js > /tmp/sosmesh-api-smoke.log 2>&1 &
-API_PID=$!
+setsid sh -c "PORT=$API_PORT node dist/main.js > /tmp/sosmesh-api-smoke.log 2>&1" &
+API_PGID=$!
 cd ../..
 
 # Wait for API to start
@@ -66,7 +88,7 @@ for i in {1..30}; do
   if curl -s http://localhost:$API_PORT/health > /dev/null 2>&1; then
     break
   fi
-  if ! kill -0 "$API_PID" 2>/dev/null; then
+  if ! kill -0 "$API_PGID" 2>/dev/null; then
     echo "❌ API process died"
     cat /tmp/sosmesh-api-smoke.log
     exit 1
@@ -100,12 +122,12 @@ fi
 
 echo "✅ API /health status is 'ok'"
 
-# Start web
+# Start web in its own process group
 echo ""
 echo "Starting web on port $WEB_PORT..."
 cd apps/web
-PORT=$WEB_PORT npx next start > /tmp/sosmesh-web-smoke.log 2>&1 &
-WEB_PID=$!
+setsid sh -c "PORT=$WEB_PORT npx next start > /tmp/sosmesh-web-smoke.log 2>&1" &
+WEB_PGID=$!
 cd ../..
 
 # Wait for web to start
@@ -114,7 +136,7 @@ for i in {1..30}; do
   if curl -s http://localhost:$WEB_PORT > /dev/null 2>&1; then
     break
   fi
-  if ! kill -0 "$WEB_PID" 2>/dev/null; then
+  if ! kill -0 "$WEB_PGID" 2>/dev/null; then
     echo "❌ Web process died"
     cat /tmp/sosmesh-web-smoke.log
     exit 1

@@ -6,7 +6,7 @@
     "location": {
       "latitude": 41.0082,
       "longitude": 28.9784,
-      "accuracy": 15.0
+      "accuracy": 15
     },
     "priority": 2,
     "ackLevel": "PEER_RECEIVED",

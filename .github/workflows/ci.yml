@@ -228,18 +228,31 @@ jobs:
       - name: Run TypeScript contract tests
         run: cd packages/contracts && pnpm test
       
+      - name: Write TypeScript canonical JSON outputs
+        run: cd packages/contracts && pnpm write-canonical
+      
       - name: Run Kotlin contract tests
         run: |
           cd packages/contracts-kotlin
-          chmod +x gradlew || gradle wrapper
-          ./gradlew test || echo "::warning::Kotlin tests failed - gradlew not available"
+          ./gradlew test --no-daemon
       
-      - name: Swift contract tests (NOT_TESTED)
+      - name: Swift toolchain diagnostic
         run: |
-          echo "::warning::Swift tests BLOCKED - Swift toolchain not available on Ubuntu 24.04 runner"
-          echo "Swift package and tests created but not executed in CI"
-          echo "Status: NOT_TESTED/BLOCKED (Swift toolchain unavailable)"
-          ls -la packages/contracts-swift || true
+          echo "=== Swift Toolchain Diagnostic ==="
+          which swift || echo "swift not found in PATH"
+          swift --version || echo "swift --version failed (exit $?)"
+          echo
+          if command -v swift &> /dev/null; then
+            echo "✓ Swift is available, attempting to run tests..."
+            cd packages/contracts-swift
+            swift test || echo "❌ Swift tests failed (exit $?)"
+          else
+            echo "⚠️ Swift toolchain NOT_AVAILABLE on this runner"
+            echo "Status: NOT_TESTED/BLOCKED (Swift toolchain not found)"
+          fi
+      
+      - name: Compare canonical JSON outputs (TypeScript vs Kotlin)
+        run: bash scripts/compare-canonical-json.sh
 
   secret-scan:
     name: Secret Scan

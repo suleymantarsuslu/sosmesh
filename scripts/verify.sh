@@ -30,6 +30,7 @@ TOTAL_CHECKS=0
 check_exit() {
   local name=$1
   local exit_code=$2
+  local log_file="$REPORTS_DIR/${3:-$name}.log"
   TOTAL_CHECKS=$((TOTAL_CHECKS + 1))
   
   if [ $exit_code -eq 0 ]; then
@@ -37,6 +38,10 @@ check_exit() {
   else
     echo -e "${RED}❌ $name FAILED (exit $exit_code)${NC}"
     FAILED_CHECKS+=("$name")
+    if [ -f "$log_file" ]; then
+      echo -e "${YELLOW}Last 80 lines of $log_file:${NC}"
+      tail -80 "$log_file"
+    fi
   fi
   echo ""
 }

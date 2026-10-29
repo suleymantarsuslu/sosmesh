@@ -15,14 +15,28 @@ WEB_PID=""
 cleanup() {
   echo ""
   echo "Cleaning up processes..."
+  
+  # Kill API process and its children
   if [ -n "$API_PID" ] && kill -0 "$API_PID" 2>/dev/null; then
-    kill "$API_PID" 2>/dev/null || true
-    wait "$API_PID" 2>/dev/null || true
+    # Kill process group to ensure children are terminated
+    kill -TERM -"$API_PID" 2>/dev/null || kill "$API_PID" 2>/dev/null || true
+    sleep 1
+    # Force kill if still running
+    kill -0 "$API_PID" 2>/dev/null && kill -9 "$API_PID" 2>/dev/null || true
   fi
+  
+  # Kill WEB process and its children
   if [ -n "$WEB_PID" ] && kill -0 "$WEB_PID" 2>/dev/null; then
-    kill "$WEB_PID" 2>/dev/null || true
-    wait "$WEB_PID" 2>/dev/null || true
+    # Kill process group to ensure children (next-server) are terminated
+    kill -TERM -"$WEB_PID" 2>/dev/null || kill "$WEB_PID" 2>/dev/null || true
+    sleep 1
+    # Force kill if still running
+    kill -0 "$WEB_PID" 2>/dev/null && kill -9 "$WEB_PID" 2>/dev/null || true
   fi
+  
+  # Additional cleanup: kill any remaining processes on ports
+  lsof -ti:$API_PORT 2>/dev/null | xargs -r kill -9 2>/dev/null || true
+  lsof -ti:$WEB_PORT 2>/dev/null | xargs -r kill -9 2>/dev/null || true
 }
 
 trap cleanup EXIT

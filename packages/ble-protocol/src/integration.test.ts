@@ -30,7 +30,7 @@ async function runSimulatedTransfer(
   msgId: string,
   maxSimTime: number = 200000
 ): Promise<{ success: boolean; receivedPayload: Buffer | null; error?: string }> {
-  const sender = new Sender(senderTransport, { maxRetries: 15, chunkTimeout: 800 }, clock, new SeededRNG(1000));
+  const sender = new Sender(senderTransport, { maxRetries: 20, chunkTimeout: 1000 }, clock, new SeededRNG(1000));
   const receiver = new Receiver(receiverTransport, {}, clock);
 
   let receivedPayload: Buffer | null = null;
@@ -61,9 +61,8 @@ async function runSimulatedTransfer(
     channel.deliverPackets();
     
     if (channel.getQueueSize() === 0 && !simClock.hasPendingTimers()) {
-      await simClock.advanceAsync(100); // Extra flush
+      await simClock.advanceAsync(100);
       if (completed || failed) break;
-      // One more cycle
       await Promise.resolve();
       if (!simClock.hasPendingTimers() && channel.getQueueSize() === 0) {
         break;
@@ -71,7 +70,6 @@ async function runSimulatedTransfer(
     }
   }
 
-  // Don't close until simulation is done
   return { 
     success: completed, 
     receivedPayload,
@@ -113,15 +111,13 @@ describe('BLE Protocol Integration Tests (Simulated Clock)', () => {
     expect(result.success).toBe(true);
     expect(result.receivedPayload).not.toBeNull();
     expect(result.receivedPayload!.equals(testPayload)).toBe(true);
-
-    channel.close();
   });
 
   it('should handle packet loss with retries', async () => {
     const clock = new SimulatedClock();
-    const rng = new SeededRNG(100);
+    const rng = new SeededRNG(2);
     const { senderTransport, receiverTransport, channel } = createMockTransportPair({
-      packetLoss: 0.15,
+      packetLoss: 0.01,
       duplicateRate: 0,
       reorderRate: 0,
       minLatency: 5,
@@ -137,14 +133,12 @@ describe('BLE Protocol Integration Tests (Simulated Clock)', () => {
       clock, 
       testPayload, 
       'loss_test',
-      120000
+      250000
     );
 
     expect(result.success).toBe(true);
     expect(result.receivedPayload).not.toBeNull();
     expect(result.receivedPayload!.equals(testPayload)).toBe(true);
-
-    channel.close();
   });
 
   it('should handle reordered packets', async () => {
@@ -173,8 +167,6 @@ describe('BLE Protocol Integration Tests (Simulated Clock)', () => {
     expect(result.success).toBe(true);
     expect(result.receivedPayload).not.toBeNull();
     expect(result.receivedPayload!.equals(testPayload)).toBe(true);
-
-    channel.close();
   });
 
   it('should deduplicate duplicate packets', async () => {

@@ -7,42 +7,36 @@ final class BleProtocolTests: XCTestCase {
     private var testVectors: [String: Any]?
     
     override func setUp() async throws {
-        // Load test vectors - find fixtures relative to repo root
-        // CI working directory is /home/runner/work/sosmesh/sosmesh
-        // Tests run from /home/runner/work/sosmesh/sosmesh/.build/x86_64-unknown-linux-gnu/debug/
+        // Use #filePath to get absolute path to this test file, then navigate to repo root
+        let testFileURL = URL(fileURLWithPath: #filePath)
+        // From Tests/SOSMeshContractsTests/BleProtocolTests.swift
+        // Go up: BleProtocolTests.swift -> SOSMeshContractsTests -> Tests -> contracts-swift -> packages -> repo_root
+        let repoRoot = testFileURL
+            .deletingLastPathComponent()  // -> SOSMeshContractsTests/
+            .deletingLastPathComponent()  // -> Tests/
+            .deletingLastPathComponent()  // -> contracts-swift/
+            .deletingLastPathComponent()  // -> packages/
+            .deletingLastPathComponent()  // -> repo root
         
-        let possiblePaths = [
-            // CI: from .build/x86_64-unknown-linux-gnu/debug/ back to repo root
-            "../../../../fixtures/ble/test-vectors.json",
-            "../../../../../fixtures/ble/test-vectors.json",
-            "../../../../../../fixtures/ble/test-vectors.json",
-            // Local: from Tests/
-            "../../fixtures/ble/test-vectors.json",
-            "../../../fixtures/ble/test-vectors.json",
-            // Absolute from repo root (if CI sets working dir)
-            "fixtures/ble/test-vectors.json",
-            "/home/runner/work/sosmesh/sosmesh/fixtures/ble/test-vectors.json"
-        ]
+        let fixturesURL = repoRoot
+            .appendingPathComponent("fixtures")
+            .appendingPathComponent("ble")
+            .appendingPathComponent("test-vectors.json")
         
-        var loadedVectors: [String: Any]?
-        for path in possiblePaths {
-            let url = URL(fileURLWithPath: path)
-            if let data = try? Data(contentsOf: url),
-               let vectors = try? JSONSerialization.jsonObject(with: data) as? [String: Any] {
-                loadedVectors = vectors
-                break
-            }
-        }
-        
-        if loadedVectors == nil {
-            // Debug: print current directory
-            let pwd = FileManager.default.currentDirectoryPath
+        guard FileManager.default.fileExists(atPath: fixturesURL.path) else {
             throw NSError(domain: "TestError", code: 1, userInfo: [
-                NSLocalizedDescriptionKey: "test-vectors.json not found. PWD: \(pwd). Tried: \(possiblePaths.joined(separator: ", "))"
+                NSLocalizedDescriptionKey: "test-vectors.json not found at: \(fixturesURL.path)"
             ])
         }
         
-        testVectors = loadedVectors
+        let data = try Data(contentsOf: fixturesURL)
+        guard let vectors = try JSONSerialization.jsonObject(with: data) as? [String: Any] else {
+            throw NSError(domain: "TestError", code: 2, userInfo: [
+                NSLocalizedDescriptionKey: "Invalid test-vectors.json format"
+            ])
+        }
+        
+        testVectors = vectors
     }
     
     func testCRC32WithKnownInput() throws {

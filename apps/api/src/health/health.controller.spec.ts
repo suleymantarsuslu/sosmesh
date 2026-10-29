@@ -17,7 +17,7 @@ describe('HealthController', () => {
     expect(controller).toBeDefined();
   });
 
-  it.skip('should return status ok', () => {
+  it('should return status ok', () => {
     const result = controller.check();
     expect(result).toHaveProperty('status', 'ok');
     expect(result).toHaveProperty('timestamp');

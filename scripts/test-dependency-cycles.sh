@@ -8,7 +8,11 @@ echo "=== Dependency Cycles Negatif Test ==="
 echo ""
 
 TEMP_DIR=$(mktemp -d)
+BACKUP_MD="$TEMP_DIR/modules-backup.md"
 trap "rm -rf $TEMP_DIR" EXIT
+
+# Orijinal modules.md'yi yedekle
+cp docs/architecture/modules.md "$BACKUP_MD"
 
 TEMP_MD="$TEMP_DIR/test-modules.md"
 
@@ -32,10 +36,6 @@ EOF
 
 echo "Test 1: Döngülü grafik (A→B→C→A)"
 
-# Geçici olarak modules.md'yi yedekle
-BACKUP_MD="/tmp/modules-backup-$$.md"
-cp docs/architecture/modules.md "$BACKUP_MD"
-
 # Geçici dosyayı modules.md yerine kopyala
 cp "$TEMP_MD" docs/architecture/modules.md
 
@@ -48,7 +48,6 @@ set -e
 if [ $EXIT_CODE -eq 0 ]; then
   echo "❌ Test 1 başarısız: Döngü tespit edilmeliydi"
   cp "$BACKUP_MD" docs/architecture/modules.md
-  rm "$BACKUP_MD"
   exit 1
 else
   # Döngü mesajını kontrol et
@@ -59,14 +58,12 @@ else
   else
     echo "❌ Test 1 başarısız: Döngü mesajı bulunamadı"
     cp "$BACKUP_MD" docs/architecture/modules.md
-    rm "$BACKUP_MD"
     exit 1
   fi
 fi
 
 # Orijinal modules.md'yi geri yükle
 cp "$BACKUP_MD" docs/architecture/modules.md
-rm "$BACKUP_MD"
 
 echo ""
 
@@ -88,7 +85,6 @@ EOF
 
 echo "Test 2: Döngüsüz grafik"
 
-cp docs/architecture/modules.md "$BACKUP_MD"
 cp "$TEMP_MD" docs/architecture/modules.md
 
 if node scripts/check-dependency-cycles.js > /dev/null 2>&1; then
@@ -96,12 +92,11 @@ if node scripts/check-dependency-cycles.js > /dev/null 2>&1; then
 else
   echo "❌ Test 2 başarısız: Döngüsüz grafikte hata"
   cp "$BACKUP_MD" docs/architecture/modules.md
-  rm "$BACKUP_MD"
   exit 1
 fi
 
+# Orijinal modules.md'yi geri yükle
 cp "$BACKUP_MD" docs/architecture/modules.md
-rm "$BACKUP_MD"
 
 echo ""
 echo "=== Tüm Testler Başarılı ==="

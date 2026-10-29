@@ -93,8 +93,8 @@ graph TD
     WEAROS[apps/wearos]
     WATCHOS[apps/watchos]
 
-    WEB_AUTH[apps/web/(auth)]
-    WEB_OPERATOR[apps/web/(operator)]
+    WEB_AUTH["apps/web/(auth)"]
+    WEB_OPERATOR["apps/web/(operator)"]
     WEB_MAP[apps/web/map]
     WEB_CASES[apps/web/cases]
 

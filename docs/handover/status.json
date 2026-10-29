@@ -74,7 +74,7 @@
       "deliverables": "docs/architecture/*.md; docs/adr/ADR-001..",
       "pass_criteria": "API/transport veri akışı ve sınırları çelişkisiz.",
       "status": "IN_PROGRESS",
-      "attempts": 1,
+      "attempts": 2,
       "commit": null,
       "evidence": [],
       "blockers": [],

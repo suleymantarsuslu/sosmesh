@@ -41,12 +41,12 @@ if [ $# -gt 0 ]; then
   FILES=("$@")
   echo "Taranıyor: ${#FILES[@]} dosya (custom list)"
 else
-  # git ls-files'tan test script'lerini ve secrets dokümantasyonunu hariç tut
+  # git ls-files'tan yalnız test script'leri hariç tut
   mapfile -d '' ALL_FILES < <(git ls-files -z 2>/dev/null || find . -type f -print0)
   FILES=()
   for FILE in "${ALL_FILES[@]}"; do
-    # scripts/test-*.sh ve ADR-004 (secrets örnekleri içerir) hariç tut
-    if [[ "$FILE" == scripts/test-*.sh ]] || [[ "$FILE" == *"secrets"*.md ]]; then
+    # Yalnız scripts/test-*.sh hariç tut (ADR-004 dahil tüm md'ler taranmalı)
+    if [[ "$FILE" == scripts/test-*.sh ]]; then
       continue
     fi
     FILES+=("$FILE")
@@ -103,9 +103,9 @@ for PATTERN in "${PATTERNS[@]}"; do
         done
       fi
       
-      # KEY/SECRET/PASSWORD: değer <placeholder> veya boş ise atla
+      # KEY/SECRET/PASSWORD: değer <placeholder>, boş, veya dev-/mock- prefix'li ise atla
       if [[ "$PATTERN" == *'KEY'* ]] || [[ "$PATTERN" == *'SECRET'* ]]; then
-        if echo "$MATCH" | grep -q -E '=\s*<|=\s*\[|=\s*$'; then
+        if echo "$MATCH" | grep -q -E '=\s*<|=\s*\[|=\s*$|=(dev|mock|test)-'; then
           SKIP=true
         fi
       fi

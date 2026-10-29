@@ -3,33 +3,27 @@
   "description": "Deterministic golden test vector for cross-language crypto compatibility",
   "algorithm": "X25519+HKDF-SHA256+ChaCha20-Poly1305",
   "protocol_version": "v1",
-  "keyId": "dev-test-001",
-  
   "inputs": {
-    "serverPrivateKey": "/Y3Ly64i9CwSN722vrc39rW2bf4+mRCByoK1fn/z+9U=",
+    "keyId": "dev-test-001",
     "serverPublicKey": "BFu/Jxfj3txqvjTtUW7BTYK3iX0E/ysPPwPNk091o1c=",
-    "ephemeralPrivateKey": "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=",
-    "nonce": "AQIDBAUGBwgJCgsM",
-    "plaintext": "Golden test vector",
+    "serverPrivateKey": "/Y3Ly64i9CwSN722vrc39rW2bf4+mRCByoK1fn/z+9U=",
+    "ephemeralPrivateKey": "AQIDBAUGBwgJCgsMDQ4PEBESExQVFhcYGRobHB0eHyA=",
+    "nonce": "AAECAwQFBgcICQoL",
+    "plaintext": "{\"sosText\":\"Golden test vector\",\"category\":\"test\",\"personsCount\":1,\"userLanguage\":\"en\"}",
     "envelope": {
+      "timestamp": "2026-10-29T21:00:00Z",
       "location": {
-        "accuracy": 10,
         "latitude": 39.9334,
-        "longitude": 32.8597
+        "longitude": 32.8597,
+        "accuracy": 10
       },
-      "priority": 1,
-      "timestamp": "2026-10-29T20:00:00Z"
+      "priority": 1
     }
   },
-  
   "expected": {
-    "sharedSecret": "COMPUTED_AT_RUNTIME",
-    "aad": "{\"envelope\":{\"location\":{\"accuracy\":10,\"latitude\":39.9334,\"longitude\":32.8597},\"priority\":1,\"timestamp\":\"2026-10-29T20:00:00Z\"},\"keyId\":\"dev-test-001\",\"protocol\":\"v1\"}",
-    "ciphertextWithTag": "TO_BE_GENERATED"
-  },
-  
-  "tampered": {
-    "description": "Flip last byte of tag",
-    "ciphertextWithTag": "TO_BE_GENERATED_THEN_TAMPERED"
+    "ephemeralPublicKey": "B6N8vBQgk8i3VdwbEOhstCY3StFqqFPtC9/AsrhtHHw=",
+    "aadCanonical": "{\"envelope\":{\"location\":{\"accuracy\":10,\"latitude\":39.9334,\"longitude\":32.8597},\"priority\":1,\"timestamp\":\"2026-10-29T21:00:00Z\"},\"keyId\":\"dev-test-001\",\"protocol\":\"v1\"}",
+    "ciphertextWithTagHex": "9aadc7c840cdfb93c559128bc4953de0182aeedce33d6dec5d2b8f6743ba8c08114c0a349aeed6b384515ce374f521a9d17108dd137730a8d3fb9b83ac440b22a6467e72af6e95136bfb633d294d431b1a055acd52c8fba324f446bf0281cc94ef851df0b1cc97",
+    "ciphertextWithTagBase64": "mq3HyEDN+5PFWRKLxJU94Bgq7tzjPW3sXSuPZ0O6jAgRTAo0mu7Ws4RRXON09SGp0XEI3RN3MKjT+5uDrEQLIqZGfnKvbpUTa/tjPSlNQxsaBVrNUsj7oyT0Rr8CgcyU74Ud8LHMlw=="
   }
 }

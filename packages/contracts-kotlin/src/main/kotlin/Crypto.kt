@@ -62,15 +62,21 @@ object Crypto {
      * @param config Crypto configuration with server public key
      * @return Encrypted payload with ephemeral public key, nonce, and ciphertext+tag
      */
-    fun encryptPayload(
+    /**
+     * @internal
+     * Test-only deterministic encryption with fixed ephemeral key and nonce.
+     * DO NOT USE IN PRODUCTION - for golden test vectors only.
+     */
+    fun encryptDeterministic(
         payload: ByteArray,
         envelope: Map<String, Any>,
-        config: CryptoConfig
+        config: CryptoConfig,
+        ephemeralPrivateKey: ByteArray,
+        nonce: ByteArray
     ): EncryptedPayload {
-        // Generate ephemeral X25519 keypair
-        val ephemeralPrivateKey = ByteArray(CryptoConstants.X25519_KEY_SIZE)
-        secureRandom.nextBytes(ephemeralPrivateKey)
-        
+        require(ephemeralPrivateKey.size == 32) { "ephemeralPrivateKey must be 32 bytes" }
+        require(nonce.size == 12) { "nonce must be 12 bytes" }
+
         val ephemeralPrivateKeyParams = X25519PrivateKeyParameters(ephemeralPrivateKey, 0)
         val ephemeralPublicKeyParams = ephemeralPrivateKeyParams.generatePublicKey()
         val ephemeralPublicKey = ephemeralPublicKeyParams.encoded
@@ -84,10 +90,6 @@ object Crypto {
         agreement.init(ephemeralPrivateKeyParams)
         val sharedSecret = ByteArray(CryptoConstants.X25519_KEY_SIZE)
         agreement.calculateAgreement(serverPublicKeyParams, sharedSecret, 0)
-        
-        // Generate random nonce
-        val nonce = ByteArray(CryptoConstants.NONCE_SIZE)
-        secureRandom.nextBytes(nonce)
         
         // Derive encryption key using HKDF-SHA256
         val encryptionKey = deriveEncryptionKey(sharedSecret, nonce, config.keyId)
@@ -104,12 +106,30 @@ object Crypto {
         var outputLen = cipher.processBytes(payload, 0, payload.size, ciphertextWithTag, 0)
         outputLen += cipher.doFinal(ciphertextWithTag, outputLen)
         
+        // Zero out sensitive data
+        sharedSecret.fill(0)
+        encryptionKey.fill(0)
+        
         return EncryptedPayload(
             ciphertext = Base64.getEncoder().encodeToString(ciphertextWithTag),
             nonce = Base64.getEncoder().encodeToString(nonce),
             ephemeralPublicKey = Base64.getEncoder().encodeToString(ephemeralPublicKey),
             keyId = config.keyId
         )
+    }
+
+    fun encryptPayload(
+        payload: ByteArray,
+        envelope: Map<String, Any>,
+        config: CryptoConfig
+    ): EncryptedPayload {
+        // Generate random ephemeral key and nonce
+        val ephemeralPrivateKey = ByteArray(CryptoConstants.X25519_KEY_SIZE)
+        val nonce = ByteArray(CryptoConstants.NONCE_SIZE)
+        secureRandom.nextBytes(ephemeralPrivateKey)
+        secureRandom.nextBytes(nonce)
+        
+        return encryptDeterministic(payload, envelope, config, ephemeralPrivateKey, nonce)
     }
 
     /**

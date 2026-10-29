@@ -109,6 +109,59 @@ function fromBase64(str: string): Uint8Array {
 }
 
 /**
+ * @internal
+ * Test-only deterministic encryption with fixed ephemeral key and nonce.
+ * DO NOT USE IN PRODUCTION - for golden test vectors only.
+ */
+export function encryptDeterministic(
+  payload: any,
+  envelope: any,
+  config: CryptoConfig,
+  ephemeralPrivateKey: Uint8Array,
+  nonce: Uint8Array
+): EncryptedPayload {
+  if (ephemeralPrivateKey.length !== 32) {
+    throw new Error('ephemeralPrivateKey must be 32 bytes');
+  }
+  if (nonce.length !== 12) {
+    throw new Error('nonce must be 12 bytes');
+  }
+
+  // Generate ephemeral public key
+  const ephemeralPublicKey = x25519.getPublicKey(ephemeralPrivateKey);
+
+  // Decode server public key
+  const serverPublicKey = fromBase64(config.serverPublicKey);
+
+  // Perform X25519 key agreement (ECDH)
+  const sharedSecret = x25519.getSharedSecret(ephemeralPrivateKey, serverPublicKey);
+
+  // Derive encryption key using HKDF (salt = nonce, info = versioned + key id)
+  const encryptionKey = deriveEncryptionKey(sharedSecret, nonce, config.keyId);
+
+  // Create AAD from envelope metadata
+  const aad = createAAD(envelope, config.keyId, PROTOCOL_VERSION);
+
+  // Serialize payload
+  const plaintextBytes = new TextEncoder().encode(JSON.stringify(payload));
+
+  // Encrypt with IETF ChaCha20-Poly1305 (AAD authenticated)
+  const cipher = chacha20poly1305(encryptionKey, nonce, aad);
+  const ciphertextWithTag = cipher.encrypt(plaintextBytes);
+
+  // Securely zero out sensitive data
+  sharedSecret.fill(0);
+  encryptionKey.fill(0);
+
+  return {
+    keyId: config.keyId,
+    ephemeralPublicKey: toBase64(ephemeralPublicKey),
+    nonce: toBase64(nonce),
+    ciphertext: toBase64(ciphertextWithTag), // Includes 16-byte Poly1305 tag
+  };
+}
+
+/**
  * Encrypts a payload using X25519 + HKDF + IETF ChaCha20-Poly1305
  * 
  * @param payload - The plaintext payload object
@@ -128,41 +181,11 @@ export function encryptPayload(
 
   // Generate ephemeral X25519 key pair (32 bytes private key)
   const ephemeralPrivateKey = randomBytes(32);
-  const ephemeralPublicKey = x25519.getPublicKey(ephemeralPrivateKey);
-
-  // Decode server public key
-  const serverPublicKey = fromBase64(config.serverPublicKey);
-
-  // Perform X25519 key agreement (ECDH)
-  const sharedSecret = x25519.getSharedSecret(ephemeralPrivateKey, serverPublicKey);
-
+  
   // Generate random 96-bit nonce for IETF ChaCha20-Poly1305
   const nonce = randomBytes(12);
 
-  // Derive encryption key using HKDF (salt = nonce, info = versioned + key id)
-  const encryptionKey = deriveEncryptionKey(sharedSecret, nonce, config.keyId);
-
-  // Create AAD from envelope metadata
-  const aad = createAAD(envelope, config.keyId, PROTOCOL_VERSION);
-
-  // Serialize payload
-  const plaintextBytes = new TextEncoder().encode(JSON.stringify(payload));
-
-  // Encrypt with IETF ChaCha20-Poly1305 (AAD authenticated)
-  const cipher = chacha20poly1305(encryptionKey, nonce, aad);
-  const ciphertextWithTag = cipher.encrypt(plaintextBytes);
-
-  // Securely zero out sensitive data
-  ephemeralPrivateKey.fill(0);
-  sharedSecret.fill(0);
-  encryptionKey.fill(0);
-
-  return {
-    keyId: config.keyId,
-    ephemeralPublicKey: toBase64(ephemeralPublicKey),
-    nonce: toBase64(nonce),
-    ciphertext: toBase64(ciphertextWithTag), // Includes 16-byte Poly1305 tag
-  };
+  return encryptDeterministic(payload, envelope, config, ephemeralPrivateKey, nonce);
 }
 
 /**

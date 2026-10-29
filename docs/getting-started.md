@@ -101,7 +101,7 @@ code .env
 1. Visit https://developers.facebook.com/docs/llama-api/
 2. Create a Meta developer account
 3. Generate an API key
-4. Add to `.env`: `MODEL_API_KEY=your_key_here`
+4. Add to `.env`: `MODEL_API_KEY=<your-actual-key>`
 
 ### 4. Start Infrastructure (Option A: Docker)
 

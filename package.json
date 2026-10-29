@@ -23,6 +23,7 @@
     "ux:check-i18n": "node scripts/ux-check-i18n-keys.js",
     "ux:check-contrast": "node scripts/ux-check-contrast.js",
     "ux:test-a11y": "playwright test",
+    "test:a11y:web": "playwright test --config=playwright.web.config.js",
     "test:secret-scan": "bash scripts/secret-scan.sh",
     "test:cycles": "bash scripts/check-dependency-cycles.sh",
     "clean": "pnpm -r clean && rm -rf node_modules",
@@ -38,6 +39,7 @@
     "eslint-config-prettier": "^9.1.0",
     "eslint-plugin-import": "^2.29.1",
     "prettier": "^3.2.5",
-    "typescript": "^5.3.3"
+    "typescript": "^5.3.3",
+    "yaml": "^2.9.1"
   }
 }

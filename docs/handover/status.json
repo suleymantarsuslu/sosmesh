@@ -161,8 +161,17 @@
       "status": "IN_PROGRESS",
       "attempts": 0,
       "commit": null,
-      "evidence": [],
-      "blockers": [],
+      "evidence": [
+        "PR #1: https://cursor.com/codebase/s-leyman-tarsuslu/tmp-b5f414fac281770b/pull/1",
+        "Commit A (failing test): fae2c4a3a40de298f61a236249ffa88ab6b6b1d4",
+        "origin pr checks result: [] (no checks reported)",
+        "Status: BLOCKED_ACCESS - Origin CI not executing workflows",
+        "Workflows validated: actionlint exit 0",
+        "Local verify.sh: exit 0 (all 18 checks pass)"
+      ],
+      "blockers": [
+        "Origin CI not available - no remote check execution"
+      ],
       "last_checked_at": null,
       "goal": "Grok’un kanıtsız sonraki adıma geçmesini teknik olarak engelle.",
       "cursor_tasks": [

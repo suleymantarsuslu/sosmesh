@@ -100,10 +100,10 @@
       ],
       "deliverables": "packages/design-tokens; docs/ux/screens.md; docs/ux/content-tr.json",
       "pass_criteria": "Her ana görev üç veya daha az belirgin eylem; metin durumu yanlış umut vermiyor.",
-      "status": "IN_PROGRESS",
+      "status": "ACCEPTED_WITH_DEBT",
       "attempts": 3,
-      "commit": "b537a4b5737072e6b0f40a65d68da1486b937115",
-      "evidence": [],
+      "commit": "1267cbad3a1e48e795350ba9a74cf54b9bf71ac1",
+      "evidence": "Kullanıcı kararı 2026-10-29, mobil/web kanıtları bağımsız denetlendi",
       "blockers": [],
       "last_checked_at": null,
       "goal": "Afet anı odaklı premium, hızlı anlaşılır ve erişilebilir bütünsel tasarım sistemi oluştur.",
@@ -116,7 +116,8 @@
       ],
       "verification_evidence": "Axe/Lighthouse planı; ekran screenshot seti ve kontrast denetimi.",
       "risk_note": "",
-      "gate_raw": "KAPI: HACKATHON / ÇEKİRDEK    •    BAĞIMLILIK: 2–3"
+      "gate_raw": "KAPI: HACKATHON / ÇEKİRDEK    •    BAĞIMLILIK: 2–3",
+      "notes": "Watch UI borçları (TD-04-W1 ile W4) tech-debt.md kayıtlı; native implementasyon öncesi kapatılacak"
     },
     {
       "id": "05",

@@ -83,7 +83,7 @@ public struct SOSMeshCrypto {
         let serverPublicKey = try Curve25519.KeyAgreement.PublicKey(rawRepresentation: serverPublicKeyData)
         let sharedSecret = try ephemeralPrivateKey.sharedSecretFromKeyAgreement(with: serverPublicKey)
         let encryptionKey = deriveEncryptionKey(sharedSecret: sharedSecret, salt: nonceData, keyId: config.keyId)
-        let aad = try createAAD(envelope: envelope, keyId: config.keyId, protocolVersion: protocolVersion)
+        let aad = try createAAD(envelope: envelope, keyId: config.keyId)
         
         let nonce = try ChaChaPoly.Nonce(data: nonceData)
         let sealedBox = try ChaChaPoly.seal(payload, using: SymmetricKey(data: encryptionKey), nonce: nonce, authenticating: aad)

@@ -1,0 +1,6 @@
+{
+  "devDependencies": {
+    "@cucumber/gherkin": "^42.0.1",
+    "@cucumber/messages": "^34.2.1"
+  }
+}

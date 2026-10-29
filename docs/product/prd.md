@@ -200,34 +200,41 @@ Aşağıdaki ifadeler **hiçbir UI/bildirimde/dokümantasyonda kanıtsız kullan
 
 **Sonuç:** Afetzede cihazında durum "YAKIN CİHAZA AKTARILDI" → "SUNUCUYA ULAŞTI" olur.
 
-### U3: Operatör vaka görüntüleme
-**Aktör:** Operatör  
-**Ön Koşul:** Panel açık, yetkili rol, canlı feed bağlı  
+### U3: Operatör koordinasyon ve AI yardımı
+**Aktör:** Operatör (koordinasyon paneli) + Backend AI worker (destekleyici)  
+**Ön Koşul:** Panel açık, yetkili rol, canlı feed bağlı; sunucu tarafı Meta API anahtarı yapılandırılmış (opsiyonel)  
 **Akış:**
 1. Yeni SOS panelde canlı feed'de belirir (SSE event)
 2. Operatör vakayı listeden seçip açar
 3. Sistem "OPERATOR_SEEN" event kaydeder, timestamp yazar
-4. Operatör orijinal mesaj, GPS, AI önerisi (kategori, aciliyet, belirsizlik) görür
-5. AI çıktısı **"öneri"** olarak etiketli; otorite değil
-6. Operatör gerekirse manuel override yapar (konum/kişi düzeltme)
-7. Durum "VAKA İŞLEME ALINDI" olarak günceller
+4. Operatör orijinal mesaj, GPS, zaman damgası görür
+5. **AI Destekleyici Sınıflandırma (Opsiyonel):**
+   - Backend AI worker `/v1/ingest` sonrası SOS'u queue'dan alır
+   - Yapılandırılmış Meta model kimliği ile prompt gönderir: "Aşağıdaki acil durum metnini sınıflandır; açıkça söylenmeyenleri UYDURMA"
+   - AI cevabı JSON Schema ile validate edilir: `categories[]`, `persons_estimate`, `injuries_reported`, `needs[]`, `urgency_suggestion`, `uncertainty`, `quoted_evidence`, `location_unknown`, `language`
+   - Belirsizlik bayrakları (`uncertainty`, `location_unknown`) kontrol edilir
+   - AI çıktısı `ai_analyses` tablosuna yazılır, vaka ile ilişkilendirilir
+   - **AI başarısız olursa (timeout/429/5xx/anahtar yok):** Ham vaka kaybolmaz, AI alanı null kalır, operatör ham metni görür
+6. Operatör panelde AI önerisi **"Öneri"** başlığı altında görür (**"Karar"** değil; özerk karar yok)
+7. Operatör gerekirse manuel override yapar (konum/kişi düzeltme)
+8. Durum "VAKA İŞLEME ALINDI" olarak günceller
 
-**Sonuç:** Afetzede uygulamasında "OPERATÖR GÖRDÜ" görünür; operatör tarafında audit log tutuluyor.
+**Sonuç:** Afetzede uygulamasında "OPERATÖR GÖRDÜ" görünür; operatör tarafında audit log tutuluyor. AI yalnızca destekleyici bilgi; gerçek karar insan operatörde.
 
-### U4: AI sınıflandırma desteği
-**Aktör:** Backend AI worker  
-**Ön Koşul:** `/v1/ingest` başarılı, Meta API anahtarı mevcut  
+### U4: Saat (Watch) SOS — Companion telefon üzerinden
+**Aktör:** Afetzede (Wear OS veya Apple Watch kullanıcısı)  
+**Ön Koşul:** Saat, eşleşmiş telefon ile Bluetooth companion bağlantısı var; telefon uygulaması arka planda  
+**Kapsam:** **Post-M0 (M1 veya sonrası)**; M0 yalnızca Android telefon odaklı  
 **Akış:**
-1. Worker yeni SOS'u queue'dan alır
-2. Meta AI API'sine `muse-spark-1.3` ile prompt gönderir:
-   - "Aşağıdaki acil durum metnini sınıflandır; açıkça söylenmeyenleri UYDURMA"
-3. AI cevabı JSON Schema ile validate edilir:
-   - `categories[]`, `persons_estimate`, `injuries_reported`, `needs[]`, `urgency_suggestion`, `uncertainty`, `quoted_evidence`, `location_unknown`, `language`
-4. Belirsizlik bayrakları (`uncertainty`, `location_unknown`) kontrol edilir
-5. AI çıktısı `ai_analyses` tablosuna yazılır, vaka ile ilişkilendirilir
-6. **AI başarısız olursa (timeout/429/5xx):** Ham vaka kaybolmaz, AI alanı null kalır, operatör ham metni görür
+1. Kullanıcı saatte "SOS" butonuna basar
+2. Basit menüden acil durum türü seçer (deprem/yangın/yaralanma)
+3. Saat, SOS'u Bluetooth companion API (Wear OS: Data Layer API, watchOS: WatchConnectivity) ile telefona aktarır
+4. Telefon uygulaması SOS'u kendi offline queue'suna ekler
+5. Saatte UI: "Telefona aktarıldı, telefon aracılığıyla işlenecek"
+6. **Telefon erişilemezse (kapalı/menzil dışı):** Saat SOS'u yerel belleğe yazar, "Telefona ulaşılamıyor; telefon açıldığında aktarılacak" gösterir
+7. **Saat bağımsız mesh rölesi DEĞİLDİR:** Röle modu seçeneği görünmez; saat başka cihazlardan BLE SOS paketlerini almaz/iletmez
 
-**Sonuç:** Operatör panelinde AI önerisi **"destek bilgisi"** olarak gösterilir; özerk karar yok.
+**Sonuç:** Saat yalnızca companion telefon aracılığıyla SOS gönderir; ağ erişimi/mesh relay telefon sorumluluğunda.
 
 ### U5: Negatif senaryo — İzin reddi ve offline yolu
 **Aktör:** Afetzede  

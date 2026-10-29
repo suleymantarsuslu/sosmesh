@@ -7,7 +7,7 @@
   Arka Plan:
     Varsayalım ki sistem ayakta ve sağlıklı
     Ve API "/health" endpoint'i 200 dönüyor
-    Ve Meta AI servisi erişilebilir (yoksa BLOCKED_SECRET)
+    Ve yapılandırılmış Meta AI servisi erişilebilir (yoksa BLOCKED_SECRET)
 
   @U1 @device-required
   Senaryo: Afetzede offline SOS oluşturur
@@ -97,7 +97,7 @@
     Ve operatör panelde canlı feed'de yeni SOS görürse
     Ve operatör vakayı açarsa
     O zaman API "OPERATOR_SEEN" event kaydeder
-    Ve operatörde AI sınıflandırma önerisi görünür (Meta anahtar varsa)
+    Ve operatörde AI sınıflandırma önerisi görünür (sunucu tarafı Meta API anahtarı yapılandırılmışsa)
     Ve operatör durumu "VAKA İŞLEME ALINDI" güncelleyebilir
     Ve Android A'da durum sırası doğru: CİHAZDA KAYITLI → YAKIN CİHAZA AKTARILDI → SUNUCUYA ULAŞTI → OPERATÖR GÖRDÜ → VAKA İŞLEME ALINDI
     Ve hiçbir adımda UI **"Ekip yolda"** veya **"Güvendesiniz"** demez
@@ -141,33 +141,20 @@
     Ve vaka listesi gösterilmez
     Ve UI "Yetkiniz yok" mesajı gösterir
 
-  @U4
-  Senaryo: Meta AI SOS'u sınıflandırır
+  @U3 @ai
+  Senaryo: Meta AI SOS'u sınıflandırır (yalnızca destekleyici öneri)
     Diyelim ki "/v1/ingest" başarılı
-    Ve Meta API anahtarı (`MODEL_API_KEY`) mevcut
+    Ve sunucu tarafı Meta API anahtarı mevcut
     Eğer AI worker yeni SOS'u işlerse
-    Ve Meta AI API'sine `muse-spark-1.3` ile prompt gönderirse
-    O zaman AI JSON cevabı döner:
-      """
-      {
-        "categories": ["deprem", "yaralanma"],
-        "persons_estimate": 3,
-        "injuries_reported": true,
-        "needs": ["tıbbi yardım", "arama-kurtarma"],
-        "urgency_suggestion": "yüksek",
-        "uncertainty": false,
-        "quoted_evidence": "Bina çöktü, 2. kat",
-        "location_unknown": false,
-        "language": "tr"
-      }
-      """
+    Ve yapılandırılmış Meta model kimliği ile prompt gönderirse
+    O zaman AI JSON cevabı şu şemada döner: categories, persons_estimate, injuries_reported, needs, urgency_suggestion, uncertainty, quoted_evidence, location_unknown, language
     Ve bu çıktı `ai_analyses` tablosuna yazılır
     Ve operatör panelde "AI Önerisi" bölümünde görür
     Ve belirsizlik bayrağı (`uncertainty: true` ise) UI'da **açıkça** gösterilir
 
-  @U4 @negative
+  @U3 @ai @negative
   Senaryo: Meta API anahtarı yoksa AI adımı atlanır
-    Diyelim ki `MODEL_API_KEY` env değişkeni yok
+    Diyelim ki sunucu tarafı Meta API anahtarı (adı ADIM 20'de ADR ile kesinleşir) env değişkeninde yok
     Eğer AI worker SOS'u işlemeye çalışırsa
     O zaman AI adımı **BLOCKED_SECRET** olarak işaretlenir
     Ve ham vaka **kaybolmaz**; AI alanı null kalır
@@ -175,10 +162,9 @@
     Ve operatör ham metni okuyarak manuel sınıflandırma yapar
     Ve M0 kabul testi **"tam M0"** sayılmaz (eksik adım)
 
-  @U4 @negative
+  @U3 @ai @negative
   Senaryo: Meta AI timeout veya 5xx hatası
-    Diyelim ki Meta AI API'si 30 saniye içinde cevap vermedi
-    Veya 500 hatası döndü
+    Diyelim ki Meta AI API'si 30 saniye içinde cevap vermedi veya 500 hatası döndü
     Eğer AI worker retry denerse (3 deneme, exponential backoff)
     Ve hepsi başarısız olursa
     O zaman ham vaka **kaybolmaz**
@@ -186,7 +172,7 @@
     Ve operatör panelde "AI geçici olarak kullanılamıyor" görür
     Ve operatör ham metni okur
 
-  @U4 @negative
+  @U3 @ai @negative
   Senaryo: AI halüsinasyon — açıkça söylenmeyeni uydurma
     Diyelim ki SOS metni: "Yardım edin, kayboldum"
     Ve konum bilgisi yok
@@ -195,6 +181,37 @@
     Ve AI **asla** "Ankara, Çankaya" gibi uydurma konum vermemeli
     Ve operatör panelde "Konum: Bilinmiyor (AI uydurma riski)" gösterilir
     Ve prompt'ta **"Açıkça söylenmeyenleri UYDURMA"** yönergesi var
+
+  @U4 @post-m0
+  Senaryo: Saat (watch) offline SOS'u eşleşmiş telefona aktarır
+    Diyelim ki Wear OS veya Apple Watch uygulaması açık
+    Ve saat, eşleşmiş telefon ile Bluetooth companion bağlantısı var
+    Ve telefon uygulaması arka planda çalışıyor
+    Eğer kullanıcı saatte "SOS" butonuna basarsa
+    Ve acil durum türü seçerse (basit menü: deprem/yangın/yaralanma)
+    Ve saat, SOS'u Bluetooth companion API ile telefona aktarırsa
+    O zaman telefon uygulaması SOS'u kendi offline queue'suna ekler
+    Ve saatte durum "Telefona aktarıldı, telefon aracılığıyla işlenecek" gösterir
+    Ve saat **asla** "Sunucuya ulaştı" veya "Başarıyla gönderildi" demez
+
+  @U4 @post-m0 @negative
+  Senaryo: Telefon erişilemezken saat durumu doğru gösterir
+    Diyelim ki Wear OS veya Apple Watch uygulaması açık
+    Ve saat ile telefon arasında Bluetooth companion bağlantısı yok (telefon kapalı veya menzil dışı)
+    Eğer kullanıcı saatte "SOS" butonuna basarsa
+    O zaman saat SOS'u yerel belleğe yazar
+    Ve UI "Telefona ulaşılamıyor; telefon açıldığında gönderilecek" gösterir
+    Ve saat **asla** "Gönderildi" veya "Mesh ağına aktarıldı" demez
+    Ve kullanıcıya "Mümkünse telefonu kontrol edin" önerisi sunar
+
+  @U4 @post-m0 @negative
+  Senaryo: Saat bağımsız mesh rölesi değildir
+    Diyelim ki Wear OS veya Apple Watch cihazında uygulama var
+    Ve kullanıcı saat üzerinde relay seçeneğini arıyor
+    Eğer ayarlar ekranını açarsa
+    O zaman "Röle modu" seçeneği **görünmez**
+    Ve yardım metni "Saat yalnızca eşleşmiş telefon üzerinden SOS gönderebilir; bağımsız mesh rölesi değildir" der
+    Ve saat **asla** başka bir cihazın (afetzede veya başka röle) BLE SOS paketini almaz/iletmez
 
   @U5 @device-required @negative
   Senaryo: İzin reddi akışı

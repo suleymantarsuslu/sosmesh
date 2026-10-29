@@ -18,6 +18,22 @@
 
 ---
 
+## Master §07 U1–U5 Uyum Tablosu
+
+Bu tablo master plan bölüm 07'deki kullanım senaryolarının feature dosyasındaki senaryolarla birebir uyumunu doğrular.
+
+| Master U-ID | Master §07 Tanımı | Feature Senaryoları | Etiketler | Uyum Durumu |
+|-------------|-------------------|---------------------|-----------|-------------|
+| **U1** | Afetzede SOS — Mobil veri/Wi-Fi olmadan (offline), Bluetooth + konum izni ile (veya izinsiz), Android/iOS uygulamasından SOS oluşturma; mesaj cihazda kalıcı queue'ya kaydedilir, BLE scan başlar. | (1) Afetzede offline SOS oluşturur<br>(2) Konum izni olmadan SOS oluşturma | @U1<br>@U1 @negative | ✅ UYUMLU |
+| **U2** | Gönüllü Röle — İnternet olan cihaz, opt-in relay modu ile BLE scan yapar, afetzede cihazını tespit eder, şifreli SOS payload'unu chunk olarak alır (içeriği GÖRMEZ), doğrular, outbox'a yazar, internet varsa `/v1/ingest` POST yapar, receipt (PEER_RECEIVED, SERVER_ACCEPTED) gönderir. | (3) Gönüllü röle BLE ile SOS alır<br>(4) Röle şifreli payload'ı görmez<br>(5) Bluetooth kapalıyken röle çalışmaz<br>(6) Röle internete ulaşınca sunucuya upload yapar | @U2<br>@U2<br>@U2 @negative<br>@U2 | ✅ UYUMLU |
+| **U3** | Koordinasyon / Operatör + Meta AI assistive classification — Operatör panelde yeni SOS görür, açar (OPERATOR_SEEN), orijinal mesaj + GPS + AI önerisi görür. AI worker Meta model ile sınıflandırma yapar (kategori, aciliyet, belirsizlik), **"öneri"** olarak gösterilir (**otorite değil**), operatör manuel override yapabilir, durumu VAKA_İŞLEME_ALINDI günceller. AI başarısız olursa ham vaka kaybolmaz. | (7) Operatör panelde vaka görüntüler<br>(8) Yetkisiz rol vaka göremez<br>(9) Meta AI SOS'u sınıflandırır<br>(10) Meta API anahtarı yoksa AI adımı atlanır<br>(11) Meta AI timeout veya 5xx hatası<br>(12) AI halüsinasyon — uydurma | @U3<br>@U3 @negative<br>@U3 @ai<br>@U3 @ai @negative<br>@U3 @ai @negative<br>@U3 @ai @negative | ✅ UYUMLU |
+| **U4** | Saat SOS — Wear OS veya Apple Watch uygulaması, eşleşmiş telefon ile Bluetooth companion bağlantısı üzerinden SOS gönderir; telefon uygulaması SOS'u kendi offline queue'suna ekler. Telefon erişilemezse (kapalı/menzil dışı) saat yerel belleğe yazar, "telefona ulaşılamıyor" gösterir, **asla "gönderildi" demez**. Saat bağımsız mesh rölesi DEĞİLDİR; başka cihazlardan BLE SOS paketlerini almaz/iletmez. **Post-M0 (M1/P) kapsamı.** | (13) Saat offline SOS'u eşleşmiş telefona gönderir<br>(14) Telefon erişilemezken saat durumu doğru gösterir<br>(15) Saat bağımsız mesh rölesi değildir | @U4 @post-m0<br>@U4 @post-m0 @negative<br>@U4 @post-m0 @negative | ✅ UYUMLU |
+| **U5** | Hata / İzin / Ağ Yok / Kısıtlı Durumlar — Bluetooth/konum izni reddedildiğinde UI doğru mesaj gösterir, kullanıcı izin vermeden SOS erişemez. API 429 rate limit veya 500 hatalarında exponential backoff + retry, başarısız olursa outbox'ta kalır, **asla "sunucuya ulaştı" demez**. Demo/simülasyon açıkça etiketlenir; 112 uyarısı onboarding'de zorunlu; yasak etiketler (Gönderildi/Teslim edildi/Okundu/Ekip yolda/Güvendesiniz) UI'da ASLA görünmez. | (16) İzin reddi akışı<br>(17) API 429 rate limit<br>(18) API 500 Internal Server Error<br>(19) Demo/simülasyon açıkça etiketlenir<br>(20) 112 uyarısı onboarding'de zorunlu<br>(21) Yasak etiketler UI'da görünmez | @U5 @negative<br>@U5 @negative<br>@U5 @negative<br>@negative<br>@negative<br>@negative | ✅ UYUMLU |
+
+**Not:** @M0 etiketli senaryolar (İki Android ile M0 uçtan uca akış, Duplicate paket idempotency, Offline yolda Meta çağrısı yok) U1–U5'in entegrasyonudur; doğrudan master §24 M0 senaryosuna karşılık gelir.
+
+---
+
 ## Tablo: Gereksinim → Senaryo → ADIM → Kanıt
 
 | Gereksinim | Master Bölüm/Ref | Senaryo Adı | Feature Etiketi | Uygulayacak ADIM | Kanıt Türü | Durum |
@@ -36,10 +52,13 @@
 | **Offline yolda Meta çağrısı yok** | §20 AI, kritik yol | Offline yolda Meta API çağrısı yapılmaz | @M0 @negative | 16, 20 | Device + E2E | NOT_STARTED |
 | **Operatör vaka görüntüleme** | §21, §23 panel | Operatör panelde vaka görüntüler | @U3 | 21, 23 | E2E | NOT_STARTED |
 | RBAC — yetkisiz erişim | §21 auth | Yetkisiz rol vaka göremez | @U3 @negative | 21 | E2E + Unit | NOT_STARTED |
-| **Meta AI sınıflandırma** | §20 AI | Meta AI SOS'u sınıflandırır | @U4 | 20 | E2E + Unit | NOT_STARTED |
-| AI anahtar yoksa BLOCKED_SECRET | §20 AI, B-05 | Meta API anahtarı yoksa AI adımı atlanır | @U4 @negative | 20, 24 | E2E | NOT_STARTED |
-| AI timeout/5xx hatası | §20 AI | Meta AI timeout veya 5xx hatası | @U4 @negative | 20 | E2E + Unit | NOT_STARTED |
-| **AI halüsinasyon önleme** | §20 AI, §45 eval | AI halüsinasyon — uydurma | @U4 @negative | 20, 45 | E2E + Manual | NOT_STARTED |
+| **Meta AI sınıflandırma (U3 destekleyici)** | §20 AI (U3 alt bileşeni) | Meta AI SOS'u sınıflandırır | @U3 @ai | 20 | E2E + Unit | NOT_STARTED |
+| AI anahtar yoksa BLOCKED_SECRET | §20 AI, B-05 | Meta API anahtarı yoksa AI adımı atlanır | @U3 @ai @negative | 20, 24 | E2E | NOT_STARTED |
+| AI timeout/5xx hatası | §20 AI | Meta AI timeout veya 5xx hatası | @U3 @ai @negative | 20 | E2E + Unit | NOT_STARTED |
+| **AI halüsinasyon önleme** | §20 AI, §45 eval | AI halüsinasyon — uydurma | @U3 @ai @negative | 20, 45 | E2E + Manual | NOT_STARTED |
+| **Saat SOS → telefon (U4)** | §37 watchOS, §35 Wear OS | Saat offline SOS'u telefona gönderir | @U4 @post-m0 | 35, 37 | Device | NOT_STARTED |
+| Telefon erişilemezken saat | §37 watchOS, §35 Wear OS | Telefon erişilemezken saat durumu doğru gösterir | @U4 @post-m0 @negative | 35, 37 | Device | NOT_STARTED |
+| **Saat bağımsız mesh değil** | §37 watchOS, §35 Wear OS | Saat bağımsız mesh rölesi değildir | @U4 @post-m0 @negative | 35, 37 | Device + Doc | NOT_STARTED |
 | **İzin reddi akışı** | §12 izinler | İzin reddi akışı | @U5 @negative | 12 | Device | NOT_STARTED |
 | API 429 rate limit | §18 ingest, §19 sync | API 429 rate limit | @U5 @negative | 18, 19 | E2E + Unit | NOT_STARTED |
 | API 500 server error | §18 ingest, §19 sync | API 500 Internal Server Error | @U5 @negative | 18, 19 | E2E + Unit | NOT_STARTED |
@@ -81,13 +100,15 @@
 |--------|----------------|----------|
 | @U1 | 2 | Afetzede offline SOS + konum izni olmadan |
 | @U2 | 4 | Röle BLE alma, gizlilik, upload, BT kapalı |
-| @U3 | 2 | Operatör görüntüleme + RBAC |
-| @U4 | 4 | AI sınıflandırma + anahtar yok + timeout + halüsinasyon |
+| @U3 | 6 | Operatör görüntüleme + RBAC + AI sınıflandırma (destekleyici) |
+| @U3 @ai | 4 | AI sınıflandırma + anahtar yok + timeout + halüsinasyon (U3 alt kümesi) |
+| @U4 @post-m0 | 3 | Saat SOS → telefon + telefon erişilemez + bağımsız mesh değil |
 | @U5 | 3 | İzin reddi, 429, 500 |
 | @M0 | 2 | Uçtan uca akış + idempotency |
-| @negative | 13 | Tüm negatif senaryolar |
-| @device-required | 10 | Fiziksel cihaz gerektiren senaryolar |
-| **Toplam** | **19** | Benzersiz senaryo sayısı |
+| @negative | 16 | Tüm negatif senaryolar (U1: 1, U2: 1, U3: 5, U4: 2, U5: 3, genel: 4) |
+| @device-required | 10 | Fiziksel cihaz gerektiren senaryolar (M0 kapsamı) |
+| @post-m0 | 3 | Post-M0 (M1/P) kapsamı (U4 saat senaryoları) |
+| **Toplam** | **22** | Benzersiz senaryo sayısı |
 
 ---
 

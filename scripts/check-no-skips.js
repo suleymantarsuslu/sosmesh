@@ -5,9 +5,8 @@
  * Exit 0 = no skips, exit 1 = skips found
  */
 
-const fs = require('fs');
-const path = require('path');
 const { execSync } = require('child_process');
+const fs = require('fs');
 
 const SKIP_PATTERNS = [
   /\.only\(/,

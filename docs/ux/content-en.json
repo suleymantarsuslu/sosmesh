@@ -1,0 +1,171 @@
+{
+  "app": {
+    "name": "SOSMesh",
+    "tagline": "Emergency mesh network"
+  },
+  "common": {
+    "yes": "Yes",
+    "no": "No",
+    "cancel": "Cancel",
+    "retry": "Retry",
+    "close": "Close",
+    "save": "Save",
+    "loading": "Loading...",
+    "error": "An error occurred"
+  },
+  "nav": {
+    "home": "Home",
+    "status": "Status",
+    "relay": "Relay",
+    "settings": "Settings",
+    "dashboard": "Dashboard",
+    "map": "Map",
+    "inbox": "Inbox",
+    "cases": "Cases",
+    "teams": "Teams",
+    "admin": "Admin"
+  },
+  "sos": {
+    "button": {
+      "label": "SOS",
+      "aria": "Send SOS, hold to activate",
+      "holdInstructions": "Hold for 3 seconds"
+    },
+    "confirm": {
+      "title": "Send SOS",
+      "message": "Are you sure you want to send an SOS?",
+      "yes": "Yes, Send",
+      "no": "No, Cancel"
+    },
+    "sending": "Sending...",
+    "sent": "SOS sent",
+    "failed": "Failed to send",
+    "searchingDevices": "Searching for nearby devices...",
+    "form": {
+      "location": "Location",
+      "message": "Message (optional)",
+      "placeholder": "You can add additional information"
+    }
+  },
+  "status": {
+    "title": "Message Status",
+    "empty": "No SOS sent yet",
+    "failed": "Failed to load status",
+    "timeline": {
+      "1": "SAVED ON DEVICE",
+      "2": "TRANSFERRED TO NEARBY DEVICE",
+      "3": "REACHED SERVER",
+      "4": "OPERATOR VIEWED",
+      "5": "CASE PROCESSED"
+    },
+    "disclaimer": "This status is technical information only and does not guarantee assistance. Always call 112."
+  },
+  "relay": {
+    "title": "Relay Mode",
+    "toggle": {
+      "on": "On",
+      "off": "Off",
+      "aria": "Toggle relay mode"
+    },
+    "description": "When relay mode is active, your device forwards SOS messages from others.",
+    "warning": "Increased battery consumption",
+    "active": "Relay is running",
+    "inactive": "Relay is off"
+  },
+  "settings": {
+    "title": "Settings",
+    "permissions": {
+      "title": "Permissions",
+      "location": "Location",
+      "bluetooth": "Bluetooth",
+      "notifications": "Notifications",
+      "required": "Required",
+      "denied": "Permission required. Go to settings."
+    },
+    "language": {
+      "title": "Language",
+      "tr": "Türkçe",
+      "en": "English"
+    },
+    "theme": {
+      "title": "Theme",
+      "light": "Light",
+      "dark": "Dark",
+      "auto": "Auto"
+    },
+    "about": {
+      "title": "About",
+      "version": "Version",
+      "licenses": "Licenses"
+    }
+  },
+  "states": {
+    "empty": "No data yet",
+    "loading": "Loading...",
+    "error": "Failed to load. Retry.",
+    "offline": "No internet connection",
+    "offlineMode": "Offline mode — Will only send to nearby devices",
+    "permissionDenied": "Permission required. Go to settings.",
+    "lowBattery": "Low battery (below 10%)",
+    "lowBatteryRelay": "Battery below 10% — Relay automatically turned off"
+  },
+  "web": {
+    "dashboard": {
+      "title": "Dashboard",
+      "widgets": {
+        "totalCases": "Total Cases",
+        "activeCases": "Active Cases",
+        "avgResponseTime": "Avg Response Time"
+      },
+      "recentCases": "Recent Cases",
+      "empty": "No cases yet"
+    },
+    "map": {
+      "title": "Map",
+      "aria": "Map of SOS locations",
+      "cluster": "{{count}} SOS"
+    },
+    "inbox": {
+      "title": "Inbox",
+      "empty": "Inbox is empty",
+      "aria": "SOS inbox"
+    },
+    "cases": {
+      "title": "Cases",
+      "detail": "Case Detail",
+      "aiSuggestion": "AI Suggestion",
+      "riskLevel": "Risk Level",
+      "suggestedResources": "Suggested Resources",
+      "similarCases": "Similar Cases",
+      "notes": "Notes",
+      "addNote": "Add Note"
+    }
+  },
+  "watch": {
+    "sos": {
+      "button": "SOS",
+      "hold": "Hold",
+      "sent": "Sent",
+      "haptic": "SOS sent"
+    },
+    "status": {
+      "title": "Status",
+      "compact": {
+        "1": "Saved",
+        "2": "Transferred",
+        "3": "On Server",
+        "4": "Viewed",
+        "5": "Processing"
+      }
+    }
+  },
+  "a11y": {
+    "skipToMain": "Skip to main content",
+    "menu": "Menu",
+    "closeMenu": "Close menu"
+  },
+  "warnings": {
+    "not112": "SOSMesh is not a replacement for 112. Always call 112 in emergencies.",
+    "noFalseHope": "Status updates are technical information only and do not guarantee assistance."
+  }
+}

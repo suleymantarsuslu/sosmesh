@@ -1,0 +1,251 @@
+<!DOCTYPE html>
+<html lang="tr" data-theme="light">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0">
+  <title>SOSMesh — Relay Modu</title>
+  <link rel="stylesheet" href="../../packages/design-tokens/tokens.css">
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+    
+    body {
+      font-family: var(--type-fontFamily-base);
+      font-size: var(--type-fontSize-base);
+      line-height: var(--type-lineHeight-normal);
+      background: var(--color-surface-primary);
+      color: var(--color-text-primary);
+      max-width: 430px;
+      margin: 0 auto;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+    }
+    
+    .header {
+      padding: var(--space-4);
+      background: var(--color-surface-secondary);
+      box-shadow: var(--elevation-2);
+      text-align: center;
+    }
+    
+    .header h1 {
+      font-size: var(--type-fontSize-xl);
+      font-weight: var(--type-fontWeight-semibold);
+    }
+    
+    .main {
+      flex: 1;
+      padding: var(--space-8);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      text-align: center;
+    }
+    
+    .relay-toggle {
+      width: 80px;
+      height: 48px;
+      background: var(--color-offline);
+      border-radius: var(--radius-full);
+      position: relative;
+      cursor: pointer;
+      transition: background 250ms var(--animation-easing-easeInOut);
+      margin-bottom: var(--space-6);
+    }
+    
+    .relay-toggle.active {
+      background: var(--color-success);
+    }
+    
+    .relay-toggle-thumb {
+      width: 40px;
+      height: 40px;
+      background: white;
+      border-radius: var(--radius-full);
+      position: absolute;
+      top: 4px;
+      left: 4px;
+      box-shadow: var(--elevation-2);
+      transition: transform 250ms var(--animation-easing-easeInOut);
+    }
+    
+    .relay-toggle.active .relay-toggle-thumb {
+      transform: translateX(32px);
+    }
+    
+    .relay-status {
+      font-size: var(--type-fontSize-2xl);
+      font-weight: var(--type-fontWeight-semibold);
+      margin-bottom: var(--space-4);
+    }
+    
+    .relay-status.active {
+      color: var(--color-success);
+    }
+    
+    .relay-desc {
+      color: var(--color-text-secondary);
+      margin-bottom: var(--space-8);
+      max-width: 320px;
+    }
+    
+    .relay-warning {
+      padding: var(--space-3);
+      background: var(--color-warning);
+      color: var(--color-text-primary);
+      border-radius: var(--radius-base);
+      font-size: var(--type-fontSize-sm);
+      margin-top: var(--space-8);
+    }
+    
+    .relay-stats {
+      margin-top: var(--space-8);
+      padding: var(--space-4);
+      background: var(--color-surface-secondary);
+      border-radius: var(--radius-md);
+      width: 100%;
+      max-width: 320px;
+    }
+    
+    .relay-stats h3 {
+      font-size: var(--type-fontSize-base);
+      margin-bottom: var(--space-3);
+    }
+    
+    .stat-row {
+      display: flex;
+      justify-content: space-between;
+      padding: var(--space-2) 0;
+      border-bottom: 1px solid var(--color-border);
+    }
+    
+    .stat-row:last-child {
+      border-bottom: none;
+    }
+    
+    .stat-label {
+      color: var(--color-text-secondary);
+      font-size: var(--type-fontSize-sm);
+    }
+    
+    .stat-value {
+      font-weight: var(--type-fontWeight-semibold);
+      font-size: var(--type-fontSize-sm);
+    }
+    
+    .bottom-nav {
+      display: flex;
+      justify-content: space-around;
+      background: var(--color-surface-secondary);
+      box-shadow: var(--elevation-3);
+      padding: var(--space-2) 0;
+    }
+    
+    .nav-item {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: var(--space-1);
+      padding: var(--space-2);
+      color: var(--color-text-secondary);
+      text-decoration: none;
+      font-size: var(--type-fontSize-xs);
+      min-height: var(--touch-default);
+    }
+    
+    .nav-item.active {
+      color: var(--color-sos);
+    }
+    
+    .nav-icon {
+      width: 24px;
+      height: 24px;
+      fill: currentColor;
+    }
+  </style>
+</head>
+<body>
+  <div class="header">
+    <h1>Relay Modu</h1>
+  </div>
+  
+  <main class="main" role="main">
+    <button 
+      class="relay-toggle" 
+      id="relayToggle" 
+      role="switch" 
+      aria-checked="false" 
+      aria-label="Relay modunu aç/kapat"
+    >
+      <div class="relay-toggle-thumb"></div>
+    </button>
+    
+    <div class="relay-status" id="relayStatus">Relay Kapalı</div>
+    
+    <p class="relay-desc">
+      Relay modu aktifken cihazınız başkalarının SOS mesajlarını aktarır.
+    </p>
+    
+    <div class="relay-warning">
+      ⚠️ Pil tüketimi artar
+    </div>
+    
+    <div class="relay-stats" id="relayStats" style="display:none">
+      <h3>İstatistikler</h3>
+      <div class="stat-row">
+        <span class="stat-label">Aktarılan mesaj</span>
+        <span class="stat-value">0</span>
+      </div>
+      <div class="stat-row">
+        <span class="stat-label">Aktif süre</span>
+        <span class="stat-value">—</span>
+      </div>
+      <div class="stat-row">
+        <span class="stat-label">Pil kullanımı</span>
+        <span class="stat-value">—</span>
+      </div>
+    </div>
+  </main>
+  
+  <nav class="bottom-nav" role="navigation" aria-label="Ana navigasyon">
+    <a href="mobile-home.html" class="nav-item">
+      <svg class="nav-icon" viewBox="0 0 24 24"><path d="M10 20v-6h4v6h5v-8h3L12 3 2 12h3v8z"/></svg>
+      <span>Ana Sayfa</span>
+    </a>
+    <a href="mobile-status.html" class="nav-item">
+      <svg class="nav-icon" viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/></svg>
+      <span>Durum</span>
+    </a>
+    <a href="mobile-relay.html" class="nav-item active">
+      <svg class="nav-icon" viewBox="0 0 24 24"><path d="M17.65 6.35C16.2 4.9 14.21 4 12 4c-4.42 0-7.99 3.58-7.99 8s3.57 8 7.99 8c3.73 0 6.84-2.55 7.73-6h-2.08c-.82 2.33-3.04 4-5.65 4-3.31 0-6-2.69-6-6s2.69-6 6-6c1.66 0 3.14.69 4.22 1.78L13 11h7V4l-2.35 2.35z"/></svg>
+      <span>Relay</span>
+    </a>
+    <a href="#" class="nav-item">
+      <svg class="nav-icon" viewBox="0 0 24 24"><path d="M19.14 12.94c.04-.3.06-.61.06-.94 0-.32-.02-.64-.07-.94l2.03-1.58c.18-.14.23-.41.12-.61l-1.92-3.32c-.12-.22-.37-.29-.59-.22l-2.39.96c-.5-.38-1.03-.7-1.62-.94l-.36-2.54c-.04-.24-.24-.41-.48-.41h-3.84c-.24 0-.43.17-.47.41l-.36 2.54c-.59.24-1.13.57-1.62.94l-2.39-.96c-.22-.08-.47 0-.59.22L2.74 8.87c-.12.21-.08.47.12.61l2.03 1.58c-.05.3-.09.63-.09.94s.02.64.07.94l-2.03 1.58c-.18.14-.23.41-.12.61l1.92 3.32c.12.22.37.29.59.22l2.39-.96c.5.38 1.03.7 1.62.94l.36 2.54c.05.24.24.41.48.41h3.84c.24 0 .44-.17.47-.41l.36-2.54c.59-.24 1.13-.56 1.62-.94l2.39.96c.22.08.47 0 .59-.22l1.92-3.32c.12-.22.07-.47-.12-.61l-2.01-1.58zM12 15.6c-1.98 0-3.6-1.62-3.6-3.6s1.62-3.6 3.6-3.6 3.6 1.62 3.6 3.6-1.62 3.6-3.6 3.6z"/></svg>
+      <span>Ayarlar</span>
+    </a>
+  </nav>
+  
+  <script>
+    const toggle = document.getElementById('relayToggle');
+    const status = document.getElementById('relayStatus');
+    const stats = document.getElementById('relayStats');
+    let isActive = false;
+    
+    toggle.addEventListener('click', () => {
+      isActive = !isActive;
+      toggle.classList.toggle('active', isActive);
+      toggle.setAttribute('aria-checked', isActive);
+      status.textContent = isActive ? 'Relay Açık' : 'Relay Kapalı';
+      status.classList.toggle('active', isActive);
+      stats.style.display = isActive ? 'block' : 'none';
+    });
+  </script>
+</body>
+</html>

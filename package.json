@@ -1,6 +1,20 @@
 {
+  "name": "sosmesh-monorepo",
+  "version": "0.1.0",
+  "private": true,
+  "description": "SOSMesh emergency mesh network monorepo",
+  "scripts": {
+    "ux:build-tokens": "node scripts/ux-build-tokens.js",
+    "ux:check-forbidden": "node scripts/ux-forbidden-copy.js",
+    "ux:check-i18n": "node scripts/ux-check-i18n-keys.js",
+    "ux:check-contrast": "node scripts/ux-check-contrast.js",
+    "ux:test-a11y": "playwright test",
+    "test:secret-scan": "bash scripts/secret-scan.sh",
+    "test:cycles": "bash scripts/check-dependency-cycles.sh"
+  },
   "devDependencies": {
-    "@cucumber/gherkin": "^42.0.1",
-    "@cucumber/messages": "^34.2.1"
+    "@axe-core/playwright": "^4.8.2",
+    "@playwright/test": "^1.40.1",
+    "ajv": "^8.12.0"
   }
 }

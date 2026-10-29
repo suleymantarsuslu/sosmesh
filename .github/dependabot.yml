@@ -1,3 +1,5 @@
+# Paused until all implementation steps finish (user decision 2026-10-29)
+# open-pull-requests-limit: 0 prevents new PRs; existing PRs closed after STEP 06
 version: 2
 updates:
   # npm dependencies
@@ -5,7 +7,7 @@ updates:
     directory: "/"
     schedule:
       interval: "monthly"
-    open-pull-requests-limit: 3
+    open-pull-requests-limit: 0
     groups:
       production-deps:
         patterns:
@@ -24,7 +26,7 @@ updates:
     directory: "/"
     schedule:
       interval: "monthly"
-    open-pull-requests-limit: 1
+    open-pull-requests-limit: 0
     labels:
       - "dependencies"
       - "github-actions"
@@ -34,7 +36,7 @@ updates:
     directory: "/apps/android"
     schedule:
       interval: "monthly"
-    open-pull-requests-limit: 1
+    open-pull-requests-limit: 0
     labels:
       - "dependencies"
       - "android"

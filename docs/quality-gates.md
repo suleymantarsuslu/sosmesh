@@ -4,6 +4,11 @@ This document defines the quality gates and required checks for each milestone (
 
 ---
 
+> **Note:** Dependabot is paused until all implementation steps finish (user decision 2026-10-29).  
+> `open-pull-requests-limit: 0` prevents new dependency PRs. Existing PRs will be closed after STEP 06.
+
+---
+
 ## Overview
 
 Quality gates prevent progression to the next milestone without passing all required checks. Each ADIM has specific verification requirements that must be met before marking it as PASS.

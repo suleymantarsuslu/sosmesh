@@ -65,14 +65,12 @@ async function runSimulatedTransfer(
     }
   }
 
-  sender.close();
-  receiver.close();
-
-  if (failed) {
-    return { success: false, receivedPayload: null, error: errorMsg };
-  }
-
-  return { success: completed, receivedPayload };
+  // Don't close until simulation is done
+  return { 
+    success: completed, 
+    receivedPayload,
+    error: failed ? errorMsg : undefined 
+  };
 }
 
 describe('BLE Protocol Integration Tests (Simulated Clock)', () => {
@@ -208,10 +206,6 @@ describe('BLE Protocol Integration Tests (Simulated Clock)', () => {
     }
 
     expect(deliveryCount).toBe(1);
-
-    sender.close();
-    receiver.close();
-    channel.close();
   });
 
   it('should log events in secure format (no PII)', async () => {
@@ -263,9 +257,5 @@ describe('BLE Protocol Integration Tests (Simulated Clock)', () => {
 
     expect(events.some(e => e.event === 'transfer_start')).toBe(true);
     expect(events.some(e => e.event === 'chunk_sent')).toBe(true);
-
-    sender.close();
-    receiver.close();
-    channel.close();
   });
 });

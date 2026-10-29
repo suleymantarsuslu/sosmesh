@@ -1,0 +1,53 @@
+{
+  "version": 1,
+  "description": "BLE V1 Protocol Test Vectors",
+  "vectors": [
+    {
+      "name": "CRC32 Known Input",
+      "input_hex": "48656c6c6f20576f726c64",
+      "expected_crc32": 1243066710,
+      "comment": "Hello World"
+    },
+    {
+      "name": "SHA-256 Known Input",
+      "input_hex": "48656c6c6f20576f726c64",
+      "expected_sha256": "a591a6d40bf420404a011733cfb7b190d62c65bf0bcda32b57b277d9ad9f146e",
+      "comment": "Hello World"
+    },
+    {
+      "name": "Simple Chunking",
+      "message": "SYNTHETIC_TEST_MESSAGE_NO_REAL_PII",
+      "chunk_size": 20,
+      "expected_chunks": 2,
+      "expected_seqs": [0, 1]
+    },
+    {
+      "name": "Handshake Sequence",
+      "hello": {
+        "version": 1,
+        "nonce_hex": "000102030405060708090a0b0c0d0e0f",
+        "mtu": 247
+      },
+      "hello_ack": {
+        "version": 1,
+        "nonce_echo_hex": "000102030405060708090a0b0c0d0e0f",
+        "mtu": 247,
+        "status": 0
+      },
+      "expected_chunk_size": 232
+    }
+  ],
+  "negative_tests": [
+    {
+      "name": "CRC Mismatch",
+      "chunk_hex": "00000001000012345678000000000000deadbeef",
+      "expected_error": "CRC_MISMATCH"
+    },
+    {
+      "name": "Version Mismatch",
+      "hello_version": 2,
+      "expected_version": 1,
+      "expected_error": "VERSION_MISMATCH"
+    }
+  ]
+}

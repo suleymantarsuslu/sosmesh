@@ -287,10 +287,9 @@ describe('Crypto - Cross-Language Test Vectors', () => {
 });
 
 describe('Crypto - Nonce Uniqueness', () => {
-  it('should generate unique nonces in 10k encryptions (representative sample)', () => {
-    // Note: 10k sample chosen for reasonable CI runtime
-    // Full 100k+ test can be run locally with NONCE_FULL_TEST=1
-    const iterations = process.env.NONCE_FULL_TEST ? 100000 : 10000;
+  it('should generate unique nonces in 100k encryptions (≥100k required)', () => {
+    // TPM REQUIREMENT: ≥100k iterations in CI by default
+    const iterations = 100000;
     const nonces = new Set<string>();
     const testPayload = Buffer.from('test');
     const testEnvelope = { timestamp: '2026-10-29T20:00:00Z', priority: 1 };

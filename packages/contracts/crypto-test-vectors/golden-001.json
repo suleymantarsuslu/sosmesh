@@ -1,0 +1,35 @@
+{
+  "WARNING": "⚠️  TEST ONLY - DO NOT USE IN PRODUCTION ⚠️",
+  "description": "Deterministic golden test vector for cross-language crypto compatibility",
+  "algorithm": "X25519+HKDF-SHA256+ChaCha20-Poly1305",
+  "protocol_version": "v1",
+  "keyId": "dev-test-001",
+  
+  "inputs": {
+    "serverPrivateKey": "/Y3Ly64i9CwSN722vrc39rW2bf4+mRCByoK1fn/z+9U=",
+    "serverPublicKey": "BFu/Jxfj3txqvjTtUW7BTYK3iX0E/ysPPwPNk091o1c=",
+    "ephemeralPrivateKey": "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=",
+    "nonce": "AQIDBAUGBwgJCgsM",
+    "plaintext": "Golden test vector",
+    "envelope": {
+      "location": {
+        "accuracy": 10,
+        "latitude": 39.9334,
+        "longitude": 32.8597
+      },
+      "priority": 1,
+      "timestamp": "2026-10-29T20:00:00Z"
+    }
+  },
+  
+  "expected": {
+    "sharedSecret": "COMPUTED_AT_RUNTIME",
+    "aad": "{\"envelope\":{\"location\":{\"accuracy\":10,\"latitude\":39.9334,\"longitude\":32.8597},\"priority\":1,\"timestamp\":\"2026-10-29T20:00:00Z\"},\"keyId\":\"dev-test-001\",\"protocol\":\"v1\"}",
+    "ciphertextWithTag": "TO_BE_GENERATED"
+  },
+  
+  "tampered": {
+    "description": "Flip last byte of tag",
+    "ciphertextWithTag": "TO_BE_GENERATED_THEN_TAMPERED"
+  }
+}

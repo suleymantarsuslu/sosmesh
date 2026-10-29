@@ -1,340 +1,180 @@
-# ADR-009: Kriptografi ve Yerel Mahremiyet
+# ADR-009: Cryptography and Local Privacy
 
-**Durum:** Kabul Edildi  
-**Tarih:** 2026-10-29  
-**Karar Veren:** SOSMesh Ekip  
-**Bağlantı:** ADIM 09, ADR-007 (Protocol V1 Schema), ADR-008 (BLE V1)
+**Status**: Accepted  
+**Date**: 2026-10-29  
+**Deciders**: Technical Team  
+**Related**: [ADR-007 (Contracts)](ADR-007-contracts.md), [ADR-008 (BLE Protocol)](ADR-008-ble-v1-protocol.md)
 
-## Bağlam
+---
 
-SOSMesh'te **rölelerin (relay node) hassas SOS içeriğini okuyamaması** kritik bir gizlilik gereksinimidir. ADR-007'de belirlenen `envelope` (açık metadata) + `encryptedPayload` (opak şifreli içerik) ayrımı uygulanmalı.
+## Context
 
-### Gereksinimler
+SOSMesh must encrypt SOS payloads so that **relays cannot read the content** while still being able to forward encrypted data to the server. Emergency messages contain sensitive personal information (location, medical details, names) that must be protected end-to-end.
 
-1. **Röle Gizliliği**: Röle node SOS metnini, GPS detaylarını, kişi bilgisini göremez
-2. **Sunucu Doğrulama**: Sunucu payload'ı çözüp doğrular (AI analizi için)
-3. **Metadata Bütünlük**: Envelope metadata ile ciphertext bağlı (AAD)
-4. **Nonce Tekrarı Yok**: Aynı key+nonce ile iki şifreleme yapılmaz
-5. **Yerel Anahtar Güvenliği**: Android Keystore, iOS Keychain koruması
-6. **Dev/Prod Ayrımı**: Geliştirme anahtarı production'da reddedilir
-7. **Log Hijyeni**: Plaintext, key, nonce, PII loglanmaz
-8. **Hata Güvenliği**: Key eksik/compromised durumda SOS engellenmez, 112 uyarısı korunur
+### Requirements
+1. **End-to-End Encryption**: Only the server can decrypt SOS messages
+2. **Authenticated Encryption**: Envelope metadata must be cryptographically bound to ciphertext
+3. **Cross-Platform**: TypeScript, Kotlin (Android), and Swift (iOS) must interoperate
+4. **Nonce Uniqueness**: No IV/nonce reuse across billions of encryptions
+5. **Key Rotation**: Support multiple active server keys with graceful transition
+6. **Auditable**: Battle-tested cryptographic primitives only
 
-## Karar
+---
 
-### 1. Kripto Tasarımı: X25519 + HKDF + ChaCha20-Poly1305
+## Decision
 
-**Seçim:** Hybrid encryption (ECIES pattern) with authenticated encryption
+### Algorithm: X25519 + HKDF-SHA256 + IETF ChaCha20-Poly1305
 
-**Bileşenler:**
-- **Key Agreement:** X25519 (elliptic curve Diffie-Hellman)
-- **Key Derivation:** HKDF-SHA256
-- **AEAD:** ChaCha20-Poly1305
+#### 1. **Key Agreement: X25519 (Curve25519 ECDH)**
+- **Ephemeral-Static ECDH**: Client generates ephemeral X25519 keypair per message
+- **Server Public Key Pinned**: Known server public key embedded in app bundle
+- **Shared Secret**: `sharedSecret = X25519(ephemeralPrivate, serverPublic)`
+- **Forward Secrecy**: Each message uses fresh ephemeral key
 
-**Alternatif:** AES-256-GCM (hardware AES support için fallback)
-
-### 2. Anahtar Mimarisi
-
+#### 2. **Key Derivation: HKDF-SHA256**
 ```
-Server Long-term Key Pair:
-  - Public Key (server_public.key): İstemcilere dağıtılır (app bundle, config)
-  - Private Key (server_private.key): YALNIZCA sunucuda, HSM/KMS korumalı
-
-İstemci Ephemeral Key Pair (her SOS için):
-  - Ephemeral Private Key: Şifreleme sonrası silinir
-  - Ephemeral Public Key: Ciphertext ile birlikte gönderilir
-
-Shared Secret Derivation:
-  HKDF-SHA256(
-    ikm: ECDH(ephemeral_private, server_public),
-    salt: nonce,
-    info: "SOSMesh-v1-payload-encryption"
-  ) → encryption_key (32 bytes) + auth_key (32 bytes)
+encryptionKey = HKDF-SHA256(
+  ikm = sharedSecret,      // 32 bytes from X25519
+  salt = nonce,            // 12-byte random nonce
+  info = "SOSMesh-v1-{keyId}-encryption",
+  outputLength = 32        // 256-bit ChaCha20 key
+)
 ```
 
-### 3. Şifreleme Protokolü
+**Rationale**:
+- **Salt = Nonce**: Binds key derivation to unique message context
+- **Info String**: Domain separation prevents cross-protocol attacks; includes `keyId` for multi-key support
 
-**Envelope:**
+#### 3. **Authenticated Encryption: IETF ChaCha20-Poly1305**
+- **Cipher**: ChaCha20 stream cipher (RFC 8439)
+- **MAC**: Poly1305 authentication tag (128-bit)
+- **Nonce**: 96-bit (12-byte) random, unique per message
+- **AAD**: Associated Authenticated Data binding envelope metadata
+
+**AAD Construction**:
 ```json
 {
-  "version": 1,
-  "id": "uuid",
   "envelope": {
-    "timestamp": "ISO8601",
-    "location": {"latitude": 0, "longitude": 0, "accuracy": 0},
-    "priority": 1,
-    "ackLevel": "DEVICE_STORED",
-    "relayCount": 0
+    "timestamp": "2026-10-29T20:00:00Z",
+    "location": {"latitude": 39.9334, "longitude": 32.8597, "accuracy": 10},
+    "priority": 1
   },
-  "encryptedPayload": {
-    "keyId": "prod-2026-10",
-    "ephemeralPublicKey": "BASE64",
-    "nonce": "BASE64_24_BYTES",
-    "ciphertext": "BASE64",
-    "tag": "BASE64_16_BYTES"
-  },
-  "signature": "ENVELOPE_DIGEST_SHA256"
+  "keyId": "prod-2026-Q4-001",
+  "protocol": "v1"
 }
 ```
+- **Canonical JSON**: Sorted keys, deterministic serialization (ADR-007)
+- **Binds Metadata**: Tampering with timestamp/location/priority invalidates tag
 
-**Plaintext Payload (şifrelenmeden önce):**
-```json
-{
-  "sosText": "Kullanıcının acil durum mesajı",
-  "category": "medical",
-  "personsCount": 3,
-  "injuries": true,
-  "userLanguage": "tr"
-}
-```
+---
 
-**Şifreleme Adımları:**
-1. Ephemeral key pair oluştur
-2. ECDH ile shared secret hesapla
-3. HKDF ile encryption_key + auth_key türet
-4. Random 192-bit nonce üret
-5. ChaCha20-Poly1305 ile şifrele:
-   - Plaintext: JSON.stringify(payload)
-   - AAD: JSON.stringify(envelope) (metadata bütünlüğü)
-   - Key: encryption_key
-   - Nonce: nonce
-6. Tag doğrula (16 bytes)
-7. Ephemeral private key'i güvenli sil
+## Implementation
 
-### 4. Nonce Politikası
+### Libraries (Battle-Tested Only)
 
-**Nonce Boyutu:** 192-bit (24 bytes) rastgele  
-**Üretim:** Kriptografik güvenli PRNG (crypto.randomBytes, SecureRandom, SecRandomCopyBytes)  
-**Tekrar Kontrolü:** Test ortamında 100k şifreleme → collision kontrolü  
-**Garantisi:** 192-bit ile 2^96 şifreleme sonrası collision probability < 2^-32
+| Platform | Library | Rationale |
+|----------|---------|-----------|
+| **TypeScript** | `@noble/curves`, `@noble/hashes`, `@noble/ciphers` | Audited, pure JS, no native deps |
+| **Kotlin** | BouncyCastle (`bcprov-jdk18on:1.77`) | Industry standard, Android Keystore compatible |
+| **Swift** | `swift-crypto` (Apple CryptoKit) | Native, hardware-accelerated (Secure Enclave) |
 
-### 5. Key Management
+**Rejected Alternatives**:
+- ❌ **TweetNaCl**: No AAD support in `secretbox` (XSalsa20-Poly1305)
+- ❌ **AES-GCM**: Hardware acceleration unreliable on all Android devices
+- ❌ **Custom Crypto**: High risk of implementation flaws
 
-**Key ID Namespace:**
-```
-dev-test-001        → Geliştirme (hard-coded test key, TEST ONLY etiketli)
-staging-2026-10     → Staging environment
-prod-2026-10        → Production (bundle/config'de public key, private server-only)
-```
+### Key Storage
 
-**Key Rotation:**
-- Yeni key ID ile yeni mesajlar şifrelenir
-- Eski key ID'ler 90 gün sunucuda tutulur (decrypt için)
-- Client config update ile yeni public key dağıtılır
+#### Development
+- **Test Keys**: `packages/contracts/crypto-test-vectors/test-keys.json`
+- **Marked**: `⚠️ TEST ONLY - DO NOT USE IN PRODUCTION ⚠️`
+- **Validation**: Production config rejects `dev-test-*` keyIds
 
-**Compromised Key:**
-- Key ID invalidate edilir
-- Yeni key ID zorlanır (app update)
-- Kullanıcıya "Güvenlik güncellemesi gerekli" bildirimi
+#### Production
+- **Android**: Android Keystore System (hardware-backed when available)
+- **iOS**: Keychain Services + Secure Enclave
+- **Server**: HSM or KMS (AWS KMS, Google Cloud KMS, Azure Key Vault)
 
-### 6. Yerel Anahtar Güvenliği
+**Key Rotation**:
+- **Frequency**: Every 90 days (quarterly)
+- **Grace Period**: 30 days (old key remains valid for decryption)
+- **Active Keys**: Multiple `keyId` supported simultaneously
 
-**Android Keystore:**
-```kotlin
-interface KeystoreAdapter {
-    fun storeKey(keyId: String, keyData: ByteArray)
-    fun retrieveKey(keyId: String): ByteArray?
-    fun deleteKey(keyId: String)
-    fun listKeys(): List<String>
-}
+---
 
-// Implementation: Android Keystore API
-// - Hardware-backed key storage (StrongBox Keymaster)
-// - setUserAuthenticationRequired(false) for SOS emergency access
-// - setUnlockedDeviceRequired(true)
-```
+## Security Properties
 
-**CI Test:** Mock KeystoreAdapter (in-memory), NOT_TESTED label for real Keystore
+### Guarantees
+1. **Confidentiality**: Only server with private key can decrypt
+2. **Integrity**: Any tampering with ciphertext or metadata detected
+3. **Authenticity**: Server verifies message originated from client with valid ephemeral key
+4. **Forward Secrecy**: Compromising server key does not decrypt past messages (ephemeral keys discarded)
 
-**iOS Keychain:**
-```swift
-protocol KeychainAdapter {
-    func storeKey(keyId: String, keyData: Data) throws
-    func retrieveKey(keyId: String) throws -> Data?
-    func deleteKey(keyId: String) throws
-    func listKeys() throws -> [String]
-}
+### Non-Goals
+- **Post-Quantum Security**: X25519 vulnerable to quantum computers (migration planned post-2030)
+- **Sender Authentication**: No proof of specific device identity (by design for privacy)
+- **Multi-Recipient**: Single server public key only (no group encryption)
 
-// Implementation: Keychain Services API
-// - kSecAttrAccessibleWhenUnlockedThisDeviceOnly
-// - kSecAttrSynchronizable: false (no iCloud sync for SOS keys)
-```
+---
 
-**CI Test:** Mock KeychainAdapter, NOT_TESTED label for real Keychain
+## Testing & Validation
 
-### 7. Error Handling
+### Cross-Language Golden Vectors
+**File**: `packages/contracts/crypto-test-vectors/golden-001.json`
 
-**Error Codes:**
-```typescript
-enum CryptoError {
-  KEY_NOT_FOUND = 'KEY_NOT_FOUND',
-  KEY_EXPIRED = 'KEY_EXPIRED',
-  DECRYPTION_FAILED = 'DECRYPTION_FAILED',
-  INVALID_TAG = 'INVALID_TAG',
-  NONCE_COLLISION = 'NONCE_COLLISION',
-  KEYSTORE_UNAVAILABLE = 'KEYSTORE_UNAVAILABLE'
-}
-```
+**Requirements**:
+1. **Deterministic Test**: Fixed server keypair + fixed ephemeral key + fixed nonce → identical ciphertext across TS/Kotlin/Swift
+2. **Decrypt Compatibility**: Each language decrypts ciphertext produced by others
+3. **Tamper Detection**: Flip 1 bit in tag → all languages reject
 
-**Kullanıcı Mesajları (TR/EN):**
-```json
-{
-  "KEY_NOT_FOUND": {
-    "tr": "Güvenlik anahtarı bulunamadı. SOS mesajınız şifrelenmeden gönderilecek. Acil durumlar için 112'yi arayın.",
-    "en": "Security key not found. Your SOS will be sent unencrypted. For emergencies, call 112."
-  },
-  "KEYSTORE_UNAVAILABLE": {
-    "tr": "Cihaz güvenliği kullanılamıyor. Mesajınız geçici anahtarla korunacak.",
-    "en": "Device security unavailable. Your message will use temporary protection."
-  }
-}
-```
+**CI Job**: `Cross-Language Contract Tests` verifies compatibility
 
-**Davranış:**
-- Key eksikse → Fallback: şifrelenmeden gönder + kullanıcı uyarısı
-- Decryption fail → Server: ham envelope kaydet, operator'e uyar
-- **112 uyarısı her durumda gösterilir** (kripto hatası SOS'u engellmez)
+### Nonce Uniqueness
+- **Test**: 100,000 encryptions with 0 collisions
+- **Source**: `crypto.getRandomValues()` (browser), `SecureRandom` (Android), `SecRandomCopyBytes` (iOS)
+- **Collision Probability**: ~2^-48 for 100k samples from 96-bit space (negligible)
 
-### 8. Dev vs Prod Key Ayrımı
+### Tamper Tests
+All 3 languages must reject:
+- Ciphertext modification (1 bit flip)
+- Tag modification (1 bit flip)
+- AAD modification (change envelope field)
+- Nonce modification (change nonce)
+- Key ID mismatch
 
-**Test Key (dev-test-001):**
-```
-# packages/contracts/crypto-test-vectors/test-keys.json
-{
-  "WARNING": "TEST ONLY - DO NOT USE IN PRODUCTION",
-  "keyId": "dev-test-001",
-  "serverPublicKey": "BASE64_X25519_PUBLIC_KEY",
-  "serverPrivateKey": "BASE64_X25519_PRIVATE_KEY",
-  "purpose": "Cross-language test vector validation"
-}
-```
+---
 
-**Secret Scanner Allowlist:**
-```yaml
-# .github/secret-scan-allowlist.yml
-paths:
-  - path: packages/contracts/crypto-test-vectors/**
-    reason: "Contains TEST-ONLY encryption keys with explicit WARNING labels"
-    patterns:
-      - "dev-test-001"
-    reviewer: "@security-team"
-```
+## Consequences
 
-**Production Key:**
-```
-# apps/api/.env.production (NEVER in repo)
-SOSMESH_SERVER_PRIVATE_KEY=<KMS_ARN or HSM reference>
+### Positive
+- ✅ Battle-tested algorithms (IETF standards)
+- ✅ No custom crypto implementation
+- ✅ Cross-platform compatibility verified
+- ✅ Hardware acceleration on iOS (Secure Enclave)
+- ✅ AAD binding prevents metadata tampering
 
-# apps/mobile/config/prod.json (public key only)
-{
-  "crypto": {
-    "keyId": "prod-2026-10",
-    "serverPublicKey": "BASE64_X25519_PUBLIC_KEY"
-  }
-}
-```
+### Negative
+- ⚠️ X25519 not post-quantum (acceptable risk until 2030+)
+- ⚠️ Android Keystore requires API 23+ (graceful degradation)
+- ⚠️ Ephemeral key generation adds ~1ms latency per encryption
 
-**Prod Rejection Test:**
-```typescript
-it('should reject dev key in production config', () => {
-  const config = { keyId: 'dev-test-001', ... };
-  expect(() => validateCryptoConfig(config, 'production'))
-    .toThrow('Dev key not allowed in production');
-});
-```
+### Risks
+- **Key Compromise**: Server private key leak decrypts all messages → **Mitigation**: HSM + quarterly rotation
+- **Implementation Bug**: Subtle crypto errors hard to detect → **Mitigation**: Golden vectors + external audit
+- **Nonce Reuse**: Breaks ChaCha20 security → **Mitigation**: 100k uniqueness test + entropy source validation
 
-### 9. Log Hijyeni
+---
 
-**Redaction Policy:**
-```typescript
-// Logging helper
-function sanitizeForLog(obj: any): any {
-  const redacted = { ...obj };
-  delete redacted.sosText;
-  delete redacted.plaintext;
-  delete redacted.serverPrivateKey;
-  delete redacted.ephemeralPrivateKey;
-  delete redacted.sharedSecret;
-  if (redacted.location) {
-    redacted.location = { accuracy: redacted.location.accuracy }; // GPS redacted
-  }
-  if (redacted.nonce && redacted.encryptionKey) {
-    // nonce+key pair = sensitive
-    delete redacted.encryptionKey;
-  }
-  return redacted;
-}
-```
+## References
 
-**Log Example:**
-```
-[INFO] SOS encrypted: id=a1b2c3, keyId=prod-2026-10, envelopeSize=245, ciphertextSize=512
-[ERROR] Decryption failed: id=a1b2c3, keyId=prod-2026-10, error=INVALID_TAG
-```
+- [RFC 7748: Elliptic Curves for Security (X25519)](https://tools.ietf.org/html/rfc7748)
+- [RFC 5869: HKDF - HMAC-based Extract-and-Expand Key Derivation Function](https://tools.ietf.org/html/rfc5869)
+- [RFC 8439: ChaCha20 and Poly1305 for IETF Protocols](https://tools.ietf.org/html/rfc8439)
+- [Key Management Documentation](../security/key-management.md)
+- [ADR-007: Contracts and Canonical JSON](ADR-007-contracts.md)
 
-**Redaction Test:**
-```typescript
-it('should not log plaintext SOS content', () => {
-  const logs = captureConsoleLogs(() => encryptSOS(payload));
-  expect(logs.join()).not.toContain('Kullanıcının acil durum mesajı');
-  expect(logs.join()).not.toContain('serverPrivateKey');
-});
-```
+---
 
-### 10. Mutation Testing (Tamper Detection)
-
-**Hedef:** Hiçbir tamper (ciphertext, tag, AAD, nonce, keyId değişikliği) kabul edilmez
-
-**Test Planı:**
-1. Geçerli ciphertext oluştur
-2. Doğrulama testini çalıştır → PASS
-3. Kodu geçici olarak sabotaj et (tag validation'ı devre dışı bırak)
-4. Aynı tampering testini çalıştır → FAIL (test kırmızı olmalı)
-5. Sabotajı geri al
-6. Testleri tekrar çalıştır → PASS
-
-**Mutation Test (CI'da ÇALIŞTIRILMAZ, manuel doğrulama):**
-```bash
-# Geçici mutation
-git apply mutation-disable-tag-check.patch
-pnpm test crypto.tamper.test.ts  # MUST BE RED (exit code != 0)
-git apply -R mutation-disable-tag-check.patch
-pnpm test crypto.tamper.test.ts  # MUST BE GREEN
-```
-
-## Sonuçlar
-
-### Pozitif
-- Röle node hassas içerik göremez (E2E privacy)
-- Metadata bütünlüğü (AAD binding)
-- Nonce tekrarı garantisi
-- Dev/prod key ayrımı zorlanır
-- Hardware-backed key storage (Android/iOS)
-- Log PII sızdırımı yok
-
-### Negatif
-- Kripto overhead (~200 bytes ciphertext + ephemeral key)
-- Key rotation manuel deploy gerektirir
-- Fallback unencrypted mode gerekli (key unavailable)
-
-### Riskler
-- Prod key leak → tüm geçmiş mesajlar decrypt edilebilir
-  - **Mitigasyon:** Server private key HSM/KMS'te, rotate policy
-- Quantum resistance yok (X25519)
-  - **Mitigasyon:** Post-quantum algos (Kyber) v2'de değerlendirilir
-
-## Alternatifler
-
-1. **TLS-only (no E2E):** Röle node içerik okur → Reddedildi
-2. **AES-GCM:** Hardware support iyi ama X25519 key agreement yok → Fallback olarak kullanılır
-3. **libsodium sealed box:** Daha basit API ama AAD binding yok → Reddedildi
-4. **HPKE (RFC 9180):** Modern standart ama library support sınırlı → v2 için değerlendir
-
-## Referanslar
-
-- [ECIES (Elliptic Curve Integrated Encryption Scheme)](https://en.wikipedia.org/wiki/Integrated_Encryption_Scheme)
-- [RFC 7748: X25519 Key Agreement](https://datatracker.ietf.org/doc/html/rfc7748)
-- [RFC 5869: HKDF](https://datatracker.ietf.org/doc/html/rfc5869)
-- [RFC 8439: ChaCha20-Poly1305](https://datatracker.ietf.org/doc/html/rfc8439)
-- [Android Keystore System](https://developer.android.com/training/articles/keystore)
-- [iOS Keychain Services](https://developer.apple.com/documentation/security/keychain_services)
+**Last Updated**: 2026-10-29  
+**Version**: 1.0  
+**Next Review**: 2027-01-29 (or upon key compromise incident)

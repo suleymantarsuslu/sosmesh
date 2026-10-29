@@ -250,8 +250,9 @@ public struct SOSMeshCrypto {
      * AAD binds envelope metadata to the ciphertext.
      */
     private static func createAAD(envelope: [String: Any], keyId: String) throws -> Data {
+        let sorted = sortKeys(envelope)
         let aadObject: [String: Any] = [
-            "envelope": sortKeys(envelope),
+            "envelope": sorted,
             "keyId": keyId,
             "protocol": protocolVersion
         ]
@@ -278,32 +279,15 @@ public struct SOSMeshCrypto {
     }
     
     /**
-     * Convert object to canonical JSON string.
+     * Convert object to canonical JSON string using JSONSerialization.
+     * Ensures cross-platform number formatting compatibility.
      */
     private static func toCanonicalJSON(_ obj: Any) throws -> String {
-        if let dict = obj as? [String: Any] {
-            let sorted = dict.sorted { $0.key < $1.key }
-            let items = try sorted.map { key, value in
-                "\"\(key)\":\(try toCanonicalJSON(value))"
-            }
-            return "{\(items.joined(separator: ","))}"
-        } else if let array = obj as? [Any] {
-            let items = try array.map { try toCanonicalJSON($0) }
-            return "[\(items.joined(separator: ","))]"
-        } else if let string = obj as? String {
-            return "\"\(string)\""
-        } else if let boolValue = obj as? Bool {
-            return boolValue ? "true" : "false"
-        } else if let number = obj as? Int {
-            return "\(number)"
-        } else if let number = obj as? Double {
-            return "\(number)"
-        } else if let number = obj as? NSNumber {
-            // NSNumber fallback (mainly for Darwin)
-            return "\(number)"
-        } else {
-            return "null"
+        let jsonData = try JSONSerialization.data(withJSONObject: obj, options: [.sortedKeys, .withoutEscapingSlashes])
+        guard let jsonString = String(data: jsonData, encoding: .utf8) else {
+            throw CryptoError.encryptionFailed
         }
+        return jsonString
     }
 }
 

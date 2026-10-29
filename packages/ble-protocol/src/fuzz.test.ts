@@ -1,8 +1,8 @@
 import { describe, it, expect } from 'vitest';
-import { Sender, IRNG, IClock } from './sender';
-import { Receiver } from './receiver';
+
 import { createMockTransportPair, MockChannelConfig } from './mock-transport';
-import { TransferEvent } from './types';
+import { Receiver } from './receiver';
+import { Sender, IRNG, IClock } from './sender';
 
 // Seeded PRNG for deterministic fuzz testing
 class SeededRNG implements IRNG {
@@ -22,40 +22,6 @@ class SeededRNG implements IRNG {
   }
 }
 
-// Simulated clock for testing timeouts
-class SimulatedClock implements IClock {
-  private currentTime = 0;
-  private timers: Array<{ id: number; fireAt: number; fn: () => void }> = [];
-  private nextId = 1;
-
-  now(): number {
-    return this.currentTime;
-  }
-
-  setTimeout(fn: () => void, ms: number): any {
-    const id = this.nextId++;
-    this.timers.push({ id, fireAt: this.currentTime + ms, fn });
-    return id;
-  }
-
-  clearTimeout(id: any): void {
-    this.timers = this.timers.filter(t => t.id !== id);
-  }
-
-  advance(ms: number): void {
-    this.currentTime += ms;
-    const fired = this.timers.filter(t => t.fireAt <= this.currentTime);
-    this.timers = this.timers.filter(t => t.fireAt > this.currentTime);
-    for (const timer of fired) {
-      timer.fn();
-    }
-  }
-
-  tick(): void {
-    this.advance(10);
-  }
-}
-
 interface FuzzScenario {
   name: string;
   payloadSize: number;
@@ -66,7 +32,6 @@ interface FuzzScenario {
 
 function generateFuzzScenarios(seedStart: number, count: number): FuzzScenario[] {
   const scenarios: FuzzScenario[] = [];
-  const rng = new SeededRNG(seedStart);
 
   for (let i = 0; i < count; i++) {
     const seed = seedStart + i;
@@ -121,21 +86,27 @@ describe('BLE Protocol Fuzz Testing', () => {
             failures.push({ scenario, error: result.error || 'Unknown error' });
           }
         }
-      } catch (error: any) {
+      } catch (error: unknown) {
         failCount++;
         if (scenario.expectSuccess) {
-          failures.push({ scenario, error: error.message });
+          const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+          failures.push({ scenario, error: errorMessage });
         }
       }
     }
 
+    // eslint-disable-next-line no-console
     console.log(`Fuzz test results: ${successCount} success, ${failCount} fail`);
+    // eslint-disable-next-line no-console
     console.log(`Seed range: ${FUZZ_SEED_START} to ${FUZZ_SEED_START + FUZZ_SCENARIO_COUNT - 1}`);
+    // eslint-disable-next-line no-console
     console.log(`Total scenarios: ${FUZZ_SCENARIO_COUNT}`);
 
     if (failures.length > 0) {
+      // eslint-disable-next-line no-console
       console.error(`${failures.length} unexpected failures:`);
       failures.slice(0, 10).forEach(f => {
+        // eslint-disable-next-line no-console
         console.error(`  ${f.scenario.name}: ${f.error}`);
       });
     }
@@ -424,7 +395,7 @@ describe('BLE Protocol Fuzz Testing', () => {
   });
 
   it('Negative test: should fail on total mismatch', async () => {
-    const { senderTransport, receiverTransport, channel } = createMockTransportPair({
+    const { receiverTransport, channel } = createMockTransportPair({
       packetLoss: 0,
       duplicateRate: 0,
       reorderRate: 0,
@@ -527,6 +498,7 @@ describe('BLE Protocol Fuzz Testing', () => {
     // CRITICAL: With corrupted digest, PEER_RECEIVED must NOT be emitted
     // This proves the fuzz test catches real bugs
     expect(peerReceivedCount).toBe(0);
+    // eslint-disable-next-line no-console
     console.log('✓ MUTATION TEST PASSED: Fuzz correctly detects digest corruption');
 
     sender.close();

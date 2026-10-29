@@ -2,7 +2,19 @@ import { createHash } from 'crypto';
 
 import CRC32 from 'crc-32';
 
-import { Chunk, ChunkHeader, ChunkFlags, CHUNK_HEADER_SIZE } from './types';
+export interface ChunkHeader {
+  seq: number;
+  total: number;
+  crc32: number;
+  flags: number;
+}
+
+export interface Chunk {
+  header: ChunkHeader;
+  payload: Buffer;
+}
+
+import { ChunkFlags, CHUNK_HEADER_SIZE } from './types';
 
 export function calculateCRC32(data: Buffer): number {
   return CRC32.buf(data) >>> 0; // Convert to unsigned

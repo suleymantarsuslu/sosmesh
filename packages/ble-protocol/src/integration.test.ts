@@ -1,7 +1,8 @@
 import { describe, it, expect } from 'vitest';
-import { Sender } from './sender';
-import { Receiver } from './receiver';
+
 import { createMockTransportPair } from './mock-transport';
+import { Receiver } from './receiver';
+import { Sender } from './sender';
 import { AckLevel } from './types';
 
 describe('BLE Protocol Integration Tests', () => {

@@ -1,42 +1,53 @@
-import * as fs from 'fs';
-import * as path from 'path';
-
 import { describe, it, expect } from 'vitest';
 
-import { 
-  calculateCRC32, 
-  calculateDigest, 
+import {
+  calculateCRC32,
+  calculateDigest,
   splitIntoChunks,
   serializeChunk,
   deserializeChunk,
   assembleChunks,
-  verifyDigest 
+  verifyDigest
 } from './chunk';
 import { ChunkFlags } from './types';
 
-const testVectors = JSON.parse(
-  fs.readFileSync(path.join(__dirname, '../../fixtures/ble/test-vectors.json'), 'utf-8')
+const testVectors: {
+  vectors: Array<{
+    name: string;
+    input_hex?: string;
+    expected_crc32?: number;
+    expected_sha256?: string;
+    message?: string;
+    chunk_size?: number;
+    expected_chunks?: number;
+    expected_seqs?: number[];
+  }>;
+} = JSON.parse(
+  require('fs').readFileSync(require('path').join(__dirname, '../../../fixtures/ble/test-vectors.json'), 'utf-8')
 );
 
 describe('BLE Protocol Chunking', () => {
   it('should calculate CRC32 correctly', () => {
-    const vector = testVectors.vectors.find((v: any) => v.name === 'CRC32 Known Input');
-    const input = Buffer.from(vector.input_hex, 'hex');
+    const vector = testVectors.vectors.find((v) => v.name === 'CRC32 Known Input');
+    if (!vector) throw new Error('Test vector not found');
+    const input = Buffer.from(vector.input_hex!, 'hex');
     const crc = calculateCRC32(input);
     expect(crc).toBe(vector.expected_crc32);
   });
 
   it('should calculate SHA-256 correctly', () => {
-    const vector = testVectors.vectors.find((v: any) => v.name === 'SHA-256 Known Input');
-    const input = Buffer.from(vector.input_hex, 'hex');
+    const vector = testVectors.vectors.find((v) => v.name === 'SHA-256 Known Input');
+    if (!vector) throw new Error('Test vector not found');
+    const input = Buffer.from(vector.input_hex!, 'hex');
     const digest = calculateDigest(input);
     expect(digest.toString('hex')).toBe(vector.expected_sha256);
   });
 
   it('should split message into chunks', () => {
-    const vector = testVectors.vectors.find((v: any) => v.name === 'Simple Chunking');
-    const message = Buffer.from(vector.message);
-    const chunks = splitIntoChunks(message, vector.chunk_size);
+    const vector = testVectors.vectors.find((v) => v.name === 'Simple Chunking');
+    if (!vector) throw new Error('Test vector not found');
+    const message = Buffer.from(vector.message!);
+    const chunks = splitIntoChunks(message, vector.chunk_size!);
     
     expect(chunks.length).toBe(vector.expected_chunks);
     expect(chunks.map(c => c.header.seq)).toEqual(vector.expected_seqs);

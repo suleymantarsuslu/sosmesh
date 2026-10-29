@@ -1,4 +1,5 @@
 import { EventEmitter } from 'events';
+
 import { ITransport, IRNG, SystemRNG } from './sender';
 
 export interface MockChannelConfig {

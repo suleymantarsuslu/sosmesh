@@ -1,4 +1,14 @@
 import { EventEmitter } from 'events';
+
+import { 
+  deserializeChunk, 
+  assembleChunks, 
+  calculateDigest, 
+  extractDigestFromLastChunk,
+  verifyDigest,
+  Chunk 
+} from './chunk';
+import { ITransport, IClock, SystemClock } from './sender';
 import { 
   TransferState, 
   MessageType, 
@@ -13,15 +23,6 @@ import {
   PROTOCOL_VERSION,
   AckLevel
 } from './types';
-import { 
-  deserializeChunk, 
-  assembleChunks, 
-  calculateDigest, 
-  extractDigestFromLastChunk,
-  verifyDigest,
-  Chunk 
-} from './chunk';
-import { ITransport, IClock, SystemClock } from './sender';
 
 export class Receiver extends EventEmitter {
   private state: TransferState = TransferState.IDLE;

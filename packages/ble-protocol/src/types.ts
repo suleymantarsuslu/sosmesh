@@ -55,18 +55,6 @@ export enum AckLevel {
   INCIDENT_OPENED = 'INCIDENT_OPENED',
 }
 
-export interface ChunkHeader {
-  seq: number;
-  total: number;
-  crc32: number;
-  flags: number;
-}
-
-export interface Chunk {
-  header: ChunkHeader;
-  payload: Buffer;
-}
-
 export interface HelloMessage {
   type: MessageType.HELLO;
   version: number;

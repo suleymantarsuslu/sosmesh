@@ -1,4 +1,12 @@
 import { EventEmitter } from 'events';
+
+import { 
+  splitIntoChunks, 
+  serializeChunk, 
+  calculateDigest, 
+  createLastChunkWithDigest,
+  Chunk 
+} from './chunk';
 import { 
   TransferState, 
   MessageType, 
@@ -12,13 +20,6 @@ import {
   TransferEvent,
   PROTOCOL_VERSION
 } from './types';
-import { 
-  splitIntoChunks, 
-  serializeChunk, 
-  calculateDigest, 
-  createLastChunkWithDigest,
-  Chunk 
-} from './chunk';
 
 export interface ITransport {
   send(data: Buffer): Promise<void>;

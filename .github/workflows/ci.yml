@@ -236,22 +236,16 @@ jobs:
           cd packages/contracts-kotlin
           ./gradlew test --no-daemon
       
-      - name: Swift toolchain diagnostic
+      - name: Run Swift contract tests
         run: |
-          echo "=== Swift Toolchain Diagnostic ==="
-          which swift || echo "swift not found in PATH"
-          swift --version || echo "swift --version failed (exit $?)"
-          echo
-          if command -v swift &> /dev/null; then
-            echo "✓ Swift is available, attempting to run tests..."
-            cd packages/contracts-swift
-            swift test || echo "❌ Swift tests failed (exit $?)"
-          else
-            echo "⚠️ Swift toolchain NOT_AVAILABLE on this runner"
-            echo "Status: NOT_TESTED/BLOCKED (Swift toolchain not found)"
-          fi
+          echo "=== Swift Contract Tests ==="
+          which swift
+          swift --version
+          cd packages/contracts-swift
+          export SOURCE_ROOT="${GITHUB_WORKSPACE}"
+          swift test
       
-      - name: Compare canonical JSON outputs (TypeScript vs Kotlin)
+      - name: Compare canonical JSON outputs (TypeScript vs Kotlin vs Swift)
         run: bash scripts/compare-canonical-json.sh
 
   secret-scan:

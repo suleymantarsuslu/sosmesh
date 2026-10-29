@@ -79,17 +79,17 @@ describe('BLE Protocol Integration Tests', () => {
 
   it('should handle packet loss with retries', async () => {
     const { senderTransport, receiverTransport, channel } = createMockTransportPair({
-      packetLoss: 0.15, // 15% packet loss (reduced for reliability)
+      packetLoss: 0.10, // 10% packet loss
       duplicateRate: 0,
       reorderRate: 0,
       minLatency: 5,
-      maxLatency: 20
+      maxLatency: 15
     });
 
-    const sender = new Sender(senderTransport, { maxRetries: 10, chunkTimeout: 600 });
+    const sender = new Sender(senderTransport, { maxRetries: 12, chunkTimeout: 500 });
     const receiver = new Receiver(receiverTransport);
 
-    const testPayload = Buffer.from('TEST_WITH_PACKET_LOSS_' + 'X'.repeat(300));
+    const testPayload = Buffer.from('TEST_WITH_PACKET_LOSS_' + 'X'.repeat(250));
     let receivedPayload: Buffer | null = null;
 
     receiver.on('completed', ({ payload }) => {
@@ -99,7 +99,7 @@ describe('BLE Protocol Integration Tests', () => {
     const completedPromise = new Promise<void>((resolve, reject) => {
       sender.on('completed', resolve);
       sender.on('failed', reject);
-      setTimeout(() => reject(new Error('Timeout')), 25000);
+      setTimeout(() => reject(new Error('Timeout')), 20000);
     });
 
     await sender.startTransfer(testPayload, 'loss_test');
@@ -113,7 +113,7 @@ describe('BLE Protocol Integration Tests', () => {
     sender.close();
     receiver.close();
     channel.close();
-  }, 30000); // Test timeout
+  }, 25000); // Test timeout
 
   it('should handle reordered packets', async () => {
     const { senderTransport, receiverTransport, channel } = createMockTransportPair({

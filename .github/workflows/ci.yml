@@ -223,9 +223,13 @@ jobs:
           java-version: '17'
       
       - name: Setup Swift
-        uses: swift-actions/setup-swift@v2
-        with:
-          swift-version: '5.9'
+        run: |
+          # Install Swift on Linux (Ubuntu runner)
+          wget -q https://download.swift.org/swift-5.9.2-release/ubuntu2404/swift-5.9.2-RELEASE/swift-5.9.2-RELEASE-ubuntu24.04.tar.gz
+          tar xzf swift-5.9.2-RELEASE-ubuntu24.04.tar.gz
+          export PATH="$PWD/swift-5.9.2-RELEASE-ubuntu24.04/usr/bin:$PATH"
+          echo "$PWD/swift-5.9.2-RELEASE-ubuntu24.04/usr/bin" >> $GITHUB_PATH
+          swift --version
       
       - name: Install dependencies
         run: pnpm install --frozen-lockfile

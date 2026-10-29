@@ -7,12 +7,21 @@ final class BleProtocolTests: XCTestCase {
     private var testVectors: [String: Any]?
     
     override func setUp() async throws {
-        // Load test vectors - try multiple possible paths for CI/local compatibility
+        // Load test vectors - find fixtures relative to repo root
+        // CI working directory is /home/runner/work/sosmesh/sosmesh
+        // Tests run from /home/runner/work/sosmesh/sosmesh/.build/x86_64-unknown-linux-gnu/debug/
+        
         let possiblePaths = [
+            // CI: from .build/x86_64-unknown-linux-gnu/debug/ back to repo root
+            "../../../../fixtures/ble/test-vectors.json",
+            "../../../../../fixtures/ble/test-vectors.json",
+            "../../../../../../fixtures/ble/test-vectors.json",
+            // Local: from Tests/
             "../../fixtures/ble/test-vectors.json",
             "../../../fixtures/ble/test-vectors.json",
-            "../../../../fixtures/ble/test-vectors.json",
-            "fixtures/ble/test-vectors.json"
+            // Absolute from repo root (if CI sets working dir)
+            "fixtures/ble/test-vectors.json",
+            "/home/runner/work/sosmesh/sosmesh/fixtures/ble/test-vectors.json"
         ]
         
         var loadedVectors: [String: Any]?
@@ -25,9 +34,11 @@ final class BleProtocolTests: XCTestCase {
             }
         }
         
-        guard loadedVectors != nil else {
+        if loadedVectors == nil {
+            // Debug: print current directory
+            let pwd = FileManager.default.currentDirectoryPath
             throw NSError(domain: "TestError", code: 1, userInfo: [
-                NSLocalizedDescriptionKey: "test-vectors.json not found. Tried: \(possiblePaths.joined(separator: ", "))"
+                NSLocalizedDescriptionKey: "test-vectors.json not found. PWD: \(pwd). Tried: \(possiblePaths.joined(separator: ", "))"
             ])
         }
         

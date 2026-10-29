@@ -5,9 +5,10 @@
   "description": "SOSMesh emergency mesh network monorepo",
   "author": "SOSMesh Team",
   "license": "SEE LICENSE FILE",
+  "packageManager": "pnpm@9.0.0",
   "engines": {
     "node": ">=20.0.0",
-    "pnpm": ">=8.0.0"
+    "pnpm": ">=9.0.0"
   },
   "scripts": {
     "build": "pnpm -r build",

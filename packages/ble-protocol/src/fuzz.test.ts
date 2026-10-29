@@ -395,7 +395,7 @@ describe('BLE Protocol Fuzz Testing', () => {
   });
 
   it('Negative test: should fail on total mismatch', async () => {
-    const { receiverTransport, channel } = createMockTransportPair({
+    const { senderTransport, receiverTransport, channel } = createMockTransportPair({
       packetLoss: 0,
       duplicateRate: 0,
       reorderRate: 0,

@@ -23,7 +23,7 @@ const testVectors: {
     expected_seqs?: number[];
   }>;
 } = JSON.parse(
-  require('fs').readFileSync(require('path').join(__dirname, '../../../fixtures/ble/test-vectors.json'), 'utf-8')
+  require('fs').readFileSync(require('path').join(__dirname, '../../fixtures/ble/test-vectors.json'), 'utf-8')
 );
 
 describe('BLE Protocol Chunking', () => {

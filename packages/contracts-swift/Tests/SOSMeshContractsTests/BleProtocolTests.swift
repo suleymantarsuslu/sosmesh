@@ -7,11 +7,31 @@ final class BleProtocolTests: XCTestCase {
     private var testVectors: [String: Any]?
     
     override func setUp() async throws {
-        // Load test vectors
-        let fixturesPath = "../../fixtures/ble/test-vectors.json"
-        let url = URL(fileURLWithPath: fixturesPath)
-        let data = try Data(contentsOf: url)
-        testVectors = try JSONSerialization.jsonObject(with: data) as? [String: Any]
+        // Load test vectors - try multiple possible paths for CI/local compatibility
+        let possiblePaths = [
+            "../../fixtures/ble/test-vectors.json",
+            "../../../fixtures/ble/test-vectors.json",
+            "../../../../fixtures/ble/test-vectors.json",
+            "fixtures/ble/test-vectors.json"
+        ]
+        
+        var loadedVectors: [String: Any]?
+        for path in possiblePaths {
+            let url = URL(fileURLWithPath: path)
+            if let data = try? Data(contentsOf: url),
+               let vectors = try? JSONSerialization.jsonObject(with: data) as? [String: Any] {
+                loadedVectors = vectors
+                break
+            }
+        }
+        
+        guard loadedVectors != nil else {
+            throw NSError(domain: "TestError", code: 1, userInfo: [
+                NSLocalizedDescriptionKey: "test-vectors.json not found. Tried: \(possiblePaths.joined(separator: ", "))"
+            ])
+        }
+        
+        testVectors = loadedVectors
     }
     
     func testCRC32WithKnownInput() throws {

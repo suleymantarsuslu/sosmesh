@@ -1,0 +1,29 @@
+body {
+  font-family: var(--type-fontFamily-base, -apple-system, sans-serif);
+  margin: 0;
+  padding: var(--space-4, 1rem);
+  background: var(--color-surface-primary, #fff);
+  color: var(--color-text-primary, #212121);
+}
+
+.container {
+  max-width: 1200px;
+  margin: 0 auto;
+}
+
+h1 {
+  font-size: var(--type-fontSize-3xl, 1.875rem);
+  margin-bottom: var(--space-4, 1rem);
+}
+
+.warning-banner {
+  background: var(--color-warning, #F57C00);
+  color: var(--color-text-primary, #000);
+  padding: var(--space-3, 0.75rem);
+  border-radius: var(--radius-base, 0.5rem);
+  margin-bottom: var(--space-4, 1rem);
+}
+
+.warning-banner p {
+  margin: 0;
+}

@@ -4,14 +4,25 @@
   "private": true,
   "description": "SOSMesh Next.js operator dashboard",
   "scripts": {
-    "build": "echo 'Web build not yet implemented'",
-    "dev": "echo 'Web dev server not yet implemented'",
-    "start": "echo 'Web start not yet implemented'",
-    "lint": "echo 'Web lint not yet implemented'",
-    "lint:fix": "echo 'Web lint:fix not yet implemented'",
-    "test": "echo 'Web tests not yet implemented'",
+    "dev": "next dev --port 3000",
+    "build": "next build",
+    "start": "next start --port 3000",
+    "lint": "next lint",
+    "lint:fix": "next lint --fix",
+    "test": "echo 'Web tests not yet implemented' && exit 0",
     "clean": "rm -rf .next"
   },
-  "dependencies": {},
-  "devDependencies": {}
+  "dependencies": {
+    "next": "^14.1.0",
+    "react": "^18.2.0",
+    "react-dom": "^18.2.0"
+  },
+  "devDependencies": {
+    "@types/node": "^20.11.0",
+    "@types/react": "^18.2.48",
+    "@types/react-dom": "^18.2.18",
+    "eslint": "^8.56.0",
+    "eslint-config-next": "^14.1.0",
+    "typescript": "^5.3.3"
+  }
 }

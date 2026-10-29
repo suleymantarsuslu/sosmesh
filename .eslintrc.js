@@ -52,6 +52,23 @@ module.exports = {
       node: true,
     },
   },
+  overrides: [
+    {
+      files: ['scripts/**/*.js', 'tests/**/*.js'],
+      env: {
+        node: true,
+      },
+      parserOptions: {
+        sourceType: 'script',
+      },
+      rules: {
+        '@typescript-eslint/no-var-requires': 'off',
+        '@typescript-eslint/no-require-imports': 'off',
+        'no-console': 'off',
+        'no-undef': 'off',
+      },
+    },
+  ],
   ignorePatterns: [
     'node_modules',
     'dist',
@@ -60,8 +77,6 @@ module.exports = {
     'coverage',
     '*.config.js',
     'playwright.config.js',
-    'scripts/**/*.js',
-    'tests/**/*.js',
     'prototypes/**/*.html',
   ],
 };

@@ -9,12 +9,18 @@
       "dependencies": [],
       "deliverables": "docs/00-access-inventory.md; docs/blockers.md; docs/decisions.md",
       "pass_criteria": "Mevcut ve eksik erişimler tam; sırlar hiçbir logda yok.",
-      "status": "NOT_STARTED",
-      "attempts": 0,
-      "commit": null,
-      "evidence": [],
+      "status": "PASS",
+      "attempts": 2,
+      "commit": "4dc415013319f254d4933c207e1bb0a0a87d2075",
+      "evidence": [
+        "git ls-files = 10 dosya (sınır içi)",
+        "9 desen gizlilik taraması + Grok bağımsız token/secret atama taraması exit=1 (bulgu yok), negatif test yakaladı",
+        "docx sha256 8d312ed5… eşit",
+        "status.json 58 adım geçerli",
+        "Grok→Cursor cloud agent launch/reply/rapor yolu çalıştı"
+      ],
       "blockers": [],
-      "last_checked_at": null,
+      "last_checked_at": "2026-10-29T13:35:00+03:00",
       "goal": "Cursor, Grok, GitHub, yerel cihaz ve servislerin erişimini değiştirmeden anla.",
       "cursor_tasks": [
         "Grok mevcut repo/klasörleri salt-okunur listeler; yeni ürün için ayrı SOSMesh monorepo kararı verir.",
@@ -35,7 +41,7 @@
       ],
       "deliverables": "docs/product/prd.md; docs/tests/m0-acceptance.feature; docs/risk-register.md",
       "pass_criteria": "M0 doğrulanabilir ve açık bir demo kapsamına sahip.",
-      "status": "NOT_STARTED",
+      "status": "IN_PROGRESS",
       "attempts": 0,
       "commit": null,
       "evidence": [],
@@ -45,8 +51,8 @@
       "cursor_tasks": [
         "U1–U5 kullanıcı senaryolarını BDD/Gherkin ile yaz; yanlış başarı etiketlerini yasakla.",
         "M0 için Android A→B→API→Web→Meta AI acceptance script hazırla.",
-        "Kritik aktarma yolu internet olmadan Meta'ya bağlanmaya çalışmamalı.",
-        "Bu sistemin resmî acil çağrı/112 yerine geçmediğini ve cihaz-izin sınırlamalarını onboarding'e ekle."
+        "Kritik aktarma yolu internet olmadan Meta’ya bağlanmaya çalışmamalı.",
+        "Bu sistemin resmî acil çağrı/112 yerine geçmediğini ve cihaz-izin sınırlamalarını onboarding’e ekle."
       ],
       "verification_evidence": "Senaryo izlenebilirlik matrisi ve kullanıcı metinlerinin gözden geçirilmesi.",
       "risk_note": "",
@@ -69,7 +75,7 @@
       "last_checked_at": null,
       "goal": "Bileşenleri sınırları net, test edilebilir bir kod tabanında böl.",
       "cursor_tasks": [
-        "Next.js/NestJS/Kotlin/SwiftUI seçimini ADR'ye yaz; karar kriterleri kapasite, hız ve offline BLE erişimi olsun.",
+        "Next.js/NestJS/Kotlin/SwiftUI seçimini ADR’ye yaz; karar kriterleri kapasite, hız ve offline BLE erişimi olsun.",
         "Mobil native yaklaşımı ve ortak JSON Schema sözleşmelerini belirle; React Native BLE eklentisi kilitlenmesi yaşamadan native uyumlu ilerle.",
         "Sıfır internet yolu için bağımlılık diyagramı; secret ve dağıtım sınırları tanımla.",
         "Her modül için owner, interface, dependency graph ve geliştirme sırası çıkar."
@@ -148,14 +154,14 @@
       "evidence": [],
       "blockers": [],
       "last_checked_at": null,
-      "goal": "Grok'un kanıtsız sonraki adıma geçmesini teknik olarak engelle.",
+      "goal": "Grok’un kanıtsız sonraki adıma geçmesini teknik olarak engelle.",
       "cursor_tasks": [
         "GitHub Actions: JS lint/typecheck/unit, Android Gradle unit, iOS/macOS Xcode job erişimi varsa, contract fixture testleri.",
         "Branch protection / required checks öner; kullanıcının reposunda izin olmadan değiştirme.",
         "Test sonuçlarını JUnit/JSON artifact olarak yayınla; coverage ve test flakiness görünür olsun.",
         "Dependabot veya güvenlik güncelleme stratejisi ve secret scan ekle."
       ],
-      "verification_evidence": "Başarısız bir testle CI'nin fail ettiğini göster; passing run URL/SHA.",
+      "verification_evidence": "Başarısız bir testle CI’nin fail ettiğini göster; passing run URL/SHA.",
       "risk_note": "",
       "gate_raw": "KAPI: HACKATHON / ÇEKİRDEK    •    BAĞIMLILIK: 5"
     },
@@ -169,7 +175,7 @@
         "06"
       ],
       "deliverables": "packages/contracts, packages/fixtures/protocol-v1, docs/api/openapi.yaml",
-      "pass_criteria": "Aynı SOS fixture'ı üç dilde eşdeğer çözülür.",
+      "pass_criteria": "Aynı SOS fixture’ı üç dilde eşdeğer çözülür.",
       "status": "NOT_STARTED",
       "attempts": 0,
       "commit": null,
@@ -206,7 +212,7 @@
       "cursor_tasks": [
         "Service UUID, control/data/ack GATT characteristics ve radio advertisement içerik sınırlarını belirle.",
         "HELLO/version/nonce handshake; chunk_size = negotiated MTU-ATT overhead; seq/total, chunk CRC; envelope digest.",
-        "Peer ACK ile server ACK'yi ayır; deadline, retry jitter, backpressure, resume ve disconnect yönetimini tasarla.",
+        "Peer ACK ile server ACK’yi ayır; deadline, retry jitter, backpressure, resume ve disconnect yönetimini tasarla.",
         "Loglarda payload redaction, test vector ve pcap yerine güvenli event trace formatı kullan."
       ],
       "verification_evidence": "İki ayrı mock transport ile loss/dup/reorder fuzz testi.",
@@ -232,7 +238,7 @@
       "goal": "Rölelerin içerik okuyamadığı veri taşıma ilkesini uygula.",
       "cursor_tasks": [
         "Server-pinned public key ve authenticated encryption tasarımını seç; gerekli anahtar rotasyonunu belgeleyip battle-tested kripto kütüphanesi kullan.",
-        "İstemci payload'ını envelope içinde şifrele; metadata ve ciphertext bütünlüğünü doğrula; serialization nonce tekrarını önle.",
+        "İstemci payload’ını envelope içinde şifrele; metadata ve ciphertext bütünlüğünü doğrula; serialization nonce tekrarını önle.",
         "Android Keystore ve iOS Keychain/yerel key koruması; secrets ve cihaz log hijyeni uygula.",
         "Key missing/rotation/compromised durumları için güvenli hata ve kullanıcıya anlaşılır davranış hazırla.",
         "Geliştirme anahtarı ile production anahtarı asla birleştirme."
@@ -288,8 +294,8 @@
       "goal": "Gerçek cihazdan önce protokolün hata toleransını tekrarlanabilir test et.",
       "cursor_tasks": [
         "Deterministik peer emulator kur; delay, 30% loss, duplicate, reorder, partial writes, MTU 23 senaryoları.",
-        "Vaka seed'leri üret; GPS yok, bozuk paket, çok dilli metin, boş batarya simülasyonu.",
-        "Trace timeline ve hata sınıflarını JSON dışa aktar; CI'de basit golden suite koş.",
+        "Vaka seed’leri üret; GPS yok, bozuk paket, çok dilli metin, boş batarya simülasyonu.",
+        "Trace timeline ve hata sınıflarını JSON dışa aktar; CI’de basit golden suite koş.",
         "Simülatörde PASS, gerçek BLE başarısı olarak gösterilmesin."
       ],
       "verification_evidence": "100 ardışık fixture transfer testi, maksimum tekrar/TTL assertleri.",
@@ -306,7 +312,7 @@
         "10"
       ],
       "deliverables": "apps/android/app + core modules, android permission guide",
-      "pass_criteria": "Uygulama en az bir gerçek Android'de açılır ve izin akışı çalışır.",
+      "pass_criteria": "Uygulama en az bir gerçek Android’de açılır ve izin akışı çalışır.",
       "status": "NOT_STARTED",
       "attempts": 0,
       "commit": null,
@@ -333,7 +339,7 @@
         "12"
       ],
       "deliverables": "apps/android/feature-sos, feature-status; UI screenshots",
-      "pass_criteria": "Gerçek SOS offline queue'ya kaydolur; yanlış \"ekibe ulaştı\" mesajı yok.",
+      "pass_criteria": "Gerçek SOS offline queue’ya kaydolur; yanlış “ekibe ulaştı” mesajı yok.",
       "status": "NOT_STARTED",
       "attempts": 0,
       "commit": null,
@@ -368,7 +374,7 @@
       "evidence": [],
       "blockers": [],
       "last_checked_at": null,
-      "goal": "İki gerçek Android'in internetsiz yakındaki cihazları keşfetmesini sağla.",
+      "goal": "İki gerçek Android’in internetsiz yakındaki cihazları keşfetmesini sağla.",
       "cursor_tasks": [
         "BLE scan filters, advertise GATT server, connect lifecycle ve izin hataları için ayrı sınıflar kur.",
         "Cihaz rolünü iki yönlü (sender/relay) senaryoları için tanımla; duplicate discovery ve reconnect sorunlarını ele al.",
@@ -390,19 +396,19 @@
         "14"
       ],
       "deliverables": "apps/android/core-protocol, feature-relay; radio traces",
-      "pass_criteria": "A cihazında PEER_RECEIVED yalnızca B'nin doğrulanmış ack'ı üzerine görünür.",
+      "pass_criteria": "A cihazında PEER_RECEIVED yalnızca B’nin doğrulanmış ack’ı üzerine görünür.",
       "status": "NOT_STARTED",
       "attempts": 0,
       "commit": null,
       "evidence": [],
       "blockers": [],
       "last_checked_at": null,
-      "goal": "A'dan B'ye şifreli SOS payload'ını eksiksiz taşı.",
+      "goal": "A’dan B’ye şifreli SOS payload’ını eksiksiz taşı.",
       "cursor_tasks": [
-        "HELLO, chunk send/receive, CRC, SHA digest, ACK/timeout/backoff, resume akışını gerçek BLE'ye bağla.",
-        "Röle cihazına alınan envelope'u payload çözmeden outbox olarak kaydet.",
-        "Saat/tarih/sequence mismatch ve retry sırasında duplicate'leri silmeden dedup yap.",
-        "A ve B'de kabul ve radyo/izin hataları görünebilsin."
+        "HELLO, chunk send/receive, CRC, SHA digest, ACK/timeout/backoff, resume akışını gerçek BLE’ye bağla.",
+        "Röle cihazına alınan envelope’u payload çözmeden outbox olarak kaydet.",
+        "Saat/tarih/sequence mismatch ve retry sırasında duplicate’leri silmeden dedup yap.",
+        "A ve B’de kabul ve radyo/izin hataları görünebilsin."
       ],
       "verification_evidence": "2 Android arasında 20 test, Bluetooth kopunca yeniden, bozuk chunk ret; sha256 doğrulama.",
       "risk_note": "",
@@ -477,10 +483,10 @@
       "evidence": [],
       "blockers": [],
       "last_checked_at": null,
-      "goal": "İnternetli rölelerden gelen SOS'ları tek vaka olarak al.",
+      "goal": "İnternetli rölelerden gelen SOS’ları tek vaka olarak al.",
       "cursor_tasks": [
         "POST /v1/ingest, signed server receipt, packet hash, size/version/TTL/time validation.",
-        "message_id UNIQUE + idempotency key; tekrar gelen farklı relay kopyalarını tek SOS'a bağla, relay receipt sakla.",
+        "message_id UNIQUE + idempotency key; tekrar gelen farklı relay kopyalarını tek SOS’a bağla, relay receipt sakla.",
         "Abuse guard: rate limit, anomalies, actor reputation yerine human review; payload meta şifreleme çözme.",
         "Cihaz kaynağı bilinmeyen/hatalı paketlerde ayrıntılı ama PII içermeyen hata kodu ver."
       ],
@@ -497,14 +503,14 @@
         "18"
       ],
       "deliverables": "apps/api/sync + events; Android uplink adapters",
-      "pass_criteria": "B internet alınca SOS tek kez panel feed'ine düşer.",
+      "pass_criteria": "B internet alınca SOS tek kez panel feed’ine düşer.",
       "status": "NOT_STARTED",
       "attempts": 0,
       "commit": null,
       "evidence": [],
       "blockers": [],
       "last_checked_at": null,
-      "goal": "Android relay'den veri toplayıp operatör paneline gecikmeden ulaştır.",
+      "goal": "Android relay’den veri toplayıp operatör paneline gecikmeden ulaştır.",
       "cursor_tasks": [
         "Batch upload endpoint, HTTP retry/429 davranışı, ağ restore tetikleme, server ack doğrulama.",
         "SSE/WebSocket ile operator incident feed; reconnect cursor ve event ordering.",
@@ -564,7 +570,7 @@
         "Next.js App Router + TS + UI tokens; auth, RBAC, route guard, role-based sidebar/nav.",
         "Dashboard kartları: yeni SOS, panelde açık, beklemede, ortalama ulaşım süresi (yalnızca gerçek veriyle).",
         "Table/mobile cards, command search, keyboard shortcuts, skeletons, toast ve disconnected state.",
-        "No direct public SOS detail URLs; server authorization her API'de kontrol edilir."
+        "No direct public SOS detail URLs; server authorization her API’de kontrol edilir."
       ],
       "verification_evidence": "Playwright auth/redirect; 390/768/1440 screenshots; role denied test.",
       "risk_note": "",
@@ -579,7 +585,7 @@
         "21"
       ],
       "deliverables": "apps/web/features/map, case-list; map provider config",
-      "pass_criteria": "Panel gelen SOS'u gerçek zamanlı gösterir; harita doğruluğunu abartmaz.",
+      "pass_criteria": "Panel gelen SOS’u gerçek zamanlı gösterir; harita doğruluğunu abartmaz.",
       "status": "NOT_STARTED",
       "attempts": 0,
       "commit": null,
@@ -590,7 +596,7 @@
       "cursor_tasks": [
         "OpenStreetMap kaynaklarının lisans/hosting şartlarını kontrol ederek MapLibre/Leaflet harita modülü kur.",
         "Map marker clustering, selected case drawer, evidence timeline, filters: category/time/source/status/accuracy.",
-        "Konum bilinmiyor için ayrı list queue; koordinat yoksa otomatik 0,0'a pin koyma.",
+        "Konum bilinmiyor için ayrı list queue; koordinat yoksa otomatik 0,0’a pin koyma.",
         "Live feed reconnect, stale indicator, screen-reader alternatif data table ve mobile full-screen list."
       ],
       "verification_evidence": "3 responsive viewport ve 1000 vaka seed testi; null GPS test; search/filter E2E.",
@@ -617,7 +623,7 @@
       "goal": "Operatörün AI bulgusunu doğrulayıp güvenli işlem yapabilmesini sağla.",
       "cursor_tasks": [
         "Case detail: orijinal metin, doğrulanmış metadata, AI açıklaması, belirsizlik ve dayanak alıntısı.",
-        "Kişi/konum yanlışsa düzeltme audit'i; AI sonucu manuel override, durum ve olay zaman çizelgesi.",
+        "Kişi/konum yanlışsa düzeltme audit’i; AI sonucu manuel override, durum ve olay zaman çizelgesi.",
         "Yeni/görüldü/incelemede/koordine ediliyor vb durum geçişleri optimistic locking ile.",
         "Yardım önerisi yalnızca taslak; ekip görevlendirmesi bu adımda otomatik yapılmaz."
       ],
@@ -653,13 +659,13 @@
       "last_checked_at": null,
       "goal": "Hackathon çekirdeğini işleyen bir gerçek deney olarak kanıtla.",
       "cursor_tasks": [
-        "Android A offline, B online; SOS oluştur, BLE aktar, peer ack, upload, Meta analyze, panelde aç, operator seen ack.'",
+        "Android A offline, B online; SOS oluştur, BLE aktar, peer ack, upload, Meta analyze, panelde aç, operator seen ack.’",
         "Uçtan uca correlation ID ile eşleşmiş 2 telefon logu, API event trace, panel video ve test checklist üret.",
         "Android A/B yer değiştir ve tekrar dene; konumsuz SOS ile bir deneme.",
         "API, Meta, GPS veya internet arızalarında UI hiçbir zaman yeşil yanlış güven vermesin."
       ],
       "verification_evidence": "Kayıt + test timestamp + 2 cihaz modeli/OS + server trace + PASS/FAIL.",
-      "risk_note": "Meta canlı anahtarı yoksa AI adımı BLOCKED_SECRET, \"tam M0\" sayılmaz.",
+      "risk_note": "Meta canlı anahtarı yoksa AI adımı BLOCKED_SECRET, “tam M0” sayılmaz.",
       "gate_raw": "KAPI: HACKATHON / ÇEKİRDEK    •    BAĞIMLILIK: 12–23"
     },
     {
@@ -896,12 +902,12 @@
       "evidence": [],
       "blockers": [],
       "last_checked_at": null,
-      "goal": "Apple'ın sınırlarını şeffaf biçimde ölç ve kullanıcıyı doğru yönlendir.",
+      "goal": "Apple’ın sınırlarını şeffaf biçimde ölç ve kullanıcıyı doğru yönlendir.",
       "cursor_tasks": [
-        "Core Bluetooth state restoration + etkinlik koşulları Apple güncel docs'a göre uygula.",
+        "Core Bluetooth state restoration + etkinlik koşulları Apple güncel docs’a göre uygula.",
         "Foreground/background/locked/force-quit/reboot/BT toggled farklı senaryoları cihaz bazlı test et.",
         "iOS 26 Live Activity yalnızca kullanım amacı ve enerji maliyeti uygunsa değerlendir.",
-        "İnternetsiz telefonun relay görevine sahip olamayabileceğini onboarding'de açıkla."
+        "İnternetsiz telefonun relay görevine sahip olamayabileceğini onboarding’de açıkla."
       ],
       "verification_evidence": "Fiziksel test videoları/trace, Apple docs refereansları, PASS/BLOCKED ayrımı.",
       "risk_note": "Donanım/os kısıtlamalarını bypass etmeye çalışma.",
@@ -945,7 +951,7 @@
         "29"
       ],
       "deliverables": "apps/wearos, wear screenshots, phone companion module",
-      "pass_criteria": "Saatten basılan SOS Android outbox'ta tek kez görülür.",
+      "pass_criteria": "Saatten basılan SOS Android outbox’ta tek kez görülür.",
       "status": "NOT_STARTED",
       "attempts": 0,
       "commit": null,
@@ -956,7 +962,7 @@
       "cursor_tasks": [
         "Kotlin Wear Compose, round/rect layouts, haptic confirmation, 2-stage accidental tap protection.",
         "Telefon bağlı mı, izinler uygun mu, göndermeye hazır mı durumları anlaşılır.",
-        "Data Layer API MessageClient/DataClient ile eşleşmiş Android'e SOS komutu gönder.",
+        "Data Layer API MessageClient/DataClient ile eşleşmiş Android’e SOS komutu gönder.",
         "Saatten cihaz üzerinden gerçek kurtarma garantisi değil, telefon kuyruğa alma teyidi göster."
       ],
       "verification_evidence": "Wear emulator + gerçek saat/telefon, disconnected state, UI automation.",
@@ -971,7 +977,7 @@
         "35"
       ],
       "deliverables": "apps/wearos/state-sync; docs/watches/wear-policy.md",
-      "pass_criteria": "Telefon çevrimdışı olsa bile saat doğru \"beklemede\" der; sahte başarı yok.",
+      "pass_criteria": "Telefon çevrimdışı olsa bile saat doğru “beklemede” der; sahte başarı yok.",
       "status": "NOT_STARTED",
       "attempts": 0,
       "commit": null,
@@ -998,19 +1004,19 @@
         "34"
       ],
       "deliverables": "apps/watchos and iOS companion target; watch setup docs",
-      "pass_criteria": "Saatten SOS iPhone outbox'a girer; saat sadece doğrulanmış alım teyidi gösterir.",
+      "pass_criteria": "Saatten SOS iPhone outbox’a girer; saat sadece doğrulanmış alım teyidi gösterir.",
       "status": "NOT_STARTED",
       "attempts": 0,
       "commit": null,
       "evidence": [],
       "blockers": [],
       "last_checked_at": null,
-      "goal": "Apple Watch'tan iPhone companion'a tek tuşla güvenilir SOS ilet.",
+      "goal": "Apple Watch’tan iPhone companion’a tek tuşla güvenilir SOS ilet.",
       "cursor_tasks": [
         "WatchKit/watchOS SwiftUI screens, accidental triggers guard, haptics + visually accessible result.",
         "WCSession reachability; reachable ise sendMessage, background queued transferUserInfo farklı durumlar.",
         "Watch SOS local pending/ack model; user education for paired phone requirement.",
-        "Phone app watch-originated SOS kimliğini standard payload'ına dönüştürür."
+        "Phone app watch-originated SOS kimliğini standard payload’ına dönüştürür."
       ],
       "verification_evidence": "Watch simulator + gerçek eşleşmiş iPhone/Apple Watch testleri.",
       "risk_note": "WatchConnectivity her durumda anlık iletim garantilemez.",
@@ -1051,7 +1057,7 @@
         "38"
       ],
       "deliverables": "docs/watches/capability-matrix.md; companion fallback flows",
-      "pass_criteria": "Her saat özelliği \"supported/tested/experimental\" olarak sınıflandırılır.",
+      "pass_criteria": "Her saat özelliği “supported/tested/experimental” olarak sınıflandırılır.",
       "status": "NOT_STARTED",
       "attempts": 0,
       "commit": null,
@@ -1060,7 +1066,7 @@
       "last_checked_at": null,
       "goal": "Saatlerin gerçek yeteneklerine göre net fallback ve taahhüt ver.",
       "cursor_tasks": [
-        "Wear OS / watchOS \"phone not reachable\" tasarımını ortak kopya diliyle eşle.",
+        "Wear OS / watchOS “phone not reachable” tasarımını ortak kopya diliyle eşle.",
         "Saatin kendi LTE/Wi-Fi erişimi varsa HTTPS direct ingest deneysel olarak ayrı capability flag ile test edilebilir.",
         "Telefon olmadan saat → başka telefon BLE mesh relay iddiasını devre dışı tut; fiziksel kanıt ayrı kapı.",
         "Paired phone, direct internet, no connection için durum açıklaması ve offline yardım bilgi ekranı."
@@ -1086,7 +1092,7 @@
       "evidence": [],
       "blockers": [],
       "last_checked_at": null,
-      "goal": "Tek hop'tan çok hop'a güvenli store-carry-forward ile geç.",
+      "goal": "Tek hop’tan çok hop’a güvenli store-carry-forward ile geç.",
       "cursor_tasks": [
         "Routing selection, relay handoff, hop_limit/TTL, Bloom/LRU dedup tradeoffs and anti-loop.",
         "A→B→C (C internetli) üç fiziksel Android ile kademeli aktarım.",
@@ -1113,15 +1119,15 @@
       "evidence": [],
       "blockers": [],
       "last_checked_at": null,
-      "goal": "iPhone'un doğrulanmış çalışma aralığı içinde sınırlı mesh relay katılımını ölç.",
+      "goal": "iPhone’un doğrulanmış çalışma aralığı içinde sınırlı mesh relay katılımını ölç.",
       "cursor_tasks": [
         "iOS foreground multi-hop sender/receiver behavior within CoreBluetooth permissions.",
         "Per-platform scheduler and activity lifecycle matrix with Android participants.",
-        "Wi-Fi Aware gibi alternatifleri yalnızca resmi API support+device matrix varsa ayrı feature flag'de dene.",
-        "Background failure modes'ı compatibility restrictions olarak UI/README'de yansıt."
+        "Wi-Fi Aware gibi alternatifleri yalnızca resmi API support+device matrix varsa ayrı feature flag’de dene.",
+        "Background failure modes’ı compatibility restrictions olarak UI/README’de yansıt."
       ],
       "verification_evidence": "3 physical devices, foreground vs locked vs force-quit evidence.",
-      "risk_note": "iPhone'ların 7/24 mesh tekrarlayıcı gibi çalıştığını varsayma.",
+      "risk_note": "iPhone’ların 7/24 mesh tekrarlayıcı gibi çalıştığını varsayma.",
       "gate_raw": "KAPI: DENEYSEL / DONANIMA BAĞLI    •    BAĞIMLILIK: 33,40"
     },
     {
@@ -1134,7 +1140,7 @@
         "40"
       ],
       "deliverables": "mobile power policy modules, docs/performance/radio.md",
-      "pass_criteria": "Rapor gerçek ölçüm sunar; pil sürüklenmesi belirsizse \"ölçülemedi\".",
+      "pass_criteria": "Rapor gerçek ölçüm sunar; pil sürüklenmesi belirsizse “ölçülemedi”.",
       "status": "NOT_STARTED",
       "attempts": 0,
       "commit": null,
@@ -1205,7 +1211,7 @@
         "Demo seed data sentetiktir; gerçek kişi/riskli konum kullanılmaz."
       ],
       "verification_evidence": "Data map and consent audit; delete/export tests; config docs.",
-      "risk_note": "Yasal uygunluk avukat/veri koruma uzmanı onayı olmadan \"tam uygun\" denmez.",
+      "risk_note": "Yasal uygunluk avukat/veri koruma uzmanı onayı olmadan “tam uygun” denmez.",
       "gate_raw": "KAPI: TAM ÜRÜN    •    BAĞIMLILIK: 43"
     },
     {
@@ -1218,16 +1224,16 @@
         "44"
       ],
       "deliverables": "apps/api/src/ai/evals, docs/ai/model-card.md",
-      "pass_criteria": "Unknown bilgisi asla uydurulmuyor, model outage vaka ingest'i bloklamıyor.",
+      "pass_criteria": "Unknown bilgisi asla uydurulmuyor, model outage vaka ingest’i bloklamıyor.",
       "status": "NOT_STARTED",
       "attempts": 0,
       "commit": null,
       "evidence": [],
       "blockers": [],
       "last_checked_at": null,
-      "goal": "AI'nin hatalı çıkarımları olay yönetimini yanlış yönlendirmesin.",
+      "goal": "AI’nin hatalı çıkarımları olay yönetimini yanlış yönlendirmesin.",
       "cursor_tasks": [
-        "Türkçe/İngilizce, yazım hatası, panik metni, çelişki, \"bilmiyoruz\" senaryolarından eval dataset.",
+        "Türkçe/İngilizce, yazım hatası, panik metni, çelişki, “bilmiyoruz” senaryolarından eval dataset.",
         "Şema dışı/hallucination/medical advice/place inference testleri, golden expected fields.",
         "JSON schema validation + safe fallback; prompt injection red team; operator correction captures.",
         "Per-incident token budget, rate limit, AI disabled mode, vendor outage, spend cap ve monitoring.",
@@ -1258,7 +1264,7 @@
         "Approved resource catalog and simple deterministic distance/availability engine; opt-in AI rationale.",
         "Ekip önerisi, önerinin gerekçesi, veri güncelliği ve eksik bilgi kutusu.",
         "Harita üzerinde task preview; assignment yalnızca coordinator confirm ile commit.",
-        "Operatör feedback'i AI scoring'e bağlanır, otomatik canlı eğitim yapılmaz."
+        "Operatör feedback’i AI scoring’e bağlanır, otomatik canlı eğitim yapılmaz."
       ],
       "verification_evidence": "Unavailable team, inaccurate GPS, no resource and stale case tests.",
       "risk_note": "",
@@ -1274,7 +1280,7 @@
         "45"
       ],
       "deliverables": "tests/load, perf-report, dashboards",
-      "pass_criteria": "Ölçülen limitler yayınlanır; kapasiteyi kanıtsız \"ölçeklenebilir\" diye yazma.",
+      "pass_criteria": "Ölçülen limitler yayınlanır; kapasiteyi kanıtsız “ölçeklenebilir” diye yazma.",
       "status": "NOT_STARTED",
       "attempts": 0,
       "commit": null,
@@ -1400,7 +1406,7 @@
       "evidence": [],
       "blockers": [],
       "last_checked_at": null,
-      "goal": "Android build'ini teslim edilebilir artifact haline getir.",
+      "goal": "Android build’ini teslim edilebilir artifact haline getir.",
       "cursor_tasks": [
         "Signed build flavors demo/staging/prod; Android App Bundle/APK; play store privacy declarations review.",
         "At least two devices, BLE capability, permission deny/off, battery/Doze, 24h reconnect smoke.",
@@ -1585,7 +1591,7 @@
       "goal": "Gerçek kullanıcıya güvenilir rehberlik ve denetim kabiliyeti ver.",
       "cursor_tasks": [
         "TR/EN offline usage, permissions, relay opt-in, watch paired phone guide, troubleshooting.",
-        "\"Bu uygulama resmî acil servisin yerine geçmez\" metni ve known limitations.",
+        "“Bu uygulama resmî acil servisin yerine geçmez” metni ve known limitations.",
         "Support form, contact, privacy/terms link ve vulnerability disclosure path.",
         "Farklı platformların minimum sürüm/destek matrisi; on-device warning policy."
       ],

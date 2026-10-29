@@ -60,5 +60,8 @@ module.exports = {
     'coverage',
     '*.config.js',
     'playwright.config.js',
+    'scripts/**/*.js',
+    'tests/**/*.js',
+    'prototypes/**/*.html',
   ],
 };

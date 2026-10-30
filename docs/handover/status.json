@@ -285,7 +285,7 @@
       "pass_criteria": "Tek SOS tek kimlik; yeniden açılışta sıradan kaybolmuyor.",
       "status": "PASS",
       "attempts": 1,
-      "commit": null,
+      "commit": "5e0e3b3",
       "evidence": [],
       "notes": "Room/Android Room ve iOS cihaz disk kuyruğu NOT_TESTED; TS/JVM/Linux Swift SQLite CI PASS",
       "blockers": [],

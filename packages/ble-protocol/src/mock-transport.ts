@@ -1,6 +1,7 @@
 import { EventEmitter } from 'events';
 
 import { ITransport, IRNG, SystemRNG, IClock, SystemClock } from './sender';
+import { MessageType, CHUNK_HEADER_SIZE } from './types';
 
 export interface MockChannelConfig {
   packetLoss: number; // 0.0 - 1.0
@@ -23,7 +24,7 @@ export class MockTransport extends EventEmitter implements ITransport {
 
   async send(data: Buffer): Promise<void> {
     if (this.closed) {
-      throw new Error('Transport closed');
+      return;
     }
     this.sendFn(data);
   }
@@ -64,15 +65,28 @@ interface QueuedPacket {
   destination: 'sender' | 'receiver';
 }
 
+/** Sender→receiver DATA chunk (not HELLO / control). */
+function isDataChunkToReceiver(data: Buffer): boolean {
+  if (data.length < CHUNK_HEADER_SIZE) {
+    return false;
+  }
+  if (data.length === 20 && data.readUInt8(0) === MessageType.HELLO) {
+    return false;
+  }
+  return true;
+}
+
 export class MockChannel {
   private queue: QueuedPacket[] = [];
   private disconnectTimer: NodeJS.Timeout | null = null;
-  private processingTimer: NodeJS.Timeout | null = null;
   private startTime: number;
   private rng: IRNG;
   private clock: IClock;
   private deliveredDataPacketsToReceiver = 0;
-  private disconnectAfterDeliveredPackets?: number;
+  private disconnectAfterDeliveredPackets: number | undefined;
+  private isDisconnected = false;
+  private dropAcksToSender = false;
+  private blockDataToReceiver = false;
 
   constructor(
     private config: MockChannelConfig,
@@ -90,50 +104,58 @@ export class MockChannel {
         this.triggerDisconnect();
       }, config.disconnectAfter);
     }
+  }
 
-    this.startProcessing();
+  setPacketLoss(rate: number): void {
+    this.config.packetLoss = rate;
+  }
+
+  setDropAcksToSender(drop: boolean): void {
+    this.dropAcksToSender = drop;
+  }
+
+  setBlockDataToReceiver(block: boolean): void {
+    this.blockDataToReceiver = block;
   }
 
   sendFromSender(data: Buffer): void {
     this.processPacket(data, 'receiver');
-    this.deliverPackets(); // Immediate delivery check for simulated clock
+    this.deliverPackets();
   }
 
   sendFromReceiver(data: Buffer): void {
     this.processPacket(data, 'sender');
-    this.deliverPackets(); // Immediate delivery check for simulated clock
+    this.deliverPackets();
   }
 
   private processPacket(data: Buffer, destination: 'sender' | 'receiver'): void {
-    // Packet loss
     if (this.rng.random() < this.config.packetLoss) {
-      return; // Drop packet
+      return;
     }
 
-    const latency = this.config.minLatency + 
-                    this.rng.random() * (this.config.maxLatency - this.config.minLatency);
+    const latency =
+      this.config.minLatency +
+      this.rng.random() * (this.config.maxLatency - this.config.minLatency);
     const deliverAt = this.clock.now() + latency;
 
-    // Queue packet
     this.queue.push({ data, deliverAt, destination });
 
-    // Duplicate
     if (this.rng.random() < this.config.duplicateRate) {
-      const dupLatency = this.config.minLatency + 
-                         this.rng.random() * (this.config.maxLatency - this.config.minLatency);
-      this.queue.push({ 
-        data: Buffer.from(data), 
+      const dupLatency =
+        this.config.minLatency +
+        this.rng.random() * (this.config.maxLatency - this.config.minLatency);
+      this.queue.push({
+        data: Buffer.from(data),
         deliverAt: this.clock.now() + dupLatency,
-        destination
+        destination,
       });
     }
 
-    // Reorder: swap with a random packet in queue going to same destination
     if (this.rng.random() < this.config.reorderRate && this.queue.length > 1) {
       const sameDestPackets = this.queue
         .map((p, i) => ({ packet: p, index: i }))
         .filter(({ packet }) => packet.destination === destination);
-      
+
       if (sameDestPackets.length > 1) {
         const idx1 = this.queue.length - 1;
         const randomIdx = Math.floor(this.rng.random() * sameDestPackets.length);
@@ -143,10 +165,6 @@ export class MockChannel {
         }
       }
     }
-  }
-
-  private startProcessing(): void {
-    // No real-time timer for simulated clock
   }
 
   deliverPackets(): void {
@@ -165,23 +183,34 @@ export class MockChannel {
     this.queue = remaining;
 
     for (const packet of toDeliver) {
+      if (this.isDisconnected) {
+        break;
+      }
+
       if (packet.destination === 'receiver' && !this.receiverTransport.isClosed()) {
-        // Check if this is a data packet
-        const isDataPacket = packet.data.length >= 20;
-        if (isDataPacket && this.disconnectAfterDeliveredPackets !== undefined) {
+        const isData = isDataChunkToReceiver(packet.data);
+        if (this.blockDataToReceiver && isData) {
+          continue;
+        }
+        this.receiverTransport.receiveData(packet.data);
+        if (isData) {
           this.deliveredDataPacketsToReceiver++;
-          // Deliver this packet first
-          this.receiverTransport.receiveData(packet.data);
-          // Then check if we should disconnect
-          if (this.deliveredDataPacketsToReceiver >= this.disconnectAfterDeliveredPackets) {
+          if (
+            this.disconnectAfterDeliveredPackets !== undefined &&
+            this.deliveredDataPacketsToReceiver >= this.disconnectAfterDeliveredPackets
+          ) {
             this.triggerDisconnect();
-            // Stop delivering more packets after disconnect
             break;
           }
-        } else {
-          this.receiverTransport.receiveData(packet.data);
         }
       } else if (packet.destination === 'sender' && !this.senderTransport.isClosed()) {
+        if (
+          this.dropAcksToSender &&
+          packet.data.length >= 1 &&
+          packet.data.readUInt8(0) === MessageType.ACK
+        ) {
+          continue;
+        }
         this.senderTransport.receiveData(packet.data);
       }
     }
@@ -193,8 +222,20 @@ export class MockChannel {
   }
 
   private triggerDisconnect(): void {
+    if (this.isDisconnected) {
+      return;
+    }
+    this.isDisconnected = true;
     this.senderTransport.triggerDisconnect();
     this.receiverTransport.triggerDisconnect();
+  }
+
+  reconnect(): void {
+    this.isDisconnected = false;
+    this.disconnectAfterDeliveredPackets = undefined;
+    this.deliveredDataPacketsToReceiver = 0;
+    this.senderTransport.reconnect();
+    this.receiverTransport.reconnect();
   }
 
   close(): void {
@@ -208,15 +249,19 @@ export class MockChannel {
   getQueueSize(): number {
     return this.queue.length;
   }
+
+  clearQueue(): void {
+    this.queue = [];
+  }
 }
 
 export function createMockTransportPair(
   channelConfig: MockChannelConfig,
   rng: IRNG = new SystemRNG(),
   clock: IClock = new SystemClock()
-): { 
-  senderTransport: MockTransport; 
-  receiverTransport: MockTransport; 
+): {
+  senderTransport: MockTransport;
+  receiverTransport: MockTransport;
   channel: MockChannel;
   clock: IClock;
 } {
@@ -236,10 +281,10 @@ export function createMockTransportPair(
 
   channelRef = new MockChannel(channelConfig, senderTransport, receiverTransport, rng, clock);
 
-  return { 
-    senderTransport, 
-    receiverTransport, 
-    channel: channelRef, 
-    clock 
+  return {
+    senderTransport,
+    receiverTransport,
+    channel: channelRef,
+    clock,
   };
 }

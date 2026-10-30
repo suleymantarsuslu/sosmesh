@@ -5,7 +5,7 @@ import {
   splitIntoChunks, 
   calculateCRC32 
 } from './chunk';
-import { createMockTransportPair } from './mock-transport';
+import { createMockTransportPair, MockChannel, MockTransport } from './mock-transport';
 import { Receiver } from './receiver';
 import { Sender, SimulatedClock, IClock, IRNG } from './sender';
 
@@ -383,5 +383,348 @@ describe('BLE Protocol Integration Tests (Simulated Clock)', () => {
 
     expect(events.some(e => e.event === 'transfer_start')).toBe(true);
     expect(events.length).toBeGreaterThan(0);
+  });
+
+  it('resume after disconnect retransmits only missing chunks', async () => {
+    const clock = new SimulatedClock();
+    const rng = new SeededRNG(5000);
+    const { senderTransport, receiverTransport, channel } = createMockTransportPair({
+      packetLoss: 0,
+      duplicateRate: 0,
+      reorderRate: 0,
+      minLatency: 10,
+      maxLatency: 20
+    }, rng, clock);
+
+    const sender = new Sender(senderTransport, { maxRetries: 20 }, clock, rng);
+    const receiver = new Receiver(receiverTransport, {}, clock);
+
+    const testPayload = Buffer.from('RESUME_TEST_' + 'X'.repeat(1000));
+    let deliveredPayload: Buffer | null = null;
+    let deliveryCount = 0;
+
+    receiver.on('completed', ({ payload }: { payload: Buffer }) => {
+      deliveredPayload = payload;
+      deliveryCount++;
+    });
+
+    const chunksSentBeforeDisconnect = new Set<number>();
+    const chunksSentAfterResume = new Set<number>();
+    let trackingResumeSends = false;
+
+    sender.on('event', (event: { event: string; seq?: number }) => {
+      if (event.event !== 'chunk_sent' || event.seq === undefined) return;
+      if (trackingResumeSends) {
+        chunksSentAfterResume.add(event.seq);
+      } else {
+        chunksSentBeforeDisconnect.add(event.seq);
+      }
+    });
+
+    await sender.startTransfer(testPayload, 'resume_test');
+
+    channel.setDisconnectAfterDeliveredPackets(3);
+
+    while (
+      clock.now() < 200000 &&
+      sender.getState() !== 'RESUMING' &&
+      receiver.getState() !== 'RESUMING'
+    ) {
+      await clock.advanceAsync(10);
+      channel.deliverPackets();
+      if (sender.getState() === 'COMPLETED' || sender.getState() === 'FAILED') {
+        break;
+      }
+      if (channel.getQueueSize() === 0 && !clock.hasPendingTimers()) {
+        await clock.advanceAsync(100);
+        await Promise.resolve();
+      }
+    }
+
+    const totalChunks = sender['chunks'].length;
+    expect(totalChunks).toBeGreaterThan(0);
+
+    expect(sender.getState()).toBe('RESUMING');
+    expect(receiver.getState()).toBe('RESUMING');
+
+    const receivedBeforeResume = new Set(receiver.getReceivedChunkSeqs());
+    const expectedMissing: number[] = [];
+    for (let i = 0; i < totalChunks; i++) {
+      if (!receivedBeforeResume.has(i)) {
+        expectedMissing.push(i);
+      }
+    }
+    expect(expectedMissing.length).toBeGreaterThan(0);
+
+    channel.reconnect();
+    trackingResumeSends = true;
+
+    await receiver.requestResume();
+    await clock.advanceAsync(100);
+    channel.deliverPackets();
+
+    while (clock.now() < 200000 && deliveryCount === 0) {
+      await clock.advanceAsync(10);
+      channel.deliverPackets();
+
+      if (channel.getQueueSize() === 0 && !clock.hasPendingTimers()) {
+        await clock.advanceAsync(100);
+        if (deliveryCount > 0) break;
+        await Promise.resolve();
+        if (!clock.hasPendingTimers() && channel.getQueueSize() === 0) break;
+      }
+    }
+
+    expect(deliveredPayload).not.toBeNull();
+    expect(deliveredPayload!.equals(testPayload)).toBe(true);
+    expect(deliveryCount).toBe(1);
+
+    const missingSet = new Set(expectedMissing);
+    expect(chunksSentAfterResume.size).toBe(missingSet.size);
+    for (const seq of chunksSentAfterResume) {
+      expect(missingSet.has(seq)).toBe(true);
+    }
+    for (const seq of missingSet) {
+      expect(chunksSentAfterResume.has(seq)).toBe(true);
+    }
+    expect(receiver.getState()).toBe('COMPLETED');
+  });
+
+  it('no false delivery before resume completes', async () => {
+    const clock = new SimulatedClock();
+    const rng = new SeededRNG(6000);
+    const { senderTransport, receiverTransport, channel } = createMockTransportPair({
+      packetLoss: 0,
+      duplicateRate: 0,
+      reorderRate: 0,
+      minLatency: 10,
+      maxLatency: 20
+    }, rng, clock);
+
+    const sender = new Sender(senderTransport, { maxRetries: 20 }, clock, rng);
+    const receiver = new Receiver(receiverTransport, {}, clock);
+
+    const testPayload = Buffer.from('NO_FALSE_DELIVERY_' + 'Y'.repeat(1000));
+    let deliveryCount = 0;
+
+    const senderEvents: string[] = [];
+    const receiverEvents: string[] = [];
+
+    sender.on('event', (event: any) => {
+      senderEvents.push(event.event);
+    });
+
+    receiver.on('event', (event: any) => {
+      receiverEvents.push(event.event);
+    });
+
+    receiver.on('completed', () => {
+      deliveryCount++;
+    });
+
+    await sender.startTransfer(testPayload, 'no_false_delivery');
+
+    channel.setDisconnectAfterDeliveredPackets(4);
+
+    while (
+      clock.now() < 200000 &&
+      sender.getState() !== 'RESUMING' &&
+      receiver.getState() !== 'RESUMING'
+    ) {
+      await clock.advanceAsync(10);
+      channel.deliverPackets();
+      if (channel.getQueueSize() === 0 && !clock.hasPendingTimers()) {
+        await clock.advanceAsync(100);
+        await Promise.resolve();
+      }
+    }
+
+    expect(deliveryCount).toBe(0);
+    expect(receiver.getState()).toBe('RESUMING');
+    expect(sender.getState()).toBe('RESUMING');
+
+    channel.reconnect();
+    
+    senderEvents.length = 0;
+    receiverEvents.length = 0;
+    
+    await receiver.requestResume();
+    await clock.advanceAsync(50);
+    channel.deliverPackets();
+    await clock.advanceAsync(50);
+    channel.deliverPackets();
+
+    while (clock.now() < 200000 && deliveryCount === 0) {
+      await clock.advanceAsync(10);
+      channel.deliverPackets();
+      
+      if (channel.getQueueSize() === 0 && !clock.hasPendingTimers()) {
+        await clock.advanceAsync(100);
+        if (deliveryCount > 0) break;
+        await Promise.resolve();
+        if (!clock.hasPendingTimers() && channel.getQueueSize() === 0) break;
+      }
+    }
+
+    expect(senderEvents.includes('resume_accepted')).toBe(true);
+    expect(deliveryCount).toBe(1);
+  });
+
+  it('>=25% loss: FAILED then resume then COMPLETED', async () => {
+    const clock = new SimulatedClock();
+    const rng = new SeededRNG(7000);
+    const { senderTransport, receiverTransport, channel } = createMockTransportPair({
+      packetLoss: 0,
+      duplicateRate: 0,
+      reorderRate: 0,
+      minLatency: 5,
+      maxLatency: 15
+    }, rng, clock);
+
+    const sender = new Sender(
+      senderTransport,
+      { maxRetries: 2, chunkTimeout: 500, windowSize: 1 },
+      clock,
+      rng
+    );
+    const receiver = new Receiver(receiverTransport, {}, clock);
+
+    const testPayload = Buffer.from('HIGH_LOSS_RESUME_' + 'Z'.repeat(3000));
+    let senderFailed = false;
+    let deliveryCount = 0;
+    let deliveredPayload: Buffer | null = null;
+
+    sender.on('failed', () => {
+      senderFailed = true;
+    });
+
+    receiver.on('completed', ({ payload }: { payload: Buffer }) => {
+      deliveredPayload = payload;
+      deliveryCount++;
+    });
+
+    await sender.startTransfer(testPayload, 'high_loss_test');
+
+    while (sender.getState() === 'HELLO_SENT' || sender['chunks'].length === 0) {
+      await clock.advanceAsync(10);
+      channel.deliverPackets();
+    }
+
+    channel.setPacketLoss(0.25);
+
+    while (
+      clock.now() < 150000 &&
+      receiver.getReceivedChunkSeqs().length < 2 &&
+      sender.getState() !== 'COMPLETED' &&
+      sender.getState() !== 'FAILED'
+    ) {
+      await clock.advanceAsync(10);
+      channel.deliverPackets();
+    }
+
+    expect(receiver.getReceivedChunkSeqs().length).toBeGreaterThan(0);
+    expect(sender.getState()).not.toBe('COMPLETED');
+
+    channel.setDropAcksToSender(true);
+    channel.setBlockDataToReceiver(true);
+    channel.clearQueue();
+
+    const maxTime = clock.now() + 120000;
+    while (clock.now() < maxTime && !senderFailed) {
+      await clock.advanceAsync(10);
+      channel.deliverPackets();
+    }
+
+    expect(senderFailed).toBe(true);
+    expect(sender.getState()).toBe('FAILED');
+    expect(deliveryCount).toBe(0);
+    expect(receiver.getState()).not.toBe('COMPLETED');
+
+    channel.setDropAcksToSender(false);
+    channel.setBlockDataToReceiver(false);
+    channel.reconnect();
+
+    await receiver.requestResume();
+    await clock.advanceAsync(50);
+    channel.deliverPackets();
+
+    const maxTime2 = clock.now() + 200000;
+    while (clock.now() < maxTime2 && deliveryCount === 0) {
+      await clock.advanceAsync(10);
+      channel.deliverPackets();
+
+      if (channel.getQueueSize() === 0 && !clock.hasPendingTimers()) {
+        await clock.advanceAsync(100);
+        if (deliveryCount > 0) break;
+        await Promise.resolve();
+        if (!clock.hasPendingTimers() && channel.getQueueSize() === 0) break;
+      }
+    }
+
+    expect(deliveredPayload).not.toBeNull();
+    expect(deliveredPayload!.equals(testPayload)).toBe(true);
+    expect(deliveryCount).toBe(1);
+    expect(receiver.getState()).toBe('COMPLETED');
+  });
+
+  it('rejects resume request with wrong transfer ID', async () => {
+    const clock = new SimulatedClock();
+    const rng = new SeededRNG(8000);
+    const { senderTransport, receiverTransport, channel } = createMockTransportPair({
+      packetLoss: 0,
+      duplicateRate: 0,
+      reorderRate: 0,
+      minLatency: 10,
+      maxLatency: 20
+    }, rng, clock);
+
+    const sender = new Sender(senderTransport, {}, clock, rng);
+    const receiver = new Receiver(receiverTransport, {}, clock);
+
+    const testPayload = Buffer.from('WRONG_TRANSFER_ID_TEST_' + 'W'.repeat(1000));
+    let resumeRejected = false;
+
+    sender.on('event', (event: { event: string }) => {
+      if (event.event === 'resume_rejected') {
+        resumeRejected = true;
+      }
+    });
+
+    await sender.startTransfer(testPayload, 'wrong_id_test');
+
+    channel.setDisconnectAfterDeliveredPackets(2);
+
+    while (clock.now() < 200000 && sender.getState() !== 'RESUMING') {
+      await clock.advanceAsync(10);
+      channel.deliverPackets();
+      if (channel.getQueueSize() === 0 && !clock.hasPendingTimers()) {
+        await clock.advanceAsync(100);
+        await Promise.resolve();
+      }
+    }
+
+    expect(sender['chunks'].length).toBeGreaterThan(0);
+    expect(sender.getState()).toBe('RESUMING');
+
+    channel.reconnect();
+
+    const wrongTransferId = Buffer.alloc(16, 0xFF);
+    const buffer = Buffer.alloc(3 + 16 + 2);
+    buffer.writeUInt8(0x20, 0);
+    buffer.writeUInt16BE(0, 1);
+    wrongTransferId.copy(buffer, 3);
+
+    const rxChunksBeforeBadResume = receiver.getReceivedChunkSeqs().length;
+
+    senderTransport.receiveData(buffer);
+    await clock.advanceAsync(100);
+    channel.deliverPackets();
+
+    expect(resumeRejected).toBe(true);
+
+    await clock.advanceAsync(500);
+    channel.deliverPackets();
+
+    expect(receiver.getReceivedChunkSeqs().length).toBe(rxChunksBeforeBadResume);
   });
 });

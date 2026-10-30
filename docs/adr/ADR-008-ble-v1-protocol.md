@@ -125,24 +125,21 @@ INCIDENT_OPENED    → Vaka açıldı (backend)
 
 ### 6. Resume Mekanizması
 
-**Mevcut Durum (v1):**  
-Protokol `RESUME_REQUEST` message type tanımlı ancak henüz implement edilmemiş. Şu anki versiyon **per-chunk retry** ile implicit resume sağlar:
-- Kayıp chunk'lar otomatik retry ile tekrar gönderilir
-- ~15%'ye kadar paket kaybında güvenilir teslim
-- >15% kayıpta başarı garanti edilemez
+**v1 (D-08 kapalı):** Kesinti veya retry tüketiminden sonra alıcı, elindeki seq listesiyle `RESUME_REQUEST` gönderir; gönderici yalnızca eksik seq'leri yeniden yollar. Yanlış `transferId` reddedilir; digest doğrulanmadan `PEER_RECEIVED` yok.
 
-**Gelecek Geliştirme (v2 için):**  
-Disconnect durumunda explicit resume:
 ```
-Receiver → Sender: RESUME_REQUEST
-  message_id: opaque identifier
-  received_chunks: bitmap or list of seq numbers
-  
-Sender: Yalnızca eksik chunk'ları yeniden gönder
+Receiver → Sender: RESUME_REQUEST (0x20)
+  uint16 received_count
+  bytes[16] transfer_id   // HELLO nonce
+  uint16[received_count] received_seqs
+
+Sender: ackReceived := received_seqs; yalnızca eksik chunk'ları gönder
 ```
 
-**Target Resume Window:** 60 saniye içinde yeniden bağlanırsa resume mümkün  
-**D-08 Notu:** Test coverage şu anda retry-based implicit resume'u doğrular; explicit RESUME_REQUEST v2 için plannendi.
+**Per-chunk retry** kayıp paketler için hâlâ geçerli; explicit resume transport kopması / FAILED sonrası tamamlama içindir.
+
+**Target Resume Window:** 60 saniye (mobil katmanda uygulanacak)  
+**Test:** `packages/ble-protocol` integration — disconnect hook yalnızca DATA chunk sayar (HELLO sayılmaz).
 
 ### 7. Backpressure ve Flow Control
 

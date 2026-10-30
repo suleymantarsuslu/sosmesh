@@ -193,12 +193,14 @@ export class Sender extends EventEmitter {
     if (msgType === MessageType.HELLO_ACK && this.state === TransferState.HELLO_SENT) {
       this.handleHelloAck(data);
     } else if (msgType === MessageType.ACK && 
-               (this.state === TransferState.WAIT_ACK || this.state === TransferState.SENDING)) {
+               (this.state === TransferState.WAIT_ACK || 
+                this.state === TransferState.SENDING ||
+                this.state === TransferState.READY)) {
       this.handleAck(data);
     } else if (msgType === MessageType.NACK && 
                (this.state === TransferState.WAIT_ACK || this.state === TransferState.SENDING)) {
       this.handleNack(data);
-    } else if (msgType === MessageType.RESUME_REQUEST) {
+    } else if (msgType === MessageType.RESUME_REQUEST && this.chunks.length > 0) {
       this.handleResumeRequest(data);
     }
   }
@@ -273,6 +275,9 @@ export class Sender extends EventEmitter {
       this.setChunkTimeout();
     } else if (this.ackReceived.size === this.chunks.length) {
       this.complete();
+    } else if (this.state === TransferState.SENDING) {
+      this.state = TransferState.WAIT_ACK;
+      this.setChunkTimeout();
     }
   }
 
@@ -304,7 +309,22 @@ export class Sender extends EventEmitter {
   }
 
   private handleChunkTimeout(): void {
-    if (this.state !== TransferState.WAIT_ACK) return;
+    if (this.inFlightChunks.size === 0) {
+      if (this.state !== TransferState.WAIT_ACK) {
+        return;
+      }
+      if (this.ackReceived.size === this.chunks.length) {
+        this.complete();
+        return;
+      }
+      this.state = TransferState.READY;
+      this.currentSeq = 0;
+      this.sendNextChunks();
+      return;
+    }
+    if (this.state !== TransferState.WAIT_ACK && this.state !== TransferState.SENDING) {
+      return;
+    }
 
     // Retry all in-flight chunks
     const chunksToRetry = Array.from(this.inFlightChunks);
@@ -396,38 +416,47 @@ export class Sender extends EventEmitter {
   }
 
   private handleResumeRequest(data: Buffer): void {
-    if (data.length < 33) return;
+    if (data.length < 19) return;
 
-    // Parse received seq numbers
+    const receivedCount = data.readUInt16BE(1);
+    const transferId = data.slice(3, 19);
+    const minLength = 19 + receivedCount * 2;
+    if (data.length < minLength) return;
+
+    if (!this.nonce || !transferId.equals(this.nonce)) {
+      this.logEvent({
+        timestamp: this.clock.now(),
+        event: 'resume_rejected',
+        msgId: this.getMsgIdHash(),
+        error: 'Transfer ID mismatch',
+      });
+      return;
+    }
+
     const receivedSeqs = new Set<number>();
-    const numSeqs = (data.length - 33) / 2;
-    for (let i = 0; i < numSeqs; i++) {
-      const seq = data.readUInt16BE(33 + i * 2);
+    for (let i = 0; i < receivedCount; i++) {
+      const seq = data.readUInt16BE(19 + i * 2);
       receivedSeqs.add(seq);
     }
 
-    this.logEvent({
-      timestamp: this.clock.now(),
-      event: 'resume_request_received',
-      msgId: this.getMsgIdHash(),
-      total: receivedSeqs.size,
-    });
+    this.ackReceived = receivedSeqs;
+    this.inFlightChunks.clear();
+    this.currentSeq = 0;
+    this.retryCount.clear();
 
-    // Mark received chunks as ACKed
-    receivedSeqs.forEach(seq => {
-      this.ackReceived.add(seq);
-      this.inFlightChunks.delete(seq);
-    });
-
-    // Clear current retry state
     if (this.chunkTimeout) {
       this.clock.clearTimeout(this.chunkTimeout);
       this.chunkTimeout = null;
     }
 
-    // Reset to send only missing chunks
+    this.logEvent({
+      timestamp: this.clock.now(),
+      event: 'resume_accepted',
+      msgId: this.getMsgIdHash(),
+      total: this.chunks.length,
+    });
+
     this.state = TransferState.READY;
-    this.currentSeq = 0;
     this.sendNextChunks();
   }
 
@@ -461,7 +490,22 @@ export class Sender extends EventEmitter {
     if (this.state === TransferState.COMPLETED || this.state === TransferState.FAILED) {
       return;
     }
-    this.fail(ErrorCode.GENERIC_TIMEOUT, 'Transport disconnected');
+    
+    if (this.chunks.length > 0) {
+      this.state = TransferState.RESUMING;
+      if (this.chunkTimeout) {
+        this.clock.clearTimeout(this.chunkTimeout);
+        this.chunkTimeout = null;
+      }
+      this.logEvent({ 
+        timestamp: this.clock.now(), 
+        event: 'disconnect_resumable', 
+        msgId: this.getMsgIdHash(),
+        total: this.chunks.length 
+      });
+    } else {
+      this.fail(ErrorCode.GENERIC_TIMEOUT, 'Transport disconnected');
+    }
   }
 
   private getMsgIdHash(): string {

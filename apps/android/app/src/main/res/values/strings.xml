@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">SOSMesh</string>
+    <string name="home_title">SOSMesh</string>
+    <string name="home_permissions_cta">İzinleri yapılandır</string>
+    <string name="home_start_relay">Mesh bağlantısı (ön plan)</string>
+    <string name="notification_channel_mesh">Mesh bağlantısı</string>
+    <string name="notification_mesh_title">Yakın cihaz bağlantısı</string>
+    <string name="notification_mesh_body">SOSMesh yakın cihazlarla iletişim kuruyor. Arka planda sürekli bağlantı garantisi yoktur.</string>
+</resources>

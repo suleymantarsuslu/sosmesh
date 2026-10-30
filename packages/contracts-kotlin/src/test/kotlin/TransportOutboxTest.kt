@@ -1,8 +1,8 @@
 package com.sosmesh.contracts.transport
 
-import org.junit.jupiter.api.Test
-import org.junit.jupiter.api.Assertions.*
 import org.junit.jupiter.api.AfterEach
+import org.junit.jupiter.api.Assertions.*
+import org.junit.jupiter.api.Test
 import java.io.File
 import java.nio.file.Files
 
@@ -57,12 +57,13 @@ class JdbcSqliteOutboxQueueTest {
     @Test
     fun `duplicate enqueue yields single row`() {
         val queue = newQueue()
-        val input = EnqueueInput(
-            sosId = "dup-kotlin",
-            digest = "digest-1",
-            origin = "jvm",
-            encryptedBlobBase64 = "YQ=="
-        )
+        val input =
+            EnqueueInput(
+                sosId = "dup-kotlin",
+                digest = "digest-1",
+                origin = "jvm",
+                encryptedBlobBase64 = "YQ==",
+            )
         queue.enqueue(input, 100)
         queue.enqueue(input, 200)
         assertEquals(1, queue.listAll().size)
@@ -75,7 +76,7 @@ class JdbcSqliteOutboxQueueTest {
         val q1 = JdbcSqliteOutboxQueue(path.absolutePath)
         q1.enqueue(
             EnqueueInput("reboot-k", "d", "jvm", "YQ=="),
-            1
+            1,
         )
         q1.close()
         openQueue = JdbcSqliteOutboxQueue(path.absolutePath)
@@ -96,7 +97,7 @@ class JdbcSqliteOutboxQueueTest {
         val queue = newQueue()
         queue.enqueue(
             EnqueueInput("exp", "d", "jvm", "YQ==", retentionMs = 500),
-            0
+            0,
         )
         assertEquals(1, queue.purgeExpired(501))
         assertTrue(queue.listAll().isEmpty())

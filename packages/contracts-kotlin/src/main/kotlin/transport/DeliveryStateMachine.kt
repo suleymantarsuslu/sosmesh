@@ -14,7 +14,7 @@ data class StateTransitionsFixture(
     val terminalStates: List<String>,
     val validTransitions: List<StateTransitionEdge>,
     val uxTimelineKeys: Map<String, String>,
-    val defaultRetentionMs: Long
+    val defaultRetentionMs: Long,
 )
 
 class InvalidStateTransitionException(from: String, to: String) :
@@ -27,10 +27,15 @@ class DeliveryStateMachine(fixture: StateTransitionsFixture) {
 
     constructor() : this(StateTransitionLoader.load())
 
-    fun canTransition(from: String, to: String): Boolean =
-        allowed.contains("$from->$to")
+    fun canTransition(
+        from: String,
+        to: String,
+    ): Boolean = allowed.contains("$from->$to")
 
-    fun transition(from: String, to: String): String {
+    fun transition(
+        from: String,
+        to: String,
+    ): String {
         if (!canTransition(from, to)) {
             throw InvalidStateTransitionException(from, to)
         }

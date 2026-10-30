@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">SOSMesh</string>
+    <string name="home_title">SOSMesh</string>
+    <string name="home_permissions_cta">Configure permissions</string>
+    <string name="home_start_relay">Mesh connection (foreground)</string>
+    <string name="notification_channel_mesh">Mesh connection</string>
+    <string name="notification_mesh_title">Nearby device connection</string>
+    <string name="notification_mesh_body">SOSMesh is communicating with nearby devices. No guarantee of continuous background connection.</string>
+</resources>

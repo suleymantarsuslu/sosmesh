@@ -24,7 +24,7 @@ object BleProtocol {
         val seq: Int,
         val total: Int,
         val crc32: Long,
-        val flags: Byte
+        val flags: Byte,
     )
 
     fun serializeChunkHeader(header: ChunkHeader): ByteArray {
@@ -43,19 +43,22 @@ object BleProtocol {
 
     fun deserializeChunkHeader(data: ByteArray): ChunkHeader {
         require(data.size >= CHUNK_HEADER_SIZE) { "Data too small for chunk header" }
-        
+
         val buffer = ByteBuffer.wrap(data)
         buffer.order(ByteOrder.BIG_ENDIAN)
-        
+
         val seq = buffer.short.toInt() and 0xFFFF
         val total = buffer.short.toInt() and 0xFFFF
         val crc32 = buffer.int.toLong() and 0xFFFFFFFFL
         val flags = buffer.get()
-        
+
         return ChunkHeader(seq, total, crc32, flags)
     }
 
-    fun verifyChunkCRC(header: ChunkHeader, payload: ByteArray): Boolean {
+    fun verifyChunkCRC(
+        header: ChunkHeader,
+        payload: ByteArray,
+    ): Boolean {
         val actualCRC = calculateCRC32(payload)
         return actualCRC == header.crc32
     }

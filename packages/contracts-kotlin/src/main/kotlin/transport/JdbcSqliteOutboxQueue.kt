@@ -5,36 +5,38 @@ import java.sql.DriverManager
 
 class JdbcSqliteOutboxQueue(
     dbPath: String,
-    private val defaultRetentionMs: Long = StateTransitionLoader.load().defaultRetentionMs
+    private val defaultRetentionMs: Long = StateTransitionLoader.load().defaultRetentionMs,
 ) : OutboxQueueAdapter {
-
     private val connection =
         DriverManager.getConnection(
-            "jdbc:sqlite:${File(dbPath).absolutePath}?busy_timeout=5000"
+            "jdbc:sqlite:${File(dbPath).absolutePath}?busy_timeout=5000",
         ).apply {
             createStatement().use { st ->
                 st.execute("PRAGMA journal_mode=WAL")
                 st.execute(
                     """
-                CREATE TABLE IF NOT EXISTS outbox (
-                  sos_id TEXT NOT NULL,
-                  digest TEXT NOT NULL,
-                  origin TEXT NOT NULL,
-                  encrypted_blob TEXT NOT NULL,
-                  state TEXT NOT NULL,
-                  retry_at INTEGER NOT NULL,
-                  expires_at INTEGER NOT NULL,
-                  last_error TEXT,
-                  created_at INTEGER NOT NULL,
-                  updated_at INTEGER NOT NULL,
-                  PRIMARY KEY (sos_id, digest)
-                )
-                    """.trimIndent()
+                    CREATE TABLE IF NOT EXISTS outbox (
+                      sos_id TEXT NOT NULL,
+                      digest TEXT NOT NULL,
+                      origin TEXT NOT NULL,
+                      encrypted_blob TEXT NOT NULL,
+                      state TEXT NOT NULL,
+                      retry_at INTEGER NOT NULL,
+                      expires_at INTEGER NOT NULL,
+                      last_error TEXT,
+                      created_at INTEGER NOT NULL,
+                      updated_at INTEGER NOT NULL,
+                      PRIMARY KEY (sos_id, digest)
+                    )
+                    """.trimIndent(),
                 )
             }
         }
 
-    override fun enqueue(input: EnqueueInput, nowMs: Long): OutboxEntryMeta {
+    override fun enqueue(
+        input: EnqueueInput,
+        nowMs: Long,
+    ): OutboxEntryMeta {
         getByKey(input.sosId, input.digest)?.let { return it }
         val retention = input.retentionMs ?: defaultRetentionMs
         val expiresAt = nowMs + retention
@@ -44,7 +46,7 @@ class JdbcSqliteOutboxQueue(
               sos_id, digest, origin, encrypted_blob, state,
               retry_at, expires_at, last_error, created_at, updated_at
             ) VALUES (?, ?, ?, ?, 'LOCAL_SAVED', ?, ?, NULL, ?, ?)
-            """.trimIndent()
+            """.trimIndent(),
         ).use { ps ->
             ps.setString(1, input.sosId)
             ps.setString(2, input.digest)
@@ -59,9 +61,12 @@ class JdbcSqliteOutboxQueue(
         return getByKey(input.sosId, input.digest)!!
     }
 
-    override fun getByKey(sosId: String, digest: String): OutboxEntryMeta? {
+    override fun getByKey(
+        sosId: String,
+        digest: String,
+    ): OutboxEntryMeta? {
         connection.prepareStatement(
-            "SELECT * FROM outbox WHERE sos_id = ? AND digest = ?"
+            "SELECT * FROM outbox WHERE sos_id = ? AND digest = ?",
         ).use { ps ->
             ps.setString(1, sosId)
             ps.setString(2, digest)
@@ -89,10 +94,10 @@ class JdbcSqliteOutboxQueue(
         digest: String,
         state: String,
         nowMs: Long,
-        lastError: String?
+        lastError: String?,
     ): OutboxEntryMeta? {
         connection.prepareStatement(
-            "UPDATE outbox SET state = ?, updated_at = ?, last_error = ? WHERE sos_id = ? AND digest = ?"
+            "UPDATE outbox SET state = ?, updated_at = ?, last_error = ? WHERE sos_id = ? AND digest = ?",
         ).use { ps ->
             ps.setString(1, state)
             ps.setLong(2, nowMs)
@@ -104,9 +109,14 @@ class JdbcSqliteOutboxQueue(
         return getByKey(sosId, digest)
     }
 
-    override fun setRetryAt(sosId: String, digest: String, retryAtMs: Long, lastError: String?) {
+    override fun setRetryAt(
+        sosId: String,
+        digest: String,
+        retryAtMs: Long,
+        lastError: String?,
+    ) {
         connection.prepareStatement(
-            "UPDATE outbox SET retry_at = ?, last_error = ? WHERE sos_id = ? AND digest = ?"
+            "UPDATE outbox SET retry_at = ?, last_error = ? WHERE sos_id = ? AND digest = ?",
         ).use { ps ->
             ps.setLong(1, retryAtMs)
             ps.setString(2, lastError)
@@ -116,13 +126,16 @@ class JdbcSqliteOutboxQueue(
         }
     }
 
-    override fun countDueForSend(nowMs: Long, paused: Boolean): Int {
+    override fun countDueForSend(
+        nowMs: Long,
+        paused: Boolean,
+    ): Int {
         if (paused) return 0
         connection.prepareStatement(
             """
             SELECT COUNT(*) FROM outbox
             WHERE retry_at <= ? AND state NOT IN ('FAILED', 'EXPIRED')
-            """.trimIndent()
+            """.trimIndent(),
         ).use { ps ->
             ps.setLong(1, nowMs)
             ps.executeQuery().use { rs ->
@@ -154,6 +167,6 @@ class JdbcSqliteOutboxQueue(
             expiresAtMs = rs.getLong("expires_at"),
             lastError = rs.getString("last_error"),
             createdAtMs = rs.getLong("created_at"),
-            updatedAtMs = rs.getLong("updated_at")
+            updatedAtMs = rs.getLong("updated_at"),
         )
 }

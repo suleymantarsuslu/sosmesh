@@ -27,6 +27,16 @@ tasks.test {
     }
 }
 
+tasks.withType<org.jetbrains.kotlin.gradle.tasks.KotlinCompile>().configureEach {
+    kotlinOptions.jvmTarget = "17"
+}
+
+java {
+    toolchain {
+        languageVersion.set(JavaLanguageVersion.of(17))
+    }
+}
+
 tasks.register("writeCanonicalJson") {
     group = "verification"
     description = "Write canonical JSON output for cross-language comparison"
@@ -38,5 +48,5 @@ tasks.register("writeCanonicalJson") {
 }
 
 kotlin {
-    jvmToolchain(21)
+    jvmToolchain(17)
 }

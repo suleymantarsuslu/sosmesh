@@ -78,6 +78,5 @@ module.exports = {
     '*.config.js',
     'playwright.config.js',
     'prototypes/**/*.html',
-    'packages/transport/scripts/**',
   ],
 };

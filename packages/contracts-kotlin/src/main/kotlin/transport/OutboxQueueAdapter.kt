@@ -35,6 +35,7 @@ interface OutboxQueueAdapter {
         nowMs: Long,
         lastError: String? = null
     ): OutboxEntryMeta?
+    fun setRetryAt(sosId: String, digest: String, retryAtMs: Long, lastError: String?): Unit
     fun countDueForSend(nowMs: Long, paused: Boolean): Int
     fun purgeExpired(nowMs: Long): Int
     fun close()

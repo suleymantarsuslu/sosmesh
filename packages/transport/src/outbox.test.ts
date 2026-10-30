@@ -1,13 +1,17 @@
 import * as fs from 'node:fs';
 import * as os from 'node:os';
 import * as path from 'node:path';
-import { spawnSync } from 'node:child_process';
+import { spawn } from 'node:child_process';
+import { once } from 'node:events';
+import { createInterface } from 'node:readline';
 import { describe, it, expect, afterEach } from 'vitest';
 import {
   SqliteOutboxQueue,
   OutboxEngine,
   SimulatedClock,
   DeliveryStateMachine,
+  nextRetryAt,
+  DEFAULT_BACKOFF_MS,
 } from '../src';
 
 function tempDb(): string {
@@ -15,6 +19,37 @@ function tempDb(): string {
     os.tmpdir(),
     `sosmesh-outbox-${process.pid}-${Date.now()}-${Math.random().toString(16).slice(2)}.db`
   );
+}
+
+function childCliPath(): string {
+  return path.join(__dirname, '../dist/outbox-child-cli.js');
+}
+
+async function spawnEnqueueWaitAndSigkill(
+  dbPath: string,
+  sosId: string,
+  digest: string,
+  state?: string
+): Promise<void> {
+  const args = [childCliPath(), 'enqueue-wait', dbPath, sosId, digest];
+  if (state) {
+    args.push(state);
+  }
+  const child = spawn(process.execPath, args, {
+    stdio: ['ignore', 'pipe', 'pipe'],
+  });
+  const rl = createInterface({ input: child.stdout! });
+  const readyLine = new Promise<string>((resolve, reject) => {
+    rl.on('line', (line) => resolve(line));
+    child.on('error', reject);
+  });
+  const line = await readyLine;
+  expect(line).toBe('ready');
+  child.kill('SIGKILL');
+  const [code, signal] = (await once(child, 'exit')) as [number | null, NodeJS.Signals | null];
+  expect(code).toBeNull();
+  expect(signal).toBe('SIGKILL');
+  rl.close();
 }
 
 describe('SqliteOutboxQueue persistence', () => {
@@ -99,21 +134,49 @@ describe('SqliteOutboxQueue persistence', () => {
     expect(engine.countSendAttemptsDue()).toBe(1);
   });
 
-  it('offline 24h simulated clock advances retry backoff and expires_at purge', () => {
+  it('offline retry backoff boundaries and retention purge at expires_at', () => {
     dbPath = tempDb();
-    const clock = new SimulatedClock(0);
-    const queue = new SqliteOutboxQueue(dbPath, 86_400_000);
+    const startMs = 1_000;
+    const retentionMs = 86_400_000;
+    const clock = new SimulatedClock(startMs);
+    const queue = new SqliteOutboxQueue(dbPath, retentionMs);
     const engine = new OutboxEngine({ queue, clock });
     engine.saveLocal({
       sosId: 'offline-day',
-      digest: 'd',
+      digest: 'd-offline',
       origin: 'local',
       encryptedBlobBase64: 'YQ==',
-      retentionMs: 86_400_000,
+      retentionMs,
     });
-    engine.recordSendFailure('offline-day', 'network', 1);
-    clock.advance(86_400_000);
-    expect(queue.purgeExpired(clock.nowMs())).toBe(1);
+    let row = queue.getByKey('offline-day', 'd-offline')!;
+    expect(row.retryAtMs).toBe(startMs);
+    expect(row.expiresAtMs).toBe(startMs + retentionMs);
+
+    engine.recordSendFailure('offline-day', 'network-a', 1);
+    row = queue.getByKey('offline-day', 'd-offline')!;
+    expect(row.retryAtMs).toBe(nextRetryAt(startMs, 1));
+    expect(row.retryAtMs).toBe(startMs + DEFAULT_BACKOFF_MS);
+    expect(row.lastError).toBe('network-a');
+    clock.set(startMs);
+    expect(engine.countSendAttemptsDue()).toBe(0);
+
+    clock.set(row.retryAtMs - 1);
+    expect(engine.countSendAttemptsDue()).toBe(0);
+    clock.set(row.retryAtMs);
+    expect(engine.countSendAttemptsDue()).toBe(1);
+
+    clock.set(62_000);
+    engine.recordSendFailure('offline-day', 'network-b', 2);
+    row = queue.getByKey('offline-day', 'd-offline')!;
+    expect(row.retryAtMs).toBe(nextRetryAt(62_000, 2));
+    expect(row.retryAtMs).toBe(62_000 + DEFAULT_BACKOFF_MS * 2);
+    expect(row.lastError).toBe('network-b');
+
+    const expiresAt = row.expiresAtMs;
+    expect(queue.purgeExpired(expiresAt - 1)).toBe(0);
+    expect(queue.listAll()).toHaveLength(1);
+    expect(queue.purgeExpired(expiresAt)).toBe(1);
+    expect(queue.listAll()).toHaveLength(0);
     queue.close();
   });
 
@@ -136,18 +199,29 @@ describe('SqliteOutboxQueue persistence', () => {
     expect(engine.countSendAttemptsDue()).toBe(1);
   });
 
-  it('process kill restart via subprocess preserves outbox on disk', () => {
+  it('SIGKILL after enqueue-wait preserves LOCAL_SAVED row on disk', async () => {
     dbPath = tempDb();
-    const childPath = path.join(__dirname, '../scripts/outbox-child.cjs');
-    const enqueue = spawnSync(process.execPath, [childPath, 'enqueue', dbPath], {
-      encoding: 'utf8',
-    });
-    expect(enqueue.status).toBe(0);
-    const countAfterKill = spawnSync(process.execPath, [childPath, 'count', dbPath], {
-      encoding: 'utf8',
-    });
-    expect(countAfterKill.status).toBe(0);
-    expect(countAfterKill.stdout.trim()).toBe('1');
+    const sosId = 'sigkill-local';
+    const digest = 'digest-kill-1';
+    await spawnEnqueueWaitAndSigkill(dbPath, sosId, digest);
+    const queue = new SqliteOutboxQueue(dbPath);
+    expect(queue.listAll()).toHaveLength(1);
+    const row = queue.getByKey(sosId, digest);
+    expect(row?.sosId).toBe(sosId);
+    expect(row?.digest).toBe(digest);
+    expect(row?.state).toBe('LOCAL_SAVED');
+    queue.close();
+  });
+
+  it('SIGKILL after PEER_RECEIVED preserves delivery state on disk', async () => {
+    dbPath = tempDb();
+    const sosId = 'sigkill-peer';
+    const digest = 'digest-peer';
+    await spawnEnqueueWaitAndSigkill(dbPath, sosId, digest, 'PEER_RECEIVED');
+    const queue = new SqliteOutboxQueue(dbPath);
+    const row = queue.getByKey(sosId, digest);
+    expect(row?.state).toBe('PEER_RECEIVED');
+    queue.close();
   });
 
   it('state advance uses shared machine PEER then SERVER distinct', () => {

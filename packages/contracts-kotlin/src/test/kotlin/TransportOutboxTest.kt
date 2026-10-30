@@ -101,4 +101,20 @@ class JdbcSqliteOutboxQueueTest {
         assertEquals(1, queue.purgeExpired(501))
         assertTrue(queue.listAll().isEmpty())
     }
+
+    @Test
+    fun `clock skew retry_at boundary due count matches shared backoff`() {
+        val queue = newQueue()
+        queue.enqueue(EnqueueInput("skew-k", "d", "jvm", "YQ=="), 1_000)
+        val retryAt = OutboxRetryPolicy.nextRetryAt(1_000, 1)
+        assertEquals(61_000L, retryAt)
+        queue.setRetryAt("skew-k", "d", retryAt, "offline")
+        assertEquals(0, queue.countDueForSend(60_999, paused = false))
+        assertEquals(1, queue.countDueForSend(61_000, paused = false))
+        val secondRetry = OutboxRetryPolicy.nextRetryAt(62_000, 2)
+        assertEquals(182_000L, secondRetry)
+        queue.setRetryAt("skew-k", "d", secondRetry, "still-offline")
+        assertEquals(0, queue.countDueForSend(181_999, paused = false))
+        assertEquals(1, queue.countDueForSend(182_000, paused = false))
+    }
 }

@@ -90,13 +90,10 @@ final class TransportOutboxTests: XCTestCase {
     }
 
     func testPurgeExpiredRemovesRow() throws {
-        let tmp = URL(fileURLWithPath: NSTemporaryDirectory())
-            .appendingPathComponent("outbox-swift-exp-\(UUID().uuidString).db")
-        let storePath = tmp.deletingPathExtension().appendingPathExtension("json").path
-        defer {
-            try? FileManager.default.removeItem(at: tmp)
-            try? FileManager.default.removeItem(atPath: storePath)
-        }
+        let storePath = URL(fileURLWithPath: NSTemporaryDirectory())
+            .appendingPathComponent("outbox-swift-exp-\(UUID().uuidString).json")
+            .path
+        defer { try? FileManager.default.removeItem(atPath: storePath) }
         let queue = try DiskOutboxQueue(storePath: storePath, defaultRetentionMs: 500)
         _ = try queue.enqueue(
             input: EnqueueInput(
@@ -110,5 +107,26 @@ final class TransportOutboxTests: XCTestCase {
         )
         XCTAssertEqual(try queue.purgeExpired(nowMs: 501), 1)
         XCTAssertTrue(try queue.listAll().isEmpty)
+    }
+
+    func testClockSkewRetryAtBoundaryMatchesSharedBackoff() throws {
+        let tmp = URL(fileURLWithPath: NSTemporaryDirectory())
+            .appendingPathComponent("outbox-swift-skew-\(UUID().uuidString).json")
+        defer { try? FileManager.default.removeItem(at: tmp) }
+        let queue = try DiskOutboxQueue(storePath: tmp.path, defaultRetentionMs: 604_800_000)
+        _ = try queue.enqueue(
+            input: EnqueueInput(sosId: "skew-s", digest: "d", origin: "linux", encryptedBlobBase64: "YQ=="),
+            nowMs: 1_000
+        )
+        let firstRetry = OutboxRetryPolicy.nextRetryAt(nowMs: 1_000, attempt: 1)
+        XCTAssertEqual(firstRetry, 61_000)
+        try queue.setRetryAt(sosId: "skew-s", digest: "d", retryAtMs: firstRetry, lastError: "offline")
+        XCTAssertEqual(try queue.countDueForSend(nowMs: 60_999, paused: false), 0)
+        XCTAssertEqual(try queue.countDueForSend(nowMs: 61_000, paused: false), 1)
+        let secondRetry = OutboxRetryPolicy.nextRetryAt(nowMs: 62_000, attempt: 2)
+        XCTAssertEqual(secondRetry, 182_000)
+        try queue.setRetryAt(sosId: "skew-s", digest: "d", retryAtMs: secondRetry, lastError: "still-offline")
+        XCTAssertEqual(try queue.countDueForSend(nowMs: 181_999, paused: false), 0)
+        XCTAssertEqual(try queue.countDueForSend(nowMs: 182_000, paused: false), 1)
     }
 }

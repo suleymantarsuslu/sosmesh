@@ -104,6 +104,18 @@ class JdbcSqliteOutboxQueue(
         return getByKey(sosId, digest)
     }
 
+    override fun setRetryAt(sosId: String, digest: String, retryAtMs: Long, lastError: String?) {
+        connection.prepareStatement(
+            "UPDATE outbox SET retry_at = ?, last_error = ? WHERE sos_id = ? AND digest = ?"
+        ).use { ps ->
+            ps.setLong(1, retryAtMs)
+            ps.setString(2, lastError)
+            ps.setString(3, sosId)
+            ps.setString(4, digest)
+            ps.executeUpdate()
+        }
+    }
+
     override fun countDueForSend(nowMs: Long, paused: Boolean): Int {
         if (paused) return 0
         connection.prepareStatement(

@@ -94,6 +94,18 @@ public struct EnqueueInput {
     }
 }
 
+public enum OutboxRetryPolicy {
+    public static let defaultBackoffMs: Int64 = 60_000
+    public static let maxBackoffMs: Int64 = 3_600_000
+
+    public static func nextRetryAt(nowMs: Int64, attempt: Int) -> Int64 {
+        let exponent = max(0, attempt - 1)
+        let multiplier = Int64(pow(2.0, Double(exponent)))
+        let backoff = min(maxBackoffMs, defaultBackoffMs * multiplier)
+        return nowMs + backoff
+    }
+}
+
 private struct OutboxStoreFile: Codable {
     var entries: [OutboxEntryMeta]
 }
@@ -112,7 +124,7 @@ public final class DiskOutboxQueue {
     public func enqueue(input: EnqueueInput, nowMs: Int64) throws -> OutboxEntryMeta {
         lock.lock()
         defer { lock.unlock() }
-        var store = try readStore()
+        var store = try readStoreUnlocked()
         if let existing = store.entries.first(where: { $0.sosId == input.sosId && $0.digest == input.digest }) {
             return existing
         }
@@ -130,19 +142,21 @@ public final class DiskOutboxQueue {
             updatedAtMs: nowMs
         )
         store.entries.append(entry)
-        try writeStore(store)
+        try writeStoreUnlocked(store)
         return entry
     }
 
     public func listAll() throws -> [OutboxEntryMeta] {
         lock.lock()
         defer { lock.unlock() }
-        return try readStore().entries.sorted { $0.createdAtMs < $1.createdAtMs }
+        return try readStoreUnlocked().entries.sorted { $0.createdAtMs < $1.createdAtMs }
     }
 
     public func countDueForSend(nowMs: Int64, paused: Bool) throws -> Int {
         if paused { return 0 }
-        let entries = try listAll()
+        lock.lock()
+        defer { lock.unlock() }
+        let entries = try readStoreUnlocked().entries
         return entries.filter {
             $0.retryAtMs <= nowMs && $0.state != "FAILED" && $0.state != "EXPIRED"
         }.count
@@ -151,14 +165,37 @@ public final class DiskOutboxQueue {
     public func purgeExpired(nowMs: Int64) throws -> Int {
         lock.lock()
         defer { lock.unlock() }
-        var store = try readStore()
+        var store = try readStoreUnlocked()
         let before = store.entries.count
         store.entries.removeAll { $0.expiresAtMs <= nowMs }
-        try writeStore(store)
+        try writeStoreUnlocked(store)
         return before - store.entries.count
     }
 
-    private func readStore() throws -> OutboxStoreFile {
+    public func setRetryAt(sosId: String, digest: String, retryAtMs: Int64, lastError: String?) throws {
+        lock.lock()
+        defer { lock.unlock() }
+        var store = try readStoreUnlocked()
+        guard let idx = store.entries.firstIndex(where: { $0.sosId == sosId && $0.digest == digest }) else {
+            return
+        }
+        let old = store.entries[idx]
+        store.entries[idx] = OutboxEntryMeta(
+            sosId: old.sosId,
+            digest: old.digest,
+            origin: old.origin,
+            encryptedBlobBase64: old.encryptedBlobBase64,
+            state: old.state,
+            retryAtMs: retryAtMs,
+            expiresAtMs: old.expiresAtMs,
+            lastError: lastError,
+            createdAtMs: old.createdAtMs,
+            updatedAtMs: old.updatedAtMs
+        )
+        try writeStoreUnlocked(store)
+    }
+
+    private func readStoreUnlocked() throws -> OutboxStoreFile {
         let fm = FileManager.default
         if !fm.fileExists(atPath: storeURL.path) {
             return OutboxStoreFile(entries: [])
@@ -167,7 +204,7 @@ public final class DiskOutboxQueue {
         return try JSONDecoder().decode(OutboxStoreFile.self, from: data)
     }
 
-    private func writeStore(_ store: OutboxStoreFile) throws {
+    private func writeStoreUnlocked(_ store: OutboxStoreFile) throws {
         let data = try JSONEncoder().encode(store)
         let tmp = storeURL.appendingPathExtension("tmp")
         try data.write(to: tmp, options: .atomic)

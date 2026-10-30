@@ -236,6 +236,65 @@ importers:
         specifier: ^1.2.0
         version: 1.6.1(@types/node@20.19.43)(terser@5.51.2)
 
+  tests/chaos:
+    dependencies:
+      '@sosmesh/ble-protocol':
+        specifier: workspace:*
+        version: link:../../packages/ble-protocol
+      '@sosmesh/mesh-simulator':
+        specifier: workspace:*
+        version: link:../../tools/mesh-simulator
+      '@sosmesh/transport':
+        specifier: workspace:*
+        version: link:../../packages/transport
+    devDependencies:
+      '@types/node':
+        specifier: ^20.11.0
+        version: 20.19.43
+      ajv:
+        specifier: ^8.12.0
+        version: 8.20.0
+      eslint:
+        specifier: ^8.56.0
+        version: 8.57.1
+      typescript:
+        specifier: ^5.3.3
+        version: 5.9.3
+      vitest:
+        specifier: ^1.2.0
+        version: 1.6.1(@types/node@20.19.43)(terser@5.51.2)
+
+  tools/mesh-simulator:
+    dependencies:
+      '@sosmesh/ble-protocol':
+        specifier: workspace:*
+        version: link:../../packages/ble-protocol
+      '@sosmesh/contracts':
+        specifier: workspace:*
+        version: link:../../packages/contracts
+      '@sosmesh/transport':
+        specifier: workspace:*
+        version: link:../../packages/transport
+    devDependencies:
+      '@types/node':
+        specifier: ^20.11.0
+        version: 20.19.43
+      '@typescript-eslint/eslint-plugin':
+        specifier: ^6.21.0
+        version: 6.21.0(@typescript-eslint/parser@6.21.0(eslint@8.57.1)(typescript@5.9.3))(eslint@8.57.1)(typescript@5.9.3)
+      '@typescript-eslint/parser':
+        specifier: ^6.21.0
+        version: 6.21.0(eslint@8.57.1)(typescript@5.9.3)
+      eslint:
+        specifier: ^8.56.0
+        version: 8.57.1
+      typescript:
+        specifier: ^5.3.3
+        version: 5.9.3
+      vitest:
+        specifier: ^1.2.0
+        version: 1.6.1(@types/node@20.19.43)(terser@5.51.2)
+
 packages:
 
   '@angular-devkit/core@17.3.11':

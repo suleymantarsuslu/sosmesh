@@ -1,0 +1,22 @@
+{
+  "name": "@sosmesh/chaos-tests",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "test": "vitest run --reporter=verbose",
+    "lint": "eslint \"**/*.ts\"",
+    "build": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@sosmesh/ble-protocol": "workspace:*",
+    "@sosmesh/mesh-simulator": "workspace:*",
+    "@sosmesh/transport": "workspace:*"
+  },
+  "devDependencies": {
+    "@types/node": "^20.11.0",
+    "ajv": "^8.12.0",
+    "eslint": "^8.56.0",
+    "typescript": "^5.3.3",
+    "vitest": "^1.2.0"
+  }
+}

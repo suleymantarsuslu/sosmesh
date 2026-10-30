@@ -135,6 +135,8 @@ pnpm format:check
 16. ✅ check-dependency-cycles (no cycles)
 17. ✅ check-compose (YAML structure valid)
 18. ✅ check-no-skips (no test.only, test.skip, xit)
+19. ✅ golden-vector-equality (TS/Kotlin/Swift)
+20. ✅ mesh-sim-golden (chaos lab + trace golden)
 
 **Blockers:**
 - `docker compose up` NOT_TESTED (daemon not available)

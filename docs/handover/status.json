@@ -340,9 +340,11 @@
       "pass_criteria": "Uygulama en az bir gerçek Android’de açılır ve izin akışı çalışır.",
       "status": "PARTIAL",
       "attempts": 1,
-      "commit": "94b63f9",
+      "commit": "5e64683",
       "evidence": [
-        "Gradle assembleDebug testDebugUnitTest lintDebug PASS (CI hedef)",
+        "PR #24",
+        "CI run 41142459079",
+        "Gradle assembleDebug testDebugUnitTest lintDebug PASS",
         "Gerçek Android cihaz / Android 12-14-16 enstrümantasyon: NOT_TESTED",
         "Android Keystore hardware-backed EncryptedSharedPreferences: NOT_TESTED"
       ],

@@ -1,0 +1,28 @@
+{
+  "name": "@sosmesh/mesh-simulator",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Deterministic BLE mesh peer emulator for SOSMesh lab tests",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "scripts": {
+    "build": "tsc",
+    "test": "vitest run --passWithNoTests --reporter=verbose",
+    "lint": "eslint \"src/**/*.ts\"",
+    "lint:fix": "eslint \"src/**/*.ts\" --fix",
+    "clean": "rm -rf dist"
+  },
+  "dependencies": {
+    "@sosmesh/ble-protocol": "workspace:*",
+    "@sosmesh/contracts": "workspace:*",
+    "@sosmesh/transport": "workspace:*"
+  },
+  "devDependencies": {
+    "@types/node": "^20.11.0",
+    "@typescript-eslint/eslint-plugin": "^6.21.0",
+    "@typescript-eslint/parser": "^6.21.0",
+    "eslint": "^8.56.0",
+    "typescript": "^5.3.3",
+    "vitest": "^1.2.0"
+  }
+}

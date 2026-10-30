@@ -25,7 +25,22 @@ const FORBIDDEN_EN = [
   'help is on the way',
   'you are safe',
   'rescued',
-  'resolved'
+  'resolved',
+  'verified on real device',
+  'real device verified',
+  'ble test passed on hardware'
+];
+
+// Simülasyon sonucunu gerçek cihaz kanıtı gibi sunmayı yasakla (ADIM 11)
+const FORBIDDEN_SIMULATION_AS_DEVICE_TR = [
+  'gerçek cihazda doğrulandı',
+  'gerçek ble başarısı',
+  'fiziksel cihazda test edildi'
+];
+const FORBIDDEN_SIMULATION_AS_DEVICE_EN = [
+  'verified on real device',
+  'real ble success',
+  'tested on physical device'
 ];
 
 // Context-specific bans (only in SOS status context)
@@ -108,14 +123,20 @@ function scanStatusContext(filePath, forbiddenList, lang) {
 // TR dosyalarını tara
 console.log('TR dosyaları taranıyor...');
 FILES_TO_SCAN.filter(f => f.includes('-tr') || f.includes('prototypes'))
-  .forEach(f => scanFile(f, FORBIDDEN_TR, 'TR'));
+  .forEach(f => {
+    scanFile(f, FORBIDDEN_TR, 'TR');
+    scanFile(f, FORBIDDEN_SIMULATION_AS_DEVICE_TR, 'TR (simulation/device)');
+  });
 
 // EN dosyalarını tara
 console.log('EN dosyaları taranıyor...');
 FILES_TO_SCAN.filter(f => f.includes('-en') || f.includes('prototypes'))
-  .forEach(f => scanFile(f, FORBIDDEN_EN, 'EN'));
+  .forEach(f => {
+    scanFile(f, FORBIDDEN_EN, 'EN');
+    scanFile(f, FORBIDDEN_SIMULATION_AS_DEVICE_EN, 'EN (simulation/device)');
+  });
 
-// Context-specific scans
+// Lab matrix — yasak ifade örneklerini dokümanda literal yazma (ux-forbidden-copy tetiklenir)
 FILES_TO_SCAN.forEach(f => scanStatusContext(f, FORBIDDEN_IN_STATUS_CONTEXT_TR, 'TR'));
 FILES_TO_SCAN.forEach(f => scanStatusContext(f, FORBIDDEN_IN_STATUS_CONTEXT_EN, 'EN'));
 

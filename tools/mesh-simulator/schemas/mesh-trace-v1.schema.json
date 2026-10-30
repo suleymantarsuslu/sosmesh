@@ -1,0 +1,69 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://sosmesh.local/schemas/mesh-trace-v1.json",
+  "title": "SOSMesh Mesh Lab Trace",
+  "type": "object",
+  "required": [
+    "environment",
+    "schemaVersion",
+    "seed",
+    "scenario",
+    "mtu",
+    "channel",
+    "outcome",
+    "senderState",
+    "receiverState",
+    "maxRetriesObserved",
+    "timeline",
+    "errorClasses"
+  ],
+  "properties": {
+    "environment": { "const": "simulated" },
+    "schemaVersion": { "const": 1 },
+    "seed": { "type": "integer" },
+    "scenario": { "type": "string" },
+    "mtu": { "type": "integer", "minimum": 23 },
+    "channel": {
+      "type": "object",
+      "required": [
+        "packetLoss",
+        "duplicateRate",
+        "reorderRate",
+        "partialWriteRate",
+        "minLatencyMs",
+        "maxLatencyMs"
+      ],
+      "properties": {
+        "packetLoss": { "type": "number" },
+        "duplicateRate": { "type": "number" },
+        "reorderRate": { "type": "number" },
+        "partialWriteRate": { "type": "number" },
+        "minLatencyMs": { "type": "number" },
+        "maxLatencyMs": { "type": "number" }
+      }
+    },
+    "outcome": { "enum": ["COMPLETED", "FAILED", "DROPPED"] },
+    "senderState": { "type": "string" },
+    "receiverState": { "type": "string" },
+    "maxRetriesObserved": { "type": "integer", "minimum": 0 },
+    "timeline": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["t", "node", "kind"],
+        "properties": {
+          "t": { "type": "number" },
+          "node": { "type": "string" },
+          "kind": { "type": "string" },
+          "detail": { "type": "string" },
+          "errorClass": { "type": "string" }
+        }
+      }
+    },
+    "errorClasses": {
+      "type": "array",
+      "items": { "type": "string" }
+    }
+  },
+  "additionalProperties": false
+}

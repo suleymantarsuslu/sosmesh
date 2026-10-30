@@ -44,6 +44,10 @@ export class Receiver extends EventEmitter {
     this.transport.on('disconnect', this.handleDisconnect.bind(this));
   }
 
+  public getReceivedChunkSeqs(): number[] {
+    return Array.from(this.chunks.keys()).sort((a, b) => a - b);
+  }
+
   private handleData(data: Buffer): void {
     if (data.length === 0) return;
 
@@ -188,15 +192,16 @@ export class Receiver extends EventEmitter {
         await this.verifyAndComplete();
       }
 
-    } catch (error: any) {
+    } catch (error: unknown) {
       // CRC mismatch or other error
       const seq = data.length >= 2 ? data.readUInt16BE(0) : 0;
+      const errorMessage = error instanceof Error ? error.message : String(error);
       this.logEvent({ 
         timestamp: this.clock.now(), 
         event: 'chunk_error', 
         msgId: '00000000',
         seq,
-        error: error.message 
+        error: errorMessage
       });
       await this.sendNack(seq, ErrorCode.CRC_MISMATCH);
     }
@@ -261,8 +266,9 @@ export class Receiver extends EventEmitter {
         ackLevel: AckLevel.PEER_RECEIVED 
       });
 
-    } catch (error: any) {
-      this.fail(ErrorCode.DIGEST_INVALID, `Verification failed: ${error.message}`);
+    } catch (error: unknown) {
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+      this.fail(ErrorCode.DIGEST_INVALID, `Verification failed: ${errorMessage}`);
     }
   }
 
@@ -347,7 +353,17 @@ export class Receiver extends EventEmitter {
   }
 
   async requestResume(): Promise<void> {
-    if (this.state !== TransferState.RESUMING || !this.currentTransferId) {
+    if (!this.currentTransferId) {
+      return;
+    }
+
+    const canResume =
+      this.state === TransferState.RESUMING ||
+      (this.state === TransferState.READY &&
+        this.expectedTotal > 0 &&
+        this.chunks.size < this.expectedTotal);
+
+    if (!canResume) {
       return;
     }
 

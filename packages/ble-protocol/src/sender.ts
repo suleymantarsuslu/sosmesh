@@ -56,15 +56,16 @@ export class SimulatedClock implements IClock {
     return this.currentTime;
   }
 
-  setTimeout(fn: () => void, ms: number): any {
+  setTimeout(fn: () => void, ms: number): NodeJS.Timeout {
     const id = this.nextId++;
     this.timers.push({ id, fireAt: this.currentTime + ms, fn });
     this.timers.sort((a, b) => a.fireAt - b.fireAt);
-    return id;
+    return id as unknown as NodeJS.Timeout;
   }
 
-  clearTimeout(id: any): void {
-    this.timers = this.timers.filter(t => t.id !== id);
+  clearTimeout(id: NodeJS.Timeout): void {
+    const numericId = id as unknown as number;
+    this.timers = this.timers.filter(t => t.id !== numericId);
   }
 
   async advanceAsync(ms: number): Promise<void> {
@@ -197,8 +198,7 @@ export class Sender extends EventEmitter {
     } else if (msgType === MessageType.NACK && 
                (this.state === TransferState.WAIT_ACK || this.state === TransferState.SENDING)) {
       this.handleNack(data);
-    } else if (msgType === MessageType.RESUME_REQUEST && 
-               this.state === TransferState.RESUMING) {
+    } else if (msgType === MessageType.RESUME_REQUEST && this.chunks.length > 0) {
       this.handleResumeRequest(data);
     }
   }
@@ -400,13 +400,15 @@ export class Sender extends EventEmitter {
 
     const receivedCount = data.readUInt16BE(1);
     const transferId = data.slice(3, 19);
-    
+    const minLength = 19 + receivedCount * 2;
+    if (data.length < minLength) return;
+
     if (!this.nonce || !transferId.equals(this.nonce)) {
-      this.logEvent({ 
-        timestamp: this.clock.now(), 
-        event: 'resume_rejected', 
+      this.logEvent({
+        timestamp: this.clock.now(),
+        event: 'resume_rejected',
         msgId: this.getMsgIdHash(),
-        error: 'Transfer ID mismatch' 
+        error: 'Transfer ID mismatch',
       });
       return;
     }
@@ -426,11 +428,11 @@ export class Sender extends EventEmitter {
       this.chunkTimeout = null;
     }
 
-    this.logEvent({ 
-      timestamp: this.clock.now(), 
-      event: 'resume_accepted', 
+    this.logEvent({
+      timestamp: this.clock.now(),
+      event: 'resume_accepted',
       msgId: this.getMsgIdHash(),
-      total: this.chunks.length 
+      total: this.chunks.length,
     });
 
     this.state = TransferState.READY;

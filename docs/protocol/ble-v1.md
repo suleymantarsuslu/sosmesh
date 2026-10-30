@@ -166,19 +166,19 @@ Reason: uint8
 
 ```
 Type: 0x20 (RESUME_REQUEST)
-Message ID: opaque identifier (4 bytes)
-Received Chunks Bitmap: variable
-  For total=10: bitmap[0] bit 0-7 = chunks 0-7, bitmap[1] bit 0-1 = chunks 8-9
+Received count: uint16 BE
+Transfer ID: 16 bytes (HELLO nonce)
+Received seq list: received_count × uint16 BE (sorted ascending önerilir)
 ```
 
-**Resume Window:** 60 seconds after disconnect
+**Resume Window:** 60 seconds after disconnect (policy; mock tests use simulated clock)
 
 ### Resume Flow
 
-1. Receiver sends RESUME_REQUEST with received chunks bitmap
-2. Sender checks if resume window valid
-3. Sender resends missing chunks
-4. Normal ACK flow continues
+1. Receiver sends RESUME_REQUEST with transfer ID and received seq numbers
+2. Sender validates transfer ID; mismatch → reject (no data sent)
+3. Sender marks listed seqs as ACKed and resends only missing chunks
+4. Normal ACK flow continues until digest verified → PEER_RECEIVED
 
 ## Error Handling
 

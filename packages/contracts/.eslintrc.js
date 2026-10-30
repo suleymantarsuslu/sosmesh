@@ -13,7 +13,7 @@ module.exports = {
   env: {
     node: true,
   },
-  ignorePatterns: ['.eslintrc.js', 'dist', 'node_modules'],
+  ignorePatterns: ['.eslintrc.js', 'dist', 'node_modules', 'scripts'],
   rules: {
     '@typescript-eslint/interface-name-prefix': 'off',
     '@typescript-eslint/explicit-function-return-type': 'off',

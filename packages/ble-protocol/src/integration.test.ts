@@ -5,7 +5,7 @@ import {
   splitIntoChunks, 
   calculateCRC32 
 } from './chunk';
-import { createMockTransportPair } from './mock-transport';
+import { createMockTransportPair, MockChannel, MockTransport } from './mock-transport';
 import { Receiver } from './receiver';
 import { Sender, SimulatedClock, IClock, IRNG } from './sender';
 
@@ -27,9 +27,9 @@ class SeededRNG implements IRNG {
 }
 
 async function runSimulatedTransfer(
-  senderTransport: any,
-  receiverTransport: any,
-  channel: any,
+  senderTransport: MockTransport,
+  receiverTransport: MockTransport,
+  channel: MockChannel,
   clock: IClock,
   payload: Buffer,
   msgId: string,
@@ -150,8 +150,8 @@ describe('BLE Protocol Integration Tests (Simulated Clock)', () => {
     expect(result.receivedPayload!.equals(testPayload)).toBe(true);
   });
 
-  it('should handle high packet loss (%25+) with resume', async () => {
-    // MANDATORY: Resume capability test - Moderate loss with retries demonstrates
+  it('should handle moderate packet loss (15%) with resume', async () => {
+    // Resume capability test - Moderate loss with retries demonstrates
     // "kesilen transfer yanlış teslim üretmeden yeniden denenebiliyor"
     const clock = new SimulatedClock();
     const rng = new SeededRNG(3000);
@@ -182,6 +182,7 @@ describe('BLE Protocol Integration Tests (Simulated Clock)', () => {
     expect(result.receivedPayload).not.toBeNull();
     expect(result.receivedPayload!.equals(testPayload)).toBe(true);
   });
+
 
   it('MANDATORY: should reject valid CRC but invalid digest (no wrong delivery)', async () => {
     // Hedefli yanlış-teslim testi: CRC geçerli ama envelope digest tutmuyor
@@ -349,7 +350,7 @@ describe('BLE Protocol Integration Tests (Simulated Clock)', () => {
       encryptedPayload: 'SECRET_MESSAGE_HELP_NEEDED'
     }));
 
-    const events: any[] = [];
+    const events: Array<{ source: string; [key: string]: unknown }> = [];
     const sender = new Sender(senderTransport, {}, clock, rng);
     const receiver = new Receiver(receiverTransport, {}, clock);
 
@@ -401,16 +402,27 @@ describe('BLE Protocol Integration Tests (Simulated Clock)', () => {
     const testPayload = Buffer.from('RESUME_TEST_' + 'X'.repeat(1000));
     let deliveredPayload: Buffer | null = null;
     let deliveryCount = 0;
+    let senderCompleted = 0;
 
     receiver.on('completed', ({ payload }: { payload: Buffer }) => {
       deliveredPayload = payload;
       deliveryCount++;
     });
 
-    const sentChunks = new Set<number>();
-    sender.on('event', (event: any) => {
-      if (event.event === 'chunk_sent') {
-        sentChunks.add(event.seq);
+    sender.on('completed', () => {
+      senderCompleted++;
+    });
+
+    const chunksSentBeforeDisconnect = new Set<number>();
+    const chunksSentAfterResume = new Set<number>();
+    let trackingResumeSends = false;
+
+    sender.on('event', (event: { event: string; seq?: number }) => {
+      if (event.event !== 'chunk_sent' || event.seq === undefined) return;
+      if (trackingResumeSends) {
+        chunksSentAfterResume.add(event.seq);
+      } else {
+        chunksSentBeforeDisconnect.add(event.seq);
       }
     });
 
@@ -421,31 +433,51 @@ describe('BLE Protocol Integration Tests (Simulated Clock)', () => {
       channel.deliverPackets();
     }
 
-    expect(sender['chunks'].length).toBeGreaterThan(0);
+    const totalChunks = sender['chunks'].length;
+    expect(totalChunks).toBeGreaterThan(0);
 
-    senderTransport.triggerDisconnect();
-    receiverTransport.triggerDisconnect();
-    
-    await clock.advanceAsync(100);
+    const disconnectAfter = 3;
+    channel.setDisconnectAfterDeliveredPackets(disconnectAfter);
+
+    while (
+      clock.now() < 200000 &&
+      sender.getState() !== 'RESUMING' &&
+      receiver.getState() !== 'RESUMING'
+    ) {
+      await clock.advanceAsync(10);
+      channel.deliverPackets();
+      if (channel.getQueueSize() === 0 && !clock.hasPendingTimers()) {
+        await clock.advanceAsync(100);
+        await Promise.resolve();
+      }
+    }
 
     expect(sender.getState()).toBe('RESUMING');
     expect(receiver.getState()).toBe('RESUMING');
 
+    const receivedBeforeResume = new Set(receiver.getReceivedChunkSeqs());
+    const expectedMissing: number[] = [];
+    for (let i = 0; i < totalChunks; i++) {
+      if (!receivedBeforeResume.has(i)) {
+        expectedMissing.push(i);
+      }
+    }
+    expect(expectedMissing.length).toBeGreaterThan(0);
+
     channel.reconnect();
-    
-    sentChunks.clear();
-    
+    trackingResumeSends = true;
+
     await receiver.requestResume();
     await clock.advanceAsync(100);
     channel.deliverPackets();
 
-    while (clock.now() < 200000 && !deliveredPayload) {
+    while (clock.now() < 200000 && deliveryCount === 0) {
       await clock.advanceAsync(10);
       channel.deliverPackets();
-      
+
       if (channel.getQueueSize() === 0 && !clock.hasPendingTimers()) {
         await clock.advanceAsync(100);
-        if (deliveredPayload) break;
+        if (deliveryCount > 0) break;
         await Promise.resolve();
         if (!clock.hasPendingTimers() && channel.getQueueSize() === 0) break;
       }
@@ -454,6 +486,16 @@ describe('BLE Protocol Integration Tests (Simulated Clock)', () => {
     expect(deliveredPayload).not.toBeNull();
     expect(deliveredPayload!.equals(testPayload)).toBe(true);
     expect(deliveryCount).toBe(1);
+    expect(senderCompleted).toBe(1);
+
+    const missingSet = new Set(expectedMissing);
+    expect(chunksSentAfterResume.size).toBe(missingSet.size);
+    for (const seq of chunksSentAfterResume) {
+      expect(missingSet.has(seq)).toBe(true);
+    }
+    for (const seq of missingSet) {
+      expect(chunksSentAfterResume.has(seq)).toBe(true);
+    }
   });
 
   it('no false delivery before resume completes', async () => {
@@ -529,33 +571,41 @@ describe('BLE Protocol Integration Tests (Simulated Clock)', () => {
       }
     }
 
-    expect(senderEvents.includes('resume_accepted') || senderEvents.includes('resume_rejected')).toBe(true);
+    expect(senderEvents.includes('resume_accepted')).toBe(true);
     expect(deliveryCount).toBe(1);
   });
 
-  it('high loss causes FAILED then resume then COMPLETED with strict state', async () => {
+  it('>=25% loss: FAILED then resume then COMPLETED', async () => {
     const clock = new SimulatedClock();
     const rng = new SeededRNG(7000);
     const { senderTransport, receiverTransport, channel } = createMockTransportPair({
-      packetLoss: 0.30,
+      packetLoss: 0.25,
       duplicateRate: 0,
       reorderRate: 0,
       minLatency: 5,
       maxLatency: 15
     }, rng, clock);
 
-    const sender = new Sender(senderTransport, { maxRetries: 2, chunkTimeout: 1000 }, clock, rng);
+    const sender = new Sender(senderTransport, { maxRetries: 2, chunkTimeout: 500 }, clock, rng);
     const receiver = new Receiver(receiverTransport, {}, clock);
 
     const testPayload = Buffer.from('HIGH_LOSS_RESUME_' + 'Z'.repeat(300));
     let senderFailed = false;
+    let deliveryCount = 0;
+    let deliveredPayload: Buffer | null = null;
+    let senderCompleted = 0;
 
     sender.on('failed', () => {
       senderFailed = true;
     });
 
+    sender.on('completed', () => {
+      senderCompleted++;
+    });
+
     receiver.on('completed', ({ payload }: { payload: Buffer }) => {
-      void payload;
+      deliveredPayload = payload;
+      deliveryCount++;
     });
 
     await sender.startTransfer(testPayload, 'high_loss_test');
@@ -564,7 +614,7 @@ describe('BLE Protocol Integration Tests (Simulated Clock)', () => {
     while (clock.now() < maxTime && !senderFailed) {
       await clock.advanceAsync(10);
       channel.deliverPackets();
-      
+
       if (channel.getQueueSize() === 0 && !clock.hasPendingTimers()) {
         await clock.advanceAsync(100);
         await Promise.resolve();
@@ -574,50 +624,34 @@ describe('BLE Protocol Integration Tests (Simulated Clock)', () => {
 
     expect(senderFailed).toBe(true);
     expect(sender.getState()).toBe('FAILED');
+    expect(deliveryCount).toBe(0);
 
-    const { senderTransport: newSenderTransport, receiverTransport: newReceiverTransport, channel: newChannel } = createMockTransportPair({
-      packetLoss: 0,
-      duplicateRate: 0,
-      reorderRate: 0,
-      minLatency: 5,
-      maxLatency: 15
-    }, new SeededRNG(7001), clock);
+    channel.setPacketLoss(0);
+    channel.reconnect();
 
-    const newSender = new Sender(newSenderTransport, { maxRetries: 20 }, clock, new SeededRNG(7001));
-    const newReceiver = new Receiver(newReceiverTransport, {}, clock);
-
-    let newDeliveryCount = 0;
-    let newDeliveredPayload: Buffer | null = null;
-    let newCompleted = false;
-
-    newSender.on('completed', () => {
-      newCompleted = true;
-    });
-
-    newReceiver.on('completed', ({ payload }: { payload: Buffer }) => {
-      newDeliveredPayload = payload;
-      newDeliveryCount++;
-    });
-
-    await newSender.startTransfer(testPayload, 'high_loss_retry');
+    await receiver.requestResume();
+    await clock.advanceAsync(50);
+    channel.deliverPackets();
 
     const maxTime2 = clock.now() + 200000;
-    while (clock.now() < maxTime2 && !newCompleted) {
+    while (clock.now() < maxTime2 && deliveryCount === 0) {
       await clock.advanceAsync(10);
-      newChannel.deliverPackets();
-      
-      if (newChannel.getQueueSize() === 0 && !clock.hasPendingTimers()) {
+      channel.deliverPackets();
+
+      if (channel.getQueueSize() === 0 && !clock.hasPendingTimers()) {
         await clock.advanceAsync(100);
-        if (newCompleted) break;
+        if (deliveryCount > 0) break;
         await Promise.resolve();
-        if (!clock.hasPendingTimers() && newChannel.getQueueSize() === 0) break;
+        if (!clock.hasPendingTimers() && channel.getQueueSize() === 0) break;
       }
     }
 
-    expect(newDeliveredPayload).not.toBeNull();
-    expect(newDeliveredPayload!.equals(testPayload)).toBe(true);
-    expect(newDeliveryCount).toBe(1);
-    expect(newSender.getState()).toBe('COMPLETED');
+    expect(deliveredPayload).not.toBeNull();
+    expect(deliveredPayload!.equals(testPayload)).toBe(true);
+    expect(deliveryCount).toBe(1);
+    expect(senderCompleted).toBe(1);
+    expect(sender.getState()).toBe('COMPLETED');
+    expect(receiver.getState()).toBe('COMPLETED');
   });
 
   it('rejects resume request with wrong transfer ID', async () => {

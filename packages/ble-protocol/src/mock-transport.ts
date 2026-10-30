@@ -1,6 +1,7 @@
 import { EventEmitter } from 'events';
 
 import { ITransport, IRNG, SystemRNG, IClock, SystemClock } from './sender';
+import { MessageType, CHUNK_HEADER_SIZE } from './types';
 
 export interface MockChannelConfig {
   packetLoss: number; // 0.0 - 1.0
@@ -37,7 +38,12 @@ export class MockTransport extends EventEmitter implements ITransport {
   triggerDisconnect(): void {
     if (!this.closed) {
       this.emit('disconnect');
+      this.closed = true;
     }
+  }
+
+  reconnect(): void {
+    this.closed = false;
   }
 
   close(): void {
@@ -59,15 +65,25 @@ interface QueuedPacket {
   destination: 'sender' | 'receiver';
 }
 
+/** Sender→receiver DATA chunk (not HELLO / control). */
+function isDataChunkToReceiver(data: Buffer): boolean {
+  if (data.length < CHUNK_HEADER_SIZE) {
+    return false;
+  }
+  if (data.length === 20 && data.readUInt8(0) === MessageType.HELLO) {
+    return false;
+  }
+  return true;
+}
+
 export class MockChannel {
   private queue: QueuedPacket[] = [];
-  private disconnectTimer: any = null;
-  private processingTimer: any = null;
+  private disconnectTimer: NodeJS.Timeout | null = null;
   private startTime: number;
   private rng: IRNG;
   private clock: IClock;
-  private disconnectAfterPackets: number | null = null;
-  private deliveredPacketCount = 0;
+  private deliveredDataPacketsToReceiver = 0;
+  private disconnectAfterDeliveredPackets: number | undefined;
   private isDisconnected = false;
 
   constructor(
@@ -86,50 +102,50 @@ export class MockChannel {
         this.triggerDisconnect();
       }, config.disconnectAfter);
     }
+  }
 
-    this.startProcessing();
+  setPacketLoss(rate: number): void {
+    this.config.packetLoss = rate;
   }
 
   sendFromSender(data: Buffer): void {
     this.processPacket(data, 'receiver');
-    this.deliverPackets(); // Immediate delivery check for simulated clock
+    this.deliverPackets();
   }
 
   sendFromReceiver(data: Buffer): void {
     this.processPacket(data, 'sender');
-    this.deliverPackets(); // Immediate delivery check for simulated clock
+    this.deliverPackets();
   }
 
   private processPacket(data: Buffer, destination: 'sender' | 'receiver'): void {
-    // Packet loss
     if (this.rng.random() < this.config.packetLoss) {
-      return; // Drop packet
+      return;
     }
 
-    const latency = this.config.minLatency + 
-                    this.rng.random() * (this.config.maxLatency - this.config.minLatency);
+    const latency =
+      this.config.minLatency +
+      this.rng.random() * (this.config.maxLatency - this.config.minLatency);
     const deliverAt = this.clock.now() + latency;
 
-    // Queue packet
     this.queue.push({ data, deliverAt, destination });
 
-    // Duplicate
     if (this.rng.random() < this.config.duplicateRate) {
-      const dupLatency = this.config.minLatency + 
-                         this.rng.random() * (this.config.maxLatency - this.config.minLatency);
-      this.queue.push({ 
-        data: Buffer.from(data), 
+      const dupLatency =
+        this.config.minLatency +
+        this.rng.random() * (this.config.maxLatency - this.config.minLatency);
+      this.queue.push({
+        data: Buffer.from(data),
         deliverAt: this.clock.now() + dupLatency,
-        destination
+        destination,
       });
     }
 
-    // Reorder: swap with a random packet in queue going to same destination
     if (this.rng.random() < this.config.reorderRate && this.queue.length > 1) {
       const sameDestPackets = this.queue
         .map((p, i) => ({ packet: p, index: i }))
         .filter(({ packet }) => packet.destination === destination);
-      
+
       if (sameDestPackets.length > 1) {
         const idx1 = this.queue.length - 1;
         const randomIdx = Math.floor(this.rng.random() * sameDestPackets.length);
@@ -139,10 +155,6 @@ export class MockChannel {
         }
       }
     }
-  }
-
-  private startProcessing(): void {
-    // No real-time timer for simulated clock
   }
 
   deliverPackets(): void {
@@ -161,23 +173,38 @@ export class MockChannel {
     this.queue = remaining;
 
     for (const packet of toDeliver) {
-      if (packet.destination === 'receiver' && !this.receiverTransport.isClosed()) {
-        this.receiverTransport.receiveData(packet.data);
-        this.deliveredPacketCount++;
-      } else if (packet.destination === 'sender' && !this.senderTransport.isClosed()) {
-        this.senderTransport.receiveData(packet.data);
-        this.deliveredPacketCount++;
+      if (this.isDisconnected) {
+        break;
       }
 
-      if (this.disconnectAfterPackets !== null && 
-          this.deliveredPacketCount >= this.disconnectAfterPackets &&
-          !this.isDisconnected) {
-        this.triggerDisconnect();
+      if (packet.destination === 'receiver' && !this.receiverTransport.isClosed()) {
+        const isData = isDataChunkToReceiver(packet.data);
+        this.receiverTransport.receiveData(packet.data);
+        if (isData) {
+          this.deliveredDataPacketsToReceiver++;
+          if (
+            this.disconnectAfterDeliveredPackets !== undefined &&
+            this.deliveredDataPacketsToReceiver >= this.disconnectAfterDeliveredPackets
+          ) {
+            this.triggerDisconnect();
+            break;
+          }
+        }
+      } else if (packet.destination === 'sender' && !this.senderTransport.isClosed()) {
+        this.senderTransport.receiveData(packet.data);
       }
     }
   }
 
+  setDisconnectAfterDeliveredPackets(count: number): void {
+    this.disconnectAfterDeliveredPackets = count;
+    this.deliveredDataPacketsToReceiver = 0;
+  }
+
   private triggerDisconnect(): void {
+    if (this.isDisconnected) {
+      return;
+    }
     this.isDisconnected = true;
     this.senderTransport.triggerDisconnect();
     this.receiverTransport.triggerDisconnect();
@@ -185,10 +212,8 @@ export class MockChannel {
 
   reconnect(): void {
     this.isDisconnected = false;
-  }
-
-  setDisconnectAfterDeliveredPackets(count: number): void {
-    this.disconnectAfterPackets = count;
+    this.senderTransport.reconnect();
+    this.receiverTransport.reconnect();
   }
 
   close(): void {
@@ -208,9 +233,9 @@ export function createMockTransportPair(
   channelConfig: MockChannelConfig,
   rng: IRNG = new SystemRNG(),
   clock: IClock = new SystemClock()
-): { 
-  senderTransport: MockTransport; 
-  receiverTransport: MockTransport; 
+): {
+  senderTransport: MockTransport;
+  receiverTransport: MockTransport;
   channel: MockChannel;
   clock: IClock;
 } {
@@ -230,10 +255,10 @@ export function createMockTransportPair(
 
   channelRef = new MockChannel(channelConfig, senderTransport, receiverTransport, rng, clock);
 
-  return { 
-    senderTransport, 
-    receiverTransport, 
-    channel: channelRef, 
-    clock 
+  return {
+    senderTransport,
+    receiverTransport,
+    channel: channelRef,
+    clock,
   };
 }

@@ -1,0 +1,11 @@
+{
+  "WARNING": "⚠️  TEST ONLY - DO NOT USE IN PRODUCTION ⚠️",
+  "WARNING_2": "These keys are for cross-language test vector validation only",
+  "WARNING_3": "Production keys must NEVER be committed to the repository",
+  "keyId": "dev-test-001",
+  "algorithm": "X25519+ChaCha20-Poly1305",
+  "serverPublicKey": "BFu/Jxfj3txqvjTtUW7BTYK3iX0E/ysPPwPNk091o1c=",
+  "serverPrivateKey": "/Y3Ly64i9CwSN722vrc39rW2bf4+mRCByoK1fn/z+9U=",
+  "purpose": "Deterministic test vectors for TS/Kotlin/Swift crypto compatibility",
+  "generated": "2026-10-29T20:02:22.572Z"
+}

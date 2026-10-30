@@ -221,12 +221,23 @@ else
 fi
 
 # 18. Check for skipped tests
-echo "18/18: node scripts/check-no-skips.js"
+echo "18/19: node scripts/check-no-skips.js"
 if node "$SCRIPT_DIR/check-no-skips.js" > "$REPORTS_DIR/check-no-skips.log" 2>&1; then
   check_exit "check-no-skips" 0
 else
   EXIT_CODE=$?
   check_exit "check-no-skips" $EXIT_CODE
+fi
+
+# 19. Check golden vector byte-equality
+echo "19/19: Golden vector byte-equality"
+MASTER_GOLDEN="packages/contracts/crypto-test-vectors/golden-001.json"
+KOTLIN_GOLDEN="packages/contracts-kotlin/src/test/resources/golden-001.json"
+SWIFT_GOLDEN="packages/contracts-swift/Tests/SOSMeshContractsTests/Resources/golden-001.json"
+if cmp -s "$MASTER_GOLDEN" "$KOTLIN_GOLDEN" && cmp -s "$MASTER_GOLDEN" "$SWIFT_GOLDEN"; then
+  check_exit "golden-vector-equality" 0
+else
+  check_exit "golden-vector-equality" 1
 fi
 
 # Summary

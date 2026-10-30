@@ -141,8 +141,12 @@ jobs:
       - name: Setup Android SDK components
         run: |
           echo "sdk.dir=${ANDROID_HOME}" >> apps/android/local.properties
-          yes | sdkmanager --licenses >/dev/null
-          sdkmanager "platforms;android-35" "build-tools;35.0.0"
+          SDKMANAGER="${ANDROID_HOME}/cmdline-tools/latest/bin/sdkmanager"
+          if [ ! -x "$SDKMANAGER" ]; then
+            SDKMANAGER=$(find "${ANDROID_HOME}/cmdline-tools" -name sdkmanager -type f | head -1)
+          fi
+          yes | "$SDKMANAGER" --licenses
+          "$SDKMANAGER" "platforms;android-35" "build-tools;35.0.0"
       
       - name: Setup Gradle cache
         uses: gradle/actions/setup-gradle@v3

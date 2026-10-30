@@ -138,8 +138,11 @@ jobs:
           java-version: '21'
           distribution: 'temurin'
       
-      - name: Setup Android SDK
-        uses: android-actions/setup-android@v3
+      - name: Setup Android SDK components
+        run: |
+          echo "sdk.dir=${ANDROID_HOME}" >> apps/android/local.properties
+          yes | sdkmanager --licenses >/dev/null
+          sdkmanager "platforms;android-35" "build-tools;35.0.0"
       
       - name: Setup Gradle cache
         uses: gradle/actions/setup-gradle@v3

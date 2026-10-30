@@ -32,6 +32,12 @@ android {
     testOptions {
         unitTests.isIncludeAndroidResources = true
     }
+
+    sourceSets {
+        getByName("test") {
+            resources.srcDir("${rootProject.projectDir}/../../packages/fixtures/transport")
+        }
+    }
 }
 
 dependencies {

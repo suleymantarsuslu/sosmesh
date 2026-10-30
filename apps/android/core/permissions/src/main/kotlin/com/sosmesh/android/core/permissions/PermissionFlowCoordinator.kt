@@ -16,7 +16,7 @@ class PermissionFlowCoordinator(
     private val sdkInt: Int,
     private val statusReader: PermissionStatusReader,
 ) {
-    private val matrix = BlePermissionMatrix.requiredRuntimePermissions(sdkInt).permissions
+    private val matrix = BlePermissionMatrix.runtimePermissions(sdkInt).permissions
 
     fun missingPermissions(): List<String> = matrix.filterNot { statusReader.isGranted(it) }
 

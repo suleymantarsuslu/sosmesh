@@ -33,6 +33,12 @@ android {
 
     testOptions {
         unitTests.isIncludeAndroidResources = true
+        unitTests.all {
+            it.systemProperty(
+                "sosmesh.android.manifest",
+                rootProject.file("app/src/main/AndroidManifest.xml").absolutePath,
+            )
+        }
     }
 }
 

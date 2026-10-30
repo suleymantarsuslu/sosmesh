@@ -1,5 +1,4 @@
 import Foundation
-import SQLite3
 
 public struct StateTransitionEdge: Codable {
     public let from: String
@@ -18,6 +17,7 @@ public struct StateTransitionsFixture: Codable {
 public enum TransportStateError: Error {
     case invalidTransition(from: String, to: String)
     case fixtureNotFound
+    case ioFailure
 }
 
 public final class StateTransitionLoader {
@@ -59,7 +59,7 @@ public final class DeliveryStateMachine {
     }
 }
 
-public struct OutboxEntryMeta: Equatable {
+public struct OutboxEntryMeta: Equatable, Codable {
     public let sosId: String
     public let digest: String
     public let origin: String
@@ -94,160 +94,87 @@ public struct EnqueueInput {
     }
 }
 
-/// Disk-backed SQLite outbox (Linux CI). iOS on-device behavior NOT_TESTED.
-public final class SqliteOutboxQueue {
-    private var db: OpaquePointer?
+private struct OutboxStoreFile: Codable {
+    var entries: [OutboxEntryMeta]
+}
+
+/// Disk-backed outbox using atomic file writes (Linux CI). iOS on-device behavior NOT_TESTED.
+public final class DiskOutboxQueue {
+    private let storeURL: URL
     private let defaultRetentionMs: Int64
+    private let lock = NSLock()
 
-    public init(dbPath: String, defaultRetentionMs: Int64) throws {
+    public init(storePath: String, defaultRetentionMs: Int64) {
+        self.storeURL = URL(fileURLWithPath: storePath)
         self.defaultRetentionMs = defaultRetentionMs
-        if sqlite3_open(dbPath, &db) != SQLITE_OK {
-            throw TransportStateError.fixtureNotFound
-        }
-        try exec(
-            """
-            CREATE TABLE IF NOT EXISTS outbox (
-              sos_id TEXT NOT NULL,
-              digest TEXT NOT NULL,
-              origin TEXT NOT NULL,
-              encrypted_blob TEXT NOT NULL,
-              state TEXT NOT NULL,
-              retry_at INTEGER NOT NULL,
-              expires_at INTEGER NOT NULL,
-              last_error TEXT,
-              created_at INTEGER NOT NULL,
-              updated_at INTEGER NOT NULL,
-              PRIMARY KEY (sos_id, digest)
-            );
-            """
-        )
-    }
-
-    deinit {
-        if db != nil {
-            sqlite3_close(db)
-        }
     }
 
     public func enqueue(input: EnqueueInput, nowMs: Int64) throws -> OutboxEntryMeta {
-        if let existing = try getByKey(sosId: input.sosId, digest: input.digest) {
+        lock.lock()
+        defer { lock.unlock() }
+        var store = try readStore()
+        if let existing = store.entries.first(where: { $0.sosId == input.sosId && $0.digest == input.digest }) {
             return existing
         }
         let retention = input.retentionMs ?? defaultRetentionMs
-        let expiresAt = nowMs + retention
-        try exec(
-            """
-            INSERT INTO outbox (
-              sos_id, digest, origin, encrypted_blob, state,
-              retry_at, expires_at, last_error, created_at, updated_at
-            ) VALUES (?, ?, ?, ?, 'LOCAL_SAVED', ?, ?, NULL, ?, ?);
-            """,
-            bind: { stmt in
-                sqlite3_bind_text(stmt, 1, input.sosId, -1, nil)
-                sqlite3_bind_text(stmt, 2, input.digest, -1, nil)
-                sqlite3_bind_text(stmt, 3, input.origin, -1, nil)
-                sqlite3_bind_text(stmt, 4, input.encryptedBlobBase64, -1, nil)
-                sqlite3_bind_int64(stmt, 5, nowMs)
-                sqlite3_bind_int64(stmt, 6, expiresAt)
-                sqlite3_bind_int64(stmt, 7, nowMs)
-                sqlite3_bind_int64(stmt, 8, nowMs)
-            }
+        let entry = OutboxEntryMeta(
+            sosId: input.sosId,
+            digest: input.digest,
+            origin: input.origin,
+            encryptedBlobBase64: input.encryptedBlobBase64,
+            state: "LOCAL_SAVED",
+            retryAtMs: nowMs,
+            expiresAtMs: nowMs + retention,
+            lastError: nil,
+            createdAtMs: nowMs,
+            updatedAtMs: nowMs
         )
-        return try getByKey(sosId: input.sosId, digest: input.digest)!
-    }
-
-    public func getByKey(sosId: String, digest: String) throws -> OutboxEntryMeta? {
-        var stmt: OpaquePointer?
-        defer { sqlite3_finalize(stmt) }
-        guard sqlite3_prepare_v2(
-            db,
-            "SELECT * FROM outbox WHERE sos_id = ? AND digest = ?;",
-            -1,
-            &stmt,
-            nil
-        ) == SQLITE_OK else { return nil }
-        sqlite3_bind_text(stmt, 1, sosId, -1, nil)
-        sqlite3_bind_text(stmt, 2, digest, -1, nil)
-        guard sqlite3_step(stmt) == SQLITE_ROW else { return nil }
-        return readRow(stmt: stmt!)
+        store.entries.append(entry)
+        try writeStore(store)
+        return entry
     }
 
     public func listAll() throws -> [OutboxEntryMeta] {
-        var stmt: OpaquePointer?
-        defer { sqlite3_finalize(stmt) }
-        guard sqlite3_prepare_v2(db, "SELECT * FROM outbox ORDER BY created_at ASC;", -1, &stmt, nil)
-            == SQLITE_OK
-        else { return [] }
-        var rows: [OutboxEntryMeta] = []
-        while sqlite3_step(stmt) == SQLITE_ROW {
-            rows.append(readRow(stmt: stmt!)!)
-        }
-        return rows
+        lock.lock()
+        defer { lock.unlock() }
+        return try readStore().entries.sorted { $0.createdAtMs < $1.createdAtMs }
     }
 
     public func countDueForSend(nowMs: Int64, paused: Bool) throws -> Int {
         if paused { return 0 }
-        var stmt: OpaquePointer?
-        defer { sqlite3_finalize(stmt) }
-        guard sqlite3_prepare_v2(
-            db,
-            """
-            SELECT COUNT(*) FROM outbox
-            WHERE retry_at <= ? AND state NOT IN ('FAILED', 'EXPIRED');
-            """,
-            -1,
-            &stmt,
-            nil
-        ) == SQLITE_OK else { return 0 }
-        sqlite3_bind_int64(stmt, 1, nowMs)
-        guard sqlite3_step(stmt) == SQLITE_ROW else { return 0 }
-        return Int(sqlite3_column_int(stmt, 0))
+        let entries = try listAll()
+        return entries.filter {
+            $0.retryAtMs <= nowMs && $0.state != "FAILED" && $0.state != "EXPIRED"
+        }.count
     }
 
     public func purgeExpired(nowMs: Int64) throws -> Int {
-        var stmt: OpaquePointer?
-        defer { sqlite3_finalize(stmt) }
-        guard sqlite3_prepare_v2(
-            db,
-            "DELETE FROM outbox WHERE expires_at <= ?;",
-            -1,
-            &stmt,
-            nil
-        ) == SQLITE_OK else { return 0 }
-        sqlite3_bind_int64(stmt, 1, nowMs)
-        guard sqlite3_step(stmt) == SQLITE_DONE else { return 0 }
-        return Int(sqlite3_changes(db))
+        lock.lock()
+        defer { lock.unlock() }
+        var store = try readStore()
+        let before = store.entries.count
+        store.entries.removeAll { $0.expiresAtMs <= nowMs }
+        try writeStore(store)
+        return before - store.entries.count
     }
 
-    private func exec(_ sql: String, bind: ((OpaquePointer?) -> Void)? = nil) throws {
-        var stmt: OpaquePointer?
-        defer { sqlite3_finalize(stmt) }
-        guard sqlite3_prepare_v2(db, sql, -1, &stmt, nil) == SQLITE_OK else {
-            throw TransportStateError.fixtureNotFound
+    private func readStore() throws -> OutboxStoreFile {
+        let fm = FileManager.default
+        if !fm.fileExists(atPath: storeURL.path) {
+            return OutboxStoreFile(entries: [])
         }
-        bind?(stmt)
-        guard sqlite3_step(stmt) == SQLITE_DONE else {
-            throw TransportStateError.fixtureNotFound
-        }
+        let data = try Data(contentsOf: storeURL)
+        return try JSONDecoder().decode(OutboxStoreFile.self, from: data)
     }
 
-    private func readRow(stmt: OpaquePointer) -> OutboxEntryMeta? {
-        func col(_ index: Int32) -> String {
-            guard let c = sqlite3_column_text(stmt, index) else { return "" }
-            return String(cString: c)
+    private func writeStore(_ store: OutboxStoreFile) throws {
+        let data = try JSONEncoder().encode(store)
+        let tmp = storeURL.appendingPathExtension("tmp")
+        try data.write(to: tmp, options: .atomic)
+        let fm = FileManager.default
+        if fm.fileExists(atPath: storeURL.path) {
+            try fm.removeItem(at: storeURL)
         }
-        let lastErrIdx = sqlite3_column_type(stmt, 7) == SQLITE_NULL ? nil : col(7)
-        return OutboxEntryMeta(
-            sosId: col(0),
-            digest: col(1),
-            origin: col(2),
-            encryptedBlobBase64: col(3),
-            state: col(4),
-            retryAtMs: sqlite3_column_int64(stmt, 5),
-            expiresAtMs: sqlite3_column_int64(stmt, 6),
-            lastError: lastErrIdx,
-            createdAtMs: sqlite3_column_int64(stmt, 8),
-            updatedAtMs: sqlite3_column_int64(stmt, 9)
-        )
+        try fm.moveItem(at: tmp, to: storeURL)
     }
 }

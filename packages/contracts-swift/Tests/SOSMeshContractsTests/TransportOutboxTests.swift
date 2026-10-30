@@ -40,8 +40,9 @@ final class TransportOutboxTests: XCTestCase {
             .appendingPathComponent("outbox-swift-\(UUID().uuidString).db")
         defer { try? FileManager.default.removeItem(at: tmp) }
         let fixture = try StateTransitionLoader.load(sourceRoot: sourceRoot())
-        let queue = try SqliteOutboxQueue(
-            dbPath: tmp.path,
+        let storePath = tmp.deletingPathExtension().appendingPathExtension("json").path
+        let queue = try DiskOutboxQueue(
+            storePath: storePath,
             defaultRetentionMs: fixture.defaultRetentionMs
         )
         let input = EnqueueInput(
@@ -60,21 +61,26 @@ final class TransportOutboxTests: XCTestCase {
             .appendingPathComponent("outbox-swift-reboot-\(UUID().uuidString).db")
         defer { try? FileManager.default.removeItem(at: tmp) }
         let fixture = try StateTransitionLoader.load(sourceRoot: sourceRoot())
-        let q1 = try SqliteOutboxQueue(dbPath: tmp.path, defaultRetentionMs: fixture.defaultRetentionMs)
+        let storePath = tmp.deletingPathExtension().appendingPathExtension("json").path
+        let q1 = try DiskOutboxQueue(storePath: storePath, defaultRetentionMs: fixture.defaultRetentionMs)
         _ = try q1.enqueue(
             input: EnqueueInput(sosId: "r1", digest: "d", origin: "linux", encryptedBlobBase64: "YQ=="),
             nowMs: 1
         )
-        let q2 = try SqliteOutboxQueue(dbPath: tmp.path, defaultRetentionMs: fixture.defaultRetentionMs)
+        let q2 = try DiskOutboxQueue(storePath: storePath, defaultRetentionMs: fixture.defaultRetentionMs)
         XCTAssertEqual(try q2.listAll().count, 1)
     }
 
     func testPauseBlocksDueSendCount() throws {
         let tmp = URL(fileURLWithPath: NSTemporaryDirectory())
             .appendingPathComponent("outbox-swift-pause-\(UUID().uuidString).db")
-        defer { try? FileManager.default.removeItem(at: tmp) }
+        let storePath = tmp.deletingPathExtension().appendingPathExtension("json").path
+        defer {
+            try? FileManager.default.removeItem(at: tmp)
+            try? FileManager.default.removeItem(atPath: storePath)
+        }
         let fixture = try StateTransitionLoader.load(sourceRoot: sourceRoot())
-        let queue = try SqliteOutboxQueue(dbPath: tmp.path, defaultRetentionMs: fixture.defaultRetentionMs)
+        let queue = try DiskOutboxQueue(storePath: storePath, defaultRetentionMs: fixture.defaultRetentionMs)
         _ = try queue.enqueue(
             input: EnqueueInput(sosId: "p", digest: "d", origin: "linux", encryptedBlobBase64: "YQ=="),
             nowMs: 10
@@ -86,8 +92,12 @@ final class TransportOutboxTests: XCTestCase {
     func testPurgeExpiredRemovesRow() throws {
         let tmp = URL(fileURLWithPath: NSTemporaryDirectory())
             .appendingPathComponent("outbox-swift-exp-\(UUID().uuidString).db")
-        defer { try? FileManager.default.removeItem(at: tmp) }
-        let queue = try SqliteOutboxQueue(dbPath: tmp.path, defaultRetentionMs: 500)
+        let storePath = tmp.deletingPathExtension().appendingPathExtension("json").path
+        defer {
+            try? FileManager.default.removeItem(at: tmp)
+            try? FileManager.default.removeItem(atPath: storePath)
+        }
+        let queue = try DiskOutboxQueue(storePath: storePath, defaultRetentionMs: 500)
         _ = try queue.enqueue(
             input: EnqueueInput(
                 sosId: "e",

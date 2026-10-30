@@ -48,6 +48,6 @@ All implementations load transitions from [`packages/fixtures/transport/state-tr
 | --- | --- | --- |
 | TypeScript reference | SQLite file (`better-sqlite3`) | PASS |
 | Kotlin JVM adapter | SQLite via JDBC (Room-portable interface) | PASS |
-| Swift Linux | SQLite3 disk queue | PASS |
+| Swift Linux | Atomic JSON file queue | PASS |
 | Android Room | Target adapter | NOT_TESTED |
 | iOS device | Target adapter | NOT_TESTED |

@@ -1,44 +1,42 @@
 # SOSMesh Android App
 
-**Status:** Skeleton - Implementation pending
+**Status:** ADIM 12 — iskelet, izin matrisi, Room outbox, CI unit/lint
 
-## Overview
+## Tech stack
 
-Native Android application for SOSMesh emergency mesh network.
+- Kotlin, Jetpack Compose, Navigation, **Hilt** (ADR-010)
+- Room outbox (`OutboxQueueAdapter`), Coroutines-ready modules
+- `packages/contracts-kotlin` as Gradle project dependency
+- EncryptedSharedPreferences (Keystore) — hardware validation **NOT_TESTED** in CI
 
-**Tech Stack:**
-- Kotlin
-- Jetpack Compose (UI)
-- Room (local database)
-- Core Bluetooth LE API
-- Kotlin Coroutines
+## Modules
 
-**Target:**
-- Android 8.0+ (API 26+)
-- Material Design 3
-
-## Setup
-
-1. Open this directory in Android Studio
-2. Sync Gradle dependencies
-3. Run on emulator or physical device
-
-## Build
-
-```bash
-./gradlew assembleDebug
+```
+apps/android/
+  app/                 # MainActivity, NavHost, FGS skeleton
+  core/model/
+  core/data/           # Room outbox + secure prefs
+  core/permissions/    # BlePermissionMatrix + Compose permission UI
+  core/ble/            # BleMeshRadio interface + skeleton
 ```
 
-## Lint
+## Build & verify
 
 ```bash
-./gradlew ktlintFormat detekt
+export ANDROID_HOME="${ANDROID_HOME:-$HOME/Android/Sdk}"
+cd apps/android
+./gradlew assembleDebug testDebugUnitTest lintDebug
+./gradlew ktlintCheck
 ```
 
-## Architecture
+## Permissions
 
-_(To be documented in implementation phase)_
+See [docs/android/permission-guide.md](../../docs/android/permission-guide.md).
+
+## SDK
+
+- minSdk **26**, targetSdk **35** (ADR-010)
 
 ---
 
-**Implementation:** ADIM 06 (Native Mobile)
+**Real device / instrumentation:** NOT_TESTED in GitHub-hosted CI (by design for ADIM 12).

@@ -1,29 +1,30 @@
 package com.sosmesh.contracts
 
-import kotlinx.serialization.json.Json
 import kotlinx.serialization.decodeFromString
 import kotlinx.serialization.encodeToString
-import org.junit.jupiter.api.Test
-import org.junit.jupiter.api.Assertions.*
+import kotlinx.serialization.json.Json
 import org.junit.jupiter.api.AfterAll
+import org.junit.jupiter.api.Assertions.*
+import org.junit.jupiter.api.Test
 import java.io.File
 
 class SosMessageTest {
-    private val json = Json { 
-        ignoreUnknownKeys = true
-        prettyPrint = false  // Canonical output için compact
-    }
+    private val json =
+        Json {
+            ignoreUnknownKeys = true
+            prettyPrint = false // Canonical output için compact
+        }
     private val fixturesPath = "../fixtures/protocol-v1"
 
     companion object {
         private val canonicalOutputs = mutableMapOf<String, String>()
-        
+
         @JvmStatic
         @AfterAll
         fun writeCanonicalJsonOutputs() {
             val outputDir = File("build/canonical-json")
             outputDir.mkdirs()
-            
+
             canonicalOutputs.forEach { (name, content) ->
                 File(outputDir, "$name.json").writeText(content)
             }
@@ -38,7 +39,7 @@ class SosMessageTest {
         assertEquals(1, message.version)
         assertEquals("550e8400-e29b-41d4-a716-446655440000", message.id)
         assertEquals("DEVICE_STORED", message.envelope.ackLevel)
-        
+
         // Write canonical output
         val canonical = json.encodeToString(message)
         canonicalOutputs["valid-sos-kotlin"] = canonical
@@ -50,7 +51,7 @@ class SosMessageTest {
         val message = json.decodeFromString<SosMessage>(content)
         assertTrue(message.encryptedPayload.contains("İ"))
         assertTrue(message.encryptedPayload.contains("🚨"))
-        
+
         // Write canonical output
         val canonical = json.encodeToString(message)
         canonicalOutputs["unicode-sos-kotlin"] = canonical
@@ -72,7 +73,7 @@ class SosMessageTest {
             json.decodeFromString<SosMessage>(content)
         }
     }
-    
+
     @Test
     fun `test invalid timestamp fails`() {
         val content = File("$fixturesPath/invalid-bad-timestamp.json").readText()

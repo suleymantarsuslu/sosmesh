@@ -6,7 +6,7 @@ import kotlinx.serialization.Serializable
 data class Location(
     val latitude: Double,
     val longitude: Double,
-    val accuracy: Double? = null
+    val accuracy: Double? = null,
 )
 
 @Serializable
@@ -15,7 +15,7 @@ data class Envelope(
     val location: Location,
     val priority: Int,
     val ackLevel: String,
-    val relayCount: Int? = null
+    val relayCount: Int? = null,
 )
 
 @Serializable
@@ -24,5 +24,5 @@ data class SosMessage(
     val id: String,
     val envelope: Envelope,
     val encryptedPayload: String,
-    val signature: String? = null
+    val signature: String? = null,
 )

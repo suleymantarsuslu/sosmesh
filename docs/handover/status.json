@@ -338,10 +338,15 @@
       ],
       "deliverables": "apps/android/app + core modules, android permission guide",
       "pass_criteria": "Uygulama en az bir gerçek Android’de açılır ve izin akışı çalışır.",
-      "status": "NOT_STARTED",
-      "attempts": 0,
+      "status": "PARTIAL",
+      "attempts": 1,
       "commit": null,
-      "evidence": [],
+      "evidence": [
+        "Gradle assembleDebug testDebugUnitTest lintDebug PASS (CI hedef)",
+        "Gerçek Android cihaz / Android 12-14-16 enstrümantasyon: NOT_TESTED",
+        "Android Keystore hardware-backed EncryptedSharedPreferences: NOT_TESTED"
+      ],
+      "notes": "CI unit+lint PASS; fiziksel cihaz pass_criteria henüz kanıtlanmadı",
       "blockers": [],
       "last_checked_at": null,
       "goal": "İlk fiziksel demo hedefi için native Android temeli hazırla.",

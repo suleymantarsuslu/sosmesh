@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="permission_disclaimer_not112">SOSMesh, 112\'nin yerine geçmez. Acil durumlarda 112\'yi arayın.</string>
+    <string name="permission_bluetooth_rationale">Bluetooth: SOSMesh, internet olmadan yakındaki cihazlara SOS iletmek için Bluetooth Low Energy kullanır. İzin vermezseniz mesh taraması başlatılamaz.</string>
+    <string name="permission_location_rationale">Konum (isteğe bağlı tarama): Android 11 ve öncesinde BLE taraması konum izni gerektirebilir. Konum verilmezse tarama yine kısıtlanabilir.</string>
+    <string name="permission_notification_rationale">Bildirim: SOS durumu değiştiğinde bilgilendirme almak için isteğe bağlıdır.</string>
+    <string name="permission_request_button">İzni ver</string>
+    <string name="permission_open_settings_button">Ayarlara git</string>
+    <string name="background_no_guarantee">Arka planda sürekli bağlantı veya kurtarma garantisi verilmez.</string>
+</resources>

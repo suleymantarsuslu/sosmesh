@@ -17,6 +17,9 @@ let package = Package(
             name: "SOSMeshContracts",
             dependencies: [
                 .product(name: "Crypto", package: "swift-crypto"),
+            ],
+            linkerSettings: [
+                .linkedLibrary("sqlite3"),
             ]),
         .testTarget(
             name: "SOSMeshContractsTests",

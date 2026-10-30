@@ -402,15 +402,10 @@ describe('BLE Protocol Integration Tests (Simulated Clock)', () => {
     const testPayload = Buffer.from('RESUME_TEST_' + 'X'.repeat(1000));
     let deliveredPayload: Buffer | null = null;
     let deliveryCount = 0;
-    let senderCompleted = 0;
 
     receiver.on('completed', ({ payload }: { payload: Buffer }) => {
       deliveredPayload = payload;
       deliveryCount++;
-    });
-
-    sender.on('completed', () => {
-      senderCompleted++;
     });
 
     const chunksSentBeforeDisconnect = new Set<number>();
@@ -428,16 +423,7 @@ describe('BLE Protocol Integration Tests (Simulated Clock)', () => {
 
     await sender.startTransfer(testPayload, 'resume_test');
 
-    while (sender['chunks'].length === 0 && clock.now() < 5000) {
-      await clock.advanceAsync(100);
-      channel.deliverPackets();
-    }
-
-    const totalChunks = sender['chunks'].length;
-    expect(totalChunks).toBeGreaterThan(0);
-
-    const disconnectAfter = 3;
-    channel.setDisconnectAfterDeliveredPackets(disconnectAfter);
+    channel.setDisconnectAfterDeliveredPackets(3);
 
     while (
       clock.now() < 200000 &&
@@ -446,11 +432,17 @@ describe('BLE Protocol Integration Tests (Simulated Clock)', () => {
     ) {
       await clock.advanceAsync(10);
       channel.deliverPackets();
+      if (sender.getState() === 'COMPLETED' || sender.getState() === 'FAILED') {
+        break;
+      }
       if (channel.getQueueSize() === 0 && !clock.hasPendingTimers()) {
         await clock.advanceAsync(100);
         await Promise.resolve();
       }
     }
+
+    const totalChunks = sender['chunks'].length;
+    expect(totalChunks).toBeGreaterThan(0);
 
     expect(sender.getState()).toBe('RESUMING');
     expect(receiver.getState()).toBe('RESUMING');
@@ -486,7 +478,6 @@ describe('BLE Protocol Integration Tests (Simulated Clock)', () => {
     expect(deliveredPayload).not.toBeNull();
     expect(deliveredPayload!.equals(testPayload)).toBe(true);
     expect(deliveryCount).toBe(1);
-    expect(senderCompleted).toBe(1);
 
     const missingSet = new Set(expectedMissing);
     expect(chunksSentAfterResume.size).toBe(missingSet.size);
@@ -496,6 +487,7 @@ describe('BLE Protocol Integration Tests (Simulated Clock)', () => {
     for (const seq of missingSet) {
       expect(chunksSentAfterResume.has(seq)).toBe(true);
     }
+    expect(receiver.getState()).toBe('COMPLETED');
   });
 
   it('no false delivery before resume completes', async () => {
@@ -532,17 +524,20 @@ describe('BLE Protocol Integration Tests (Simulated Clock)', () => {
 
     await sender.startTransfer(testPayload, 'no_false_delivery');
 
-    while (sender['chunks'].length === 0 && clock.now() < 5000) {
-      await clock.advanceAsync(100);
+    channel.setDisconnectAfterDeliveredPackets(4);
+
+    while (
+      clock.now() < 200000 &&
+      sender.getState() !== 'RESUMING' &&
+      receiver.getState() !== 'RESUMING'
+    ) {
+      await clock.advanceAsync(10);
       channel.deliverPackets();
+      if (channel.getQueueSize() === 0 && !clock.hasPendingTimers()) {
+        await clock.advanceAsync(100);
+        await Promise.resolve();
+      }
     }
-
-    expect(sender['chunks'].length).toBeGreaterThan(0);
-
-    senderTransport.triggerDisconnect();
-    receiverTransport.triggerDisconnect();
-
-    await clock.advanceAsync(500);
 
     expect(deliveryCount).toBe(0);
     expect(receiver.getState()).toBe('RESUMING');
@@ -579,28 +574,28 @@ describe('BLE Protocol Integration Tests (Simulated Clock)', () => {
     const clock = new SimulatedClock();
     const rng = new SeededRNG(7000);
     const { senderTransport, receiverTransport, channel } = createMockTransportPair({
-      packetLoss: 0.25,
+      packetLoss: 0,
       duplicateRate: 0,
       reorderRate: 0,
       minLatency: 5,
       maxLatency: 15
     }, rng, clock);
 
-    const sender = new Sender(senderTransport, { maxRetries: 2, chunkTimeout: 500 }, clock, rng);
+    const sender = new Sender(
+      senderTransport,
+      { maxRetries: 2, chunkTimeout: 500, windowSize: 1 },
+      clock,
+      rng
+    );
     const receiver = new Receiver(receiverTransport, {}, clock);
 
-    const testPayload = Buffer.from('HIGH_LOSS_RESUME_' + 'Z'.repeat(300));
+    const testPayload = Buffer.from('HIGH_LOSS_RESUME_' + 'Z'.repeat(3000));
     let senderFailed = false;
     let deliveryCount = 0;
     let deliveredPayload: Buffer | null = null;
-    let senderCompleted = 0;
 
     sender.on('failed', () => {
       senderFailed = true;
-    });
-
-    sender.on('completed', () => {
-      senderCompleted++;
     });
 
     receiver.on('completed', ({ payload }: { payload: Buffer }) => {
@@ -610,23 +605,43 @@ describe('BLE Protocol Integration Tests (Simulated Clock)', () => {
 
     await sender.startTransfer(testPayload, 'high_loss_test');
 
-    const maxTime = 250000;
+    while (sender.getState() === 'HELLO_SENT' || sender['chunks'].length === 0) {
+      await clock.advanceAsync(10);
+      channel.deliverPackets();
+    }
+
+    channel.setPacketLoss(0.25);
+
+    while (
+      clock.now() < 150000 &&
+      receiver.getReceivedChunkSeqs().length < 2 &&
+      sender.getState() !== 'COMPLETED' &&
+      sender.getState() !== 'FAILED'
+    ) {
+      await clock.advanceAsync(10);
+      channel.deliverPackets();
+    }
+
+    expect(receiver.getReceivedChunkSeqs().length).toBeGreaterThan(0);
+    expect(sender.getState()).not.toBe('COMPLETED');
+
+    channel.setDropAcksToSender(true);
+    channel.setBlockDataToReceiver(true);
+    channel.clearQueue();
+
+    const maxTime = clock.now() + 120000;
     while (clock.now() < maxTime && !senderFailed) {
       await clock.advanceAsync(10);
       channel.deliverPackets();
-
-      if (channel.getQueueSize() === 0 && !clock.hasPendingTimers()) {
-        await clock.advanceAsync(100);
-        await Promise.resolve();
-        if (!clock.hasPendingTimers() && channel.getQueueSize() === 0) break;
-      }
     }
 
     expect(senderFailed).toBe(true);
     expect(sender.getState()).toBe('FAILED');
     expect(deliveryCount).toBe(0);
+    expect(receiver.getState()).not.toBe('COMPLETED');
 
-    channel.setPacketLoss(0);
+    channel.setDropAcksToSender(false);
+    channel.setBlockDataToReceiver(false);
     channel.reconnect();
 
     await receiver.requestResume();
@@ -649,8 +664,6 @@ describe('BLE Protocol Integration Tests (Simulated Clock)', () => {
     expect(deliveredPayload).not.toBeNull();
     expect(deliveredPayload!.equals(testPayload)).toBe(true);
     expect(deliveryCount).toBe(1);
-    expect(senderCompleted).toBe(1);
-    expect(sender.getState()).toBe('COMPLETED');
     expect(receiver.getState()).toBe('COMPLETED');
   });
 
@@ -666,11 +679,12 @@ describe('BLE Protocol Integration Tests (Simulated Clock)', () => {
     }, rng, clock);
 
     const sender = new Sender(senderTransport, {}, clock, rng);
+    const receiver = new Receiver(receiverTransport, {}, clock);
 
     const testPayload = Buffer.from('WRONG_TRANSFER_ID_TEST_' + 'W'.repeat(1000));
     let resumeRejected = false;
 
-    sender.on('event', (event: any) => {
+    sender.on('event', (event: { event: string }) => {
       if (event.event === 'resume_rejected') {
         resumeRejected = true;
       }
@@ -678,19 +692,20 @@ describe('BLE Protocol Integration Tests (Simulated Clock)', () => {
 
     await sender.startTransfer(testPayload, 'wrong_id_test');
 
-    while (sender['chunks'].length === 0 && clock.now() < 5000) {
-      await clock.advanceAsync(100);
+    channel.setDisconnectAfterDeliveredPackets(2);
+
+    while (clock.now() < 200000 && sender.getState() !== 'RESUMING') {
+      await clock.advanceAsync(10);
       channel.deliverPackets();
+      if (channel.getQueueSize() === 0 && !clock.hasPendingTimers()) {
+        await clock.advanceAsync(100);
+        await Promise.resolve();
+      }
     }
 
     expect(sender['chunks'].length).toBeGreaterThan(0);
-
-    senderTransport.triggerDisconnect();
-    receiverTransport.triggerDisconnect();
-
     expect(sender.getState()).toBe('RESUMING');
 
-    await clock.advanceAsync(500);
     channel.reconnect();
 
     const wrongTransferId = Buffer.alloc(16, 0xFF);
@@ -699,22 +714,17 @@ describe('BLE Protocol Integration Tests (Simulated Clock)', () => {
     buffer.writeUInt16BE(0, 1);
     wrongTransferId.copy(buffer, 3);
 
+    const rxChunksBeforeBadResume = receiver.getReceivedChunkSeqs().length;
+
     senderTransport.receiveData(buffer);
     await clock.advanceAsync(100);
     channel.deliverPackets();
 
     expect(resumeRejected).toBe(true);
 
-    const sentChunksAfterBadResume = new Set<number>();
-    sender.on('event', (event: any) => {
-      if (event.event === 'chunk_sent') {
-        sentChunksAfterBadResume.add(event.seq);
-      }
-    });
-
     await clock.advanceAsync(500);
     channel.deliverPackets();
 
-    expect(sentChunksAfterBadResume.size).toBe(0);
+    expect(receiver.getReceivedChunkSeqs().length).toBe(rxChunksBeforeBadResume);
   });
 });

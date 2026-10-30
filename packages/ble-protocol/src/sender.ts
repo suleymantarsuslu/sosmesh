@@ -193,7 +193,9 @@ export class Sender extends EventEmitter {
     if (msgType === MessageType.HELLO_ACK && this.state === TransferState.HELLO_SENT) {
       this.handleHelloAck(data);
     } else if (msgType === MessageType.ACK && 
-               (this.state === TransferState.WAIT_ACK || this.state === TransferState.SENDING)) {
+               (this.state === TransferState.WAIT_ACK || 
+                this.state === TransferState.SENDING ||
+                this.state === TransferState.READY)) {
       this.handleAck(data);
     } else if (msgType === MessageType.NACK && 
                (this.state === TransferState.WAIT_ACK || this.state === TransferState.SENDING)) {
@@ -273,6 +275,9 @@ export class Sender extends EventEmitter {
       this.setChunkTimeout();
     } else if (this.ackReceived.size === this.chunks.length) {
       this.complete();
+    } else if (this.state === TransferState.SENDING) {
+      this.state = TransferState.WAIT_ACK;
+      this.setChunkTimeout();
     }
   }
 
@@ -304,7 +309,22 @@ export class Sender extends EventEmitter {
   }
 
   private handleChunkTimeout(): void {
-    if (this.state !== TransferState.WAIT_ACK) return;
+    if (this.inFlightChunks.size === 0) {
+      if (this.state !== TransferState.WAIT_ACK) {
+        return;
+      }
+      if (this.ackReceived.size === this.chunks.length) {
+        this.complete();
+        return;
+      }
+      this.state = TransferState.READY;
+      this.currentSeq = 0;
+      this.sendNextChunks();
+      return;
+    }
+    if (this.state !== TransferState.WAIT_ACK && this.state !== TransferState.SENDING) {
+      return;
+    }
 
     // Retry all in-flight chunks
     const chunksToRetry = Array.from(this.inFlightChunks);
@@ -422,6 +442,7 @@ export class Sender extends EventEmitter {
     this.ackReceived = receivedSeqs;
     this.inFlightChunks.clear();
     this.currentSeq = 0;
+    this.retryCount.clear();
 
     if (this.chunkTimeout) {
       this.clock.clearTimeout(this.chunkTimeout);

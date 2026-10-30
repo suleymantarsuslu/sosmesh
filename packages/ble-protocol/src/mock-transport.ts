@@ -24,7 +24,7 @@ export class MockTransport extends EventEmitter implements ITransport {
 
   async send(data: Buffer): Promise<void> {
     if (this.closed) {
-      throw new Error('Transport closed');
+      return;
     }
     this.sendFn(data);
   }
@@ -85,6 +85,8 @@ export class MockChannel {
   private deliveredDataPacketsToReceiver = 0;
   private disconnectAfterDeliveredPackets: number | undefined;
   private isDisconnected = false;
+  private dropAcksToSender = false;
+  private blockDataToReceiver = false;
 
   constructor(
     private config: MockChannelConfig,
@@ -106,6 +108,14 @@ export class MockChannel {
 
   setPacketLoss(rate: number): void {
     this.config.packetLoss = rate;
+  }
+
+  setDropAcksToSender(drop: boolean): void {
+    this.dropAcksToSender = drop;
+  }
+
+  setBlockDataToReceiver(block: boolean): void {
+    this.blockDataToReceiver = block;
   }
 
   sendFromSender(data: Buffer): void {
@@ -179,6 +189,9 @@ export class MockChannel {
 
       if (packet.destination === 'receiver' && !this.receiverTransport.isClosed()) {
         const isData = isDataChunkToReceiver(packet.data);
+        if (this.blockDataToReceiver && isData) {
+          continue;
+        }
         this.receiverTransport.receiveData(packet.data);
         if (isData) {
           this.deliveredDataPacketsToReceiver++;
@@ -191,6 +204,13 @@ export class MockChannel {
           }
         }
       } else if (packet.destination === 'sender' && !this.senderTransport.isClosed()) {
+        if (
+          this.dropAcksToSender &&
+          packet.data.length >= 1 &&
+          packet.data.readUInt8(0) === MessageType.ACK
+        ) {
+          continue;
+        }
         this.senderTransport.receiveData(packet.data);
       }
     }
@@ -212,6 +232,8 @@ export class MockChannel {
 
   reconnect(): void {
     this.isDisconnected = false;
+    this.disconnectAfterDeliveredPackets = undefined;
+    this.deliveredDataPacketsToReceiver = 0;
     this.senderTransport.reconnect();
     this.receiverTransport.reconnect();
   }
@@ -226,6 +248,10 @@ export class MockChannel {
 
   getQueueSize(): number {
     return this.queue.length;
+  }
+
+  clearQueue(): void {
+    this.queue = [];
   }
 }
 

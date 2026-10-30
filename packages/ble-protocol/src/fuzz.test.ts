@@ -221,12 +221,11 @@ describe('BLE Protocol Fuzz Testing (Simulated Clock)', () => {
     const sender = new Sender(senderTransport, {}, clock, rng);
     const payload = Buffer.from('TEST_MESSAGE_FOR_CORRUPTION');
 
-    let chunksSent = 0;
     const originalSend = senderTransport.send.bind(senderTransport);
     senderTransport.send = async (data: Buffer) => {
       if (data.length > 20) {
-        chunksSent++;
-        if (chunksSent === 1) {
+        const seq = data.readUInt16BE(0);
+        if (seq === 0) {
           const corrupted = Buffer.from(data);
           corrupted.writeUInt32BE(0x12345678, 4);
           return originalSend(corrupted);

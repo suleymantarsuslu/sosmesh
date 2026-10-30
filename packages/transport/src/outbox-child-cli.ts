@@ -23,7 +23,7 @@ if (command !== 'enqueue-wait') {
   process.exit(2);
 }
 
-const queue = new SqliteOutboxQueue(':memory:');
+const queue = new SqliteOutboxQueue(dbPath);
 queue.enqueue(
   {
     sosId,
@@ -38,6 +38,7 @@ if (stateAfterEnqueue) {
   queue.updateState(sosId, stateAfterEnqueue, Date.now());
 }
 
+queue.checkpointWal();
 process.stdout.write('ready\n');
 setInterval(() => {
   /* keep WAL connection open until SIGKILL */

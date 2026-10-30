@@ -143,6 +143,11 @@ export class SqliteOutboxQueue implements OutboxQueueAdapter {
     return info.changes;
   }
 
+  /** Flush WAL into the main database file before abrupt process termination. */
+  checkpointWal(): void {
+    this.db.pragma('wal_checkpoint(TRUNCATE)');
+  }
+
   close(): void {
     this.db.close();
   }

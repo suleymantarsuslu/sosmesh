@@ -1,0 +1,186 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+/// Aligns with packages/fixtures/transport/state-transitions.json (DeliveryStateMachine).
+enum DeliveryState {
+  LOCAL_SAVED
+  PEER_RECEIVED
+  SERVER_ACCEPTED
+  OPERATOR_SEEN
+  CASE_IN_PROGRESS
+  FAILED
+  EXPIRED
+}
+
+/// packages/contracts/schemas/common.schema.json#/definitions/incidentState
+enum IncidentState {
+  PENDING
+  ASSIGNED
+  IN_PROGRESS
+  RESOLVED
+  CANCELLED
+}
+
+/// ADR-011 (feature branch): UNKNOWN/GPS/MANUAL — TODO sync enum when contract lands on main.
+enum LocationStatus {
+  UNKNOWN
+  GPS
+  MANUAL
+}
+
+/// SOS category — TODO bind to packages/contracts when SOS type schema is on main.
+enum SosType {
+  GENERAL
+  MEDICAL
+  TRAPPED
+  FIRE
+  OTHER
+}
+
+enum UserRole {
+  OPERATOR
+  ADMIN
+  COORDINATOR
+}
+
+model Incident {
+  id          String         @id @default(uuid()) @db.Uuid
+  state       IncidentState  @default(PENDING)
+  createdAt   DateTime       @default(now()) @map("created_at")
+  updatedAt   DateTime       @updatedAt @map("updated_at")
+  sosMessages SosMessage[]
+  assignments Assignment[]
+  aiAnalyses  AiAnalysis[]
+  auditLogs   AuditLog[]
+
+  @@map("incidents")
+}
+
+model SosMessage {
+  id                  String         @id @default(uuid()) @db.Uuid
+  messageId           String         @unique @map("message_id")
+  incidentId          String         @map("incident_id") @db.Uuid
+  incident            Incident       @relation(fields: [incidentId], references: [id], onDelete: Cascade)
+  deliveryState       DeliveryState  @default(LOCAL_SAVED) @map("delivery_state")
+  sosType             SosType        @default(GENERAL) @map("sos_type")
+  locationStatus      LocationStatus @default(UNKNOWN) @map("location_status")
+  latitude            Decimal?       @db.Decimal(10, 7)
+  longitude           Decimal?       @db.Decimal(10, 7)
+  accuracyMeters      Float?         @map("accuracy_meters")
+  /// Sensitive note: encrypted/opaque at rest (ADIM 9); must not appear in logs.
+  encryptedNoteBlob   String?        @map("encrypted_note_blob") @db.Text
+  encryptedPayloadRef String?        @map("encrypted_payload_ref")
+  personCount         Int?           @map("person_count")
+  priority            Int            @default(3)
+  receivedAt          DateTime       @default(now()) @map("received_at")
+  createdAt           DateTime       @default(now()) @map("created_at")
+  updatedAt           DateTime       @updatedAt @map("updated_at")
+  messageEvents       MessageEvent[]
+  relayReceipts       RelayReceipt[]
+
+  @@index([incidentId])
+  @@map("sos_messages")
+}
+
+model MessageEvent {
+  id            String        @id @default(uuid()) @db.Uuid
+  sosMessageId  String        @map("message_id") @db.Uuid
+  sosMessage    SosMessage    @relation(fields: [sosMessageId], references: [id], onDelete: Cascade)
+  deliveryState DeliveryState @map("delivery_state")
+  source        String
+  createdAt     DateTime      @default(now()) @map("created_at")
+  metadataJson  Json?         @map("metadata_json")
+
+  @@index([sosMessageId, createdAt])
+  @@map("message_events")
+}
+
+model RelayReceipt {
+  id           String     @id @default(uuid()) @db.Uuid
+  sosMessageId String     @map("message_id") @db.Uuid
+  sosMessage   SosMessage @relation(fields: [sosMessageId], references: [id], onDelete: Cascade)
+  relayId      String     @map("relay_id")
+  receivedAt   DateTime   @default(now()) @map("received_at")
+  hopCount     Int        @default(0) @map("hop_count")
+  receiptHash  String?    @map("receipt_hash")
+
+  @@unique([sosMessageId, relayId])
+  @@map("relay_receipts")
+}
+
+model AiAnalysis {
+  id           String   @id @default(uuid()) @db.Uuid
+  incidentId   String   @map("incident_id") @db.Uuid
+  incident     Incident @relation(fields: [incidentId], references: [id], onDelete: Cascade)
+  modelVersion String   @map("model_version")
+  resultJson   Json     @map("result_json")
+  status       String   @default("PENDING")
+  createdAt    DateTime @default(now()) @map("created_at")
+
+  @@index([incidentId])
+  @@map("ai_analyses")
+}
+
+model Team {
+  id          String       @id @default(uuid()) @db.Uuid
+  name        String
+  zoneCode    String?      @map("zone_code")
+  createdAt   DateTime     @default(now()) @map("created_at")
+  users       User[]
+  assignments Assignment[]
+
+  @@map("teams")
+}
+
+model User {
+  id          String       @id @default(uuid()) @db.Uuid
+  email       String       @unique
+  displayName String       @map("display_name")
+  role        UserRole     @default(OPERATOR)
+  teamId      String?      @map("team_id") @db.Uuid
+  team        Team?        @relation(fields: [teamId], references: [id])
+  createdAt   DateTime     @default(now()) @map("created_at")
+  updatedAt   DateTime     @updatedAt @map("updated_at")
+  assignments Assignment[]
+  auditLogs   AuditLog[]
+
+  @@map("users")
+}
+
+model Assignment {
+  id         String   @id @default(uuid()) @db.Uuid
+  incidentId String   @map("incident_id") @db.Uuid
+  incident   Incident @relation(fields: [incidentId], references: [id], onDelete: Cascade)
+  teamId     String   @map("team_id") @db.Uuid
+  team       Team     @relation(fields: [teamId], references: [id])
+  assigneeId String?  @map("assignee_id") @db.Uuid
+  assignee   User?    @relation(fields: [assigneeId], references: [id])
+  status     String   @default("OPEN")
+  createdAt  DateTime @default(now()) @map("created_at")
+  updatedAt  DateTime @updatedAt @map("updated_at")
+
+  @@index([incidentId])
+  @@index([teamId])
+  @@map("assignments")
+}
+
+model AuditLog {
+  id          String    @id @default(uuid()) @db.Uuid
+  actorId     String?   @map("actor_id") @db.Uuid
+  actor       User?     @relation(fields: [actorId], references: [id])
+  incidentId  String?   @map("incident_id") @db.Uuid
+  incident    Incident? @relation(fields: [incidentId], references: [id])
+  action      String
+  detailsJson Json?     @map("details_json")
+  createdAt   DateTime  @default(now()) @map("created_at")
+
+  @@index([incidentId])
+  @@index([createdAt])
+  @@map("audit_logs")
+}

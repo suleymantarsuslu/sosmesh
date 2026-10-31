@@ -523,7 +523,7 @@
       "pass_criteria": "Tek geçerli SOS tek kalıcı kayıt ve SERVER_ACCEPTED imzalı receipt üretir.",
       "status": "PASS",
       "attempts": 1,
-      "commit": null,
+      "commit": "a42c57a",
       "evidence": [
         "apps/api/src/ingest + migration 20261031203000_ingest_receipt_flags",
         "apps/api/test/ingest.spec.ts (Postgres embedded/CI pattern)",

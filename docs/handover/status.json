@@ -655,7 +655,7 @@
       "pass_criteria": "Operatör admin olmayan rol yetkisi dışında vaka göremez.",
       "status": "PARTIAL",
       "attempts": 1,
-      "commit": null,
+      "commit": "faa0626",
       "evidence": [
         "apps/api auth login (bcrypt, rate limit, httpOnly cookie) + RBAC incident scope + dashboard stats API",
         "apps/web operator panel: login, dashboard, role denied, SSE polling fallback banner, Playwright 6/6",

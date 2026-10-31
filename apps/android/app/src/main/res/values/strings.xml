@@ -3,6 +3,8 @@
     <string name="app_name">SOSMesh</string>
     <string name="home_title">SOSMesh</string>
     <string name="home_permissions_cta">İzinleri yapılandır</string>
+    <string name="home_sos_cta">SOS gönder</string>
+    <string name="home_status_cta">Mesaj durumu</string>
     <string name="home_start_relay">Mesh bağlantısı (ön plan)</string>
     <string name="home_radio_debug_cta">Radyo / peer keşfi (debug)</string>
     <string name="radio_debug_title">BLE radyo durumu</string>

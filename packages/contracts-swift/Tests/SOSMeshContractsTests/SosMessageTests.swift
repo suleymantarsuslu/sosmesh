@@ -43,6 +43,20 @@ final class SosMessageTests: XCTestCase {
         }
     }
     
+    func testUnknownLocationSosMessage() throws {
+        let path = getFixturePath("unknown-location-sos.json")
+        let url = URL(fileURLWithPath: path)
+        let data = try Data(contentsOf: url)
+
+        let message = try decoder.decode(SosMessage.self, from: data)
+        XCTAssertEqual(message.envelope.locationStatus, .unknown)
+        XCTAssertNil(message.envelope.location)
+
+        encoder.outputFormatting = [.sortedKeys]
+        let canonical = try encoder.encode(message)
+        SosMessageTests.canonicalOutputs["unknown-location-sos-swift"] = canonical
+    }
+
     func testValidSosMessageDeserialization() throws {
         let path = getFixturePath("valid-sos.json")
         let url = URL(fileURLWithPath: path)
@@ -99,10 +113,15 @@ final class SosMessageTests: XCTestCase {
         let path = getFixturePath("invalid-bad-timestamp.json")
         let url = URL(fileURLWithPath: path)
         let data = try Data(contentsOf: url)
-        
-        // Swift Codable does not validate ISO8601 format strictly by default
-        // This will succeed but we document the behavior difference
+
         let message = try decoder.decode(SosMessage.self, from: data)
-        XCTAssertNotNil(message)
+        XCTAssertEqual(message.envelope.timestamp, "NOT_A_VALID_TIMESTAMP")
+        XCTAssertThrowsError(try SosEnvelopeRules.validateTimestamp(message.envelope.timestamp)) { error in
+            guard case SosEnvelopeRulesError.invalidTimestamp(let value) = error else {
+                XCTFail("Expected invalidTimestamp, got \(error)")
+                return
+            }
+            XCTAssertEqual(value, "NOT_A_VALID_TIMESTAMP")
+        }
     }
 }

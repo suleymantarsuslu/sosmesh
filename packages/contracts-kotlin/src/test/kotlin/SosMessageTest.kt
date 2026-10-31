@@ -12,7 +12,9 @@ class SosMessageTest {
     private val json =
         Json {
             ignoreUnknownKeys = true
-            prettyPrint = false // Canonical output için compact
+            prettyPrint = false
+            explicitNulls = true
+            encodeDefaults = true
         }
     private val fixturesPath = "../fixtures/protocol-v1"
 
@@ -30,6 +32,17 @@ class SosMessageTest {
             }
             println("✓ Canonical JSON outputs written to build/canonical-json/")
         }
+    }
+
+    @Test
+    fun `test unknown location SOS message`() {
+        val content = File("$fixturesPath/unknown-location-sos.json").readText()
+        val message = json.decodeFromString<SosMessage>(content)
+        assertEquals(LocationStatus.UNKNOWN, message.envelope.locationStatus)
+        assertEquals(null, message.envelope.location)
+
+        val canonical = json.encodeToString(message)
+        canonicalOutputs["unknown-location-sos-kotlin"] = canonical
     }
 
     @Test
@@ -77,9 +90,13 @@ class SosMessageTest {
     @Test
     fun `test invalid timestamp fails`() {
         val content = File("$fixturesPath/invalid-bad-timestamp.json").readText()
-        // Kotlin kotlinx.serialization does not validate ISO8601 format strictly
-        // but we parse successfully and document this behavior difference
         val message = json.decodeFromString<SosMessage>(content)
-        assertNotNull(message)
+        assertEquals("NOT_A_VALID_TIMESTAMP", message.envelope.timestamp)
+        val ex =
+            assertThrows(IllegalArgumentException::class.java) {
+                SosEnvelopeRules.validateTimestamp(message.envelope.timestamp)
+            }
+        assertTrue(ex.message!!.contains("timestamp"))
+        assertTrue(ex.message!!.contains("NOT_A_VALID_TIMESTAMP"))
     }
 }

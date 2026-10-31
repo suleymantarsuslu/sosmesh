@@ -20,6 +20,8 @@ import com.sosmesh.android.service.MeshConnectionForegroundService
 fun HomeRoute(
     onOpenPermissions: () -> Unit,
     onOpenRadioDebug: () -> Unit,
+    onOpenSos: () -> Unit,
+    onOpenStatus: () -> Unit,
 ) {
     val context = LocalContext.current
     Column(
@@ -34,6 +36,12 @@ fun HomeRoute(
             text = stringResource(com.sosmesh.android.core.permissions.R.string.permission_disclaimer_not112),
             style = MaterialTheme.typography.bodyMedium,
         )
+        Button(onClick = onOpenSos) {
+            Text(stringResource(R.string.home_sos_cta))
+        }
+        Button(onClick = onOpenStatus) {
+            Text(stringResource(R.string.home_status_cta))
+        }
         Button(onClick = onOpenPermissions) {
             Text(stringResource(R.string.home_permissions_cta))
         }

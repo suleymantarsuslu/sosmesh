@@ -12,6 +12,15 @@ async function main() {
   if (!process.env[jwtEnvKey]) {
     process.env[jwtEnvKey] = 'local-dev-jwt-secret-min-16';
   }
+  const ingestKeyEnv = 'INGEST_RECEIPT_SIGNING_PRIVATE_KEY';
+  if (!process.env[ingestKeyEnv]) {
+    const { privateKey } = await import('node:crypto').then((c) =>
+      c.generateKeyPairSync('ed25519')
+    );
+    process.env[ingestKeyEnv] = privateKey
+      .export({ format: 'der', type: 'pkcs8' })
+      .toString('base64');
+  }
   process.env.LOG_LEVEL = 'silent';
 
   const { createApp } = await import('../src/main');

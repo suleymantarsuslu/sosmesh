@@ -94,12 +94,18 @@ rm -f "$SMOKE_PG_STATE"
 write_smoke_env_from_state() {
   node <<'NODE'
 const fs = require('node:fs');
+const { generateKeyPairSync } = require('node:crypto');
 const statePath = process.env.SMOKE_PG_STATE;
 const jwtKey = 'JWT' + '_SECRET';
 const state = JSON.parse(fs.readFileSync(statePath, 'utf8'));
+const { privateKey } = generateKeyPairSync('ed25519');
+const ingestSigningKey = privateKey
+  .export({ format: 'der', type: 'pkcs8' })
+  .toString('base64');
 const lines = [
   `${jwtKey}=${JSON.stringify(process.env[jwtKey] || 'smoke-local-jwt-minimum-16chars')}`,
   `DATABASE_URL=${JSON.stringify(state.databaseUrl)}`,
+  `INGEST_RECEIPT_SIGNING_PRIVATE_KEY=${JSON.stringify(ingestSigningKey)}`,
 ];
 fs.writeFileSync('/tmp/sosmesh-smoke.env', lines.join('\n'));
 NODE

@@ -62,6 +62,9 @@ importers:
       '@prisma/client':
         specifier: ^5.22.0
         version: 5.22.0(prisma@5.22.0)
+      '@sosmesh/contracts':
+        specifier: workspace:*
+        version: link:../../packages/contracts
       class-transformer:
         specifier: ^0.5.1
         version: 0.5.1

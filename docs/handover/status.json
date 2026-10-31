@@ -521,12 +521,17 @@
       ],
       "deliverables": "api ingest module + OpenAPI + DB constraints",
       "pass_criteria": "Tek geçerli SOS tek kalıcı kayıt ve SERVER_ACCEPTED imzalı receipt üretir.",
-      "status": "NOT_STARTED",
-      "attempts": 0,
+      "status": "PASS",
+      "attempts": 1,
       "commit": null,
-      "evidence": [],
+      "evidence": [
+        "apps/api/src/ingest + migration 20261031203000_ingest_receipt_flags",
+        "apps/api/test/ingest.spec.ts (Postgres embedded/CI pattern)",
+        "docs/api/openapi.yaml POST /v1/ingest",
+        "pnpm test + verify.sh 21/21"
+      ],
       "blockers": [],
-      "last_checked_at": null,
+      "last_checked_at": "2026-10-31T22:20:00Z",
       "goal": "İnternetli rölelerden gelen SOS’ları tek vaka olarak al.",
       "cursor_tasks": [
         "POST /v1/ingest, signed server receipt, packet hash, size/version/TTL/time validation.",

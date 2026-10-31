@@ -2,6 +2,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 
 import { applyTestAuthEnv } from './helpers/operator-auth';
+import { applyTestIngestEnv } from './helpers/ingest-test-env';
 
 const envFile = path.join(__dirname, '.embedded-pg-env.json');
 
@@ -18,5 +19,6 @@ if (fs.existsSync(envFile)) {
 }
 
 applyTestAuthEnv();
+applyTestIngestEnv();
 process.env.NODE_ENV = 'test';
 process.env.LOG_LEVEL = 'silent';

@@ -79,6 +79,8 @@ model SosMessage {
   personCount         Int?           @map("person_count")
   priority            Int            @default(3)
   receivedAt          DateTime       @default(now()) @map("received_at")
+  serverReceiptAt     DateTime?      @map("server_receipt_at")
+  needsHumanReview    Boolean        @default(false) @map("needs_human_review")
   createdAt           DateTime       @default(now()) @map("created_at")
   updatedAt           DateTime       @updatedAt @map("updated_at")
   messageEvents       MessageEvent[]

@@ -235,28 +235,21 @@ jobs:
       
       - name: Setup Swift
         run: |
-          SWIFT_VERSION="5.10.1"
-          SWIFT_PLATFORM="ubuntu2204-aarch64"
-          SWIFT_URL="https://download.swift.org/swift-${SWIFT_VERSION}-release/ubuntu2204-aarch64/swift-${SWIFT_VERSION}-RELEASE/swift-${SWIFT_VERSION}-RELEASE-${SWIFT_PLATFORM}.tar.gz"
+          echo "Installing Swiftly (Swift toolchain manager)..."
+          curl -L https://swift-server.github.io/swiftly/swiftly-install.sh | bash -s -- -y --no-modify-profile
           
-          echo "Downloading Swift ${SWIFT_VERSION} for ARM64 from ${SWIFT_URL}"
-          if ! curl -f -L "${SWIFT_URL}" -o swift.tar.gz; then
-            echo "Failed to download Swift. Trying to list available versions..."
-            curl -L "https://download.swift.org/swift-${SWIFT_VERSION}-release/ubuntu2204-aarch64/"
-            exit 1
-          fi
+          export PATH="$HOME/.local/bin:$PATH"
+          export SWIFTLY_HOME_DIR="$HOME/.local/share/swiftly"
+          export SWIFTLY_BIN_DIR="$HOME/.local/bin"
           
-          echo "Verifying download..."
-          file swift.tar.gz
+          echo "$HOME/.local/bin" >> $GITHUB_PATH
+          echo "SWIFTLY_HOME_DIR=$HOME/.local/share/swiftly" >> $GITHUB_ENV
           
-          echo "Extracting Swift..."
-          tar xzf swift.tar.gz
+          echo "Installing Swift toolchain..."
+          swiftly install latest
           
-          SWIFT_DIR="${PWD}/swift-${SWIFT_VERSION}-RELEASE-${SWIFT_PLATFORM}"
-          echo "${SWIFT_DIR}/usr/bin" >> $GITHUB_PATH
-          
-          echo "Swift installed successfully"
-          "${SWIFT_DIR}/usr/bin/swift" --version
+          echo "Verifying Swift installation..."
+          swift --version
       
       - name: Install dependencies
         run: pnpm install --frozen-lockfile

@@ -49,6 +49,15 @@ class GattClientSessionTest {
             connected = false
             callback?.onConnectionStateChanged(GattConnectionState.DISCONNECTED)
         }
+
+        override fun writeCharacteristic(
+            uuid: String,
+            value: ByteArray,
+        ): Result<Unit> = Result.success(Unit)
+
+        override fun enableAckNotifications(): Result<Unit> = Result.success(Unit)
+
+        override fun setClientDataListener(listener: GattClientCallbackPort?) = Unit
     }
 
     @Test

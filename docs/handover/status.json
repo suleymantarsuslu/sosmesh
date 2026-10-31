@@ -440,22 +440,29 @@
         "14"
       ],
       "deliverables": "apps/android/core-protocol, feature-relay; radio traces",
-      "pass_criteria": "A cihazında PEER_RECEIVED yalnızca B’nin doğrulanmış ack’ı üzerine görünür.",
-      "status": "NOT_STARTED",
-      "attempts": 0,
+      "pass_criteria": "A cihazında PEER_RECEIVED yalnızca B'nin doğrulanmış ack'ı üzerine görünür.",
+      "status": "PARTIAL",
+      "attempts": 1,
       "commit": null,
-      "evidence": [],
+      "evidence": [
+        "apps/android/core/protocol: BleChunkCodec, BleTransferSender/Receiver, GattBleTransferTransport, BleTransferEngine",
+        "AndroidGattClientPort/ServerPort: BluetoothGatt write/notify (stub oturum ADIM 14 üzerine)",
+        "feature-relay: RelayEnvelopeRegistrar (decrypt yok), dedup test",
+        "docs/tests/android-transfer.md JSONL trace şablonu",
+        "JVM: golden fixture byte-eşit, simüle ACK timeout/resume, PEER gate",
+        "Gerçek 2 cihaz transfer: NOT_TESTED"
+      ],
       "blockers": [],
-      "last_checked_at": null,
-      "goal": "A’dan B’ye şifreli SOS payload’ını eksiksiz taşı.",
+      "last_checked_at": "2026-10-31T22:00:00Z",
+      "goal": "A'dan B'ye şifreli SOS payload'ını eksiksiz taşı.",
       "cursor_tasks": [
-        "HELLO, chunk send/receive, CRC, SHA digest, ACK/timeout/backoff, resume akışını gerçek BLE’ye bağla.",
-        "Röle cihazına alınan envelope’u payload çözmeden outbox olarak kaydet.",
-        "Saat/tarih/sequence mismatch ve retry sırasında duplicate’leri silmeden dedup yap.",
-        "A ve B’de kabul ve radyo/izin hataları görünebilsin."
+        "HELLO, chunk send/receive, CRC, SHA digest, ACK/timeout/backoff, resume akışını gerçek BLE'ye bağla.",
+        "Röle cihazına alınan envelope'u payload çözmeden outbox olarak kaydet.",
+        "Saat/tarih/sequence mismatch ve retry sırasında duplicate'leri silmeden dedup yap.",
+        "A ve B'de kabul ve radyo/izin hataları görünebilsin."
       ],
       "verification_evidence": "2 Android arasında 20 test, Bluetooth kopunca yeniden, bozuk chunk ret; sha256 doğrulama.",
-      "risk_note": "",
+      "risk_note": "JVM/fake test gerçek BLE kanıtı değildir.",
       "gate_raw": "KAPI: HACKATHON / ÇEKİRDEK    •    BAĞIMLILIK: 9,10,13,14"
     },
     {

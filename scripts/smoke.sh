@@ -86,7 +86,7 @@ fi
 SMOKE_PG_STATE="/tmp/sosmesh-smoke-pg-$(node -p "require('crypto').randomUUID()").json"
 rm -f "$SMOKE_PG_STATE"
 echo "Starting embedded PostgreSQL for smoke..."
-node apps/api/test/helpers/hold-embedded.mjs "$SMOKE_PG_STATE" &
+flock -x /tmp/sosmesh-embedded-pg.lock node apps/api/test/helpers/hold-embedded.mjs "$SMOKE_PG_STATE" &
 SMOKE_PG_HELPER=$!
 for i in {1..180}; do
   if [ -f "$SMOKE_PG_STATE" ]; then

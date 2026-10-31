@@ -34,7 +34,8 @@ export async function startEmbeddedPostgres(): Promise<{
     fs.rmSync(statePath, { force: true });
   }
   const script = path.join(__dirname, 'hold-embedded.mjs');
-  const child = spawn('node', [script, statePath], {
+  const lockPath = path.join(os.tmpdir(), 'sosmesh-embedded-pg.lock');
+  const child = spawn('flock', ['-x', lockPath, 'node', script, statePath], {
     stdio: ['ignore', 'ignore', 'pipe'],
     detached: true,
   });

@@ -1,7 +1,6 @@
 import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
-import { openSync, closeSync, flockSync, constants } from 'node:fs';
 
 const statePath = process.argv[2];
 if (!statePath) {
@@ -37,10 +36,6 @@ async function bootOnce(attempt) {
   return { embedded, dataDir, port };
 }
 
-const lockPath = path.join(os.tmpdir(), 'sosmesh-embedded-pg.lock');
-const lockFd = openSync(lockPath, 'a');
-flockSync(lockFd, constants.LOCK_EX);
-
 let embedded;
 let dataDir;
 let port;
@@ -58,9 +53,6 @@ for (let attempt = 1; attempt <= 5; attempt += 1) {
     await new Promise((resolve) => setTimeout(resolve, attempt * 500));
   }
 }
-
-flockSync(lockFd, constants.LOCK_UN);
-closeSync(lockFd);
 
 if (lastError) {
   console.error(String(lastError));

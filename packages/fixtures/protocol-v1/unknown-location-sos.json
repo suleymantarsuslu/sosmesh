@@ -1,0 +1,13 @@
+{
+  "version": 1,
+  "id": "880e8400-e29b-41d4-a716-446655440003",
+  "envelope": {
+    "timestamp": "2026-10-29T19:00:00Z",
+    "locationStatus": "UNKNOWN",
+    "location": null,
+    "priority": 1,
+    "ackLevel": "DEVICE_STORED",
+    "relayCount": 0
+  },
+  "encryptedPayload": "ENCRYPTED_UNKNOWN_LOCATION_PAYLOAD=="
+}

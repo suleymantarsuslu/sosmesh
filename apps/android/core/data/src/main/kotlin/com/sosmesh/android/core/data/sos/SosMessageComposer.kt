@@ -6,6 +6,7 @@ import com.sosmesh.contracts.Crypto
 import com.sosmesh.contracts.CryptoConfig
 import com.sosmesh.contracts.Envelope
 import com.sosmesh.contracts.Location
+import com.sosmesh.contracts.LocationStatus
 import com.sosmesh.contracts.SosMessage
 import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
@@ -38,19 +39,28 @@ class SosMessageComposer(
         val isoTimestamp = instantToIso8601(Instant.ofEpochMilli(request.nowMs))
         val messageId = UUID.randomUUID().toString()
         val trimmedNote = request.note.trim().ifEmpty { null }
+        val locationStatus = locationStatusWire(request.location)
+
+        val innerLocation =
+            if (request.location.isKnown) {
+                val lat = requireNotNull(request.location.latitude) { "known location requires latitude" }
+                val lng = requireNotNull(request.location.longitude) { "known location requires longitude" }
+                SosInnerLocation(
+                    latitude = lat,
+                    longitude = lng,
+                    accuracy_meters = request.location.accuracyMeters,
+                    timestamp = isoTimestamp,
+                )
+            } else {
+                null
+            }
 
         val inner =
             SosInnerPayload(
                 sos_type = request.sosType.wireValue,
                 person_count = request.personCount,
                 note = trimmedNote,
-                location =
-                    SosInnerLocation(
-                        latitude = request.location.latitude,
-                        longitude = request.location.longitude,
-                        accuracy_meters = request.location.accuracyMeters,
-                        timestamp = isoTimestamp,
-                    ),
+                location = innerLocation,
                 language = normalizeLanguage(request.languageTag),
             )
         val innerBytes = json.encodeToString(inner).toByteArray(Charsets.UTF_8)
@@ -58,20 +68,28 @@ class SosMessageComposer(
         val envelopeMap =
             buildEnvelopeMap(
                 request.location,
+                locationStatus,
                 isoTimestamp,
             )
         val encrypted = Crypto.encryptPayload(innerBytes, envelopeMap, cryptoConfig)
         val encryptedPayloadString = json.encodeToString(encrypted)
 
+        val envelopeLocation =
+            if (request.location.isKnown) {
+                Location(
+                    latitude = requireNotNull(request.location.latitude),
+                    longitude = requireNotNull(request.location.longitude),
+                    accuracy = request.location.accuracyMeters,
+                )
+            } else {
+                null
+            }
+
         val envelope =
             Envelope(
                 timestamp = isoTimestamp,
-                location =
-                    Location(
-                        latitude = request.location.latitude,
-                        longitude = request.location.longitude,
-                        accuracy = request.location.accuracyMeters,
-                    ),
+                locationStatus = locationStatus,
+                location = envelopeLocation,
                 priority = 1,
                 ackLevel = "DEVICE_STORED",
                 relayCount = 0,
@@ -101,18 +119,35 @@ class SosMessageComposer(
         )
     }
 
+    private fun locationStatusWire(location: LocationSnapshot): String =
+        when (location.source) {
+            LocationSource.UNKNOWN -> LocationStatus.UNKNOWN
+            LocationSource.GPS -> LocationStatus.GPS
+            LocationSource.MANUAL -> LocationStatus.MANUAL
+        }
+
     private fun buildEnvelopeMap(
         location: LocationSnapshot,
+        locationStatus: String,
         isoTimestamp: String,
-    ): Map<String, Any> {
-        val locationMap =
-            linkedMapOf<String, Any>(
-                "latitude" to location.latitude,
-                "longitude" to location.longitude,
-            )
-        location.accuracyMeters?.let { locationMap["accuracy"] = it }
+    ): Map<String, Any?> {
+        val locationMap: Map<String, Any?>? =
+            if (location.isKnown) {
+                val lat = requireNotNull(location.latitude)
+                val lng = requireNotNull(location.longitude)
+                val map =
+                    linkedMapOf<String, Any?>(
+                        "latitude" to lat,
+                        "longitude" to lng,
+                    )
+                location.accuracyMeters?.let { map["accuracy"] = it }
+                map
+            } else {
+                null
+            }
         return mapOf(
             "timestamp" to isoTimestamp,
+            "locationStatus" to locationStatus,
             "location" to locationMap,
             "priority" to 1,
         )
@@ -129,6 +164,7 @@ class SosMessageComposer(
             Json {
                 prettyPrint = false
                 encodeDefaults = true
+                explicitNulls = true
                 ignoreUnknownKeys = false
             }
 

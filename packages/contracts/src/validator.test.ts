@@ -22,6 +22,50 @@ describe('SOS Message Validation', () => {
     expect(result.valid).toBe(true);
   });
 
+  it('should validate unknown-location SOS message without coordinates', () => {
+    const unknownSos = JSON.parse(
+      fs.readFileSync(path.join(fixturesDir, 'unknown-location-sos.json'), 'utf-8')
+    );
+    const result = validateSosMessage(unknownSos);
+    expect(result.valid).toBe(true);
+    expect(unknownSos.envelope.locationStatus).toBe('UNKNOWN');
+    expect(unknownSos.envelope.location).toBeNull();
+  });
+
+  it('should reject UNKNOWN locationStatus with Null Island coordinates', () => {
+    const nullIsland = {
+      version: 1,
+      id: '990e8400-e29b-41d4-a716-446655440004',
+      envelope: {
+        timestamp: '2026-10-29T20:00:00Z',
+        locationStatus: 'UNKNOWN',
+        location: { latitude: 0, longitude: 0 },
+        priority: 1,
+        ackLevel: 'DEVICE_STORED',
+      },
+      encryptedPayload: 'PAYLOAD',
+    };
+    const result = validateSosMessage(nullIsland);
+    expect(result.valid).toBe(false);
+  });
+
+  it('should reject GPS locationStatus without location object', () => {
+    const missingCoords = {
+      version: 1,
+      id: 'aa0e8400-e29b-41d4-a716-446655440005',
+      envelope: {
+        timestamp: '2026-10-29T20:30:00Z',
+        locationStatus: 'GPS',
+        location: null,
+        priority: 1,
+        ackLevel: 'DEVICE_STORED',
+      },
+      encryptedPayload: 'PAYLOAD',
+    };
+    const result = validateSosMessage(missingCoords);
+    expect(result.valid).toBe(false);
+  });
+
   it('should reject invalid message with missing field', () => {
     const invalidSos = JSON.parse(
       fs.readFileSync(path.join(fixturesDir, 'invalid-missing-field.json'), 'utf-8')

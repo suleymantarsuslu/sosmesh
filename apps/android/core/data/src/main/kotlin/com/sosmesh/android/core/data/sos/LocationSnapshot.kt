@@ -1,19 +1,50 @@
 package com.sosmesh.android.core.data.sos
 
+enum class LocationSource {
+    UNKNOWN,
+    GPS,
+    MANUAL,
+}
+
 data class LocationSnapshot(
-    val latitude: Double,
-    val longitude: Double,
-    val accuracyMeters: Double?,
-    val isKnown: Boolean,
+    val source: LocationSource,
+    val latitude: Double? = null,
+    val longitude: Double? = null,
+    val accuracyMeters: Double? = null,
 ) {
+    val isKnown: Boolean
+        get() = source != LocationSource.UNKNOWN
+
     companion object {
-        /** Synthetic placeholder when GPS unavailable (fixtures / privacy). */
         fun unknown(): LocationSnapshot =
             LocationSnapshot(
-                latitude = 0.0,
-                longitude = 0.0,
+                source = LocationSource.UNKNOWN,
+                latitude = null,
+                longitude = null,
                 accuracyMeters = null,
-                isKnown = false,
+            )
+
+        fun gps(
+            latitude: Double,
+            longitude: Double,
+            accuracyMeters: Double? = null,
+        ): LocationSnapshot =
+            LocationSnapshot(
+                source = LocationSource.GPS,
+                latitude = latitude,
+                longitude = longitude,
+                accuracyMeters = accuracyMeters,
+            )
+
+        fun manual(
+            latitude: Double,
+            longitude: Double,
+        ): LocationSnapshot =
+            LocationSnapshot(
+                source = LocationSource.MANUAL,
+                latitude = latitude,
+                longitude = longitude,
+                accuracyMeters = null,
             )
     }
 }

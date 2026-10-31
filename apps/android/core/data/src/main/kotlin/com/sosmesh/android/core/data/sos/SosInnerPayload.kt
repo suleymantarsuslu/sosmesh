@@ -7,7 +7,7 @@ data class SosInnerPayload(
     val sos_type: String,
     val person_count: Int? = null,
     val note: String? = null,
-    val location: SosInnerLocation,
+    val location: SosInnerLocation? = null,
     val language: String,
 )
 

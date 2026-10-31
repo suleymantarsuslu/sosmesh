@@ -141,7 +141,7 @@ class SosFormViewModel
                 val lat = state.manualLat.trim().toDoubleOrNull()
                 val lng = state.manualLng.trim().toDoubleOrNull()
                 if (lat != null && lng != null && lat in -90.0..90.0 && lng in -180.0..180.0) {
-                    return LocationSnapshot(lat, lng, accuracyMeters = null, isKnown = true)
+                    return LocationSnapshot.manual(lat, lng)
                 }
             }
             return state.gpsLocation

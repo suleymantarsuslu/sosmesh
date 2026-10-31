@@ -12,7 +12,9 @@ class SosMessageTest {
     private val json =
         Json {
             ignoreUnknownKeys = true
-            prettyPrint = false // Canonical output için compact
+            prettyPrint = false
+            explicitNulls = true
+            encodeDefaults = true
         }
     private val fixturesPath = "../fixtures/protocol-v1"
 
@@ -30,6 +32,17 @@ class SosMessageTest {
             }
             println("✓ Canonical JSON outputs written to build/canonical-json/")
         }
+    }
+
+    @Test
+    fun `test unknown location SOS message`() {
+        val content = File("$fixturesPath/unknown-location-sos.json").readText()
+        val message = json.decodeFromString<SosMessage>(content)
+        assertEquals(LocationStatus.UNKNOWN, message.envelope.locationStatus)
+        assertEquals(null, message.envelope.location)
+
+        val canonical = json.encodeToString(message)
+        canonicalOutputs["unknown-location-sos-kotlin"] = canonical
     }
 
     @Test

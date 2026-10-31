@@ -43,6 +43,20 @@ final class SosMessageTests: XCTestCase {
         }
     }
     
+    func testUnknownLocationSosMessage() throws {
+        let path = getFixturePath("unknown-location-sos.json")
+        let url = URL(fileURLWithPath: path)
+        let data = try Data(contentsOf: url)
+
+        let message = try decoder.decode(SosMessage.self, from: data)
+        XCTAssertEqual(message.envelope.locationStatus, .unknown)
+        XCTAssertNil(message.envelope.location)
+
+        encoder.outputFormatting = [.sortedKeys]
+        let canonical = try encoder.encode(message)
+        SosMessageTests.canonicalOutputs["unknown-location-sos-swift"] = canonical
+    }
+
     func testValidSosMessageDeserialization() throws {
         let path = getFixturePath("valid-sos.json")
         let url = URL(fileURLWithPath: path)

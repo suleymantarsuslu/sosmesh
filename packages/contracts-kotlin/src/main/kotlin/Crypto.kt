@@ -70,7 +70,7 @@ object Crypto {
      */
     fun encryptDeterministic(
         payload: ByteArray,
-        envelope: Map<String, Any>,
+        envelope: Map<String, Any?>,
         config: CryptoConfig,
         ephemeralPrivateKey: ByteArray,
         nonce: ByteArray,
@@ -121,7 +121,7 @@ object Crypto {
 
     fun encryptPayload(
         payload: ByteArray,
-        envelope: Map<String, Any>,
+        envelope: Map<String, Any?>,
         config: CryptoConfig,
     ): EncryptedPayload {
         // Generate random ephemeral key and nonce
@@ -144,7 +144,7 @@ object Crypto {
      */
     fun decryptPayload(
         encrypted: EncryptedPayload,
-        envelope: Map<String, Any>,
+        envelope: Map<String, Any?>,
         config: CryptoConfig,
     ): ByteArray {
         if (encrypted.keyId != config.keyId) {
@@ -226,7 +226,7 @@ object Crypto {
      * @return AAD bytes (UTF-8 encoded canonical JSON)
      */
     private fun createAAD(
-        envelope: Map<String, Any>,
+        envelope: Map<String, Any?>,
         keyId: String,
     ): ByteArray {
         // Manual canonical JSON construction (sorted keys)
@@ -247,12 +247,13 @@ object Crypto {
      * Recursively sort map keys for canonical JSON serialization.
      */
     @Suppress("UNCHECKED_CAST")
-    private fun sortKeys(obj: Any): Any {
+    private fun sortKeys(obj: Any?): Any? {
         return when (obj) {
+            null -> null
             is Map<*, *> -> {
-                (obj as Map<String, Any>).toSortedMap().mapValues { sortKeys(it.value) }
+                (obj as Map<String, Any?>).toSortedMap().mapValues { sortKeys(it.value) }
             }
-            is List<*> -> obj.map { sortKeys(it!!) }
+            is List<*> -> obj.map { sortKeys(it) }
             else -> obj
         }
     }
@@ -260,20 +261,21 @@ object Crypto {
     /**
      * Convert object to canonical JSON string.
      */
-    @Suppress("UNCHECKED_CAST")
-    private fun toCanonicalJson(obj: Any): String {
+    private fun toCanonicalJson(obj: Any?): String {
         return when (obj) {
+            null -> "null"
             is String -> "\"$obj\""
             is Number -> obj.toString()
             is Boolean -> obj.toString()
             is Map<*, *> -> {
-                val sorted = (obj as Map<String, Any>).toSortedMap()
+                @Suppress("UNCHECKED_CAST")
+                val sorted = (obj as Map<String, Any?>).toSortedMap()
                 sorted.entries.joinToString(",", "{", "}") { (k, v) ->
                     "\"$k\":${toCanonicalJson(v)}"
                 }
             }
             is List<*> -> {
-                obj.joinToString(",", "[", "]") { toCanonicalJson(it!!) }
+                obj.joinToString(",", "[", "]") { toCanonicalJson(it) }
             }
             else -> "null"
         }

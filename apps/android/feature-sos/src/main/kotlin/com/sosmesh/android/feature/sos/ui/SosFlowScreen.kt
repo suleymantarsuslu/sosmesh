@@ -299,7 +299,7 @@ private fun LocationPreview(state: SosFormUiState) {
             val lat = state.manualLat.trim().toDoubleOrNull()
             val lng = state.manualLng.trim().toDoubleOrNull()
             if (lat != null && lng != null) {
-                LocationSnapshot(lat, lng, null, isKnown = true)
+                LocationSnapshot.manual(lat, lng)
             } else {
                 LocationSnapshot.unknown()
             }

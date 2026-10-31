@@ -8,6 +8,7 @@ import {
 import { createHash } from 'node:crypto';
 
 import { PrismaService } from '../prisma/prisma.service';
+import { OperatorFeedService } from '../events/operator-feed.service';
 import { RELAY_ANOMALY_THRESHOLD, RELAY_ANOMALY_WINDOW_MS } from './ingest.constants';
 import type { IngestRequestDto, IngestResponseDto } from './dto/ingest-request.dto';
 import { parseEnvelopeGeo } from './envelope-location';
@@ -25,7 +26,8 @@ export class IngestService {
     private readonly prisma: PrismaService,
     private readonly packetService: IngestPacketService,
     private readonly rateLimit: IngestRateLimitService,
-    private readonly receiptSigner: ReceiptSignerService
+    private readonly receiptSigner: ReceiptSignerService,
+    private readonly operatorFeed: OperatorFeedService
   ) {}
 
   async processIngest(
@@ -170,6 +172,9 @@ export class IngestService {
         },
       });
 
+      return message;
+    }).then(async (message) => {
+      await this.operatorFeed.publishNewIncidentMessage(message);
       return message;
     });
   }

@@ -82,7 +82,14 @@ class RelayUploadExecutor
                     break
                 }
                 attempted++
-                when (val result = uplink.uploadEncryptedBlob(entry.encryptedBlobBase64)) {
+                when (
+                    val result =
+                        uplink.uploadOutboxEntry(
+                            entry.sosId,
+                            entry.digest,
+                            entry.encryptedBlobBase64,
+                        )
+                ) {
                     is RelayIngestResult.Success -> {
                         outbox.updateState(
                             entry.sosId,
@@ -93,6 +100,20 @@ class RelayUploadExecutor
                         )
                         hourlyBudget.recordSent(payloadBytes, nowMs)
                         uploaded++
+                    }
+                    is RelayIngestResult.InvalidReceipt -> {
+                        retryMs = nowMs + HTTP_ERROR_BACKOFF_MS
+                        outbox.setRetryAt(entry.sosId, entry.digest, retryMs, "invalid_receipt")
+                        break
+                    }
+                    is RelayIngestResult.MessageIdConflict -> {
+                        outbox.setRetryAt(
+                            entry.sosId,
+                            entry.digest,
+                            NEEDS_REVIEW_RETRY_AT_MS,
+                            "needs_review",
+                        )
+                        break
                     }
                     is RelayIngestResult.NoNetwork -> {
                         retryMs = nowMs + NO_NETWORK_BACKOFF_MS
@@ -124,5 +145,6 @@ class RelayUploadExecutor
             const val HOURLY_LIMIT_BACKOFF_MS = 300_000L
             const val HTTP_ERROR_BACKOFF_MS = 120_000L
             const val RATE_LIMIT_MAX_BACKOFF_MS = 900_000L
+            const val NEEDS_REVIEW_RETRY_AT_MS = 9_223_372_036_854_775L
         }
     }

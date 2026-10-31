@@ -92,6 +92,21 @@ class RelayUploadExecutorTest {
     }
 
     @Test
+    fun messageIdConflict_marksNeedsReviewWithoutDeletingOutbox() {
+        enqueueRelayBlob("conflict-1")
+        fakeUplink.nextResult = RelayIngestResult.MessageIdConflict
+        executor.runUploadCycle(
+            nowMs = 6_000L,
+            networkConnected = true,
+            battery = RelayBatterySnapshot(90, false),
+        )
+        val entry = adapter.getByKey("conflict-1", digestFor("conflict-1"))
+        assertNotNull(entry)
+        assertEquals("needs_review", entry!!.lastError)
+        assertEquals("LOCAL_SAVED", entry.state)
+    }
+
+    @Test
     fun http429_appliesBackoff() {
         enqueueRelayBlob("rate-1")
         fakeUplink.nextResult = RelayIngestResult.RateLimited(retryAfterMs = 120_000L)

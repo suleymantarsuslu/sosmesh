@@ -591,12 +591,19 @@
       ],
       "deliverables": "apps/api/sync + events; Android uplink adapters",
       "pass_criteria": "B internet alınca SOS tek kez panel feed’ine düşer.",
-      "status": "NOT_STARTED",
-      "attempts": 0,
+      "status": "PARTIAL",
+      "attempts": 1,
       "commit": null,
-      "evidence": [],
+      "evidence": [
+        "merge: cursor/sos-ingest-idempotency-ca96 + cursor/android-relay-battery-09d4 (verify.sh birleşik)",
+        "API: POST /v1/ingest/batch, GET /v1/operator/events (SSE Accept + ?after= polling), operator_feed_events",
+        "Android: HttpRelayIngestUplink (HttpURLConnection), Ed25519 receipt verify, 409 needs_review, 429 Retry-After, ağ restore upload trigger",
+        "FakeRelayIngestUplink yalnız test kaynak setinde; prod DI HttpRelayIngestUplink",
+        "apps/api/test/sync-events.spec.ts; JVM: ServerReceiptVerifierTest, RelayOfflineOnlineIntegrationTest, RelayUploadExecutorTest (409)",
+        "pnpm build/test; verify.sh; Android assembleDebug testDebugUnitTest lintDebug ktlintCheck EXIT=0"
+      ],
       "blockers": [],
-      "last_checked_at": null,
+      "last_checked_at": "2026-10-31T23:32:00Z",
       "goal": "Android relay’den veri toplayıp operatör paneline gecikmeden ulaştır.",
       "cursor_tasks": [
         "Batch upload endpoint, HTTP retry/429 davranışı, ağ restore tetikleme, server ack doğrulama.",

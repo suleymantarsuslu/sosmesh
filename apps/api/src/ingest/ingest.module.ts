@@ -1,5 +1,6 @@
 import { Module } from '@nestjs/common';
 
+import { EventsModule } from '../events/events.module';
 import { IngestController } from './ingest.controller';
 import { IngestPacketService } from './ingest-packet.service';
 import { IngestRateLimitService } from './ingest-rate-limit.service';
@@ -7,6 +8,7 @@ import { IngestService } from './ingest.service';
 import { ReceiptSignerService } from './receipt-signer.service';
 
 @Module({
+  imports: [EventsModule],
   controllers: [IngestController],
   providers: [
     IngestService,
@@ -14,5 +16,6 @@ import { ReceiptSignerService } from './receipt-signer.service';
     IngestRateLimitService,
     ReceiptSignerService,
   ],
+  exports: [IngestService, IngestPacketService],
 })
 export class IngestModule {}

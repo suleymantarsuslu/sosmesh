@@ -8,11 +8,29 @@ sealed class RelayIngestResult {
     data class RateLimited(val retryAfterMs: Long) : RelayIngestResult()
 
     data class HttpError(val code: Int, val message: String) : RelayIngestResult()
+
+    /** Same message_id already bound to a different packet hash (HTTP 409). */
+    data object MessageIdConflict : RelayIngestResult()
+
+    /** Receipt missing or Ed25519 verification failed — outbox must stay unchanged. */
+    data object InvalidReceipt : RelayIngestResult()
 }
 
+data class ServerAcceptedReceipt(
+    val ackType: String,
+    val messageId: String,
+    val packetHash: String,
+    val timestamp: String,
+    val signature: String,
+)
+
 /**
- * Uplink port for POST /v1/ingest. Production HTTP client is implemented in ADIM 18.
+ * Uplink port for POST /v1/ingest with ADIM 18 DTO semantics.
  */
 interface RelayIngestUplink {
-    fun uploadEncryptedBlob(encryptedBlobBase64: String): RelayIngestResult
+    fun uploadOutboxEntry(
+        sosId: String,
+        digest: String,
+        encryptedBlobBase64: String,
+    ): RelayIngestResult
 }

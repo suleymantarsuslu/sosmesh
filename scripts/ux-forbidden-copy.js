@@ -16,7 +16,11 @@ const FORBIDDEN_TR = [
   'yardım geliyor',
   'kurtarılacaksınız',
   'güvendesiniz',
-  'çözüldü'
+  'çözüldü',
+  'ekibe ulaştı',
+  'yardım yolda',
+  'kurtarma ekibi gördü',
+  'operatör okudu',
 ];
 
 const FORBIDDEN_EN = [
@@ -28,7 +32,8 @@ const FORBIDDEN_EN = [
   'resolved',
   'verified on real device',
   'real device verified',
-  'ble test passed on hardware'
+  'ble test passed on hardware',
+  'delivered to rescue',
 ];
 
 // Simülasyon sonucunu gerçek cihaz kanıtı gibi sunmayı yasakla (ADIM 11)
@@ -62,6 +67,21 @@ if (fs.existsSync(PROTOTYPES_DIR)) {
   
   FILES_TO_SCAN.push(...prototypeFiles);
 }
+
+function collectAndroidStringFiles(dir) {
+  if (!fs.existsSync(dir)) return;
+  for (const entry of fs.readdirSync(dir, { withFileTypes: true })) {
+    const full = path.join(dir, entry.name);
+    if (entry.isDirectory()) {
+      collectAndroidStringFiles(full);
+    } else if (entry.isFile() && entry.name === 'strings.xml') {
+      FILES_TO_SCAN.push(full);
+    }
+  }
+}
+
+collectAndroidStringFiles('apps/android/feature-sos/src/main/res');
+collectAndroidStringFiles('apps/android/feature-status/src/main/res');
 
 let violations = [];
 

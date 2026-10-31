@@ -523,7 +523,7 @@
       "pass_criteria": "Tek geçerli SOS tek kalıcı kayıt ve SERVER_ACCEPTED imzalı receipt üretir.",
       "status": "PASS",
       "attempts": 2,
-      "commit": "2d41f2e",
+      "commit": "1c01613",
       "evidence": [
         "ADR-011 envelope locationStatus (UNKNOWN/MANUAL/GPS) + ingest envelope-location.ts",
         "packet_hash column + MESSAGE_ID_CONFLICT (409) on hash mismatch",

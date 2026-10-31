@@ -484,7 +484,7 @@
       "pass_criteria": "İlk kez boş DB ile API başlar, tablo ilişkileri ve indexler doğru.",
       "status": "PARTIAL",
       "attempts": 1,
-      "commit": null,
+      "commit": "1aa936a",
       "evidence": [
         "apps/api embedded-postgres integration tests (5 senaryo)",
         "verify check-openapi",

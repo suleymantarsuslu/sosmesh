@@ -67,14 +67,14 @@ export function runPrismaMigrateDeploy(databaseUrl: string): void {
 }
 
 export function runMigrationDown(databaseUrl: string): void {
-  const downPath = path.join(
-    apiRoot,
-    'prisma',
-    'migrations',
-    '20261031180000_init',
-    'down.sql'
-  );
-  const sql = fs.readFileSync(downPath, 'utf8');
+  const migrationsDir = path.join(apiRoot, 'prisma', 'migrations');
+  const downFiles = fs
+    .readdirSync(migrationsDir)
+    .filter((name) => fs.existsSync(path.join(migrationsDir, name, 'down.sql')))
+    .sort()
+    .reverse()
+    .map((name) => path.join(migrationsDir, name, 'down.sql'));
+  const sql = downFiles.map((downPath) => fs.readFileSync(downPath, 'utf8')).join('\n\n');
   execSync(`npx prisma db execute --stdin --url "${databaseUrl}"`, {
     cwd: apiRoot,
     input: sql,

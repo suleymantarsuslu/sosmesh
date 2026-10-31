@@ -268,12 +268,21 @@ else
 fi
 
 # 23. Release build must not bundle dev-test SOS crypto
-echo "23/24: bash scripts/android-release-no-dev-crypto.sh"
+echo "23/25: bash scripts/android-release-no-dev-crypto.sh"
 if bash "$SCRIPT_DIR/android-release-no-dev-crypto.sh" > "$REPORTS_DIR/android-release-no-dev-crypto.log" 2>&1; then
   check_exit "android-release-no-dev-crypto" 0
 else
   EXIT_CODE=$?
   check_exit "android-release-no-dev-crypto" $EXIT_CODE
+fi
+
+# 24. Relay uplink must not derive relay id from ANDROID_ID
+echo "24/25: bash scripts/android-relay-no-android-id.sh"
+if bash "$SCRIPT_DIR/android-relay-no-android-id.sh" > "$REPORTS_DIR/android-relay-no-android-id.log" 2>&1; then
+  check_exit "android-relay-no-android-id" 0
+else
+  EXIT_CODE=$?
+  check_exit "android-relay-no-android-id" $EXIT_CODE
 fi
 
 # Summary

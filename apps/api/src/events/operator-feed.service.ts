@@ -1,7 +1,8 @@
 import { Injectable } from '@nestjs/common';
-import { LocationStatus, SosMessage } from '@prisma/client';
+import { LocationStatus, Prisma, SosMessage } from '@prisma/client';
 
 import { PrismaService } from '../prisma/prisma.service';
+import { OPERATOR_FEED_ADVISORY_LOCK_KEY } from './operator-feed.constants';
 
 export type OperatorFeedEventDto = {
   id: string;
@@ -18,9 +19,17 @@ export type OperatorFeedEventDto = {
 export class OperatorFeedService {
   constructor(private readonly prisma: PrismaService) {}
 
-  async publishNewIncidentMessage(message: SosMessage): Promise<OperatorFeedEventDto> {
+  /**
+   * Must run inside the same DB transaction as first SOS accept so feed failure rolls back
+   * the SOS row (client retry can safely re-attempt first accept).
+   */
+  async insertFirstAcceptInTransaction(
+    tx: Prisma.TransactionClient,
+    message: SosMessage
+  ): Promise<void> {
+    await tx.$executeRaw`SELECT pg_advisory_xact_lock(${OPERATOR_FEED_ADVISORY_LOCK_KEY}::bigint)`;
     const occurredAt = message.serverReceiptAt ?? message.receivedAt;
-    const row = await this.prisma.operatorFeedEvent.create({
+    await tx.operatorFeedEvent.create({
       data: {
         messageId: message.messageId,
         incidentId: message.incidentId,
@@ -31,7 +40,6 @@ export class OperatorFeedService {
         occurredAt,
       },
     });
-    return this.toDto(row);
   }
 
   async listAfter(afterSeq: bigint, limit: number): Promise<OperatorFeedEventDto[]> {

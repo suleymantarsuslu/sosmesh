@@ -13,10 +13,15 @@ API_PGID=""
 WEB_PGID=""
 SMOKE_PG_HELPER=""
 SMOKE_PG_STATE=""
+SMOKE_DB_MODE=""
 
 cleanup() {
   echo ""
   echo "Cleaning up processes..."
+
+  if [ "$SMOKE_DB_MODE" = "ci" ] && [ -n "$SMOKE_PG_STATE" ]; then
+    node apps/api/test/helpers/smoke-ci-db.mjs drop "$SMOKE_PG_STATE" || true
+  fi
   
   if [ -n "$SMOKE_PG_HELPER" ]; then
     node apps/api/test/helpers/stop-embedded.mjs "$SMOKE_PG_STATE" 2>/dev/null || true
@@ -82,32 +87,69 @@ if [ ! -d "apps/web/.next" ]; then
   exit 1
 fi
 
-# Start embedded PostgreSQL for API smoke (no Docker on CI runner)
-SMOKE_PG_STATE="/tmp/sosmesh-smoke-pg-$(node -p "require('crypto').randomUUID()").json"
+# Provision PostgreSQL for API smoke (CI shared PG or embedded fallback)
+SMOKE_PG_STATE=$(mktemp /tmp/sosmesh-smoke-pg-XXXXXX.json)
 rm -f "$SMOKE_PG_STATE"
-echo "Starting embedded PostgreSQL for smoke..."
-node apps/api/test/helpers/hold-embedded.mjs "$SMOKE_PG_STATE" &
-SMOKE_PG_HELPER=$!
-for i in {1..180}; do
-  if [ -f "$SMOKE_PG_STATE" ]; then
-    break
+
+write_smoke_env_from_state() {
+  node <<'NODE'
+const fs = require('node:fs');
+const statePath = process.env.SMOKE_PG_STATE;
+const jwtKey = 'JWT' + '_SECRET';
+const state = JSON.parse(fs.readFileSync(statePath, 'utf8'));
+const lines = [
+  `${jwtKey}=${JSON.stringify(process.env[jwtKey] || 'smoke-local-jwt-minimum-16chars')}`,
+  `DATABASE_URL=${JSON.stringify(state.databaseUrl)}`,
+];
+fs.writeFileSync('/tmp/sosmesh-smoke.env', lines.join('\n'));
+NODE
+}
+
+if [ -n "${SOSMESH_CI_PG_ADMIN_URL:-}" ] && [ -n "${SOSMESH_CI_DATABASE_URL:-}" ]; then
+  echo "Provisioning CI PostgreSQL for smoke..."
+  if ! node apps/api/test/helpers/smoke-ci-db.mjs create "$SMOKE_PG_STATE"; then
+    echo "❌ CI PostgreSQL provisioning failed for smoke"
+    exit 1
   fi
-  sleep 1
-done
-if [ ! -f "$SMOKE_PG_STATE" ]; then
-  echo "❌ Embedded PostgreSQL failed to start for smoke"
-  kill "$SMOKE_PG_HELPER" 2>/dev/null || true
+  SMOKE_DB_MODE=ci
+elif [ -n "${SOSMESH_CI_PG_ADMIN_URL:-}" ] || [ -n "${SOSMESH_CI_DATABASE_URL:-}" ]; then
+  echo "❌ SOSMESH_CI_PG_ADMIN_URL and SOSMESH_CI_DATABASE_URL must both be set"
   exit 1
+else
+  echo "Starting embedded PostgreSQL for smoke..."
+  node apps/api/test/helpers/hold-embedded.mjs "$SMOKE_PG_STATE" &
+  SMOKE_PG_HELPER=$!
+  for i in {1..180}; do
+    if [ -f "$SMOKE_PG_STATE" ]; then
+      break
+    fi
+    if ! kill -0 "$SMOKE_PG_HELPER" 2>/dev/null; then
+      echo "❌ Embedded PostgreSQL failed to start for smoke"
+      exit 1
+    fi
+    sleep 1
+  done
+  if [ ! -f "$SMOKE_PG_STATE" ]; then
+    echo "❌ Embedded PostgreSQL failed to start for smoke"
+    kill "$SMOKE_PG_HELPER" 2>/dev/null || true
+    exit 1
+  fi
+  SMOKE_DB_MODE=embedded
 fi
-SMOKE_DATABASE_URL=$(node -p "JSON.parse(require('fs').readFileSync('$SMOKE_PG_STATE','utf8')).databaseUrl")
-node -e "const fs=require('fs');const jwtKey='JWT'+'_SECRET';const url=JSON.parse(fs.readFileSync('$SMOKE_PG_STATE','utf8')).databaseUrl;const lines=[jwtKey+'='+JSON.stringify(process.env[jwtKey]||'smoke-local-jwt-minimum-16chars'),'DATABASE_URL='+JSON.stringify(url)];fs.writeFileSync('/tmp/sosmesh-smoke.env',lines.join('\\n'));"
+
+export SMOKE_PG_STATE
+write_smoke_env_from_state
 set -a
 # shellcheck disable=SC1091
 . /tmp/sosmesh-smoke.env
 set +a
-export DATABASE_URL="$SMOKE_DATABASE_URL"
+export DATABASE_URL
 echo "Applying API migrations for smoke..."
-(cd apps/api && npx prisma migrate deploy > /tmp/sosmesh-smoke-migrate.log 2>&1)
+if ! (cd apps/api && npx prisma migrate deploy > /tmp/sosmesh-smoke-migrate.log 2>&1); then
+  echo "❌ API migrations failed for smoke"
+  cat /tmp/sosmesh-smoke-migrate.log
+  exit 1
+fi
 
 # Start API in its own process group
 echo "Starting API on port $API_PORT..."

@@ -7,20 +7,37 @@ if (!statePath) {
   process.exit(1);
 }
 
-const { default: EmbeddedPostgres } = await import('embedded-postgres');
+async function bootOnce() {
+  const { default: EmbeddedPostgres } = await import('embedded-postgres');
+  const dataDir = fs.mkdtempSync(path.join(os.tmpdir(), 'sosmesh-pg-'));
+  const port = 15432 + Math.floor(Math.random() * 8000);
+  const embedded = new EmbeddedPostgres({
+    databaseDir: dataDir,
+    user: 'postgres',
+    password: 'postgres',
+    port,
+    persistent: false,
+  });
+  await embedded.initialise();
+  await embedded.start();
+  return { embedded, dataDir, port };
+}
 
-const dataDir = fs.mkdtempSync(path.join(os.tmpdir(), 'sosmesh-pg-'));
-const port = 15432 + Math.floor(Math.random() * 1000);
-const embedded = new EmbeddedPostgres({
-  databaseDir: dataDir,
-  user: 'postgres',
-  password: 'postgres',
-  port,
-  persistent: false,
-});
+let embedded;
+let dataDir;
+let port;
 
-await embedded.initialise();
-await embedded.start();
+try {
+  ({ embedded, dataDir, port } = await bootOnce());
+} catch (firstError) {
+  try {
+    ({ embedded, dataDir, port } = await bootOnce());
+  } catch (secondError) {
+    console.error(String(firstError));
+    console.error(String(secondError));
+    process.exit(1);
+  }
+}
 
 const databaseUrl = `postgresql://postgres:postgres@127.0.0.1:${port}/postgres`;
 fs.writeFileSync(

@@ -83,7 +83,7 @@ if [ ! -d "apps/web/.next" ]; then
 fi
 
 # Start embedded PostgreSQL for API smoke (no Docker on CI runner)
-SMOKE_PG_STATE="/tmp/sosmesh-smoke-pg.json"
+SMOKE_PG_STATE="/tmp/sosmesh-smoke-pg-$(node -p "require('crypto').randomUUID()").json"
 rm -f "$SMOKE_PG_STATE"
 echo "Starting embedded PostgreSQL for smoke..."
 node apps/api/test/helpers/hold-embedded.mjs "$SMOKE_PG_STATE" &

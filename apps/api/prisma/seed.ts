@@ -14,10 +14,10 @@ async function main() {
   });
 
   await prisma.user.upsert({
-    where: { email: 'operator-demo@sosmesh.invalid' },
+    where: { email: 'operator-demo@sosmesh.example' },
     update: {},
     create: {
-      email: 'operator-demo@sosmesh.invalid',
+      email: 'operator-demo@sosmesh.example',
       displayName: 'Demo Operator',
       role: 'OPERATOR',
       teamId: team.id,

@@ -2,13 +2,14 @@ import { execSync, spawn, spawnSync } from 'node:child_process';
 import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
+import { randomUUID } from 'node:crypto';
 
-const statePath = path.join(os.tmpdir(), 'sosmesh-pg-state.json');
+const apiRoot = path.join(__dirname, '..', '..');
 
-async function waitForState(timeoutMs = 120000): Promise<{
-  databaseUrl: string;
-  port: number;
-}> {
+async function waitForState(
+  statePath: string,
+  timeoutMs = 180000
+): Promise<{ databaseUrl: string; port: number }> {
   const started = Date.now();
   while (Date.now() - started < timeoutMs) {
     if (fs.existsSync(statePath)) {
@@ -18,7 +19,7 @@ async function waitForState(timeoutMs = 120000): Promise<{
         return parsed;
       }
     }
-    await new Promise((resolve) => setTimeout(resolve, 200));
+    await new Promise((resolve) => setTimeout(resolve, 250));
   }
   throw new Error('Timed out waiting for embedded Postgres');
 }
@@ -26,7 +27,9 @@ async function waitForState(timeoutMs = 120000): Promise<{
 export async function startEmbeddedPostgres(): Promise<{
   databaseUrl: string;
   port: number;
+  statePath: string;
 }> {
+  const statePath = path.join(os.tmpdir(), `sosmesh-pg-${randomUUID()}.json`);
   if (fs.existsSync(statePath)) {
     fs.rmSync(statePath, { force: true });
   }
@@ -39,16 +42,15 @@ export async function startEmbeddedPostgres(): Promise<{
     process.stderr.write(chunk);
   });
   child.unref();
-  return waitForState();
+  const started = await waitForState(statePath);
+  return { ...started, statePath };
 }
 
-export async function stopEmbeddedPostgres(): Promise<void> {
+export async function stopEmbeddedPostgres(statePath: string): Promise<void> {
   const script = path.join(__dirname, 'stop-embedded.mjs');
   spawnSync('node', [script, statePath], { stdio: 'ignore' });
   await new Promise((resolve) => setTimeout(resolve, 500));
 }
-
-const apiRoot = path.join(__dirname, '..', '..');
 
 export function runPrismaMigrateDeploy(databaseUrl: string): void {
   execSync('npx prisma migrate deploy', {

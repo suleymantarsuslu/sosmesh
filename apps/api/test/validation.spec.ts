@@ -1,13 +1,11 @@
 import { INestApplication } from '@nestjs/common';
 import { IncidentState } from '@prisma/client';
-import * as jwt from 'jsonwebtoken';
 import request from 'supertest';
 
 import { PrismaService } from '../src/prisma/prisma.service';
 import { getTestDatabaseUrl } from './helpers/database-url';
+import { operatorBearerToken } from './helpers/operator-auth';
 import { createTestApp } from './helpers/test-app';
-
-const TEST_JWT_SECRET = 'test-jwt-secret-minimum-16';
 
 describe('Operator DTO validation', () => {
   let app: INestApplication;
@@ -27,7 +25,7 @@ describe('Operator DTO validation', () => {
   });
 
   it('returns 400 VALIDATION_ERROR for invalid message body', async () => {
-    const token = jwt.sign({ sub: 'operator-test', role: 'OPERATOR' }, TEST_JWT_SECRET);
+    const token = operatorBearerToken();
     const response = await request(app.getHttpServer())
       .post('/v1/operator/messages')
       .set('Authorization', `Bearer ${token}`)

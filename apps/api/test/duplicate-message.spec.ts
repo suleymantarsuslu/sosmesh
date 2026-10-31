@@ -1,13 +1,11 @@
 import { INestApplication } from '@nestjs/common';
 import { IncidentState } from '@prisma/client';
-import * as jwt from 'jsonwebtoken';
 import request from 'supertest';
 
 import { PrismaService } from '../src/prisma/prisma.service';
 import { getTestDatabaseUrl } from './helpers/database-url';
+import { operatorBearerToken } from './helpers/operator-auth';
 import { createTestApp } from './helpers/test-app';
-
-const TEST_JWT_SECRET = 'test-jwt-secret-minimum-16';
 
 describe('Duplicate message_id conflict', () => {
   let app: INestApplication;
@@ -28,7 +26,7 @@ describe('Duplicate message_id conflict', () => {
   });
 
   it('returns 409 DUPLICATE_MESSAGE_ID on second insert with same message_id', async () => {
-    const token = jwt.sign({ sub: 'operator-test', role: 'OPERATOR' }, TEST_JWT_SECRET);
+    const token = operatorBearerToken();
     const payload = {
       messageId,
       incidentId,

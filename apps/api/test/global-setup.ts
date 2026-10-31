@@ -8,5 +8,12 @@ const envFile = path.join(__dirname, '.embedded-pg-env.json');
 export default async function globalSetup(): Promise<void> {
   const started = await startEmbeddedPostgres();
   runPrismaMigrateDeploy(started.databaseUrl);
-  fs.writeFileSync(envFile, JSON.stringify(started), 'utf8');
+  fs.writeFileSync(
+    envFile,
+    JSON.stringify({
+      databaseUrl: started.databaseUrl,
+      statePath: started.statePath,
+    }),
+    'utf8'
+  );
 }

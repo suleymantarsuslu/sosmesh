@@ -10,7 +10,7 @@ const AxeBuilder = require('@axe-core/playwright').default;
 const { test, expect } = require('@playwright/test');
 
 // Artifact directory
-const ARTIFACTS_DIR = '/opt/cursor/artifacts/adim04';
+const ARTIFACTS_DIR = path.join(process.cwd(), 'test-artifacts');
 
 test.beforeAll(async () => {
   if (!fs.existsSync(ARTIFACTS_DIR)) {

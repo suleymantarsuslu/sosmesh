@@ -90,9 +90,13 @@ class SosMessageTest {
     @Test
     fun `test invalid timestamp fails`() {
         val content = File("$fixturesPath/invalid-bad-timestamp.json").readText()
-        // Kotlin kotlinx.serialization does not validate ISO8601 format strictly
-        // but we parse successfully and document this behavior difference
         val message = json.decodeFromString<SosMessage>(content)
-        assertNotNull(message)
+        assertEquals("NOT_A_VALID_TIMESTAMP", message.envelope.timestamp)
+        val ex =
+            assertThrows(IllegalArgumentException::class.java) {
+                SosEnvelopeRules.validateTimestamp(message.envelope.timestamp)
+            }
+        assertTrue(ex.message!!.contains("timestamp"))
+        assertTrue(ex.message!!.contains("NOT_A_VALID_TIMESTAMP"))
     }
 }

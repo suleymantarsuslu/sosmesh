@@ -1,13 +1,8 @@
 #!/usr/bin/env bash
-# Fail if SOS GPS coordinates or note bodies appear in Android log calls.
+# Fail if SOS modules call Log/Timber (PII risk). Uses git grep (always available in CI).
 set -euo pipefail
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 cd "$ROOT"
-
-if ! command -v rg >/dev/null 2>&1; then
-  echo "Android SOS privacy log scan: ripgrep (rg) is required but not installed"
-  exit 1
-fi
 
 PATTERN='(Log\.|Timber\.|android\.util\.Log)'
 SEARCH_PATHS=(
@@ -17,11 +12,11 @@ SEARCH_PATHS=(
 )
 
 set +e
-MATCHES="$(rg -n "$PATTERN" "${SEARCH_PATHS[@]}")"
-RG_EXIT=$?
+MATCHES="$(git grep -n -E "$PATTERN" -- "${SEARCH_PATHS[@]}")"
+GIT_EXIT=$?
 set -e
 
-case "$RG_EXIT" in
+case "$GIT_EXIT" in
   0)
     echo "Android SOS modules must not call Log/Timber (PII risk):"
     echo "$MATCHES"
@@ -32,7 +27,8 @@ case "$RG_EXIT" in
     exit 0
     ;;
   *)
-    echo "Android SOS privacy log scan: rg failed with exit $RG_EXIT"
+    echo "Android SOS privacy log scan: git grep failed with exit $GIT_EXIT"
+    echo "$MATCHES"
     exit 1
     ;;
 esac

@@ -81,6 +81,8 @@ describe('SOS Message Validation', () => {
     );
     const result = validateSosMessage(invalidTimestamp);
     expect(result.valid).toBe(false);
+    expect(result.errors).toMatch(/\/envelope\/timestamp/);
+    expect(result.errors).toMatch(/date-time/);
   });
 
   it('should serialize and deserialize maintaining structure', () => {

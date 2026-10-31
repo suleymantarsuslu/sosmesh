@@ -17,9 +17,9 @@ export class ReceiptSignerService implements OnModuleInit {
     this.privateKey = createPrivateKey({ key: der, format: 'der', type: 'pkcs8' });
   }
 
-  signServerAccepted(messageId: string, timestamp: Date): string {
+  signServerAccepted(messageId: string, packetHash: string, timestamp: Date): string {
     const payload = Buffer.from(
-      `SERVER_ACCEPTED|${messageId}|${timestamp.toISOString()}`,
+      `SERVER_ACCEPTED|${messageId}|${packetHash}|${timestamp.toISOString()}`,
       'utf8'
     );
     return sign(null, payload, this.privateKey).toString('base64');

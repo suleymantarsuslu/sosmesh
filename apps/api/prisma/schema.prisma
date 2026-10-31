@@ -81,6 +81,7 @@ model SosMessage {
   receivedAt          DateTime       @default(now()) @map("received_at")
   serverReceiptAt     DateTime?      @map("server_receipt_at")
   needsHumanReview    Boolean        @default(false) @map("needs_human_review")
+  packetHash          String?        @map("packet_hash") @db.VarChar(64)
   createdAt           DateTime       @default(now()) @map("created_at")
   updatedAt           DateTime       @updatedAt @map("updated_at")
   messageEvents       MessageEvent[]

@@ -15,7 +15,28 @@ export type BuildIngestOptions = {
   hopCount?: number;
   ttlSeconds?: number;
   mutate?: (message: Record<string, unknown>) => void;
+  envelopeProfile?: 'gps' | 'unknown' | 'manual';
 };
+
+function applyEnvelopeProfile(
+  base: Record<string, unknown>,
+  profile: BuildIngestOptions['envelopeProfile']
+): void {
+  const envelope = base.envelope as Record<string, unknown>;
+  if (profile === 'unknown') {
+    envelope.locationStatus = 'UNKNOWN';
+    envelope.location = null;
+    return;
+  }
+  if (profile === 'manual') {
+    envelope.locationStatus = 'MANUAL';
+    envelope.location = {
+      latitude: 41.015137,
+      longitude: 28.97953,
+      accuracy: 25,
+    };
+  }
+}
 
 export function buildValidIngestRequest(
   options: BuildIngestOptions = {}
@@ -26,6 +47,7 @@ export function buildValidIngestRequest(
   base.id = messageId;
   const envelope = base.envelope as Record<string, unknown>;
   envelope.timestamp = new Date(Date.now() - 30_000).toISOString();
+  applyEnvelopeProfile(base, options.envelopeProfile);
   if (options.mutate) {
     options.mutate(base);
   }

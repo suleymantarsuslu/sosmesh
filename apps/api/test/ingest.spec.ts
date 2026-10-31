@@ -18,6 +18,7 @@ import { createTestApp } from './helpers/test-app';
 function verifyReceiptSignature(receipt: {
   ackType: string;
   messageId: string;
+  packetHash: string;
   timestamp: string;
   signature: string;
 }): boolean {
@@ -28,7 +29,7 @@ function verifyReceiptSignature(receipt: {
   });
   const publicKey = createPublicKey(privateKey);
   const payload = Buffer.from(
-    `${receipt.ackType}|${receipt.messageId}|${receipt.timestamp}`,
+    `${receipt.ackType}|${receipt.messageId}|${receipt.packetHash}|${receipt.timestamp}`,
     'utf8'
   );
   return verify(
@@ -59,6 +60,7 @@ describe('POST /v1/ingest', () => {
     expect(response.status).toBe(200);
     expect(response.body.receipt.ackType).toBe('SERVER_ACCEPTED');
     expect(response.body.receipt.messageId).toBe(body.sosMessage.id);
+    expect(response.body.receipt.packetHash).toBe(body.transport.packetHash);
     expect(verifyReceiptSignature(response.body.receipt)).toBe(true);
     expect(JSON.stringify(response.body)).not.toMatch(/ENCRYPTED_TEST/i);
   });
@@ -90,9 +92,16 @@ describe('POST /v1/ingest', () => {
   it('stores one sos row and multiple relay receipts for different relays', async () => {
     const messageId = '44444444-4444-4444-8444-444444444444';
     const relays = ['01', '02', '03'].map((suffix) => relayIdFromSuffix(suffix));
+    const baseBody = buildValidIngestRequest({ messageId });
 
     for (const relayId of relays) {
-      const body = buildValidIngestRequest({ messageId, relayId });
+      const body = {
+        ...baseBody,
+        relayInfo: {
+          ...baseBody.relayInfo,
+          relayId,
+        },
+      };
       const response = await request(app.getHttpServer()).post('/v1/ingest').send(body);
       expect(response.status).toBe(200);
     }
@@ -202,6 +211,66 @@ describe('POST /v1/ingest', () => {
 
     const prisma = app.get(PrismaService);
     expect(await prisma.sosMessage.count({ where: { messageId } })).toBe(1);
+  });
+
+  it('stores UNKNOWN envelope location without coordinates', async () => {
+    const messageId = '10101010-1010-4101-8101-101010101010';
+    const body = buildValidIngestRequest({
+      messageId,
+      envelopeProfile: 'unknown',
+    });
+    const response = await request(app.getHttpServer()).post('/v1/ingest').send(body);
+    expect(response.status).toBe(200);
+
+    const prisma = app.get(PrismaService);
+    const row = await prisma.sosMessage.findUnique({ where: { messageId } });
+    expect(row?.locationStatus).toBe('UNKNOWN');
+    expect(row?.latitude).toBeNull();
+    expect(row?.longitude).toBeNull();
+  });
+
+  it('stores MANUAL envelope locationStatus from envelope', async () => {
+    const messageId = '12121212-1212-4121-8121-121212121212';
+    const body = buildValidIngestRequest({
+      messageId,
+      envelopeProfile: 'manual',
+    });
+    const response = await request(app.getHttpServer()).post('/v1/ingest').send(body);
+    expect(response.status).toBe(200);
+
+    const prisma = app.get(PrismaService);
+    const row = await prisma.sosMessage.findUnique({ where: { messageId } });
+    expect(row?.locationStatus).toBe('MANUAL');
+    expect(row?.latitude).not.toBeNull();
+    expect(row?.longitude).not.toBeNull();
+  });
+
+  it('returns 409 MESSAGE_ID_CONFLICT when message_id repeats with a different packet hash', async () => {
+    const messageId = '13131313-1313-4131-8131-131313131313';
+    const first = buildValidIngestRequest({ messageId });
+    const firstResponse = await request(app.getHttpServer()).post('/v1/ingest').send(first);
+    expect(firstResponse.status).toBe(200);
+    const originalHash = first.transport.packetHash;
+
+    const conflicting = buildValidIngestRequest({
+      messageId,
+      mutate: (message) => {
+        message.encryptedPayload = 'DIFFERENT_OPAQUE_PAYLOAD_BASE64==';
+      },
+    });
+    const conflictResponse = await request(app.getHttpServer())
+      .post('/v1/ingest')
+      .send(conflicting);
+
+    expect(conflictResponse.status).toBe(409);
+    expect(conflictResponse.body.code).toBe('MESSAGE_ID_CONFLICT');
+    expect(JSON.stringify(conflictResponse.body.message)).not.toMatch(/9334|ENCRYPTED/i);
+
+    const prisma = app.get(PrismaService);
+    expect(await prisma.sosMessage.count({ where: { messageId } })).toBe(1);
+    const row = await prisma.sosMessage.findUnique({ where: { messageId } });
+    expect(row?.packetHash).toBe(originalHash);
+    expect(row?.needsHumanReview).toBe(true);
   });
 
   it('fails verification when receipt signature is corrupted', async () => {

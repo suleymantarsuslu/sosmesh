@@ -59,6 +59,7 @@ export class IngestRequestDto {
 export class IngestReceiptDto {
   ackType!: 'SERVER_ACCEPTED';
   messageId!: string;
+  packetHash!: string;
   timestamp!: string;
   signature!: string;
 }

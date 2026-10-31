@@ -1,8 +1,7 @@
-import { Injectable } from '@nestjs/common';
+import { ConflictException, Injectable } from '@nestjs/common';
 import {
   DeliveryState,
   IncidentState,
-  LocationStatus,
   Prisma,
   SosMessage,
 } from '@prisma/client';
@@ -11,6 +10,7 @@ import { createHash } from 'node:crypto';
 import { PrismaService } from '../prisma/prisma.service';
 import { RELAY_ANOMALY_THRESHOLD, RELAY_ANOMALY_WINDOW_MS } from './ingest.constants';
 import type { IngestRequestDto, IngestResponseDto } from './dto/ingest-request.dto';
+import { parseEnvelopeGeo } from './envelope-location';
 import { IngestPacketService } from './ingest-packet.service';
 import { IngestRateLimitService } from './ingest-rate-limit.service';
 import { ReceiptSignerService } from './receipt-signer.service';
@@ -36,17 +36,25 @@ export class IngestService {
     this.rateLimit.assertAllowed(clientKey);
     this.packetService.assertWithinSizeLimit(rawBodyBytes);
     const { messageId, sosMessage } = this.packetService.validateRequest(dto);
+    const packetHash = dto.transport.packetHash;
 
     const existing = await this.prisma.sosMessage.findUnique({
       where: { messageId },
     });
     if (existing) {
+      await this.ensureSamePacketHash(existing, packetHash, dto);
       await this.recordRelayReceipt(existing.id, dto);
       return this.buildReceipt(existing);
     }
 
     try {
-      const created = await this.createFirstAccept(messageId, sosMessage, dto, clientKey);
+      const created = await this.createFirstAccept(
+        messageId,
+        sosMessage,
+        dto,
+        clientKey,
+        packetHash
+      );
       return this.buildReceipt(created);
     } catch (error) {
       if (
@@ -59,6 +67,7 @@ export class IngestService {
         if (!raced) {
           throw error;
         }
+        await this.ensureSamePacketHash(raced, packetHash, dto);
         await this.recordRelayReceipt(raced.id, dto);
         return this.buildReceipt(raced);
       }
@@ -66,15 +75,36 @@ export class IngestService {
     }
   }
 
+  private async ensureSamePacketHash(
+    existing: SosMessage,
+    packetHash: string,
+    dto: IngestRequestDto
+  ): Promise<void> {
+    if (existing.packetHash === packetHash) {
+      return;
+    }
+    await this.recordMessageIdConflict(existing, dto);
+    throw new ConflictException({
+      code: 'MESSAGE_ID_CONFLICT',
+      message: 'message_id is already bound to a different packet hash',
+    });
+  }
+
   private buildReceipt(message: SosMessage): IngestResponseDto {
     const timestamp = message.serverReceiptAt ?? message.receivedAt;
+    const packetHash = message.packetHash;
+    if (!packetHash) {
+      throw new Error('Stored SOS message is missing packet_hash for receipt signing');
+    }
     return {
       receipt: {
         ackType: 'SERVER_ACCEPTED',
         messageId: message.messageId,
+        packetHash,
         timestamp: timestamp.toISOString(),
         signature: this.receiptSigner.signServerAccepted(
           message.messageId,
+          packetHash,
           timestamp
         ),
       },
@@ -85,10 +115,11 @@ export class IngestService {
     messageId: string,
     sosMessage: Record<string, unknown>,
     dto: IngestRequestDto,
-    clientKey: string
+    clientKey: string,
+    packetHash: string
   ): Promise<SosMessage> {
     const envelope = sosMessage.envelope as Record<string, unknown>;
-    const location = envelope.location as Record<string, unknown>;
+    const geo = parseEnvelopeGeo(envelope);
     const priority = typeof envelope.priority === 'number' ? envelope.priority : 3;
     const encryptedPayload = String(sosMessage.encryptedPayload ?? '');
     const payloadRef = createHash('sha256').update(encryptedPayload, 'utf8').digest('hex');
@@ -105,13 +136,13 @@ export class IngestService {
           messageId,
           incidentId: incident.id,
           deliveryState: DeliveryState.SERVER_ACCEPTED,
-          locationStatus: LocationStatus.GPS,
-          latitude: new Prisma.Decimal(String(location.latitude)),
-          longitude: new Prisma.Decimal(String(location.longitude)),
-          accuracyMeters:
-            typeof location.accuracy === 'number' ? location.accuracy : undefined,
+          locationStatus: geo.locationStatus,
+          latitude: geo.latitude,
+          longitude: geo.longitude,
+          accuracyMeters: geo.accuracyMeters,
           priority,
           encryptedPayloadRef: payloadRef,
+          packetHash,
           serverReceiptAt: receiptAt,
           needsHumanReview,
         },
@@ -135,7 +166,7 @@ export class IngestService {
           sosMessageId: message.id,
           relayId: dto.relayInfo.relayId,
           hopCount: dto.relayInfo.hopCount,
-          receiptHash: dto.transport.packetHash,
+          receiptHash: packetHash,
         },
       });
 
@@ -143,10 +174,35 @@ export class IngestService {
     });
   }
 
+  private async recordMessageIdConflict(
+    existing: SosMessage,
+    dto: IngestRequestDto
+  ): Promise<void> {
+    await this.prisma.$transaction([
+      this.prisma.sosMessage.update({
+        where: { id: existing.id },
+        data: { needsHumanReview: true },
+      }),
+      this.prisma.messageEvent.create({
+        data: {
+          sosMessageId: existing.id,
+          deliveryState: existing.deliveryState,
+          source: 'ingest',
+          metadataJson: {
+            anomaly: 'MESSAGE_ID_CONFLICT',
+            relayId: dto.relayInfo.relayId,
+            hopCount: dto.relayInfo.hopCount,
+          },
+        },
+      }),
+    ]);
+  }
+
   private async recordRelayReceipt(
     sosMessageId: string,
     dto: IngestRequestDto
   ): Promise<void> {
+    const packetHash = dto.transport.packetHash;
     await this.prisma.relayReceipt.upsert({
       where: {
         sosMessageId_relayId: {
@@ -158,11 +214,11 @@ export class IngestService {
         sosMessageId,
         relayId: dto.relayInfo.relayId,
         hopCount: dto.relayInfo.hopCount,
-        receiptHash: dto.transport.packetHash,
+        receiptHash: packetHash,
       },
       update: {
         hopCount: dto.relayInfo.hopCount,
-        receiptHash: dto.transport.packetHash,
+        receiptHash: packetHash,
       },
     });
   }

@@ -210,7 +210,7 @@ jobs:
             -destination 'platform=iOS Simulator,name=iPhone 15'
 
   cross-language-contracts:
-    name: Cross-Language Contract Tests
+    name: Cross-Language Contract Tests (TS+Kotlin)
     runs-on: [self-hosted, linux, ARM64, zulal]
     timeout-minutes: 15
     if: github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository
@@ -233,24 +233,6 @@ jobs:
           distribution: 'temurin'
           java-version: '17'
       
-      - name: Setup Swift
-        run: |
-          echo "Installing Swiftly (Swift toolchain manager)..."
-          curl -L https://swift-server.github.io/swiftly/swiftly-install.sh | bash -s -- -y --no-modify-profile
-          
-          export PATH="$HOME/.local/bin:$PATH"
-          export SWIFTLY_HOME_DIR="$HOME/.local/share/swiftly"
-          export SWIFTLY_BIN_DIR="$HOME/.local/bin"
-          
-          echo "$HOME/.local/bin" >> $GITHUB_PATH
-          echo "SWIFTLY_HOME_DIR=$HOME/.local/share/swiftly" >> $GITHUB_ENV
-          
-          echo "Installing Swift toolchain..."
-          swiftly install latest
-          
-          echo "Verifying Swift installation..."
-          swift --version
-      
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
       
@@ -264,6 +246,15 @@ jobs:
         run: |
           cd packages/contracts-kotlin
           ./gradlew test --no-daemon
+  
+  swift-contracts:
+    name: Swift Contract Tests
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
       
       - name: Run Swift contract tests
         run: |
@@ -273,6 +264,42 @@ jobs:
           cd packages/contracts-swift
           export SOURCE_ROOT="${GITHUB_WORKSPACE}"
           swift test
+  
+  compare-contracts:
+    name: Compare Cross-Language Contracts
+    runs-on: [self-hosted, linux, ARM64, zulal]
+    needs: [cross-language-contracts, swift-contracts]
+    if: github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository
+    timeout-minutes: 5
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+      
+      - name: Install pnpm
+        uses: pnpm/action-setup@v3
+      
+      - name: Setup Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'temurin'
+          java-version: '17'
+      
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+      
+      - name: Write TypeScript canonical JSON outputs
+        run: cd packages/contracts && pnpm write-canonical
+      
+      - name: Run Kotlin to generate canonical output
+        run: |
+          cd packages/contracts-kotlin
+          ./gradlew test --no-daemon
       
       - name: Compare canonical JSON outputs (TypeScript vs Kotlin vs Swift)
         run: bash scripts/compare-canonical-json.sh

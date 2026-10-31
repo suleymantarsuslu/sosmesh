@@ -443,7 +443,7 @@
       "pass_criteria": "A cihazında PEER_RECEIVED yalnızca B'nin doğrulanmış ack'ı üzerine görünür.",
       "status": "PARTIAL",
       "attempts": 1,
-      "commit": null,
+      "commit": "3e1fb9f",
       "evidence": [
         "apps/android/core/protocol: BleChunkCodec, BleTransferSender/Receiver, GattBleTransferTransport, BleTransferEngine",
         "AndroidGattClientPort/ServerPort: BluetoothGatt write/notify (stub oturum ADIM 14 üzerine)",

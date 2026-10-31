@@ -29,6 +29,7 @@ class GattBleTransferTransport(
                 MessageType.HELLO_ACK.wire,
                 MessageType.ACK.wire,
                 MessageType.NACK.wire,
+                MessageType.TRANSFER_VERIFIED.wire,
                 -> BleMeshConstants.ACK_CHAR_UUID
                 else -> BleMeshConstants.DATA_CHAR_UUID
             }

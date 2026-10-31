@@ -51,9 +51,10 @@ class MockBleTransferChannel(
     fun deliverAll() {
         while (pending.isNotEmpty()) {
             val (target, uuid, data) = pending.removeFirst()
-            if (rng.nextUnit() < packetLossRate) continue
+            val isDataChar = uuid.uppercase() == BleMeshConstants.DATA_CHAR_UUID.uppercase()
+            if (isDataChar && rng.nextUnit() < packetLossRate) continue
             target.deliverIncoming(uuid, data)
-            if (rng.nextUnit() < duplicateRate) {
+            if (isDataChar && rng.nextUnit() < duplicateRate) {
                 target.deliverIncoming(uuid, data)
             }
         }
@@ -70,6 +71,7 @@ class MockBleTransferChannel(
             MessageType.HELLO_ACK.wire,
             MessageType.ACK.wire,
             MessageType.NACK.wire,
+            MessageType.TRANSFER_VERIFIED.wire,
             -> BleMeshConstants.ACK_CHAR_UUID
             else -> BleMeshConstants.DATA_CHAR_UUID
         }

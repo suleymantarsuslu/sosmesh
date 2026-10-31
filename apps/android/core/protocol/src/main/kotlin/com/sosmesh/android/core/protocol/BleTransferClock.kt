@@ -38,7 +38,11 @@ class SystemBleTransferClock : BleTransferClock {
 class SimulatedBleTransferClock : BleTransferClock {
     private var currentMs: Long = 0L
 
-    private data class Pending(val fireAt: Long, val block: () -> Unit)
+    private data class Pending(
+        val fireAt: Long,
+        val block: () -> Unit,
+        val handle: BleTransferTimer,
+    )
 
     private val timers = mutableListOf<Pending>()
 
@@ -63,12 +67,14 @@ class SimulatedBleTransferClock : BleTransferClock {
         delayMs: Long,
         block: () -> Unit,
     ): BleTransferTimer {
-        timers.add(Pending(currentMs + delayMs, block))
-        return object : BleTransferTimer {}
+        val handle = object : BleTransferTimer {}
+        timers.add(Pending(currentMs + delayMs, block, handle))
+        return handle
     }
 
     override fun cancel(timer: BleTransferTimer?) {
-        // Simulated tests recreate senders; no-op cancel is sufficient for JVM tests.
+        if (timer == null) return
+        timers.removeAll { it.handle === timer }
     }
 }
 

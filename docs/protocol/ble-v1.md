@@ -178,7 +178,21 @@ Received seq list: received_count × uint16 BE (sorted ascending önerilir)
 1. Receiver sends RESUME_REQUEST with transfer ID and received seq numbers
 2. Sender validates transfer ID; mismatch → reject (no data sent)
 3. Sender marks listed seqs as ACKed and resends only missing chunks
-4. Normal ACK flow continues until digest verified → PEER_RECEIVED
+4. All chunks ACKed → receiver SHA-256 doğrular → **TRANSFER_VERIFIED** (0x21) gönderir
+5. Sender yalnızca TRANSFER_VERIFIED (transfer_id + digest eşleşmesi) alınca PEER_RECEIVED sayılır
+
+### TRANSFER_VERIFIED (0x21)
+
+Peer digest doğrulaması sonrası ACK karakteristiğinde gönderilir (chunk ACK'larından **sonra**):
+
+```
+Type: 0x21
+Transfer ID: 16 bytes (HELLO nonce)
+SHA-256 digest: 32 bytes (tam birleşik payload'un digest'i)
+```
+
+Chunk ACK'ları tek başına PEER_RECEIVED tetiklemez. Digest hatasında receiver **NACK** (reason `DIGEST_INVALID` 0x11) gönderir; sender `FAILED`, PEER_RECEIVED yok.
+
 
 ## Error Handling
 

@@ -15,6 +15,7 @@ enum class MessageType(val wire: Int) {
     ACK(0x10),
     NACK(0x11),
     RESUME_REQUEST(0x20),
+    TRANSFER_VERIFIED(0x21),
     ;
 
     companion object {
@@ -52,6 +53,7 @@ enum class TransferState {
     COMPLETED,
     FAILED,
     RESUMING,
+    WAIT_PEER_VERIFIED,
 }
 
 data class TransferConfig(
@@ -60,6 +62,7 @@ data class TransferConfig(
     val chunkTimeoutMs: Long = 2_000L,
     val maxRetries: Int = 3,
     val retryJitterMs: Long = 500L,
+    val peerVerifyTimeoutMs: Long = 5_000L,
 )
 
 data class ChunkHeader(

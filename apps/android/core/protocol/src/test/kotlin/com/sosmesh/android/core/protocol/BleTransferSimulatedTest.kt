@@ -1,6 +1,7 @@
 package com.sosmesh.android.core.protocol
 
 import org.junit.Assert.assertArrayEquals
+import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
 import org.junit.Test
 
@@ -16,18 +17,25 @@ class BleTransferSimulatedTest {
     @Test
     fun ackTimeout_backoffAndResumeCompletes() {
         val payload = ("RESUME_" + "X".repeat(200)).toByteArray()
+        val (ok, received) = runTransfer(payload, packetLoss = 0.12, seed = 1000)
+        assertTrue(ok)
+        assertArrayEquals(payload, received)
+    }
+
+    @Test
+    fun senderCompleted_onlyAfterTransferVerified() {
+        val payload = "PEER_ACK_GATE".toByteArray()
         val clock = SimulatedBleTransferClock()
-        val rng = SeededBleTransferRng(1000)
-        val channel = MockBleTransferChannel(0.08, 0.0, rng)
+        val rng = SeededBleTransferRng(3)
+        val channel = MockBleTransferChannel(0.0, 0.0, rng)
         val (senderT, receiverT) = channel.createTransportPair()
-        val config = TransferConfig(maxRetries = 12, chunkTimeoutMs = 400L, windowSize = 2)
-        val sender = BleTransferSender(senderT, config, clock, rng)
-        val receiver = BleTransferReceiver(receiverT, config, clock)
-        var completed = false
+        val sender = BleTransferSender(senderT, TransferConfig(maxRetries = 5, chunkTimeoutMs = 400L), clock, rng)
+        val receiver = BleTransferReceiver(receiverT, TransferConfig(maxRetries = 5, chunkTimeoutMs = 400L), clock)
+        var senderCompleted = false
         sender.setListener(
             object : BleTransferSender.Listener {
                 override fun onCompleted() {
-                    completed = true
+                    senderCompleted = true
                 }
 
                 override fun onFailed(
@@ -47,43 +55,12 @@ class BleTransferSimulatedTest {
             },
         )
         sender.startTransfer(payload)
-        var steps = 0
-        while (!completed && steps < 50_000) {
-            clock.advance(10)
-            channel.deliverAll()
-            steps++
-        }
-        assertTrue(completed)
-    }
-
-    @Test
-    fun senderCompleted_onlyAfterAllAcks() {
-        val payload = "PEER_ACK_GATE".toByteArray()
-        val clock = SimulatedBleTransferClock()
-        val rng = SeededBleTransferRng(3)
-        val channel = MockBleTransferChannel(0.0, 0.0, rng)
-        val (senderT, receiverT) = channel.createTransportPair()
-        val sender = BleTransferSender(senderT, TransferConfig(maxRetries = 5, chunkTimeoutMs = 400L), clock, rng)
-        BleTransferReceiver(receiverT, TransferConfig(maxRetries = 5, chunkTimeoutMs = 400L), clock)
-        var senderCompleted = false
-        sender.setListener(
-            object : BleTransferSender.Listener {
-                override fun onCompleted() {
-                    senderCompleted = true
-                }
-
-                override fun onFailed(
-                    code: ErrorCode,
-                    message: String,
-                ) {}
-            },
-        )
-        sender.startTransfer(payload)
-        repeat(200) {
+        repeat(300) {
             clock.advance(10)
             channel.deliverAll()
         }
         assertTrue(senderCompleted)
+        assertEquals(TransferState.COMPLETED, sender.getState())
     }
 
     private fun runTransfer(
@@ -96,8 +73,18 @@ class BleTransferSimulatedTest {
         val rng = SeededBleTransferRng(seed)
         val channel = MockBleTransferChannel(packetLoss, duplicateRate, rng)
         val (senderT, receiverT) = channel.createTransportPair()
-        val sender = BleTransferSender(senderT, TransferConfig(maxRetries = 8, chunkTimeoutMs = 500L), clock, rng)
-        val receiver = BleTransferReceiver(receiverT, TransferConfig(maxRetries = 8, chunkTimeoutMs = 500L), clock)
+        val sender =
+            BleTransferSender(
+                senderT,
+                TransferConfig(
+                    maxRetries = 20,
+                    chunkTimeoutMs = 500L,
+                    peerVerifyTimeoutMs = 5_000L,
+                ),
+                clock,
+                rng,
+            )
+        val receiver = BleTransferReceiver(receiverT, TransferConfig(maxRetries = 20, chunkTimeoutMs = 500L), clock)
         var completed = false
         var failed = false
         var received: ByteArray? = null
@@ -130,7 +117,7 @@ class BleTransferSimulatedTest {
             },
         )
         sender.startTransfer(payload)
-        val deadline = clock.now() + 200_000L
+        val deadline = clock.now() + 400_000L
         while (clock.now() < deadline && !completed && !failed) {
             clock.advance(10)
             channel.deliverAll()

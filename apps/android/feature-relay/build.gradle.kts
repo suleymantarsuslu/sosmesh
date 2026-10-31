@@ -22,6 +22,16 @@ android {
     kotlinOptions {
         jvmTarget = "17"
     }
+
+    testOptions {
+        unitTests.isIncludeAndroidResources = true
+    }
+
+    sourceSets {
+        getByName("test") {
+            resources.srcDir("${rootProject.projectDir}/../../packages/fixtures/transport")
+        }
+    }
 }
 
 dependencies {
@@ -33,6 +43,10 @@ dependencies {
     kapt("com.google.dagger:hilt-compiler:2.50")
 
     testImplementation("junit:junit:4.13.2")
+    testImplementation(project(":core:data"))
+    testImplementation("org.robolectric:robolectric:4.11.1")
+    testImplementation("androidx.test:core:1.5.0")
+    testImplementation("androidx.room:room-runtime:2.6.1")
 }
 
 kapt {

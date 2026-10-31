@@ -61,7 +61,15 @@ class BleTransferReceiver(
         val msgType = data[0].toInt() and 0xff
         if (msgType == MessageType.HELLO.wire && state == TransferState.IDLE) {
             handleHello(data)
-        } else if (data.size >= BleProtocolTypes.CHUNK_HEADER_SIZE) {
+        } else if (
+            msgType != MessageType.TRANSFER_VERIFIED.wire &&
+            msgType != MessageType.HELLO.wire &&
+            msgType != MessageType.HELLO_ACK.wire &&
+            msgType != MessageType.ACK.wire &&
+            msgType != MessageType.NACK.wire &&
+            msgType != MessageType.RESUME_REQUEST.wire &&
+            data.size >= BleProtocolTypes.CHUNK_HEADER_SIZE
+        ) {
             handleChunk(data)
         }
     }
@@ -133,6 +141,7 @@ class BleTransferReceiver(
             val lastChunk = ordered.last()
             val extracted = BleChunkCodec.extractDigestFromLastChunk(lastChunk)
             if (extracted == null) {
+                sendDigestInvalidNack()
                 fail(ErrorCode.DIGEST_INVALID, "Failed to extract digest")
                 return
             }
@@ -142,14 +151,23 @@ class BleTransferReceiver(
             modified[modified.lastIndex] = Chunk(lastChunk.header, lastData)
             val assembled = BleChunkCodec.assembleChunks(modified)
             if (!BleChunkCodec.verifyDigest(assembled, digest)) {
+                sendDigestInvalidNack()
                 fail(ErrorCode.DIGEST_INVALID, "Digest verification failed")
                 return
             }
+            val transferId = currentTransferId ?: ByteArray(16)
+            transport.send(BleTransferVerifiedMessage.encode(transferId, digest))
             state = TransferState.COMPLETED
             listener?.onCompleted(assembled)
         } catch (ex: IllegalStateException) {
+            sendDigestInvalidNack()
             fail(ErrorCode.DIGEST_INVALID, ex.message ?: "Verification failed")
         }
+    }
+
+    private fun sendDigestInvalidNack() {
+        if (expectedTotal <= 0) return
+        sendNack(expectedTotal - 1, ErrorCode.DIGEST_INVALID)
     }
 
     private fun sendAck(seq: Int) {

@@ -7,7 +7,7 @@ class BleTransferSender(
     private val rng: BleTransferRng = SystemBleTransferRng(),
 ) {
     interface Listener {
-        /** All chunk ACKs received — safe to mark PEER_RECEIVED on device A. */
+        /** Peer digest verified — safe to mark PEER_RECEIVED on device A. */
         fun onCompleted()
 
         fun onFailed(
@@ -26,8 +26,10 @@ class BleTransferSender(
     private var nonce: ByteArray? = null
     private var negotiatedMtu = 0
     private var chunkTimer: BleTransferTimer? = null
+    private var verifyTimer: BleTransferTimer? = null
     private var originalPayload: ByteArray? = null
     private var expectedDigest: ByteArray? = null
+    private var peerVerifyAttempts = 0
 
     init {
         transport.setIncomingHandler { handleData(it) }
@@ -44,6 +46,7 @@ class BleTransferSender(
         originalPayload = payload
         expectedDigest = BleChunkCodec.calculateDigest(payload)
         nonce = ByteArray(16) { (rng.nextUnit() * 256).toInt().toByte() }
+        peerVerifyAttempts = 0
         state = TransferState.HELLO_SENT
         sendHello()
         chunkTimer =
@@ -70,6 +73,8 @@ class BleTransferSender(
         val msgType = data[0].toInt() and 0xff
         when {
             msgType == MessageType.HELLO_ACK.wire && state == TransferState.HELLO_SENT -> handleHelloAck(data)
+            msgType == MessageType.TRANSFER_VERIFIED.wire && state == TransferState.WAIT_PEER_VERIFIED ->
+                handleTransferVerified(data)
             msgType == MessageType.ACK.wire &&
                 (
                     state == TransferState.WAIT_ACK ||
@@ -77,9 +82,31 @@ class BleTransferSender(
                         state == TransferState.READY
                 ) -> handleAck(data)
             msgType == MessageType.NACK.wire &&
-                (state == TransferState.WAIT_ACK || state == TransferState.SENDING) -> handleNack(data)
+                (
+                    state == TransferState.WAIT_ACK ||
+                        state == TransferState.SENDING ||
+                        state == TransferState.WAIT_PEER_VERIFIED
+                ) -> handleNack(data)
             msgType == MessageType.RESUME_REQUEST.wire && chunks.isNotEmpty() -> handleResumeRequest(data)
         }
+    }
+
+    private fun handleTransferVerified(data: ByteArray) {
+        val parsed = BleTransferVerifiedMessage.decode(data) ?: return
+        val (transferId, digest) = parsed
+        val helloNonce = nonce ?: return
+        val expected = expectedDigest ?: return
+        if (!transferId.contentEquals(helloNonce)) {
+            fail(ErrorCode.GENERIC_TIMEOUT, "Verified transfer ID mismatch")
+            return
+        }
+        if (!digest.contentEquals(expected)) {
+            fail(ErrorCode.DIGEST_INVALID, "Verified digest mismatch")
+            return
+        }
+        clock.cancel(verifyTimer)
+        verifyTimer = null
+        complete()
     }
 
     private fun handleHelloAck(data: ByteArray) {
@@ -105,11 +132,16 @@ class BleTransferSender(
         negotiatedMtu = minOf(config.mtu, mtu)
         val chunkSize = negotiatedMtu - BleProtocolTypes.ATT_OVERHEAD - BleProtocolTypes.CHUNK_HEADER_SIZE
         val payload = originalPayload ?: return
-        val normal = BleChunkCodec.splitIntoChunks(payload, chunkSize)
+        var dataChunkSize = chunkSize
+        var normal = BleChunkCodec.splitIntoChunks(payload, dataChunkSize)
+        if (normal.size == 1 && payload.size + 32 > chunkSize) {
+            dataChunkSize = chunkSize - 32
+            normal = BleChunkCodec.splitIntoChunks(payload, dataChunkSize)
+        }
         val lastSeq = normal.lastIndex
-        chunks =
-            normal.dropLast(1) +
-            BleChunkCodec.createLastChunkWithDigest(payload, chunkSize, lastSeq, normal.size)
+        val lastChunk =
+            BleChunkCodec.createLastChunkWithDigest(payload, dataChunkSize, lastSeq, normal.size)
+        chunks = normal.dropLast(1) + lastChunk
         currentSeq = 0
         ackReceived.clear()
         inFlight.clear()
@@ -132,7 +164,7 @@ class BleTransferSender(
             state = TransferState.WAIT_ACK
             setChunkTimeout()
         } else if (ackReceived.size == chunks.size) {
-            complete()
+            beginWaitPeerVerified()
         } else {
             state = TransferState.WAIT_ACK
             setChunkTimeout()
@@ -154,11 +186,42 @@ class BleTransferSender(
             }
     }
 
+    private fun setPeerVerifyTimeout() {
+        clock.cancel(verifyTimer)
+        val jitter = (rng.nextUnit() * config.retryJitterMs).toLong()
+        verifyTimer =
+            clock.schedule(config.peerVerifyTimeoutMs + jitter) {
+                handlePeerVerifyTimeout()
+            }
+    }
+
+    private fun handlePeerVerifyTimeout() {
+        if (state != TransferState.WAIT_PEER_VERIFIED) return
+        peerVerifyAttempts++
+        if (peerVerifyAttempts >= config.maxRetries) {
+            fail(ErrorCode.TIMEOUT, "Peer verified message timeout")
+            return
+        }
+        setPeerVerifyTimeout()
+    }
+
+    private fun beginWaitPeerVerified() {
+        state = TransferState.WAIT_PEER_VERIFIED
+        clock.cancel(chunkTimer)
+        chunkTimer = null
+        inFlight.clear()
+        setPeerVerifyTimeout()
+    }
+
     private fun handleChunkTimeout() {
+        if (state == TransferState.WAIT_PEER_VERIFIED) {
+            handlePeerVerifyTimeout()
+            return
+        }
         if (inFlight.isEmpty()) {
             if (state != TransferState.WAIT_ACK) return
             if (ackReceived.size == chunks.size) {
-                complete()
+                beginWaitPeerVerified()
                 return
             }
             state = TransferState.READY
@@ -192,7 +255,7 @@ class BleTransferSender(
         clock.cancel(chunkTimer)
         chunkTimer = null
         if (ackReceived.size == chunks.size) {
-            complete()
+            beginWaitPeerVerified()
         } else {
             state = TransferState.READY
             sendNextChunks()
@@ -202,6 +265,15 @@ class BleTransferSender(
     private fun handleNack(data: ByteArray) {
         if (data.size < 4) return
         val seq = ((data[1].toInt() and 0xff) shl 8) or (data[2].toInt() and 0xff)
+        val reason = data[3].toInt() and 0xff
+        if (reason == ErrorCode.DIGEST_INVALID.wire) {
+            fail(ErrorCode.DIGEST_INVALID, "Peer rejected digest at seq $seq")
+            return
+        }
+        if (state == TransferState.WAIT_PEER_VERIFIED) {
+            fail(ErrorCode.DIGEST_INVALID, "Unexpected NACK while waiting for verified message")
+            return
+        }
         inFlight.remove(seq)
         val retries = retryCount.getOrDefault(seq, 0)
         if (retries >= config.maxRetries) {
@@ -235,6 +307,8 @@ class BleTransferSender(
         retryCount.clear()
         clock.cancel(chunkTimer)
         chunkTimer = null
+        clock.cancel(verifyTimer)
+        verifyTimer = null
         state = TransferState.READY
         sendNextChunks()
     }
@@ -243,6 +317,8 @@ class BleTransferSender(
         state = TransferState.COMPLETED
         clock.cancel(chunkTimer)
         chunkTimer = null
+        clock.cancel(verifyTimer)
+        verifyTimer = null
         listener?.onCompleted()
     }
 
@@ -253,6 +329,8 @@ class BleTransferSender(
         state = TransferState.FAILED
         clock.cancel(chunkTimer)
         chunkTimer = null
+        clock.cancel(verifyTimer)
+        verifyTimer = null
         listener?.onFailed(code, message)
     }
 
@@ -262,6 +340,8 @@ class BleTransferSender(
             state = TransferState.RESUMING
             clock.cancel(chunkTimer)
             chunkTimer = null
+            clock.cancel(verifyTimer)
+            verifyTimer = null
         } else {
             fail(ErrorCode.GENERIC_TIMEOUT, "Transport disconnected")
         }
@@ -269,6 +349,7 @@ class BleTransferSender(
 
     fun close() {
         clock.cancel(chunkTimer)
+        clock.cancel(verifyTimer)
         transport.close()
     }
 }

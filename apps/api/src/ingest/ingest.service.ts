@@ -7,6 +7,7 @@ import {
 } from '@prisma/client';
 import { createHash } from 'node:crypto';
 
+import { AiJobService } from '../ai/ai-job.service';
 import { PrismaService } from '../prisma/prisma.service';
 import { RELAY_ANOMALY_THRESHOLD, RELAY_ANOMALY_WINDOW_MS } from './ingest.constants';
 import type { IngestRequestDto, IngestResponseDto } from './dto/ingest-request.dto';
@@ -25,7 +26,8 @@ export class IngestService {
     private readonly prisma: PrismaService,
     private readonly packetService: IngestPacketService,
     private readonly rateLimit: IngestRateLimitService,
-    private readonly receiptSigner: ReceiptSignerService
+    private readonly receiptSigner: ReceiptSignerService,
+    private readonly aiJobs: AiJobService
   ) {}
 
   async processIngest(
@@ -170,6 +172,13 @@ export class IngestService {
         },
       });
 
+      return { message, incidentId: incident.id };
+    }).then(({ message, incidentId }) => {
+      this.aiJobs.enqueueAfterIngest({
+        incidentId,
+        tenantKey: clientKey,
+        sosMessageSnapshot: sosMessage,
+      });
       return message;
     });
   }

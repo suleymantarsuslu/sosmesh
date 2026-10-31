@@ -485,7 +485,7 @@
       "pass_criteria": "Cihazda desteklenen aktif röle davranışı gerçekten çalışıyor; kısıtlar gizlenmiyor.",
       "status": "PARTIAL",
       "attempts": 1,
-      "commit": null,
+      "commit": "e88fd67",
       "evidence": [
         "feature-relay: RelaySettingsStore opt-in (varsayılan kapalı), pil eşiği, saatlik veri limiti",
         "RelayBatteryPolicy + RelaySessionController + connectedDevice FGS",

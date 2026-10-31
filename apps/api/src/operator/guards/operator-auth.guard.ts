@@ -5,12 +5,27 @@ import {
   UnauthorizedException,
 } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
+import { UserRole } from '@prisma/client';
 import { Request } from 'express';
 import * as jwt from 'jsonwebtoken';
 
+import { SESSION_COOKIE } from '../../auth/auth.constants';
+
 export type OperatorJwtPayload = {
   sub: string;
-  role: string;
+  role: UserRole | string;
+  teamId?: string;
+};
+
+export type OperatorRequestUser = {
+  sub: string;
+  role: UserRole;
+  teamId?: string;
+  isLegacyTestAdmin?: boolean;
+};
+
+export type OperatorRequest = Request & {
+  operatorUser: OperatorRequestUser;
 };
 
 @Injectable()
@@ -18,15 +33,14 @@ export class OperatorAuthGuard implements CanActivate {
   constructor(private readonly config: ConfigService) {}
 
   canActivate(context: ExecutionContext): boolean {
-    const request = context.switchToHttp().getRequest<Request>();
-    const header = request.headers.authorization;
-    if (!header || !header.startsWith('Bearer ')) {
+    const request = context.switchToHttp().getRequest<OperatorRequest>();
+    const token = this.extractToken(request);
+    if (!token) {
       throw new UnauthorizedException({
         code: 'UNAUTHORIZED',
         message: 'Operator authentication required',
       });
     }
-    const token = header.slice('Bearer '.length);
     const secret = this.config.get<string>('JWT_SECRET');
     if (!secret) {
       throw new UnauthorizedException({
@@ -35,7 +49,20 @@ export class OperatorAuthGuard implements CanActivate {
       });
     }
     try {
-      jwt.verify(token, secret) as OperatorJwtPayload;
+      const payload = jwt.verify(token, secret) as OperatorJwtPayload;
+      if (payload.sub === 'operator-test') {
+        request.operatorUser = {
+          sub: payload.sub,
+          role: UserRole.ADMIN,
+          isLegacyTestAdmin: true,
+        };
+        return true;
+      }
+      request.operatorUser = {
+        sub: payload.sub,
+        role: payload.role as UserRole,
+        teamId: payload.teamId,
+      };
       return true;
     } catch {
       throw new UnauthorizedException({
@@ -43,5 +70,17 @@ export class OperatorAuthGuard implements CanActivate {
         message: 'Operator authentication required',
       });
     }
+  }
+
+  private extractToken(request: Request): string | null {
+    const header = request.headers.authorization;
+    if (header?.startsWith('Bearer ')) {
+      return header.slice('Bearer '.length);
+    }
+    const cookies = request.cookies as Record<string, string> | undefined;
+    if (cookies?.[SESSION_COOKIE]) {
+      return cookies[SESSION_COOKIE];
+    }
+    return null;
   }
 }

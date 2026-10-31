@@ -14,6 +14,7 @@ import {
 } from './common/filters/http-exception.filter';
 import { RequestIdMiddleware } from './common/middleware/request-id.middleware';
 import { envValidationSchema } from './config/env.schema';
+import { AuthModule } from './auth/auth.module';
 import { HealthModule } from './health/health.module';
 import { IngestModule } from './ingest/ingest.module';
 import { EventsModule } from './events/events.module';
@@ -64,6 +65,7 @@ import { PublicModule } from './public/public.module';
     }),
     PrismaModule,
     HealthModule,
+    AuthModule,
     PublicModule,
     IngestModule,
     SyncModule,

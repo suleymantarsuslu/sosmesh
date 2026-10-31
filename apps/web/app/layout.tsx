@@ -1,5 +1,8 @@
 import type { Metadata } from 'next';
+
+import { ToastProvider } from '../components/ui/ToastProvider';
 import './globals.css';
+import './operator.css';
 
 export const metadata: Metadata = {
   title: 'SOSMesh Operator Dashboard',
@@ -16,7 +19,9 @@ export default function RootLayout({
       <head>
         <link rel="stylesheet" href="/tokens.css" />
       </head>
-      <body>{children}</body>
+      <body>
+        <ToastProvider>{children}</ToastProvider>
+      </body>
     </html>
   );
 }

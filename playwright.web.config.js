@@ -1,12 +1,12 @@
 /**
- * Playwright configuration for SOSMesh web skeleton A11y tests
+ * Playwright configuration for SOSMesh web skeleton + operator panel tests
  */
 
 const { defineConfig, devices } = require('@playwright/test');
 
 module.exports = defineConfig({
   testDir: './tests/ux',
-  testMatch: '**/web-skeleton.spec.js',
+  testMatch: ['**/web-skeleton.spec.js', '**/operator-panel.spec.js'],
   fullyParallel: false,
   forbidOnly: !!process.env.CI,
   retries: process.env.CI ? 2 : 0,
@@ -17,10 +17,11 @@ module.exports = defineConfig({
     trace: 'retain-on-failure',
   },
   webServer: {
-    command: 'cd apps/web && pnpm start',
+    command:
+      'cd apps/web && pnpm build && OPERATOR_E2E_MOCK=1 JWT_SECRET=test-operator-jwt-signing-key-16 pnpm start',
     url: 'http://localhost:3000',
     reuseExistingServer: !process.env.CI,
-    timeout: 60000,
+    timeout: 120000,
   },
   projects: [
     {

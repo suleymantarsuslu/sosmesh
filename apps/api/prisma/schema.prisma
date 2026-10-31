@@ -142,11 +142,12 @@ model Team {
 }
 
 model User {
-  id          String       @id @default(uuid()) @db.Uuid
-  email       String       @unique
-  displayName String       @map("display_name")
-  role        UserRole     @default(OPERATOR)
-  teamId      String?      @map("team_id") @db.Uuid
+  id           String       @id @default(uuid()) @db.Uuid
+  email        String       @unique
+  displayName  String       @map("display_name")
+  passwordHash String?      @map("password_hash")
+  role         UserRole     @default(OPERATOR)
+  teamId       String?      @map("team_id") @db.Uuid
   team        Team?        @relation(fields: [teamId], references: [id])
   createdAt   DateTime     @default(now()) @map("created_at")
   updatedAt   DateTime     @updatedAt @map("updated_at")

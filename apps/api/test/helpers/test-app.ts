@@ -1,5 +1,6 @@
 import { INestApplication } from '@nestjs/common';
 import { Test, TestingModule } from '@nestjs/testing';
+import cookieParser from 'cookie-parser';
 
 import { AppModule } from '../../src/app.module';
 import { applyTestAuthEnv } from './operator-auth';
@@ -17,6 +18,7 @@ export async function createTestApp(databaseUrl: string): Promise<INestApplicati
   }).compile();
 
   const app = moduleFixture.createNestApplication({ bufferLogs: true });
+  app.use(cookieParser());
   await app.init();
   return app;
 }

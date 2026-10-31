@@ -88,7 +88,7 @@ rm -f "$SMOKE_PG_STATE"
 echo "Starting embedded PostgreSQL for smoke..."
 node apps/api/test/helpers/hold-embedded.mjs "$SMOKE_PG_STATE" &
 SMOKE_PG_HELPER=$!
-for i in {1..120}; do
+for i in {1..180}; do
   if [ -f "$SMOKE_PG_STATE" ]; then
     break
   fi

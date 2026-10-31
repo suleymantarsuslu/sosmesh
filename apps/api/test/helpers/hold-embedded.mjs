@@ -1,16 +1,30 @@
 import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
+import { openSync, closeSync, flockSync, constants } from 'node:fs';
 
 const statePath = process.argv[2];
 if (!statePath) {
   process.exit(1);
 }
 
-async function bootOnce() {
+function cleanupStaleDirs() {
+  for (const entry of fs.readdirSync(os.tmpdir())) {
+    if (entry.startsWith('sosmesh-pg-')) {
+      const full = path.join(os.tmpdir(), entry);
+      try {
+        fs.rmSync(full, { recursive: true, force: true });
+      } catch {
+        // ignore busy temp dirs
+      }
+    }
+  }
+}
+
+async function bootOnce(attempt) {
   const { default: EmbeddedPostgres } = await import('embedded-postgres');
-  const dataDir = fs.mkdtempSync(path.join(os.tmpdir(), 'sosmesh-pg-'));
-  const port = 15432 + Math.floor(Math.random() * 8000);
+  const dataDir = fs.mkdtempSync(path.join(os.tmpdir(), `sosmesh-pg-a${attempt}-`));
+  const port = 20000 + Math.floor(Math.random() * 15000);
   const embedded = new EmbeddedPostgres({
     databaseDir: dataDir,
     user: 'postgres',
@@ -23,20 +37,34 @@ async function bootOnce() {
   return { embedded, dataDir, port };
 }
 
+const lockPath = path.join(os.tmpdir(), 'sosmesh-embedded-pg.lock');
+const lockFd = openSync(lockPath, 'a');
+flockSync(lockFd, constants.LOCK_EX);
+
 let embedded;
 let dataDir;
 let port;
+let lastError;
 
-try {
-  ({ embedded, dataDir, port } = await bootOnce());
-} catch (firstError) {
+cleanupStaleDirs();
+
+for (let attempt = 1; attempt <= 5; attempt += 1) {
   try {
-    ({ embedded, dataDir, port } = await bootOnce());
-  } catch (secondError) {
-    console.error(String(firstError));
-    console.error(String(secondError));
-    process.exit(1);
+    ({ embedded, dataDir, port } = await bootOnce(attempt));
+    lastError = undefined;
+    break;
+  } catch (error) {
+    lastError = error;
+    await new Promise((resolve) => setTimeout(resolve, attempt * 500));
   }
+}
+
+flockSync(lockFd, constants.LOCK_UN);
+closeSync(lockFd);
+
+if (lastError) {
+  console.error(String(lastError));
+  process.exit(1);
 }
 
 const databaseUrl = `postgresql://postgres:postgres@127.0.0.1:${port}/postgres`;

@@ -8,7 +8,7 @@ const apiRoot = path.join(__dirname, '..', '..');
 
 async function waitForState(
   statePath: string,
-  timeoutMs = 180000
+  timeoutMs = 300000
 ): Promise<{ databaseUrl: string; port: number }> {
   const started = Date.now();
   while (Date.now() - started < timeoutMs) {

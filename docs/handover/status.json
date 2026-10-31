@@ -593,7 +593,7 @@
       "pass_criteria": "B internet alınca SOS tek kez panel feed’ine düşer.",
       "status": "PARTIAL",
       "attempts": 1,
-      "commit": null,
+      "commit": "ed1ba19",
       "evidence": [
         "merge: cursor/sos-ingest-idempotency-ca96 + cursor/android-relay-battery-09d4 (verify.sh birleşik)",
         "API: POST /v1/ingest/batch, GET /v1/operator/events (SSE Accept + ?after= polling), operator_feed_events",

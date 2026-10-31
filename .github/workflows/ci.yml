@@ -9,8 +9,9 @@ on:
 jobs:
   verify:
     name: Verify Quality Gates
-    runs-on: ubuntu-latest
+    runs-on: [self-hosted, linux, ARM64, zulal]
     timeout-minutes: 30
+    if: github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository
     
     steps:
       - name: Checkout code
@@ -38,7 +39,7 @@ jobs:
             ${{ runner.os }}-pnpm-store-
       
       - name: Install Playwright browsers
-        run: npx playwright install --with-deps chromium
+        run: npx playwright install chromium
       
       - name: Run verification script
         run: bash scripts/verify.sh
@@ -69,8 +70,9 @@ jobs:
 
   contracts:
     name: Contracts Type Check
-    runs-on: ubuntu-latest
+    runs-on: [self-hosted, linux, ARM64, zulal]
     timeout-minutes: 10
+    if: github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository
     
     steps:
       - name: Checkout code
@@ -95,7 +97,8 @@ jobs:
 
   detect-mobile:
     name: Detect Mobile Projects
-    runs-on: ubuntu-latest
+    runs-on: [self-hosted, linux, ARM64, zulal]
+    if: github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository
     outputs:
       android: ${{ steps.check.outputs.android }}
       ios: ${{ steps.check.outputs.ios }}
@@ -208,8 +211,9 @@ jobs:
 
   cross-language-contracts:
     name: Cross-Language Contract Tests
-    runs-on: ubuntu-latest
+    runs-on: [self-hosted, linux, ARM64, zulal]
     timeout-minutes: 15
+    if: github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository
     
     steps:
       - name: Checkout code
@@ -253,12 +257,31 @@ jobs:
           swift test
       
       - name: Compare canonical JSON outputs (TypeScript vs Kotlin vs Swift)
-        run: bash scripts/compare-canonical-json.sh
+        run: |
+          echo "Comparing TypeScript and Kotlin canonical outputs..."
+          MASTER_GOLDEN="packages/contracts/crypto-test-vectors/golden-001.json"
+          KOTLIN_GOLDEN="packages/contracts-kotlin/src/test/resources/golden-001.json"
+          if cmp -s "$MASTER_GOLDEN" "$KOTLIN_GOLDEN"; then
+            echo "✅ TypeScript and Kotlin canonical outputs match"
+          else
+            echo "❌ TypeScript and Kotlin canonical outputs differ"
+            exit 1
+          fi
+          
+          echo "Comparing with Swift canonical output..."
+          SWIFT_GOLDEN="packages/contracts-swift/Tests/SOSMeshContractsTests/Resources/golden-001.json"
+          if cmp -s "$MASTER_GOLDEN" "$SWIFT_GOLDEN"; then
+            echo "✅ Swift canonical output matches"
+          else
+            echo "❌ Swift canonical output differs"
+            exit 1
+          fi
 
   secret-scan:
     name: Secret Scan
-    runs-on: ubuntu-latest
+    runs-on: [self-hosted, linux, ARM64, zulal]
     timeout-minutes: 5
+    if: github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository
     
     steps:
       - name: Checkout code

@@ -82,3 +82,4 @@ temp/
 test-results/
 playwright-report/
 actionlint
+test-artifacts/

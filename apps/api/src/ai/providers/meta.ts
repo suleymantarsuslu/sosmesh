@@ -1,6 +1,7 @@
 import {
   DEFAULT_META_BASE_URL,
   DEFAULT_META_MODEL,
+  DEFAULT_META_MAX_TOKENS,
 } from '../ai.constants';
 import { SOS_AI_SYSTEM_PROMPT } from '../system-prompt';
 import {
@@ -16,6 +17,7 @@ export type MetaProviderConfig = {
   apiKey: string;
   timeoutMs: number;
   maxRetries: number;
+  maxTokens: number;
   fetchImpl?: FetchLike;
 };
 
@@ -182,6 +184,7 @@ export class MetaHttpProvider implements MetaProvider {
             },
           ],
           temperature: 0,
+          max_tokens: this.config.maxTokens,
         }),
         signal: controller.signal,
       });
@@ -195,10 +198,19 @@ export class MetaHttpProvider implements MetaProvider {
       }
 
       const payload = (await response.json()) as {
-        choices?: Array<{ message?: { content?: string } }>;
+        choices?: Array<{
+          message?: { content?: string | null };
+          finish_reason?: string;
+        }>;
       };
-      const content = payload.choices?.[0]?.message?.content;
-      if (!content) {
+      const choice = payload.choices?.[0];
+      const finishReason = choice?.finish_reason;
+      if (finishReason === 'length') {
+        return metaFailure('response_truncated', false);
+      }
+
+      const content = choice?.message?.content;
+      if (content === null || content === undefined || content === '') {
         return metaFailure('empty_model_content', false);
       }
 
@@ -271,6 +283,7 @@ export function buildMetaProviderFromEnv(
   const model = env.META_MODEL?.trim() || DEFAULT_META_MODEL;
   const timeoutMs = Number(env.META_TIMEOUT_MS ?? 15000);
   const maxRetries = Number(env.META_MAX_RETRIES ?? 2);
+  const maxTokens = Number(env.META_MAX_TOKENS ?? DEFAULT_META_MAX_TOKENS);
 
   const circuit =
     deps?.circuit ??
@@ -286,6 +299,7 @@ export function buildMetaProviderFromEnv(
       apiKey,
       timeoutMs,
       maxRetries,
+      maxTokens,
       fetchImpl: deps?.fetchImpl,
     },
     circuit

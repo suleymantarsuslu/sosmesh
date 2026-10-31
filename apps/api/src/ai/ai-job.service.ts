@@ -12,30 +12,13 @@ import {
 } from './providers/meta';
 import { EVAL_FIXTURES } from './evals/fixtures';
 import { PrismaService } from '../prisma/prisma.service';
+import {
+  NullSosPlaintextSource,
+  SOS_PLAINTEXT_SOURCE,
+  type SosPlaintextSource,
+} from './sos-plaintext-source';
 
 export const AI_PROVIDER_OVERRIDE = 'AI_PROVIDER_OVERRIDE';
-
-/**
- * Plaintext source for AI (ADIM 20):
- * - Production ingest stores only encryptedPayload (opaque); server does not decrypt in M0.
- * - Optional dev/test field `sosMessage.plaintextForOperator` may be present on the envelope
- *   for controlled fixtures; it is never logged.
- * - When no plaintext is available, analysis is skipped with status NO_PLAINTEXT.
- */
-export function resolvePlaintextForAi(sosMessageJson: Record<string, unknown>): string | null {
-  const envelope = sosMessageJson.envelope;
-  if (envelope && typeof envelope === 'object' && !Array.isArray(envelope)) {
-    const note = (envelope as Record<string, unknown>).plaintextForOperator;
-    if (typeof note === 'string' && note.trim().length > 0) {
-      return note.trim();
-    }
-  }
-  const topLevel = sosMessageJson.plaintextForOperator;
-  if (typeof topLevel === 'string' && topLevel.trim().length > 0) {
-    return topLevel.trim();
-  }
-  return null;
-}
 
 @Injectable()
 export class AiJobService {
@@ -43,10 +26,12 @@ export class AiJobService {
   private readonly tenantLimiter: TenantAiRateLimiter;
   private readonly costGuard: AiCostGuard;
   private readonly providerOverride: MetaProvider | null;
+  private readonly plaintextSource: SosPlaintextSource;
 
   constructor(
     private readonly prisma: PrismaService,
-    @Optional() @Inject(AI_PROVIDER_OVERRIDE) providerOverride: MetaProvider | null = null
+    @Optional() @Inject(AI_PROVIDER_OVERRIDE) providerOverride: MetaProvider | null = null,
+    @Optional() @Inject(SOS_PLAINTEXT_SOURCE) plaintextSource: SosPlaintextSource | null = null
   ) {
     this.tenantLimiter = new TenantAiRateLimiter(
       Number(process.env.AI_TENANT_RATE_LIMIT_MAX ?? 30),
@@ -54,12 +39,13 @@ export class AiJobService {
     );
     this.costGuard = new AiCostGuard(Number(process.env.AI_DAILY_COST_CAP_USD ?? 25));
     this.providerOverride = providerOverride ?? null;
+    this.plaintextSource = plaintextSource ?? new NullSosPlaintextSource();
   }
 
   enqueueAfterIngest(params: {
     incidentId: string;
+    messageId: string;
     tenantKey: string;
-    sosMessageSnapshot: Record<string, unknown>;
   }): void {
     setImmediate(() => {
       void this.runJob(params).catch((error) => {
@@ -73,8 +59,8 @@ export class AiJobService {
 
   async runJob(params: {
     incidentId: string;
+    messageId: string;
     tenantKey: string;
-    sosMessageSnapshot: Record<string, unknown>;
   }): Promise<void> {
     const aiEnabled = process.env.AI_ENABLED !== 'false';
     if (!aiEnabled) {
@@ -82,7 +68,10 @@ export class AiJobService {
       return;
     }
 
-    const plaintext = resolvePlaintextForAi(params.sosMessageSnapshot);
+    const plaintext = await this.plaintextSource.getPlaintext({
+      incidentId: params.incidentId,
+      messageId: params.messageId,
+    });
     if (!plaintext) {
       await this.persistSkipped(params.incidentId, AI_ANALYSIS_STATUS.NO_PLAINTEXT);
       return;

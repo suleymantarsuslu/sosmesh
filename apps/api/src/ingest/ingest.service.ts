@@ -176,8 +176,8 @@ export class IngestService {
     }).then(({ message, incidentId }) => {
       this.aiJobs.enqueueAfterIngest({
         incidentId,
+        messageId,
         tenantKey: clientKey,
-        sosMessageSnapshot: sosMessage,
       });
       return message;
     });

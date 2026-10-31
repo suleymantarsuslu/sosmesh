@@ -4,55 +4,43 @@
 
 | Setting | Default | Notes |
 |--------|---------|--------|
-| `META_BASE_URL` | `https://api.meta.ai/v1` | Master plan URL; not live-verified in this environment |
-| `META_MODEL` | `muse-spark-1.3` | Master plan model id |
-| `MODEL_API_KEY` | _(empty)_ | Server-only; never commit or log |
+| `META_BASE_URL` | `https://api.meta.ai/v1` | Live path verified in audit (no agent live call) |
+| `META_MODEL` | `muse-spark-1.3` | Reasoning model; needs sufficient `META_MAX_TOKENS` |
+| `META_MAX_TOKENS` | `2048` | Values like `20` yield `content: null`, `finish_reason: length` → job **FAILED** |
+| `MODEL_API_KEY` | _(empty)_ | Server-only; `Authorization: Bearer` |
 
-## Request shape (unverified)
+## Request (OpenAI chat-completions compatible)
 
-The worker calls:
-
-`POST {META_BASE_URL}/chat/completions`
-
-with JSON body:
+`POST https://api.meta.ai/v1/chat/completions`
 
 ```json
 {
   "model": "<META_MODEL>",
   "messages": [
     { "role": "system", "content": "<SOS_AI_SYSTEM_PROMPT>" },
-    { "role": "user", "content": "<JSON task payload with SOS plaintext>" }
+    { "role": "user", "content": "<JSON task with decrypted SOS plaintext>" }
   ],
-  "temperature": 0
+  "temperature": 0,
+  "max_tokens": <META_MAX_TOKENS>
 }
 ```
 
-Authorization: `Bearer ${MODEL_API_KEY}`.
+Structured SOS JSON is parsed from `choices[0].message.content` and validated against the operator suggestion schema.
 
-**Status:** Request/response field names are **not live-verified** (`NOT_TESTED` without a valid `MODEL_API_KEY`). Confirm against Meta Model API docs before production.
+Truncation handling: `finish_reason === "length"` or empty/null `content` → `ai_analyses.status = FAILED` (incident retained).
 
-## Plaintext source for AI
+## Plaintext source (server decrypt port only)
 
-| Source | Used when |
-|--------|-----------|
-| `sosMessage.envelope.plaintextForOperator` | Controlled dev/fixture path only |
-| `sosMessage.plaintextForOperator` | Same (top-level alias) |
-| Decrypted `encryptedPayload` | **Not available in M0** — server does not decrypt ingest ciphertext |
+| Source | M0 |
+|--------|-----|
+| `SosPlaintextSource` (ADIM 9 server-side decrypt) | **Not wired** — default implementation returns `null` |
+| Envelope / packet body fields | **Forbidden** — relays must not see SOS text; ingest rejects `plaintext*`, `text`, `message`, etc. on the envelope |
 
-If no plaintext is available, the async AI job writes `ai_analyses.status = NO_PLAINTEXT` and the ingest receipt path is unchanged.
+When plaintext is unavailable: async job writes `NO_PLAINTEXT`. Ingest and encrypted payload storage are unchanged.
 
 ## Output contract
 
 Validated JSON fields: `categories[]`, `persons_estimate`, `injuries_reported`, `needs[]`, `urgency_suggestion`, `uncertainty`, `quoted_evidence`, `location_unknown`, `language`, and **`requires_human_review: true` (fixed)**.
-
-Forbidden in model output: team assignment / dispatch / treatment fields. Prompt injection in user text must not produce team assignment; output remains a human-reviewed suggestion only.
-
-## Resilience
-
-- Timeout + retry with exponential backoff on `429` and `5xx`
-- Circuit breaker after repeated failures
-- Per-tenant rate limit and daily cost cap (`AI_*` env vars)
-- On failure, raw incident/message rows are retained; `ai_analyses.status = FAILED`
 
 ## Logging
 
@@ -62,4 +50,4 @@ Prompt and model response bodies are **not** written to application logs.
 
 | Check | Status |
 |-------|--------|
-| Real `https://api.meta.ai/v1` call | **NOT_TESTED** (no verified `MODEL_API_KEY` in agent environment) |
+| Real Meta API call from this agent | **NOT_TESTED** (no verified `MODEL_API_KEY` in agent environment) |

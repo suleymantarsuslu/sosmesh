@@ -10,6 +10,7 @@ import {
   SUPPORTED_PROTOCOL_VERSION,
 } from './ingest.constants';
 import type { IngestRequestDto } from './dto/ingest-request.dto';
+import { findForbiddenEnvelopeFieldKey } from './envelope-sensitive-fields';
 import { isUnknownLocationEnvelope } from './envelope-location';
 
 function stableStringify(value: unknown): string {
@@ -69,6 +70,17 @@ export class IngestPacketService {
     if (!envelope || typeof envelope !== 'object') {
       throw new HttpException(
         { code: 'INVALID_SOS_PACKET', message: 'SOS envelope is required' },
+        HttpStatus.BAD_REQUEST
+      );
+    }
+
+    const forbiddenKey = findForbiddenEnvelopeFieldKey(envelope);
+    if (forbiddenKey) {
+      throw new HttpException(
+        {
+          code: 'ENVELOPE_SENSITIVE_FIELD',
+          message: 'Envelope must not contain plaintext or message-like fields visible to relays',
+        },
         HttpStatus.BAD_REQUEST
       );
     }

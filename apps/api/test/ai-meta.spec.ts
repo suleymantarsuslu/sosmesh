@@ -93,6 +93,7 @@ describe('Meta AI provider', () => {
         apiKey: 'test-key',
         timeoutMs: 5000,
         maxRetries: 2,
+        maxTokens: 2048,
         fetchImpl: fetchImpl as typeof fetch,
       },
       circuit
@@ -113,6 +114,7 @@ describe('Meta AI provider', () => {
         apiKey: 'test-key',
         timeoutMs: 2000,
         maxRetries: 0,
+        maxTokens: 2048,
         fetchImpl: fetchImpl as typeof fetch,
       },
       circuit
@@ -143,6 +145,7 @@ describe('Meta AI provider', () => {
         apiKey: 'test-key',
         timeoutMs: 2000,
         maxRetries: 0,
+        maxTokens: 2048,
         fetchImpl: fetchImpl as typeof fetch,
       },
       new MetaCircuitBreaker(3, 1000)
@@ -150,6 +153,35 @@ describe('Meta AI provider', () => {
 
     const result = await provider.classify({ plaintext: 'test' });
     expect(result.ok).toBe(false);
+  });
+
+  it('fails when muse-spark returns length finish_reason or null content', async () => {
+    const fetchImpl = async () =>
+      new Response(
+        JSON.stringify({
+          choices: [{ message: { content: null }, finish_reason: 'length' }],
+        }),
+        { status: 200, headers: { 'Content-Type': 'application/json' } }
+      );
+
+    const provider = new MetaHttpProvider(
+      {
+        baseUrl: 'https://api.meta.ai/v1',
+        model: 'muse-spark-1.3',
+        apiKey: 'test-key',
+        timeoutMs: 2000,
+        maxRetries: 0,
+        maxTokens: 20,
+        fetchImpl: fetchImpl as typeof fetch,
+      },
+      new MetaCircuitBreaker(3, 1000)
+    );
+
+    const result = await provider.classify({ plaintext: 'help needed' });
+    expect(result.ok).toBe(false);
+    if (result.ok === false) {
+      expect(result.reason).toBe('response_truncated');
+    }
   });
 
   it('MockMetaProvider is exported fixture helper', () => {

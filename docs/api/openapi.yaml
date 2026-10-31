@@ -1,65 +1,105 @@
-openapi: 3.1.0
-info:
-  title: SOSMesh API
-  version: 1.0.0
-  description: Emergency mesh network API for SOS message relay
-servers:
-  - url: http://localhost:3001
-    description: Local development
+openapi: 3.0.0
 paths:
   /health:
     get:
-      summary: Health check endpoint
+      operationId: HealthController_check
+      parameters: []
       responses:
-        '200':
-          description: Service is healthy
-          content:
-            application/json:
-              schema:
-                type: object
-                required: [status, timestamp]
-                properties:
-                  status:
-                    type: string
-                    enum: [ok, error]
-                  timestamp:
-                    type: string
-                    format: date-time
-  /sos:
+        "200":
+          description: ""
+      tags: &a1
+        - health
+  /health/ready:
+    get:
+      operationId: HealthController_ready
+      parameters: []
+      responses:
+        "200":
+          description: ""
+      tags: *a1
+  /v1/public/messages/{messageId}/status:
+    get:
+      operationId: PublicController_messageStatus
+      parameters:
+        - name: messageId
+          required: true
+          in: path
+          schema:
+            type: string
+      responses:
+        "200":
+          description: ""
+      tags:
+        - public
+  /v1/ingest:
     post:
-      summary: Submit SOS message
+      operationId: IngestController_ingest
+      summary: Accept SOS packet from internet-connected relay
+      parameters: []
       requestBody:
         required: true
         content:
           application/json:
             schema:
-              $ref: '../../packages/contracts/schemas/sos-message.schema.json'
+              $ref: "#/components/schemas/IngestRequestDto"
       responses:
-        '201':
-          description: SOS message received
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  id:
-                    type: string
-                    format: uuid
-                  ackLevel:
-                    type: string
-        '400':
-          description: Invalid request
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Error'
+        "200":
+          description: SERVER_ACCEPTED signed receipt
+      tags:
+        - public
+  /v1/operator/incidents:
+    get:
+      operationId: OperatorController_listIncidents
+      parameters:
+        - name: cursor
+          required: true
+          in: query
+          schema:
+            type: string
+        - name: limit
+          required: true
+          in: query
+          schema:
+            type: string
+      responses:
+        "200":
+          description: ""
+      tags: &a2
+        - operator
+      security: &a3
+        - bearer: []
+  /v1/operator/messages:
+    post:
+      operationId: OperatorController_createMessage
+      parameters: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateOperatorMessageDto"
+      responses:
+        "201":
+          description: ""
+      tags: *a2
+      security: *a3
+info:
+  title: SOSMesh API
+  description: Emergency mesh network API — public and operator surfaces
+  version: 1.0.0
+  contact: {}
+tags: []
+servers: []
 components:
+  securitySchemes:
+    bearer:
+      scheme: bearer
+      bearerFormat: JWT
+      type: http
   schemas:
-    Error:
+    IngestRequestDto:
       type: object
-      required: [code, message]
-      properties:
-        code:
-          type: string
-        message:
-          type: string
+      properties: {}
+    CreateOperatorMessageDto:
+      type: object
+      properties: {}

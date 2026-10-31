@@ -30,3 +30,4 @@ export interface SosStatusTimeline {
 }
 
 export { encryptPayload, decryptPayload, type EncryptedPayload } from './crypto';
+export { validateSosMessage } from './validator';

@@ -82,5 +82,6 @@ module.exports = {
     'tests/chaos/.eslintrc.js',
     'playwright.config.js',
     'prototypes/**/*.html',
+    'apps/api/**',
   ],
 };

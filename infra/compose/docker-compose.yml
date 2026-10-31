@@ -1,0 +1,38 @@
+# Local backend stack (PostgreSQL + API). CI does not use Docker; see ADR-012 for embedded-postgres in tests.
+services:
+  postgres:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_DB: sosmesh
+      POSTGRES_USER: sosmesh
+      POSTGRES_PASSWORD: sosmesh_dev_password
+    ports:
+      - "5432:5432"
+    healthcheck:
+      test: ['CMD-SHELL', 'pg_isready -U sosmesh -d sosmesh']
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  api:
+    image: node:20-bookworm
+    working_dir: /app
+    volumes:
+      - ../..:/app
+    environment:
+      DATABASE_URL: postgresql://sosmesh:sosmesh_dev_password@postgres:5432/sosmesh
+      JWT_SECRET: local-dev-jwt-secret-min-16
+      PORT: '3001'
+      NODE_ENV: development
+    ports:
+      - '3001:3001'
+    depends_on:
+      postgres:
+        condition: service_healthy
+    command: bash -lc "corepack enable && pnpm install --filter @sosmesh/api && pnpm --filter @sosmesh/api exec prisma migrate deploy && pnpm --filter @sosmesh/api dev"
+    healthcheck:
+      test: ['CMD-SHELL', 'wget -q -O- http://127.0.0.1:3001/health || exit 1']
+      interval: 15s
+      timeout: 5s
+      retries: 5
+      start_period: 120s

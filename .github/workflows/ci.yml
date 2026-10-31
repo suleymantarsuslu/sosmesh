@@ -9,9 +9,8 @@ on:
 jobs:
   verify:
     name: Verify Quality Gates
-    runs-on: [self-hosted, linux, ARM64, zulal]
+    runs-on: ubuntu-latest
     timeout-minutes: 30
-    if: github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository
     
     steps:
       - name: Checkout code
@@ -39,7 +38,7 @@ jobs:
             ${{ runner.os }}-pnpm-store-
       
       - name: Install Playwright browsers
-        run: npx playwright install chromium
+        run: npx playwright install --with-deps chromium
       
       - name: Run verification script
         run: bash scripts/verify.sh

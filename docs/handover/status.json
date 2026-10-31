@@ -583,7 +583,7 @@
       "pass_criteria": "AI yokken ingest devam eder; AI çıktısı insan onayı gerektiren öneridir.",
       "status": "PARTIAL",
       "attempts": 1,
-      "commit": null,
+      "commit": "16f7694",
       "evidence": [
         "apps/api/src/ai/providers/meta.ts",
         "apps/api/src/ai/evals/fixtures.ts (32 TR/EN fixtures)",

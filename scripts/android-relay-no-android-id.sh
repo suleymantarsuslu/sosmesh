@@ -11,6 +11,11 @@ PATTERN='Settings\.Secure|ANDROID_ID'
 if grep -RIn -E "$PATTERN" "$RELAY_MAIN"; then
   echo "Relay feature must not use Settings.Secure or ANDROID_ID:"
   exit 1
+else
+  grep_status=$?
+  if [ "$grep_status" -ge 2 ]; then
+    exit "$grep_status"
+  fi
 fi
 
 node <<'NODE'

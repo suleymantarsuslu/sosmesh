@@ -10,7 +10,11 @@ SOSMesh CI runs on a self-hosted Linux ARM64 runner without Docker or sudo. Back
 
 ## Decision
 
-Use the npm [`embedded-postgres`](https://www.npmjs.com/package/embedded-postgres) package to download and start a temporary PostgreSQL instance in an isolated data directory during Jest `globalSetup`. Tests connect via a normal `DATABASE_URL`. The helper process is torn down in `globalTeardown`.
+On the Zulal self-hosted runner, API tests use a dedicated PostgreSQL 17 instance (`127.0.0.1:55432`). Workflow step `Load CI PostgreSQL credentials` sources `/etc/sosmesh-ci/pg.env` (masked into `GITHUB_ENV`). Jest `globalSetup` creates a unique database per run via `SOSMESH_CI_PG_ADMIN_URL`, migrates it, and `globalTeardown` drops it.
+
+On cloud agent VMs and local dev (no CI env file), use the npm [`embedded-postgres`](https://www.npmjs.com/package/embedded-postgres) package to download and start a temporary PostgreSQL instance in an isolated data directory during Jest `globalSetup`. Tests connect via a normal `DATABASE_URL`. The helper process is torn down in `globalTeardown`.
+
+If neither CI PostgreSQL env nor embedded-postgres startup succeeds, tests fail explicitly (no silent skip).
 
 `infra/compose/docker-compose.yml` remains available for optional local Docker-based development but is **not** used in CI (`NOT_TESTED` when Docker is unavailable).
 

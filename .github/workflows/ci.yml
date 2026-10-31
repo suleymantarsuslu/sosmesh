@@ -9,8 +9,9 @@ on:
 jobs:
   verify:
     name: Verify Quality Gates
-    runs-on: ubuntu-latest
+    runs-on: [self-hosted, linux, ARM64, zulal]
     timeout-minutes: 30
+    if: github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository
     
     steps:
       - name: Checkout code
@@ -38,7 +39,7 @@ jobs:
             ${{ runner.os }}-pnpm-store-
       
       - name: Install Playwright browsers
-        run: npx playwright install --with-deps chromium
+        run: npx playwright install chromium
       
       - name: Run verification script
         run: bash scripts/verify.sh
@@ -210,8 +211,9 @@ jobs:
 
   cross-language-contracts:
     name: Cross-Language Contract Tests
-    runs-on: ubuntu-latest
+    runs-on: [self-hosted, linux, ARM64, zulal]
     timeout-minutes: 15
+    if: github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository
     
     steps:
       - name: Checkout code
@@ -230,6 +232,11 @@ jobs:
         with:
           distribution: 'temurin'
           java-version: '17'
+      
+      - name: Setup Swift
+        uses: swift-actions/setup-swift@v2
+        with:
+          swift-version: '6.0'
       
       - name: Install dependencies
         run: pnpm install --frozen-lockfile

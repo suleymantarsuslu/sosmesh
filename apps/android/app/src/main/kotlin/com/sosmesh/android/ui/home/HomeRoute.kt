@@ -17,7 +17,10 @@ import com.sosmesh.android.R
 import com.sosmesh.android.service.MeshConnectionForegroundService
 
 @Composable
-fun HomeRoute(onOpenPermissions: () -> Unit) {
+fun HomeRoute(
+    onOpenPermissions: () -> Unit,
+    onOpenRadioDebug: () -> Unit,
+) {
     val context = LocalContext.current
     Column(
         modifier =
@@ -33,6 +36,9 @@ fun HomeRoute(onOpenPermissions: () -> Unit) {
         )
         Button(onClick = onOpenPermissions) {
             Text(stringResource(R.string.home_permissions_cta))
+        }
+        Button(onClick = onOpenRadioDebug) {
+            Text(stringResource(R.string.home_radio_debug_cta))
         }
         Button(
             onClick = {

@@ -11,6 +11,7 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import com.sosmesh.android.ui.home.HomeRoute
 import com.sosmesh.android.ui.permissions.PermissionsRoute
+import com.sosmesh.android.ui.radio.RadioDebugRoute
 import dagger.hilt.android.AndroidEntryPoint
 
 @AndroidEntryPoint
@@ -34,10 +35,14 @@ private fun SosMeshNavHost() {
         composable("home") {
             HomeRoute(
                 onOpenPermissions = { navController.navigate("permissions") },
+                onOpenRadioDebug = { navController.navigate("radio") },
             )
         }
         composable("permissions") {
             PermissionsRoute(onBack = { navController.popBackStack() })
+        }
+        composable("radio") {
+            RadioDebugRoute(onBack = { navController.popBackStack() })
         }
     }
 }

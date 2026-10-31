@@ -402,7 +402,7 @@
       "pass_criteria": "En az 2 Android cihaz birbirini keşfeder ve GATT oturumu kurar.",
       "status": "PARTIAL",
       "attempts": 1,
-      "commit": null,
+      "commit": "622ed30",
       "evidence": [
         "JVM unit: GattClientSession, PeerRegistry, PermissionAndAdapterGuard, BleAdvertiser payload",
         "docs/tests/android-radio.md prosedür + OEM şablon",

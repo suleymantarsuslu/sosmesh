@@ -9,8 +9,9 @@ on:
 jobs:
   verify:
     name: Verify Quality Gates
-    runs-on: ubuntu-latest
+    runs-on: [self-hosted, linux, ARM64, zulal]
     timeout-minutes: 30
+    if: github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository
     
     steps:
       - name: Checkout code
@@ -38,7 +39,7 @@ jobs:
             ${{ runner.os }}-pnpm-store-
       
       - name: Install Playwright browsers
-        run: npx playwright install --with-deps chromium
+        run: npx playwright install chromium
       
       - name: Run verification script
         run: bash scripts/verify.sh
@@ -248,20 +249,14 @@ jobs:
       
       - name: Run Swift contract tests
         run: |
-          if command -v swift &> /dev/null; then
-            echo "=== Swift Contract Tests ==="
-            which swift
-            swift --version
-            cd packages/contracts-swift
-            export SOURCE_ROOT="${GITHUB_WORKSPACE}"
-            swift test
-          else
-            echo "::warning::Swift is not installed on this runner. Skipping Swift tests."
-            echo "To enable Swift tests, install Swift manually on the self-hosted runner."
-            exit 0
-          fi
+          echo "=== Swift Contract Tests ==="
+          which swift
+          swift --version
+          cd packages/contracts-swift
+          export SOURCE_ROOT="${GITHUB_WORKSPACE}"
+          swift test
       
-      - name: Compare canonical JSON outputs (TypeScript vs Kotlin)
+      - name: Compare canonical JSON outputs (TypeScript vs Kotlin vs Swift)
         run: |
           echo "Comparing TypeScript and Kotlin canonical outputs..."
           MASTER_GOLDEN="packages/contracts/crypto-test-vectors/golden-001.json"
@@ -273,17 +268,13 @@ jobs:
             exit 1
           fi
           
-          if command -v swift &> /dev/null; then
-            echo "Comparing with Swift canonical output..."
-            SWIFT_GOLDEN="packages/contracts-swift/Tests/SOSMeshContractsTests/Resources/golden-001.json"
-            if cmp -s "$MASTER_GOLDEN" "$SWIFT_GOLDEN"; then
-              echo "✅ Swift canonical output matches"
-            else
-              echo "❌ Swift canonical output differs"
-              exit 1
-            fi
+          echo "Comparing with Swift canonical output..."
+          SWIFT_GOLDEN="packages/contracts-swift/Tests/SOSMeshContractsTests/Resources/golden-001.json"
+          if cmp -s "$MASTER_GOLDEN" "$SWIFT_GOLDEN"; then
+            echo "✅ Swift canonical output matches"
           else
-            echo "::warning::Swift not available, skipping Swift canonical comparison"
+            echo "❌ Swift canonical output differs"
+            exit 1
           fi
 
   secret-scan:

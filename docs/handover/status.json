@@ -374,7 +374,7 @@
       "pass_criteria": "Gerçek SOS offline queue’ya kaydolur; yanlış “ekibe ulaştı” mesajı yok.",
       "status": "PARTIAL",
       "attempts": 1,
-      "commit": null,
+      "commit": "3149beb",
       "evidence": [
         "Compose/Robolectric unit tests: outbox enqueue, forbidden copy, i18n parity",
         "docs/tests/android-talkback-script.md NOT_TESTED",

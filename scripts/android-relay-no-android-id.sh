@@ -8,13 +8,8 @@ RELAY_MAIN="$ROOT/apps/android/feature-relay/src/main"
 
 PATTERN='Settings\.Secure|ANDROID_ID'
 
-set +e
-MATCHES="$(grep -RIn -E "$PATTERN" "$RELAY_MAIN" 2>/dev/null || true)"
-set -e
-
-if [ -n "$MATCHES" ]; then
+if grep -RIn -E "$PATTERN" "$RELAY_MAIN"; then
   echo "Relay feature must not use Settings.Secure or ANDROID_ID:"
-  echo "$MATCHES"
   exit 1
 fi
 

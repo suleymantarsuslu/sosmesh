@@ -19,6 +19,7 @@ Use the npm [`embedded-postgres`](https://www.npmjs.com/package/embedded-postgre
 - API tests in `apps/api/test` require ~5–10s startup for the embedded cluster on first run.
 - Rollback coverage uses a hand-written `down.sql` beside the Prisma migration plus `prisma db execute`.
 - No GitHub-hosted `services: postgres` containers are added (zero hosted-minute budget).
+- Test helpers set `LC_ALL=C` / `LANG=C` on the embedded-postgres child process and pass `initdbFlags: ['--locale=C', '--encoding=UTF8']` (no `pnpm` patch of vendor `dist` files).
 
 ## Alternatives considered
 

@@ -2,6 +2,10 @@ import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
 
+process.env.LC_ALL = 'C';
+process.env.LANG = 'C';
+process.env.LC_MESSAGES = 'C';
+
 const statePath = process.argv[2];
 if (!statePath) {
   process.exit(1);
@@ -30,6 +34,13 @@ async function bootOnce(attempt) {
     password: 'postgres',
     port,
     persistent: false,
+    initdbFlags: ['--locale=C', '--encoding=UTF8'],
+    onLog: (message) => {
+      process.stderr.write(String(message));
+    },
+    onError: (message) => {
+      process.stderr.write(String(message));
+    },
   });
   await embedded.initialise();
   await embedded.start();

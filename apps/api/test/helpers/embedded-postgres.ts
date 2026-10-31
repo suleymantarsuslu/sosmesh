@@ -34,10 +34,15 @@ export async function startEmbeddedPostgres(): Promise<{
     fs.rmSync(statePath, { force: true });
   }
   const script = path.join(__dirname, 'hold-embedded.mjs');
-  const lockPath = path.join(os.tmpdir(), 'sosmesh-embedded-pg.lock');
-  const child = spawn('flock', ['-x', lockPath, 'node', script, statePath], {
+  const child = spawn('node', [script, statePath], {
     stdio: ['ignore', 'ignore', 'pipe'],
     detached: true,
+    env: {
+      ...process.env,
+      LC_ALL: 'C',
+      LANG: 'C',
+      LC_MESSAGES: 'C',
+    },
   });
   child.stderr?.on('data', (chunk: Buffer) => {
     process.stderr.write(chunk);

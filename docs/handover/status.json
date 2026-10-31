@@ -443,7 +443,7 @@
       "pass_criteria": "A cihazında PEER_RECEIVED yalnızca B'nin doğrulanmış ack'ı üzerine görünür.",
       "status": "PARTIAL",
       "attempts": 1,
-      "commit": "PLACEHOLDER",
+      "commit": "e97c3a7",
       "evidence": [
         "docs/protocol/ble-v1.md: TRANSFER_VERIFIED (0x21), PEER_RECEIVED yalnız doğrulanmış tamamlama",
         "BleTransferReceiver: sha256 OK → TRANSFER_VERIFIED; digest hata → NACK DIGEST_INVALID",

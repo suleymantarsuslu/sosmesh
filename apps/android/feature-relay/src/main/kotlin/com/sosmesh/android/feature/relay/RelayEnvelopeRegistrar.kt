@@ -1,5 +1,6 @@
 package com.sosmesh.android.feature.relay
 
+import com.sosmesh.android.feature.relay.upload.RelayUploadCommands
 import com.sosmesh.ble.BleProtocol
 import com.sosmesh.contracts.transport.EnqueueInput
 import com.sosmesh.contracts.transport.OutboxQueueAdapter
@@ -18,6 +19,7 @@ class RelayEnvelopeRegistrar
     @Inject
     constructor(
         private val outbox: OutboxQueueAdapter,
+        private val uploadScheduler: RelayUploadCommands,
     ) {
         fun registerFromWirePayload(
             payload: ByteArray,
@@ -37,6 +39,7 @@ class RelayEnvelopeRegistrar
                     ),
                     nowMs,
                 )
+                uploadScheduler.scheduleUpload(nowMs)
                 Result.success(Unit)
             } catch (ex: Exception) {
                 Result.failure(ex)

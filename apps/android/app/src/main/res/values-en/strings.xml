@@ -5,6 +5,7 @@
     <string name="home_permissions_cta">Configure permissions</string>
     <string name="home_sos_cta">Send SOS</string>
     <string name="home_status_cta">Message status</string>
+    <string name="home_relay_cta">Volunteer relay mode</string>
     <string name="home_start_relay">Mesh connection (foreground)</string>
     <string name="home_radio_debug_cta">Radio / peer discovery (debug)</string>
     <string name="radio_debug_title">BLE radio status</string>
@@ -27,4 +28,5 @@
     <string name="notification_channel_mesh">Mesh connection</string>
     <string name="notification_mesh_title">Nearby device connection</string>
     <string name="notification_mesh_body">SOSMesh is communicating with nearby devices. No guarantee of continuous background connection.</string>
+    <string name="notification_mesh_body_pending">%1$d packet(s) waiting to upload. No guarantee of continuous background connection.</string>
 </resources>

@@ -33,4 +33,13 @@ interface OutboxDao {
         """,
     )
     fun countDueForSend(nowMs: Long): Int
+
+    @Query(
+        """
+        SELECT * FROM outbox
+        WHERE retry_at <= :nowMs AND state = 'LOCAL_SAVED' AND origin = 'relay'
+        ORDER BY created_at ASC
+        """,
+    )
+    fun listDueRelayUpload(nowMs: Long): List<OutboxEntity>
 }

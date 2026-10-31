@@ -41,6 +41,9 @@ object DataModule {
     }
 
     @Provides
+    fun provideOutboxDao(db: OutboxDatabase): com.sosmesh.android.core.data.outbox.OutboxDao = db.outboxDao()
+
+    @Provides
     @Singleton
     fun provideSecureStringStore(store: KeystoreEncryptedStringStore): SecureStringStore = store
 }

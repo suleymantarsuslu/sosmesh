@@ -5,6 +5,7 @@ import androidx.test.core.app.ApplicationProvider
 import com.sosmesh.android.core.data.fixtures.AndroidStateTransitionLoader
 import com.sosmesh.android.core.data.outbox.OutboxDatabase
 import com.sosmesh.android.core.data.outbox.RoomOutboxQueueAdapter
+import com.sosmesh.android.feature.relay.upload.RelayUploadCommands
 import com.sosmesh.ble.BleProtocol
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
@@ -15,6 +16,15 @@ import org.robolectric.RobolectricTestRunner
 import org.robolectric.annotation.Config
 import java.io.File
 import java.util.Base64
+
+class NoopUploadCommands : RelayUploadCommands {
+    override fun scheduleUpload(
+        nowMs: Long,
+        delayMs: Long,
+    ) = Unit
+
+    override fun cancelUpload() = Unit
+}
 
 class RelayNoDecryptTest {
     @Test
@@ -32,7 +42,7 @@ class RelayDedupKeyTest {
         ThrowingOutbox.enqueueCalls = 0
         ThrowingOutbox.lastSosId = null
         ThrowingOutbox.lastDigest = null
-        val registrar = RelayEnvelopeRegistrar(ThrowingOutbox())
+        val registrar = RelayEnvelopeRegistrar(ThrowingOutbox(), NoopUploadCommands())
         val payload =
             """
             {"version":1,"id":"dup-15","envelope":{"timestamp":"2026-10-29T17:00:00Z","priority":1},"encryptedPayload":"cipher"}
@@ -123,7 +133,7 @@ class RelayRoomOutboxDedupTest {
                 javaClass.classLoader!!.getResourceAsStream("state-transitions.json")!!,
             )
         val adapter = RoomOutboxQueueAdapter(db.outboxDao(), fixture.defaultRetentionMs)
-        val registrar = RelayEnvelopeRegistrar(adapter)
+        val registrar = RelayEnvelopeRegistrar(adapter, NoopUploadCommands())
         val payload =
             """
             {"version":1,"id":"room-dup-15","envelope":{"timestamp":"2026-10-29T17:00:00Z","priority":1},"encryptedPayload":"cipher"}

@@ -8,6 +8,7 @@ import androidx.compose.runtime.Composable
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
+import com.sosmesh.android.feature.relay.RelayRoute
 import com.sosmesh.android.feature.sos.SosRoute
 import com.sosmesh.android.feature.status.StatusRoute
 import com.sosmesh.android.ui.home.HomeRoute
@@ -40,6 +41,7 @@ private fun SosMeshNavHost() {
                 onOpenRadioDebug = { navController.navigate("radio") },
                 onOpenSos = { navController.navigate("sos") },
                 onOpenStatus = { navController.navigate("status") },
+                onOpenRelay = { navController.navigate("relay") },
             )
         }
         composable("permissions") {
@@ -53,6 +55,9 @@ private fun SosMeshNavHost() {
         }
         composable("status") {
             StatusRoute()
+        }
+        composable("relay") {
+            RelayRoute(onBack = { navController.popBackStack() })
         }
     }
 }

@@ -583,20 +583,18 @@
       "pass_criteria": "AI yokken ingest devam eder; AI çıktısı insan onayı gerektiren öneridir.",
       "status": "PARTIAL",
       "attempts": 1,
-      "commit": "fef83b2",
+      "commit": "PLACEHOLDER",
       "evidence": [
         "apps/api/src/ai/providers/meta.ts",
         "apps/api/src/ai/evals/fixtures.ts (32 TR/EN fixtures)",
         "apps/api/test/ai-meta.spec.ts",
         "apps/api/test/ai-worker.spec.ts",
         "docs/ai/meta-provider.md",
-        "Canlı Meta API smoke: NOT_TESTED (MODEL_API_KEY doğrulanmadı)"
+        "Canlı Meta chat/completions smoke: denetçi 2026-11-01 (sentetik TR fixture, 200/stop/şema; ~1.9k token/istek)"
       ],
-      "notes": "Async AI worker; plaintext yalnızca SosPlaintextSource (M0 NO_PLAINTEXT); envelope plaintext alanları reddedilir; dal: cursor/meta-ai-adim20",
-      "blockers": [
-        "B-05 MODEL_API_KEY canlı doğrulama yok"
-      ],
-      "last_checked_at": "2026-10-31T23:15:00Z",
+      "notes": "Async AI worker; plaintext yalnızca SosPlaintextSource (M0 NO_PLAINTEXT); envelope plaintext alanları reddedilir; dal: cursor/meta-ai-adim20; META_MAX_TOKENS varsayılan 4096",
+      "blockers": [],
+      "last_checked_at": "2026-11-01T00:00:00Z",
       "goal": "İstekleri operatöre yardımcı yapılandırılmış bilgiye dönüştür.",
       "cursor_tasks": [
         "Yalnızca backend worker, https://api.meta.ai/v1 üzerinden MODEL_API_KEY ile muse-spark-1.3 çağırır; key yalnızca server env.",

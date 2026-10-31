@@ -37,7 +37,7 @@ export class AiJobService {
       Number(process.env.AI_TENANT_RATE_LIMIT_MAX ?? 30),
       Number(process.env.AI_TENANT_RATE_LIMIT_WINDOW_MS ?? 60000)
     );
-    this.costGuard = new AiCostGuard(Number(process.env.AI_DAILY_COST_CAP_USD ?? 25));
+    this.costGuard = new AiCostGuard(Number(process.env.AI_DAILY_COST_CAP_USD ?? 5));
     this.providerOverride = providerOverride ?? null;
     this.plaintextSource = plaintextSource ?? new NullSosPlaintextSource();
   }

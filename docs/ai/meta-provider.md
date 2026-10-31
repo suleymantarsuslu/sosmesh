@@ -6,8 +6,9 @@
 |--------|---------|--------|
 | `META_BASE_URL` | `https://api.meta.ai/v1` | Live path verified in audit (no agent live call) |
 | `META_MODEL` | `muse-spark-1.3` | Reasoning model; needs sufficient `META_MAX_TOKENS` |
-| `META_MAX_TOKENS` | `2048` | Values like `20` yield `content: null`, `finish_reason: length` → job **FAILED** |
+| `META_MAX_TOKENS` | `4096` | Values like `20` yield `content: null`, `finish_reason: length` → job **FAILED** |
 | `MODEL_API_KEY` | _(empty)_ | Server-only; `Authorization: Bearer` |
+| `AI_DAILY_COST_CAP_USD` | `5` | UTC calendar day; `AiCostGuard` resets at UTC midnight |
 
 ## Request (OpenAI chat-completions compatible)
 
@@ -50,4 +51,9 @@ Prompt and model response bodies are **not** written to application logs.
 
 | Check | Status |
 |-------|--------|
-| Real Meta API call from this agent | **NOT_TESTED** (no verified `MODEL_API_KEY` in agent environment) |
+| Cloud agent live Meta call | **NOT_RUN** (key not in agent environment) |
+| Denetçi canlı smoke | **PASS** (2026-11-01, see below) |
+
+**Canlı smoke 2026-11-01:** SOSMesh denetçisi tarafından box üzerinden, sentetik Türkçe fixture ile `chat/completions` + bu system prompt: HTTP **200**, `finish_reason=stop`, şemaya uygun JSON, prompt injection denemesine rağmen ekip ataması yok, `requires_human_review=true`. Ölçüm: ~**1.9k token/istek** (`completion_tokens` ~1668, reasoning payı yüksek). Anahtar değeri kaydedilmedi.
+
+Production SOS metni M0’da sunucuda çözülmediği için operasyonel yol hâlâ **`NO_PLAINTEXT`**; status **PARTIAL** kalır.

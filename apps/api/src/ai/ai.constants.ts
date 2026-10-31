@@ -13,4 +13,4 @@ export type AiAnalysisStatus = (typeof AI_ANALYSIS_STATUS)[keyof typeof AI_ANALY
 
 export const DEFAULT_META_BASE_URL = 'https://api.meta.ai/v1';
 export const DEFAULT_META_MODEL = 'muse-spark-1.3';
-export const DEFAULT_META_MAX_TOKENS = 2048;
+export const DEFAULT_META_MAX_TOKENS = 4096;

@@ -24,10 +24,20 @@ export class TenantAiRateLimiter {
 
 export class AiCostGuard {
   private spentUsd = 0;
+  private utcDayKey = '';
 
   constructor(private readonly maxUsdPerDay: number) {}
 
-  tryCharge(estimatedUsd: number): boolean {
+  private utcDayKeyFor(nowMs: number): string {
+    return new Date(nowMs).toISOString().slice(0, 10);
+  }
+
+  tryCharge(estimatedUsd: number, nowMs = Date.now()): boolean {
+    const dayKey = this.utcDayKeyFor(nowMs);
+    if (dayKey !== this.utcDayKey) {
+      this.utcDayKey = dayKey;
+      this.spentUsd = 0;
+    }
     if (this.spentUsd + estimatedUsd > this.maxUsdPerDay) {
       return false;
     }
@@ -37,5 +47,6 @@ export class AiCostGuard {
 
   reset(): void {
     this.spentUsd = 0;
+    this.utcDayKey = '';
   }
 }

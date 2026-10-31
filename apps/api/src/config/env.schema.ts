@@ -20,12 +20,12 @@ export const envValidationSchema = Joi.object({
   META_MODEL: Joi.string().default('muse-spark-1.3'),
   META_TIMEOUT_MS: Joi.number().integer().min(1000).default(15000),
   META_MAX_RETRIES: Joi.number().integer().min(0).max(5).default(2),
-  META_MAX_TOKENS: Joi.number().integer().min(256).default(2048),
+  META_MAX_TOKENS: Joi.number().integer().min(256).default(4096),
   META_CIRCUIT_FAILURE_THRESHOLD: Joi.number().integer().min(1).default(3),
   META_CIRCUIT_COOLDOWN_MS: Joi.number().integer().min(1000).default(30000),
   AI_TENANT_RATE_LIMIT_MAX: Joi.number().integer().min(1).default(30),
   AI_TENANT_RATE_LIMIT_WINDOW_MS: Joi.number().integer().min(1000).default(60000),
-  AI_DAILY_COST_CAP_USD: Joi.number().min(0).default(25),
+  AI_DAILY_COST_CAP_USD: Joi.number().min(0).default(5),
   AI_ESTIMATED_COST_USD: Joi.number().min(0).default(0.002),
 });
 

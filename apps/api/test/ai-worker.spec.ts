@@ -161,6 +161,15 @@ describe('AI worker (async, post-ingest)', () => {
     expect(guard.tryCharge(0.001)).toBe(false);
   });
 
+  it('resets AiCostGuard spend at UTC day boundary', () => {
+    const guard = new AiCostGuard(1);
+    const endOfDay = Date.parse('2026-11-01T23:59:00.000Z');
+    expect(guard.tryCharge(0.9, endOfDay)).toBe(true);
+    expect(guard.tryCharge(0.2, endOfDay)).toBe(false);
+    const nextUtcDay = Date.parse('2026-11-02T00:00:00.000Z');
+    expect(guard.tryCharge(0.9, nextUtcDay)).toBe(true);
+  });
+
   it('skips provider call when AI is disabled', async () => {
     const previous = process.env.AI_ENABLED;
     process.env.AI_ENABLED = 'false';

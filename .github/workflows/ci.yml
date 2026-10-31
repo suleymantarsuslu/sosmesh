@@ -235,12 +235,19 @@ jobs:
       
       - name: Setup Swift
         run: |
-          SWIFT_VERSION="6.0.3"
-          SWIFT_PLATFORM="ubuntu2404-aarch64"
-          SWIFT_URL="https://download.swift.org/swift-${SWIFT_VERSION}-release/ubuntu2404-aarch64/swift-${SWIFT_VERSION}-RELEASE/swift-${SWIFT_VERSION}-RELEASE-${SWIFT_PLATFORM}.tar.gz"
+          SWIFT_VERSION="5.10.1"
+          SWIFT_PLATFORM="ubuntu2204-aarch64"
+          SWIFT_URL="https://download.swift.org/swift-${SWIFT_VERSION}-release/ubuntu2204-aarch64/swift-${SWIFT_VERSION}-RELEASE/swift-${SWIFT_VERSION}-RELEASE-${SWIFT_PLATFORM}.tar.gz"
           
-          echo "Downloading Swift ${SWIFT_VERSION} for ARM64..."
-          curl -L "${SWIFT_URL}" -o swift.tar.gz
+          echo "Downloading Swift ${SWIFT_VERSION} for ARM64 from ${SWIFT_URL}"
+          if ! curl -f -L "${SWIFT_URL}" -o swift.tar.gz; then
+            echo "Failed to download Swift. Trying to list available versions..."
+            curl -L "https://download.swift.org/swift-${SWIFT_VERSION}-release/ubuntu2204-aarch64/"
+            exit 1
+          fi
+          
+          echo "Verifying download..."
+          file swift.tar.gz
           
           echo "Extracting Swift..."
           tar xzf swift.tar.gz
@@ -249,6 +256,7 @@ jobs:
           echo "${SWIFT_DIR}/usr/bin" >> $GITHUB_PATH
           
           echo "Swift installed successfully"
+          "${SWIFT_DIR}/usr/bin/swift" --version
       
       - name: Install dependencies
         run: pnpm install --frozen-lockfile

@@ -33,7 +33,7 @@ jobs:
         run: |
           STORE_PATH="${{ runner.temp }}/pnpm-store-${{ github.job }}"
           echo "STORE_PATH=${STORE_PATH}" >> "$GITHUB_ENV"
-          pnpm config set store-dir "${STORE_PATH}"
+          echo "npm_config_store_dir=${STORE_PATH}" >> "$GITHUB_ENV"
       
       - name: Setup pnpm cache
         uses: actions/cache@v4
@@ -118,7 +118,11 @@ jobs:
           dest: ${{ runner.temp }}/pnpm-${{ github.job }}
       
       - name: Configure isolated pnpm store (self-hosted parallel jobs)
-        run: pnpm config set store-dir "${{ runner.temp }}/pnpm-store-${{ github.job }}"
+        shell: bash
+        run: |
+          STORE_PATH="${{ runner.temp }}/pnpm-store-${{ github.job }}"
+          echo "STORE_PATH=${STORE_PATH}" >> "$GITHUB_ENV"
+          echo "npm_config_store_dir=${STORE_PATH}" >> "$GITHUB_ENV"
       
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
@@ -271,7 +275,11 @@ jobs:
           java-version: '17'
       
       - name: Configure isolated pnpm store (self-hosted parallel jobs)
-        run: pnpm config set store-dir "${{ runner.temp }}/pnpm-store-${{ github.job }}"
+        shell: bash
+        run: |
+          STORE_PATH="${{ runner.temp }}/pnpm-store-${{ github.job }}"
+          echo "STORE_PATH=${STORE_PATH}" >> "$GITHUB_ENV"
+          echo "npm_config_store_dir=${STORE_PATH}" >> "$GITHUB_ENV"
       
       - name: Install dependencies
         run: pnpm install --frozen-lockfile

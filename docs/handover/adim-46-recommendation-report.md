@@ -39,4 +39,4 @@ Onaylı sentetik kaynak kataloğu + deterministik mesafe/müsaitlik motoru (AI�
 
 ## HEAD
 
-Commit push sonrası CI run id rapora eklenecek.
+Commit: `1722727` (push sonrası CI run id eklenecek).

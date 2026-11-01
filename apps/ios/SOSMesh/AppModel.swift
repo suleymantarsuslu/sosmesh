@@ -8,6 +8,14 @@ final class AppModel: ObservableObject {
     @Published var acceptedDisclaimer = false
     @Published var restorationPhase: BleRestorationPhase = .coldStart
     @Published var outboxCount = 0
+    @Published var platformHint: CrossPlatformUserHint = .none
+
+    /// Preview / simulated fault injection for UX tests (not real GPS coordinates).
+    @Published var simulateLocationUnavailable = false
+    @Published var simulateTransferCorrupt = false
+    @Published var simulateApiUploadFailed = false
+    @Published var simulateBluetoothOff = false
+    @Published var simulatePermissionsDenied = false
 
     private var restorationMachine = BleRestorationStateMachine()
     private let roleSelector = BleRoleSelector()
@@ -37,5 +45,19 @@ final class AppModel: ObservableObject {
     func noteEnteredForeground() {
         try? restorationMachine.apply(.willEnterForeground)
         restorationPhase = restorationMachine.phase
+    }
+
+    func refreshPlatformHint() {
+        let state = CrossPlatformPlatformState(
+            bluetoothEnabled: !simulateBluetoothOff,
+            blePermissionsGranted: !simulatePermissionsDenied,
+            locationAvailable: !simulateLocationUnavailable,
+            networkValidated: false,
+            batteryLevelPercent: 100,
+            relayOptIn: relayEnabled,
+            lastTransferCorrupt: simulateTransferCorrupt,
+            lastApiUploadFailed: simulateApiUploadFailed
+        )
+        platformHint = CrossPlatformPlatformEvaluator.userHint(for: state)
     }
 }

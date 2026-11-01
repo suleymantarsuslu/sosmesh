@@ -21,6 +21,11 @@
     <string name="platform_hint_low_battery">Pil düşük; gönüllü röle duraklatıldı. SOS kaydı cihazda korunur.</string>
     <string name="platform_hint_network">İnternet yok; röle yüklemesi bekliyor. Paketler cihazda saklanır.</string>
     <string name="platform_hint_power_save">Güç tasarrufu etkin; tarama aralığı kısıtlanır. Arka plan garantisi yoktur.</string>
+    <string name="cross_platform_fault_title">Aktarım veya bağlantı uyarısı</string>
+    <string name="cross_platform_fault_aria">Çapraz platform hata durumu bildirimi</string>
+    <string name="cross_platform_hint_location">Konum servisi kapalı veya GPS yok. SOS akışı devam eder; konum bilinmiyor olarak işaretlenir.</string>
+    <string name="cross_platform_hint_corrupt">Paket bozuk veya doğrulanamadı. Yakın cihaza aktarıldı sayılmaz.</string>
+    <string name="cross_platform_hint_api">Sunucu yüklemesi başarısız. Mesaj cihazda bekler; operatör okundu anlamına gelmez.</string>
     <string name="relay_education_title">Gönüllü röle (isteğe bağlı)</string>
     <string name="relay_education_body">Yakındaki SOS mesajlarını internete taşımak için gönüllü olabilirsiniz. İçerik okunmaz; pil ve veri limitleri uygulanır.</string>
     <string name="relay_education_cta">Röle ayarlarını aç</string>

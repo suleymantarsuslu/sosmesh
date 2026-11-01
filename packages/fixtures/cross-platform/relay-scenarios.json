@@ -1,0 +1,55 @@
+{
+  "description": "iOS ↔ Android cross relay scenario contract (simulated + physical tracking).",
+  "scenarios": [
+    {
+      "id": "ios_a_android_b_online",
+      "direction": "iphone_sender_android_receiver",
+      "senderPlatform": "ios",
+      "receiverPlatform": "android",
+      "receiverHasNetwork": true,
+      "offlineRelayHop": false,
+      "verification": "NOT_TESTED",
+      "environment": "physical_lab_required"
+    },
+    {
+      "id": "android_a_ios_b_online",
+      "direction": "android_sender_iphone_receiver",
+      "senderPlatform": "android",
+      "receiverPlatform": "ios",
+      "receiverHasNetwork": true,
+      "offlineRelayHop": false,
+      "verification": "NOT_TESTED",
+      "environment": "physical_lab_required"
+    },
+    {
+      "id": "ios_android_offline_cross_relay",
+      "direction": "bidirectional_store_forward",
+      "senderPlatform": "ios",
+      "receiverPlatform": "android",
+      "receiverHasNetwork": false,
+      "offlineRelayHop": true,
+      "verification": "NOT_TESTED",
+      "environment": "physical_lab_required"
+    },
+    {
+      "id": "android_ios_offline_cross_relay",
+      "direction": "bidirectional_store_forward",
+      "senderPlatform": "android",
+      "receiverPlatform": "ios",
+      "receiverHasNetwork": false,
+      "offlineRelayHop": true,
+      "verification": "NOT_TESTED",
+      "environment": "physical_lab_required"
+    },
+    {
+      "id": "simulated_ble_protocol_parity",
+      "direction": "mock_transport",
+      "senderPlatform": "any",
+      "receiverPlatform": "any",
+      "receiverHasNetwork": false,
+      "offlineRelayHop": false,
+      "verification": "PASS",
+      "environment": "packages/ble-protocol integration tests"
+    }
+  ]
+}

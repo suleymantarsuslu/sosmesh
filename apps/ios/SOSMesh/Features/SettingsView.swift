@@ -1,4 +1,5 @@
 import SwiftUI
+import SOSMeshCore
 
 struct SettingsView: View {
     @EnvironmentObject private var appModel: AppModel
@@ -16,6 +17,17 @@ struct SettingsView: View {
                     Text("Phase: \(appModel.restorationPhase.rawValue)")
                         .font(.caption)
                         .accessibilityLabel(Text("ios.restoration.phase"))
+                }
+                Section("settings.multihop.title") {
+                    Toggle(isOn: Binding(
+                        get: { MeshRelayFeatureFlags.isExperimentalMultihopRelayEnabled },
+                        set: { MeshRelayFeatureFlags.setExperimentalMultihopRelayEnabled($0) }
+                    )) {
+                        Text("settings.multihop.toggle")
+                    }
+                    .accessibilityLabel(Text("settings.multihop.toggle"))
+                    Text("settings.multihop.footer")
+                        .font(.footnote)
                 }
             }
             .navigationTitle("settings.title")

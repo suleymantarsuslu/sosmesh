@@ -21,6 +21,11 @@
     <string name="platform_hint_low_battery">Battery is low; volunteer relay paused. SOS remains saved on device.</string>
     <string name="platform_hint_network">No internet; relay upload is waiting. Packets stay on device.</string>
     <string name="platform_hint_power_save">Power save is on; scan intervals are reduced. No background guarantee.</string>
+    <string name="cross_platform_fault_title">Transfer or connectivity warning</string>
+    <string name="cross_platform_fault_aria">Cross-platform fault status announcement</string>
+    <string name="cross_platform_hint_location">Location services off or no GPS. SOS flow continues; location marked unknown.</string>
+    <string name="cross_platform_hint_corrupt">Packet corrupt or could not be verified. Not counted as delivered to a nearby device.</string>
+    <string name="cross_platform_hint_api">Server upload failed. Message waits on device; not operator read.</string>
     <string name="relay_education_title">Volunteer relay (opt-in)</string>
     <string name="relay_education_body">You can volunteer to carry nearby SOS messages to the internet. Content is not read; battery and data limits apply.</string>
     <string name="relay_education_cta">Open relay settings</string>

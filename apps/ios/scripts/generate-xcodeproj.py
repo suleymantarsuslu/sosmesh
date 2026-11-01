@@ -12,6 +12,7 @@ APP_SOURCES = [
     "SOSMesh/AppModel.swift",
     "SOSMesh/RootTabView.swift",
     "SOSMesh/Features/HomeView.swift",
+    "SOSMesh/Features/CrossPlatformFaultViews.swift",
     "SOSMesh/Features/StatusView.swift",
     "SOSMesh/Features/RelayView.swift",
     "SOSMesh/Features/SettingsView.swift",

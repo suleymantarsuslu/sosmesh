@@ -1,0 +1,26 @@
+{
+  "description": "Synthetic end-to-end encrypted payload references for cross-platform contract tests (no real PII).",
+  "fixtures": [
+    {
+      "id": "golden-001-envelope",
+      "source": "packages/contracts/crypto-test-vectors/golden-001.json",
+      "fields": {
+        "keyId": "dev-test-001",
+        "ciphertextField": "ciphertextBase64",
+        "note": "Same golden vector must round-trip in TS/Kotlin/Swift crypto tests"
+      }
+    },
+    {
+      "id": "ble-opaque-chunk-payload",
+      "opaqueCiphertextBase64": "AQIDBAUGBwgJCgsMDQ4PEBESExQVFhcYGRobHB0eHyAhIiMkJSYnKCkqKywtLi8=",
+      "expectedSha256": "a591a6d40bf420404a011733cfb7b190d62c65bf0bcda32b57b277d9ad9f146e",
+      "comment": "SHA is for Hello World hex in ble test-vectors; opaque blob is synthetic mesh relay sample"
+    },
+    {
+      "id": "mesh-v2-opaque-relay",
+      "messageId": "cross-fixture-msg-001",
+      "opaqueCiphertextBase64": "c2FudGV0aWMtZW5jcnlwdGVkLWJsb2Itbm8tUElJ",
+      "peerAckHint": "PEER_RECEIVED_ONLY"
+    }
+  ]
+}

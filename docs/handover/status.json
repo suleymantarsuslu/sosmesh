@@ -197,7 +197,9 @@
         "PR #18: https://github.com/suleymantarsuslu/sosmesh/pull/18",
         "Cross-language CI job"
       ],
-      "blockers": ["docs/api/openapi.yaml not in repo"],
+      "blockers": [
+        "docs/api/openapi.yaml not in repo"
+      ],
       "last_checked_at": null,
       "goal": "Android, iOS, saat, web ve API için tek payload kaynağı oluştur.",
       "cursor_tasks": [
@@ -222,7 +224,10 @@
       "status": "PASS",
       "attempts": 2,
       "commit": "74f4b4c",
-      "evidence": ["CI run 41120079781", "Merged PR #21 D-08 resume to main 74f4b4c"],
+      "evidence": [
+        "CI run 41120079781",
+        "Merged PR #21 D-08 resume to main 74f4b4c"
+      ],
       "note": "D-08 RESUME_REQUEST merge 74f4b4c",
       "blockers": [],
       "last_checked_at": "2026-10-29T16:00:00Z",
@@ -284,7 +289,10 @@
       "status": "PASS",
       "attempts": 1,
       "commit": "e2c18af",
-      "evidence": ["CI run 41128740240", "PR #22"],
+      "evidence": [
+        "CI run 41128740240",
+        "PR #22"
+      ],
       "notes": "Room/Android Room ve iOS cihaz NOT_TESTED; TS/JVM/Swift SQLite CI PASS",
       "blockers": [],
       "last_checked_at": null,
@@ -313,7 +321,12 @@
       "status": "PASS",
       "attempts": 1,
       "commit": "2162113",
-      "evidence": ["PR #23", "CI run 41132795663", "verify 20/20", "100-transfer 36 success / 64 failed"],
+      "evidence": [
+        "PR #23",
+        "CI run 41132795663",
+        "verify 20/20",
+        "100-transfer 36 success / 64 failed"
+      ],
       "blockers": [],
       "last_checked_at": null,
       "goal": "Gerçek cihazdan önce protokolün hata toleransını tekrarlanabilir test et.",
@@ -903,21 +916,20 @@
       "pass_criteria": "Her görev için açık sorumlu ve izlenebilir değişiklik geçmişi var.",
       "status": "PARTIAL",
       "attempts": 1,
-      "commit": "a29c6ec",
+      "commit": "252e18148895a68532a9efc7ace73094b96a6c1d",
       "evidence": [
         "Prisma migration 20261101193000_adim27_28 (resources, work_tasks, location_share_grants)",
         "apps/api/src/coordination (teams/resources/tasks, optimistic version 409, audit_logs)",
-        "apps/api/test/work-tasks.spec.ts (RBAC, AI PROPOSED, concurrency, location expiry)",
+        "apps/api/test/work-tasks.spec.ts (RBAC, assignee org scope, resourceWhere fail-closed, lifecycle)",
         "apps/web features/tasks + /operator/tasks,/teams (ScreenState, icon+label status)",
         "reports/operator-tasks-1440.png (Playwright)",
         "pnpm -r build EXIT=0; pnpm test EXIT=0; verify.sh 24/24 EXIT=0",
         "ERTELENDI: mutation/geniş ekran görüntüleri PASS sayılmadı"
       ],
       "blockers": [
-        "Self-hosted CI yeşil olana kadar PASS değil",
-        "PR #40 (ADIM 26) merge edilmeden main ile birleşme sırası"
+        "Self-hosted CI yeşil olana kadar PASS değil (pnpm ENOTEMPTY — PR #41)"
       ],
-      "last_checked_at": "2026-11-01T17:51:00+00:00",
+      "last_checked_at": "2026-11-01T18:49:00+00:00",
       "goal": "Operatör önerisini onaylı operasyonel iş akışına dönüştür.",
       "cursor_tasks": [
         "Teams, resource types, capacity, zone, assignment statuses ve availability model.",
@@ -940,7 +952,7 @@
       "pass_criteria": "Aynı olaydan notification fırtınası yok; zaman çizelgesi doğru.",
       "status": "PARTIAL",
       "attempts": 1,
-      "commit": "a29c6ec",
+      "commit": "252e18148895a68532a9efc7ace73094b96a6c1d",
       "evidence": [
         "apps/api/src/notifications (dedupe upsert, quiet hours, preferences/subscriptions)",
         "GET /v1/operator/notifications, /activity, /activity/export (role guard)",
@@ -950,9 +962,9 @@
         "Push/email gerçek sağlayıcı: in-app worker only (NOT_TESTED prod delivery)"
       ],
       "blockers": [
-        "Self-hosted CI yeşil olana kadar PASS değil"
+        "Self-hosted CI yeşil olana kadar PASS değil (pnpm ENOTEMPTY — PR #41)"
       ],
-      "last_checked_at": "2026-11-01T17:51:00+00:00",
+      "last_checked_at": "2026-11-01T18:49:00+00:00",
       "goal": "Güvenilir kullanıcı bilgilendirmesi ile operasyonel gürültüyü dengede tut.",
       "cursor_tasks": [
         "Operator notification rules; urgency suggestions never silently escalate life-critical decisions.",

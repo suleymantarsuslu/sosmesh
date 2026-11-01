@@ -1520,7 +1520,7 @@
       "pass_criteria": "Her veri alanı için amaç, erişim, retention ve silme yolu belli.",
       "status": "PARTIAL",
       "attempts": 1,
-      "commit": null,
+      "commit": "01fe84f",
       "evidence": [
         "docs/legal/privacy-policy-draft.md, docs/legal/kvkk-gdpr-legal-review-checklist.md (hukuki inceleme NOT_TESTED)",
         "docs/privacy/data-map.md, docs/privacy/lawful-emergency-access.md",

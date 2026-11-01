@@ -339,12 +339,27 @@ export class RecommendationService {
       expectedVersion: draft.version,
     });
 
-    const updated = await this.prisma.assignmentRecommendation.update({
-      where: { id: recommendationId },
+    const finalized = await this.prisma.assignmentRecommendation.updateMany({
+      where: {
+        id: recommendationId,
+        status: AssignmentRecommendationStatus.PROPOSED,
+      },
       data: {
         status: AssignmentRecommendationStatus.CONFIRMED,
         workTaskId: assigned.id,
       },
+    });
+
+    if (finalized.count !== 1) {
+      await this.tasks.withdrawTask(user, assigned.id, { expectedVersion: assigned.version });
+      throw new BadRequestException({
+        code: 'INVALID_STATE',
+        message: 'Recommendation already finalized',
+      });
+    }
+
+    const updated = await this.prisma.assignmentRecommendation.findUniqueOrThrow({
+      where: { id: recommendationId },
       include: {
         team: { select: { name: true, zoneCode: true } },
         resource: { select: { name: true, zoneCode: true } },

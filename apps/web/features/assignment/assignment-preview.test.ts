@@ -1,23 +1,9 @@
 import { describe, expect, it } from 'vitest';
 
+import { pickActivePreview } from './pick-active-preview';
 import type { AssignmentRecommendationRow } from './types';
 
-function pickActivePreview(
-  items: AssignmentRecommendationRow[],
-  caseCoordinates: { latitude: number; longitude: number } | null
-) {
-  const proposed = items.find((row) => row.status === 'PROPOSED' && row.available);
-  if (!proposed) {
-    return null;
-  }
-  return {
-    teamLabel: proposed.teamName,
-    from: proposed.previewAnchor,
-    to: caseCoordinates,
-  };
-}
-
-describe('assignment preview helpers', () => {
+describe('pickActivePreview', () => {
   it('selects first available proposed row for map preview', () => {
     const items: AssignmentRecommendationRow[] = [
       {

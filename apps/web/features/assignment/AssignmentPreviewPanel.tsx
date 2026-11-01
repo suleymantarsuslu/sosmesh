@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useState } from 'react';
 
+import { pickActivePreview } from './pick-active-preview';
 import type { AssignmentPreviewRoute, AssignmentRecommendationRow } from './types';
 
 type Props = {
@@ -49,20 +50,10 @@ export function AssignmentPreviewPanel({ incidentId, caseCoordinates, onPreviewC
     void loadPlan();
   }, [loadRole, loadPlan]);
 
-  const activePreview = useMemo((): AssignmentPreviewRoute | null => {
-    const proposed = items.find((row) => row.status === 'PROPOSED' && row.available);
-    if (!proposed) {
-      return null;
-    }
-    return {
-      teamLabel: proposed.teamName,
-      from: {
-        latitude: proposed.previewAnchor.latitude,
-        longitude: proposed.previewAnchor.longitude,
-      },
-      to: caseCoordinates,
-    };
-  }, [items, caseCoordinates]);
+  const activePreview = useMemo(
+    (): AssignmentPreviewRoute | null => pickActivePreview(items, caseCoordinates),
+    [items, caseCoordinates]
+  );
 
   useEffect(() => {
     onPreviewChange?.(activePreview);

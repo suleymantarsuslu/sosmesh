@@ -16,17 +16,18 @@ import { createTestOrganization } from './helpers/test-organization';
 
 describe('Assignment recommendations (ADIM 46)', () => {
   let app: INestApplication;
-  const orgId = '00000000-0000-4000-8000-000000000d01';
-  const teamId = '00000000-0000-4000-8000-000000000d11';
-  const incidentId = '00000000-0000-4000-8000-000000000d21';
-  const staleIncidentId = '00000000-0000-4000-8000-000000000d22';
-  const noResourceOrgId = '00000000-0000-4000-8000-000000000d03';
-  const noResourceTeamId = '00000000-0000-4000-8000-000000000d13';
-  const noResourceIncidentId = '00000000-0000-4000-8000-000000000d23';
-  const operatorId = '00000000-0000-4000-8000-000000000d31';
-  const coordinatorId = '00000000-0000-4000-8000-000000000d32';
-  const assigneeId = '00000000-0000-4000-8000-000000000d33';
+  const orgId = '00000000-0000-4000-8000-000000000461';
+  const teamId = '00000000-0000-4000-8000-000000000462';
+  const incidentId = '00000000-0000-4000-8000-000000000463';
+  const staleIncidentId = '00000000-0000-4000-8000-000000000464';
+  const noResourceOrgId = '00000000-0000-4000-8000-000000000465';
+  const noResourceTeamId = '00000000-0000-4000-8000-000000000466';
+  const noResourceIncidentId = '00000000-0000-4000-8000-000000000467';
+  const operatorId = '00000000-0000-4000-8000-000000000468';
+  const coordinatorId = '00000000-0000-4000-8000-000000000469';
+  const assigneeId = '00000000-0000-4000-8000-00000000046a';
   const allowedOrigin = 'http://localhost:3000';
+  const rationaleRationaleEnabled = process.env.AI_RECOMMENDATION_RATIONALE_ENABLED;
 
   beforeAll(async () => {
     applyTestAuthEnv();
@@ -36,17 +37,17 @@ describe('Assignment recommendations (ADIM 46)', () => {
     await createTestOrganization(prisma, {
       id: orgId,
       name: 'Rec Org',
-      slug: 'rec-org',
+      slug: 'rec-org-46',
     });
     await createTestOrganization(prisma, {
       id: noResourceOrgId,
       name: 'Empty Org',
-      slug: 'empty-org-rec',
+      slug: 'empty-org-rec-46',
     });
     await prisma.team.createMany({
       data: [
-        { id: teamId, name: 'rec-team', organizationId: orgId, zoneCode: 'SYNTH-Z1' },
-        { id: noResourceTeamId, name: 'empty-team', organizationId: noResourceOrgId },
+        { id: teamId, name: 'rec-team-46', organizationId: orgId, zoneCode: 'SYNTH-Z1' },
+        { id: noResourceTeamId, name: 'empty-team-46', organizationId: noResourceOrgId },
       ],
     });
     const hash = await bcrypt.hash('test-password-16chars', 10);
@@ -54,7 +55,7 @@ describe('Assignment recommendations (ADIM 46)', () => {
       data: [
         {
           id: operatorId,
-          email: 'rec-operator@sosmesh.example',
+          email: 'rec-operator-46@sosmesh.example',
           displayName: 'Operator',
           role: UserRole.OPERATOR,
           teamId,
@@ -62,7 +63,7 @@ describe('Assignment recommendations (ADIM 46)', () => {
         },
         {
           id: coordinatorId,
-          email: 'rec-coordinator@sosmesh.example',
+          email: 'rec-coordinator-46@sosmesh.example',
           displayName: 'Coordinator',
           role: UserRole.COORDINATOR,
           teamId,
@@ -70,7 +71,7 @@ describe('Assignment recommendations (ADIM 46)', () => {
         },
         {
           id: assigneeId,
-          email: 'rec-assignee@sosmesh.example',
+          email: 'rec-assignee-46@sosmesh.example',
           displayName: 'Assignee',
           role: UserRole.OPERATOR,
           teamId,
@@ -96,7 +97,7 @@ describe('Assignment recommendations (ADIM 46)', () => {
     await prisma.sosMessage.createMany({
       data: [
         {
-          messageId: '00000000-0000-4000-8000-000000000d41',
+          messageId: '00000000-0000-4000-8000-00000000046b',
           incidentId,
           locationStatus: LocationStatus.GPS,
           latitude: 39.925,
@@ -105,7 +106,7 @@ describe('Assignment recommendations (ADIM 46)', () => {
           receivedAt: new Date(),
         },
         {
-          messageId: '00000000-0000-4000-8000-000000000d42',
+          messageId: '00000000-0000-4000-8000-00000000046c',
           incidentId: staleIncidentId,
           locationStatus: LocationStatus.GPS,
           latitude: 39.925,
@@ -114,7 +115,7 @@ describe('Assignment recommendations (ADIM 46)', () => {
           receivedAt: old,
         },
         {
-          messageId: '00000000-0000-4000-8000-000000000d43',
+          messageId: '00000000-0000-4000-8000-00000000046d',
           incidentId: noResourceIncidentId,
           locationStatus: LocationStatus.UNKNOWN,
           receivedAt: new Date(),
@@ -124,7 +125,7 @@ describe('Assignment recommendations (ADIM 46)', () => {
     await prisma.resource.createMany({
       data: [
         {
-          id: '00000000-0000-4000-8000-000000000d51',
+          id: '00000000-0000-4000-8000-00000000046e',
           organizationId: orgId,
           teamId,
           kind: ResourceKind.FIELD_TEAM,
@@ -133,7 +134,7 @@ describe('Assignment recommendations (ADIM 46)', () => {
           zoneCode: 'SYNTH-Z1',
         },
         {
-          id: '00000000-0000-4000-8000-000000000d52',
+          id: '00000000-0000-4000-8000-00000000046f',
           organizationId: orgId,
           teamId,
           kind: ResourceKind.VEHICLE,
@@ -144,6 +145,15 @@ describe('Assignment recommendations (ADIM 46)', () => {
         },
       ],
     });
+  });
+
+  afterAll(async () => {
+    if (rationaleRationaleEnabled === undefined) {
+      delete process.env.AI_RECOMMENDATION_RATIONALE_ENABLED;
+    } else {
+      process.env.AI_RECOMMENDATION_RATIONALE_ENABLED = rationaleRationaleEnabled;
+    }
+    await app.close();
   });
 
   beforeEach(() => {
@@ -165,6 +175,80 @@ describe('Assignment recommendations (ADIM 46)', () => {
       teamId,
       organizationId: orgId,
     });
+
+  async function seedIncidentWithFreshResource(
+    prisma: PrismaService,
+    ids: {
+      incidentId: string;
+      messageId: string;
+      orgId: string;
+      teamId: string;
+      resourceId: string;
+      assigneeId: string;
+      coordinatorId: string;
+    }
+  ): Promise<void> {
+    const hash = await bcrypt.hash('test-password-16chars', 10);
+    await createTestOrganization(prisma, {
+      id: ids.orgId,
+      name: `Rec Org ${ids.orgId.slice(-4)}`,
+      slug: `rec-org-${ids.orgId.slice(-8)}`,
+    });
+    await prisma.team.create({
+      data: {
+        id: ids.teamId,
+        name: `rec-team-${ids.teamId.slice(-4)}`,
+        organizationId: ids.orgId,
+        zoneCode: 'SYNTH-Z1',
+      },
+    });
+    await prisma.user.createMany({
+      data: [
+        {
+          id: ids.coordinatorId,
+          email: `rec-coord-${ids.coordinatorId.slice(-4)}@sosmesh.example`,
+          displayName: 'Coordinator',
+          role: UserRole.COORDINATOR,
+          teamId: ids.teamId,
+          passwordHash: hash,
+        },
+        {
+          id: ids.assigneeId,
+          email: `rec-assignee-${ids.assigneeId.slice(-4)}@sosmesh.example`,
+          displayName: 'Assignee',
+          role: UserRole.OPERATOR,
+          teamId: ids.teamId,
+          passwordHash: hash,
+        },
+      ],
+    });
+    await prisma.resource.create({
+      data: {
+        id: ids.resourceId,
+        organizationId: ids.orgId,
+        teamId: ids.teamId,
+        kind: ResourceKind.FIELD_TEAM,
+        name: `unit-${ids.resourceId.slice(-4)}`,
+        capacity: 8,
+        zoneCode: 'SYNTH-Z1',
+      },
+    });
+    await prisma.incident.create({ data: { id: ids.incidentId, state: 'PENDING' } });
+    await prisma.assignment.create({
+      data: { incidentId: ids.incidentId, teamId: ids.teamId, status: 'OPEN' },
+    });
+    await prisma.sosMessage.create({
+      data: {
+        messageId: ids.messageId,
+        incidentId: ids.incidentId,
+        locationStatus: LocationStatus.GPS,
+        latitude: 39.925,
+        longitude: 32.836,
+        accuracyMeters: 2500,
+        receivedAt: new Date(),
+      },
+    });
+  }
 
   it('plans recommendations with unavailable resource and GPS warnings', async () => {
     const plan = await request(app.getHttpServer())
@@ -230,31 +314,54 @@ describe('Assignment recommendations (ADIM 46)', () => {
       .post(`/v1/operator/incidents/${incidentId}/recommendations/plan`)
       .set('Authorization', `Bearer ${coordinatorToken()}`)
       .set('Origin', allowedOrigin);
-    const available = plan.body.items.find((row: { available: boolean }) => row.available);
-    expect(available).toBeDefined();
+    expect(plan.body.items.length).toBeGreaterThan(0);
+    const targetId = plan.body.items[0].id as string;
     const confirm = await request(app.getHttpServer())
-      .post(`/v1/operator/recommendations/${available.id}/confirm`)
+      .post(`/v1/operator/recommendations/${targetId}/confirm`)
       .set('Authorization', `Bearer ${operatorToken()}`)
       .set('Origin', allowedOrigin)
       .send({ assigneeId });
     expect(confirm.status).toBe(403);
+    expect(confirm.body.code).toBe('FORBIDDEN');
   });
 
   it('commits assignment only after coordinator confirm with assignee', async () => {
+    const prisma = app.get(PrismaService);
+    const confirmIncidentId = '00000000-0000-4000-8000-000000000475';
+    const confirmOrgId = '00000000-0000-4000-8000-000000000484';
+    const confirmTeamId = '00000000-0000-4000-8000-00000000047b';
+    const confirmResourceId = '00000000-0000-4000-8000-00000000047c';
+    const confirmAssigneeId = '00000000-0000-4000-8000-000000000481';
+    const confirmCoordinatorId = '00000000-0000-4000-8000-000000000485';
+    await seedIncidentWithFreshResource(prisma, {
+      incidentId: confirmIncidentId,
+      messageId: '00000000-0000-4000-8000-000000000476',
+      orgId: confirmOrgId,
+      teamId: confirmTeamId,
+      resourceId: confirmResourceId,
+      assigneeId: confirmAssigneeId,
+      coordinatorId: confirmCoordinatorId,
+    });
+    const confirmCoordToken = operatorBearerToken({
+      sub: confirmCoordinatorId,
+      role: UserRole.COORDINATOR,
+      teamId: confirmTeamId,
+      organizationId: confirmOrgId,
+    });
     const plan = await request(app.getHttpServer())
-      .post(`/v1/operator/incidents/${incidentId}/recommendations/plan`)
-      .set('Authorization', `Bearer ${coordinatorToken()}`)
+      .post(`/v1/operator/incidents/${confirmIncidentId}/recommendations/plan`)
+      .set('Authorization', `Bearer ${confirmCoordToken}`)
       .set('Origin', allowedOrigin);
     const available = plan.body.items.find((row: { available: boolean }) => row.available);
+    expect(available).toBeDefined();
     const confirm = await request(app.getHttpServer())
       .post(`/v1/operator/recommendations/${available.id}/confirm`)
-      .set('Authorization', `Bearer ${coordinatorToken()}`)
+      .set('Authorization', `Bearer ${confirmCoordToken}`)
       .set('Origin', allowedOrigin)
-      .send({ assigneeId });
+      .send({ assigneeId: confirmAssigneeId });
     expect(confirm.status).toBe(201);
     expect(confirm.body.taskId).toBeTruthy();
     expect(confirm.body.recommendation.status).toBe('CONFIRMED');
-    const prisma = app.get(PrismaService);
     const task = await prisma.workTask.findUnique({ where: { id: confirm.body.taskId } });
     expect(task?.status).toBe('ASSIGNED');
     expect(task?.source).toBe('AI');
@@ -282,5 +389,189 @@ describe('Assignment recommendations (ADIM 46)', () => {
     });
     const details = audit?.detailsJson as { liveTraining?: boolean };
     expect(details.liveTraining).toBe(false);
+  });
+
+  it('returns NOT_FOUND for cross-organization recommendation plan (IDOR)', async () => {
+    const prisma = app.get(PrismaService);
+    const otherOrgId = '00000000-0000-4000-8000-000000000470';
+    const otherTeamId = '00000000-0000-4000-8000-000000000471';
+    const otherOperatorId = '00000000-0000-4000-8000-000000000472';
+    const hash = await bcrypt.hash('test-password-16chars', 10);
+    await createTestOrganization(prisma, {
+      id: otherOrgId,
+      name: 'rec-other-org',
+      slug: 'rec-other-org-46',
+    });
+    await prisma.team.create({
+      data: { id: otherTeamId, name: 'rec-other-team', organizationId: otherOrgId },
+    });
+    await prisma.user.create({
+      data: {
+        id: otherOperatorId,
+        email: 'rec-other-op-46@sosmesh.example',
+        displayName: 'Other Op',
+        role: UserRole.OPERATOR,
+        teamId: otherTeamId,
+        passwordHash: hash,
+      },
+    });
+    const token = operatorBearerToken({
+      sub: otherOperatorId,
+      role: UserRole.OPERATOR,
+      teamId: otherTeamId,
+      organizationId: otherOrgId,
+    });
+    const response = await request(app.getHttpServer())
+      .post(`/v1/operator/incidents/${incidentId}/recommendations/plan`)
+      .set('Authorization', `Bearer ${token}`)
+      .set('Origin', allowedOrigin);
+    expect(response.status).toBe(404);
+    expect(response.body.code).toBe('NOT_FOUND');
+  });
+
+  it('returns 403 for recommendation POST without allowed Origin (CSRF guard)', async () => {
+    const login = await request(app.getHttpServer())
+      .post('/v1/auth/login')
+      .set('Origin', allowedOrigin)
+      .send({ email: 'rec-operator-46@sosmesh.example', password: 'test-password-16chars' });
+    expect(login.status).toBe(200);
+    const cookie = login.headers['set-cookie'];
+    const blocked = await request(app.getHttpServer())
+      .post(`/v1/operator/incidents/${incidentId}/recommendations/plan`)
+      .set('Cookie', cookie)
+      .set('Origin', 'http://attacker.example');
+    expect(blocked.status).toBe(403);
+    expect(blocked.body.code).toBe('CSRF_FORBIDDEN');
+  });
+
+  it('rejects second confirm on the same recommendation (idempotent guard)', async () => {
+    const prisma = app.get(PrismaService);
+    const idempotentIncidentId = '00000000-0000-4000-8000-000000000477';
+    const idempotentOrgId = '00000000-0000-4000-8000-000000000486';
+    const idempotentTeamId = '00000000-0000-4000-8000-00000000047d';
+    const idempotentResourceId = '00000000-0000-4000-8000-00000000047e';
+    const idempotentAssigneeId = '00000000-0000-4000-8000-000000000482';
+    const idempotentCoordinatorId = '00000000-0000-4000-8000-000000000487';
+    await seedIncidentWithFreshResource(prisma, {
+      incidentId: idempotentIncidentId,
+      messageId: '00000000-0000-4000-8000-000000000478',
+      orgId: idempotentOrgId,
+      teamId: idempotentTeamId,
+      resourceId: idempotentResourceId,
+      assigneeId: idempotentAssigneeId,
+      coordinatorId: idempotentCoordinatorId,
+    });
+    const idempotentCoordToken = operatorBearerToken({
+      sub: idempotentCoordinatorId,
+      role: UserRole.COORDINATOR,
+      teamId: idempotentTeamId,
+      organizationId: idempotentOrgId,
+    });
+    const plan = await request(app.getHttpServer())
+      .post(`/v1/operator/incidents/${idempotentIncidentId}/recommendations/plan`)
+      .set('Authorization', `Bearer ${idempotentCoordToken}`)
+      .set('Origin', allowedOrigin);
+    const available = plan.body.items.find((row: { available: boolean }) => row.available);
+    expect(available).toBeDefined();
+    const first = await request(app.getHttpServer())
+      .post(`/v1/operator/recommendations/${available.id}/confirm`)
+      .set('Authorization', `Bearer ${idempotentCoordToken}`)
+      .set('Origin', allowedOrigin)
+      .send({ assigneeId: idempotentAssigneeId });
+    expect(first.status).toBe(201);
+    const second = await request(app.getHttpServer())
+      .post(`/v1/operator/recommendations/${available.id}/confirm`)
+      .set('Authorization', `Bearer ${idempotentCoordToken}`)
+      .set('Origin', allowedOrigin)
+      .send({ assigneeId: idempotentAssigneeId });
+    expect(second.status).toBe(400);
+    expect(second.body.code).toBe('INVALID_STATE');
+    const tasks = await prisma.workTask.count({
+      where: { incidentId: idempotentIncidentId, source: 'AI', status: 'ASSIGNED' },
+    });
+    expect(tasks).toBe(1);
+  });
+
+  it('rejects confirm after operator rejection', async () => {
+    const prisma = app.get(PrismaService);
+    const rejectIncidentId = '00000000-0000-4000-8000-000000000479';
+    const rejectOrgId = '00000000-0000-4000-8000-000000000488';
+    const rejectTeamId = '00000000-0000-4000-8000-00000000047f';
+    const rejectResourceId = '00000000-0000-4000-8000-000000000480';
+    const rejectAssigneeId = '00000000-0000-4000-8000-000000000483';
+    const rejectCoordinatorId = '00000000-0000-4000-8000-000000000489';
+    await seedIncidentWithFreshResource(prisma, {
+      incidentId: rejectIncidentId,
+      messageId: '00000000-0000-4000-8000-00000000047a',
+      orgId: rejectOrgId,
+      teamId: rejectTeamId,
+      resourceId: rejectResourceId,
+      assigneeId: rejectAssigneeId,
+      coordinatorId: rejectCoordinatorId,
+    });
+    const rejectCoordToken = operatorBearerToken({
+      sub: rejectCoordinatorId,
+      role: UserRole.COORDINATOR,
+      teamId: rejectTeamId,
+      organizationId: rejectOrgId,
+    });
+    const plan = await request(app.getHttpServer())
+      .post(`/v1/operator/incidents/${rejectIncidentId}/recommendations/plan`)
+      .set('Authorization', `Bearer ${rejectCoordToken}`)
+      .set('Origin', allowedOrigin);
+    const target = plan.body.items.find((row: { available: boolean }) => row.available);
+    expect(target).toBeDefined();
+    const rejected = await request(app.getHttpServer())
+      .patch(`/v1/operator/recommendations/${target.id}/reject`)
+      .set('Authorization', `Bearer ${rejectCoordToken}`)
+      .set('Origin', allowedOrigin);
+    expect(rejected.status).toBe(200);
+    const confirm = await request(app.getHttpServer())
+      .post(`/v1/operator/recommendations/${target.id}/confirm`)
+      .set('Authorization', `Bearer ${rejectCoordToken}`)
+      .set('Origin', allowedOrigin)
+      .send({ assigneeId: rejectAssigneeId });
+    expect(confirm.status).toBe(400);
+    expect(confirm.body.code).toBe('INVALID_STATE');
+  });
+
+  it('stores AI rationale only when opt-in enabled and redacts PII from operator text', async () => {
+    const prisma = app.get(PrismaService);
+    const rationaleIncidentId = '00000000-0000-4000-8000-000000000473';
+    await prisma.incident.create({ data: { id: rationaleIncidentId, state: 'PENDING' } });
+    await prisma.assignment.create({
+      data: { incidentId: rationaleIncidentId, teamId, status: 'OPEN' },
+    });
+    const syntheticLat = '12.3456';
+    const syntheticLon = '54.3210';
+    const coordPair = `${syntheticLat},${syntheticLon}`;
+    await prisma.sosMessage.create({
+      data: {
+        messageId: '00000000-0000-4000-8000-000000000474',
+        incidentId: rationaleIncidentId,
+        locationStatus: LocationStatus.UNKNOWN,
+        operatorDisplayText: `yardım ${coordPair} victim@example.com`,
+        receivedAt: new Date(),
+      },
+    });
+
+    process.env.AI_RECOMMENDATION_RATIONALE_ENABLED = 'true';
+    const plan = await request(app.getHttpServer())
+      .post(
+        `/v1/operator/incidents/${rationaleIncidentId}/recommendations/plan?includeAiRationale=true`
+      )
+      .set('Authorization', `Bearer ${operatorToken()}`)
+      .set('Origin', allowedOrigin);
+    process.env.AI_RECOMMENDATION_RATIONALE_ENABLED = 'false';
+    expect(plan.status).toBe(201);
+    const withRationale = plan.body.items.find(
+      (row: { aiRationale: string | null }) => row.aiRationale
+    );
+    expect(withRationale).toBeDefined();
+    const rationaleText = withRationale.aiRationale as string;
+    expect(rationaleText).not.toMatch(/victim@example\.com/);
+    expect(rationaleText).not.toContain(syntheticLat);
+    expect(rationaleText).not.toMatch(/treatment_plan|triage_decision|dispatch_now/i);
+    expect(rationaleText).toMatch(/koordinatör|Deterministik|aciliyet/i);
   });
 });

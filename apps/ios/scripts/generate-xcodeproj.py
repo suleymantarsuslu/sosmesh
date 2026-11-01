@@ -231,6 +231,7 @@ def build_settings(target_name: str, bundle_id: str, info_plist: str | None = No
         "TARGETED_DEVICE_FAMILY = 1;",
         "SUPPORTED_PLATFORMS = \"iphoneos iphonesimulator\";",
         "SUPPORTS_MACCATALYST = NO;",
+        "PRODUCT_NAME = " + ("SOSMeshTests" if test else "SOSMesh") + ";",
         "PRODUCT_BUNDLE_IDENTIFIER = " + bundle_id + ";",
         "CODE_SIGNING_ALLOWED = NO;",
         "CODE_SIGNING_REQUIRED = NO;",

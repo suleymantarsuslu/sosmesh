@@ -11,6 +11,9 @@ export const envValidationSchema = Joi.object({
     .valid('fatal', 'error', 'warn', 'info', 'debug', 'trace', 'silent')
     .default('info'),
   CORS_ORIGINS: Joi.string().optional(),
+  INGEST_RECEIPT_SIGNING_PRIVATE_KEY: Joi.string().base64().min(32).required(),
+  INGEST_RATE_LIMIT_MAX: Joi.number().integer().min(1).default(120),
+  INGEST_RATE_LIMIT_WINDOW_MS: Joi.number().integer().min(1000).default(60000),
 });
 
 export type AppEnv = {

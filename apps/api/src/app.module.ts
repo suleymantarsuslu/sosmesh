@@ -15,6 +15,7 @@ import {
 import { RequestIdMiddleware } from './common/middleware/request-id.middleware';
 import { envValidationSchema } from './config/env.schema';
 import { HealthModule } from './health/health.module';
+import { IngestModule } from './ingest/ingest.module';
 import { OperatorModule } from './operator/operator.module';
 import { PrismaModule } from './prisma/prisma.module';
 import { PublicModule } from './public/public.module';
@@ -37,7 +38,8 @@ import { PublicModule } from './public/public.module';
             'req.headers.authorization',
             'req.body.encryptedNoteBlob',
             'req.body.encryptedPayload',
-            'req.body.latitude',
+            'req.body.sosMessage.encryptedPayload',
+            'req.body.sosMessage.envelope.location',
             'req.body.longitude',
             'req.body.note',
             'req.body.coordinates',
@@ -61,6 +63,7 @@ import { PublicModule } from './public/public.module';
     PrismaModule,
     HealthModule,
     PublicModule,
+    IngestModule,
     OperatorModule,
   ],
   providers: [

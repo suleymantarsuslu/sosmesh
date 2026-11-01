@@ -31,6 +31,22 @@ paths:
           description: ""
       tags:
         - public
+  /v1/ingest:
+    post:
+      operationId: IngestController_ingest
+      summary: Accept SOS packet from internet-connected relay
+      parameters: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/IngestRequestDto"
+      responses:
+        "200":
+          description: SERVER_ACCEPTED signed receipt
+      tags:
+        - public
   /v1/operator/incidents:
     get:
       operationId: OperatorController_listIncidents
@@ -81,6 +97,9 @@ components:
       bearerFormat: JWT
       type: http
   schemas:
+    IngestRequestDto:
+      type: object
+      properties: {}
     CreateOperatorMessageDto:
       type: object
       properties: {}

@@ -8,7 +8,7 @@ export async function GET() {
     const { mockSseResponse } = await import('../../../../../lib/e2e-mock-cases');
     return mockSseResponse();
   }
-  const token = getSessionToken();
+  const token = await getSessionToken();
   if (!token) {
     return NextResponse.json({ code: 'UNAUTHORIZED' }, { status: 401 });
   }

@@ -70,7 +70,11 @@ cleanup() {
     sleep 1
   done
   
-  echo "Warning: Some ports may still be in use"
+  if lsof -ti:$API_PORT >/dev/null 2>&1 || lsof -ti:$WEB_PORT >/dev/null 2>&1; then
+    echo "❌ Ports $API_PORT/$WEB_PORT still in use after cleanup (blocks Playwright a11y)"
+    lsof -i:$API_PORT -i:$WEB_PORT 2>/dev/null || true
+    exit 1
+  fi
 }
 
 trap cleanup EXIT

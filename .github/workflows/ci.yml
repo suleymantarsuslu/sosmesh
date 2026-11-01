@@ -6,17 +6,32 @@ on:
   pull_request:
     branches: [main, dev]
 
-concurrency:
-  group: ci-${{ github.workflow }}-${{ github.head_ref || github.ref }}
-  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
-
 jobs:
   verify:
     name: Verify Quality Gates
-    runs-on: [self-hosted, linux, ARM64, zulal]
+    runs-on: ubuntu-latest
     timeout-minutes: 30
     if: github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository
-    
+
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: postgres
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
+    env:
+      SOSMESH_CI_PG_ADMIN_URL: postgresql://postgres:postgres@localhost:5432/postgres
+      SOSMESH_CI_DATABASE_URL: postgresql://postgres:postgres@localhost:5432/postgres
+
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -30,46 +45,26 @@ jobs:
         uses: pnpm/action-setup@v3
         with:
           version: 9
+          dest: ${{ runner.temp }}/pnpm-${{ github.job }}
       
-      - name: Get pnpm store directory
+      - name: Configure isolated pnpm store (self-hosted parallel jobs)
         shell: bash
         run: |
-          echo "STORE_PATH=$(pnpm store path --silent)" >> $GITHUB_ENV
+          STORE_PATH="${{ runner.temp }}/pnpm-store-${{ github.job }}"
+          echo "STORE_PATH=${STORE_PATH}" >> "$GITHUB_ENV"
+          echo "npm_config_store_dir=${STORE_PATH}" >> "$GITHUB_ENV"
       
       - name: Setup pnpm cache
         uses: actions/cache@v4
         with:
           path: ${{ env.STORE_PATH }}
-          key: ${{ runner.os }}-pnpm-store-${{ hashFiles('**/pnpm-lock.yaml') }}
+          key: ${{ runner.os }}-pnpm-${{ github.job }}-${{ hashFiles('**/pnpm-lock.yaml') }}
           restore-keys: |
-            ${{ runner.os }}-pnpm-store-
+            ${{ runner.os }}-pnpm-${{ github.job }}-
       
       - name: Install Playwright browsers
-        run: npx playwright install chromium
-      
-      - name: Load CI PostgreSQL credentials
-        shell: bash
-        run: |
-          PG_ENV=/etc/sosmesh-ci/pg.env
-          if [ ! -f "$PG_ENV" ]; then
-            echo "Missing ${PG_ENV} on self-hosted runner (required for API DB tests)"
-            exit 1
-          fi
-          set -a
-          # shellcheck disable=SC1090
-          source "$PG_ENV"
-          set +a
-          if [ -z "${SOSMESH_CI_PG_ADMIN_URL:-}" ] || [ -z "${SOSMESH_CI_DATABASE_URL:-}" ]; then
-            echo "pg.env must define SOSMESH_CI_PG_ADMIN_URL and SOSMESH_CI_DATABASE_URL"
-            exit 1
-          fi
-          echo "::add-mask::${SOSMESH_CI_PG_ADMIN_URL}"
-          echo "::add-mask::${SOSMESH_CI_DATABASE_URL}"
-          {
-            echo "SOSMESH_CI_PG_ADMIN_URL=${SOSMESH_CI_PG_ADMIN_URL}"
-            echo "SOSMESH_CI_DATABASE_URL=${SOSMESH_CI_DATABASE_URL}"
-          } >> "$GITHUB_ENV"
-      
+        run: npx playwright install --with-deps chromium
+
       - name: Run verification script
         run: bash scripts/verify.sh
       
@@ -99,7 +94,7 @@ jobs:
 
   contracts:
     name: Contracts Type Check
-    runs-on: [self-hosted, linux, ARM64, zulal]
+    runs-on: ubuntu-latest
     timeout-minutes: 10
     if: github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository
     
@@ -114,6 +109,16 @@ jobs:
       
       - name: Install pnpm
         uses: pnpm/action-setup@v3
+        with:
+          version: 9
+          dest: ${{ runner.temp }}/pnpm-${{ github.job }}
+      
+      - name: Configure isolated pnpm store (self-hosted parallel jobs)
+        shell: bash
+        run: |
+          STORE_PATH="${{ runner.temp }}/pnpm-store-${{ github.job }}"
+          echo "STORE_PATH=${STORE_PATH}" >> "$GITHUB_ENV"
+          echo "npm_config_store_dir=${STORE_PATH}" >> "$GITHUB_ENV"
       
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
@@ -126,7 +131,7 @@ jobs:
 
   detect-mobile:
     name: Detect Mobile Projects
-    runs-on: [self-hosted, linux, ARM64, zulal]
+    runs-on: ubuntu-latest
     if: github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository
     outputs:
       android: ${{ steps.check.outputs.android }}
@@ -208,15 +213,8 @@ jobs:
         with:
           xcode-version: latest-stable
       
-      - name: Install CocoaPods
-        run: cd apps/ios && pod install
-      
-      - name: Prepare iOS Simulator platform
-        run: |
-          set -euo pipefail
-          if ! xcrun simctl list devices available 2>/dev/null | grep -q "iPhone"; then
-            xcodebuild -downloadPlatform iOS
-          fi
+      - name: Show Xcode version
+        run: xcodebuild -version
       
       - name: Lint Swift
         run: |
@@ -225,6 +223,15 @@ jobs:
           else
             echo "SwiftLint not installed, skipping"
           fi
+      
+      - name: Resolve Swift packages
+        run: |
+          set -euo pipefail
+          cd apps/ios
+          xcodebuild \
+            -project SOSMesh.xcodeproj \
+            -scheme SOSMesh-iOS \
+            -resolvePackageDependencies
       
       - name: Build iOS app
         run: |
@@ -235,7 +242,35 @@ jobs:
             -scheme SOSMesh-iOS \
             -sdk iphonesimulator \
             -destination 'generic/platform=iOS Simulator' \
+            CODE_SIGNING_ALLOWED=NO \
             clean build
+      
+      - name: Resolve iOS Simulator for tests
+        id: sim
+        run: |
+          set -euo pipefail
+          SIM_ID=$(python3 <<'PY'
+          import json, subprocess, sys
+          out = subprocess.check_output(["xcrun", "simctl", "list", "devices", "available", "-j"], text=True)
+          data = json.loads(out)
+          candidates = []
+          for runtime, devices in data.get("devices", {}).items():
+              if "iOS" not in runtime:
+                  continue
+              for d in devices:
+                  if not d.get("isAvailable"):
+                      continue
+                  name = d.get("name", "")
+                  if name.startswith("iPhone"):
+                      candidates.append((name, d["udid"]))
+          if not candidates:
+              sys.exit("No available iPhone simulators")
+          candidates.sort(key=lambda x: x[0])
+          print(candidates[-1][1])
+          PY
+          )
+          echo "id=${SIM_ID}" >> "$GITHUB_OUTPUT"
+          echo "Using simulator id ${SIM_ID}"
       
       - name: Run tests
         run: |
@@ -245,12 +280,13 @@ jobs:
             -project SOSMesh.xcodeproj \
             -scheme SOSMesh-iOS \
             -sdk iphonesimulator \
-            -destination 'generic/platform=iOS Simulator' \
+            -destination "platform=iOS Simulator,id=${{ steps.sim.outputs.id }}" \
+            CODE_SIGNING_ALLOWED=NO \
             -only-testing:SOSMeshTests
 
   cross-language-contracts:
     name: Cross-Language Contract Tests
-    runs-on: [self-hosted, linux, ARM64, zulal]
+    runs-on: ubuntu-latest
     timeout-minutes: 15
     if: github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository
     
@@ -265,12 +301,22 @@ jobs:
       
       - name: Install pnpm
         uses: pnpm/action-setup@v3
+        with:
+          version: 9
+          dest: ${{ runner.temp }}/pnpm-${{ github.job }}
       
       - name: Setup Java
         uses: actions/setup-java@v4
         with:
           distribution: 'temurin'
           java-version: '17'
+      
+      - name: Configure isolated pnpm store (self-hosted parallel jobs)
+        shell: bash
+        run: |
+          STORE_PATH="${{ runner.temp }}/pnpm-store-${{ github.job }}"
+          echo "STORE_PATH=${STORE_PATH}" >> "$GITHUB_ENV"
+          echo "npm_config_store_dir=${STORE_PATH}" >> "$GITHUB_ENV"
       
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
@@ -350,7 +396,7 @@ jobs:
 
   secret-scan:
     name: Secret Scan
-    runs-on: [self-hosted, linux, ARM64, zulal]
+    runs-on: ubuntu-latest
     timeout-minutes: 5
     if: github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository
     

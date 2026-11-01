@@ -66,4 +66,22 @@ test.describe('Operator map and case list', () => {
     await expect(page.getByTestId('operator-map')).toBeVisible();
     await page.screenshot({ path: 'reports/operator-map-cases-1440.png', fullPage: true });
   });
+
+  test('map screenshot 390', async ({ page }) => {
+    await page.setViewportSize({ width: 390, height: 844 });
+    await login(page);
+    await page.goto('/operator/cases');
+    await expect(page.getByTestId('operator-cases-view')).toBeVisible();
+    await expect(page.getByTestId('unknown-location-queue')).toBeVisible();
+    await page.screenshot({ path: 'reports/operator-map-cases-390.png', fullPage: true });
+  });
+
+  test('map screenshot 768', async ({ page }) => {
+    await page.setViewportSize({ width: 768, height: 1024 });
+    await login(page);
+    await page.goto('/operator/cases');
+    await expect(page.getByTestId('operator-cases-view')).toBeVisible();
+    await expect(page.getByTestId('unknown-location-queue')).toBeVisible();
+    await page.screenshot({ path: 'reports/operator-map-cases-768.png', fullPage: true });
+  });
 });

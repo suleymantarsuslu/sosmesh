@@ -962,7 +962,7 @@
       "deliverables": "Android complete feature set; screenshot goldens",
       "pass_criteria": "Kullanıcı yanlış teslim algısına düşmeden iki dakikadan kısa temel akışı tamamlar.",
       "status": "PARTIAL",
-      "attempts": 1,
+      "attempts": 2,
       "commit": "61a0d7c",
       "evidence": [
         "HomeRoute: express SOS (ExpressSosSaver) + rehberli sihirbaz (OutlinedButton); PlatformSelfRepairCard; RelayEducationCard",
@@ -971,7 +971,8 @@
         "SettingsRoute: yüksek kontrast + yerel veri kontrolü metni",
         "Robolectric: ExpressSosSaverTest, SosA11yRobolectricTest (fontScale 2), LocationFreshnessTest",
         "TalkBack canlı / screenshot golden / 30fps ölçümü: NOT_TESTED (ERTELENDİ)",
-        "Gradle testDebugUnitTest + ktlintCheck + assembleDebug EXIT=0 (JDK 17, ANDROID_HOME=/opt/android-sdk)"
+        "Bağımsız PR #44 inceleme: BleScannerEnergyProfileTest BleScanner.start(EnergyRadioProfile) → ScanRequest (sabit-only test kaldırıldı)",
+        "Gradle :core:ble/:core:platform testDebugUnitTest + ktlintCheck EXIT=0 (review VM, JDK 17 bytecode, ANDROID_HOME=/opt/android-sdk); tam monorepo CI android-gradle job"
       ],
       "blockers": [
         "Fiziksel cihaz TalkBack ve akış süresi ölçümü yok",
@@ -1000,16 +1001,16 @@
       "deliverables": "apps/android/core/platform; docs/compat/android-matrix.csv",
       "pass_criteria": "Desteklenen senaryolar belgeli; yanlış sürekli arka plan garantisi yok.",
       "status": "PARTIAL",
-      "attempts": 1,
+      "attempts": 2,
       "commit": "61a0d7c",
       "evidence": [
         "apps/android/core/platform: MeshPlatformStateMachine + EnergyRadioProfile (SOS_URGENT vs CONSTRAINED vs relay)",
         "MeshPlatformSignalBridge: ağ/BT/izin/pil/güç tasarrufu/doze sinyalleri",
         "docs/compat/android-matrix.csv (fiziksel OEM satırları NOT_TESTED)",
         "BleScanner.start(EnergyRadioProfile); RelayBatteryPolicy duty-cycle EnergyRadioProfile ile hizalı",
-        "MeshPlatformStateMachineTest (BT kapalı, izin reddi, pil, doze, ağ)",
+        "MeshPlatformStateMachineTest (BT kapalı, izin reddi, pil, doze, ağ); bozuk reduce mantığında test kırmızı (denetçi doğruladı)",
         "Gerçek cihaz pil ölçümü / 3+ OEM / BLE: NOT_TESTED",
-        "Gradle testDebugUnitTest + ktlintCheck + assembleDebug EXIT=0"
+        "Gradle :core:ble/:core:platform testDebugUnitTest + ktlintCheck EXIT=0 (review VM); tam monorepo CI android-gradle job PR #44"
       ],
       "blockers": [
         "Fiziksel Android matrisi ve pil tüketimi ölçümü yok"

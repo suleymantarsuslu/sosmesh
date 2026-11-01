@@ -1,4 +1,5 @@
 import { IncidentState, PrismaClient } from '@prisma/client';
+import * as bcrypt from 'bcrypt';
 
 const prisma = new PrismaClient();
 
@@ -13,14 +14,23 @@ async function main() {
     },
   });
 
+  const demoPassword = process.env.OPERATOR_DEMO_PASSWORD;
+  let passwordHash: string | undefined;
+  if (demoPassword) {
+    passwordHash = await bcrypt.hash(demoPassword, 10);
+  }
+
   await prisma.user.upsert({
     where: { email: 'operator-demo@sosmesh.example' },
-    update: {},
+    update: {
+      ...(passwordHash ? { passwordHash } : {}),
+    },
     create: {
       email: 'operator-demo@sosmesh.example',
       displayName: 'Demo Operator',
       role: 'OPERATOR',
       teamId: team.id,
+      ...(passwordHash ? { passwordHash } : {}),
     },
   });
 
@@ -30,6 +40,17 @@ async function main() {
     create: {
       id: '00000000-0000-4000-8000-000000000010',
       state: IncidentState.PENDING,
+    },
+  });
+
+  await prisma.assignment.upsert({
+    where: { id: '00000000-0000-4000-8000-000000000030' },
+    update: {},
+    create: {
+      id: '00000000-0000-4000-8000-000000000030',
+      incidentId: incident.id,
+      teamId: team.id,
+      status: 'OPEN',
     },
   });
 

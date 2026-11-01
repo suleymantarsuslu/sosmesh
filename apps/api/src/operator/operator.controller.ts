@@ -1,45 +1,24 @@
 import {
   Body,
   Controller,
-  Get,
   HttpCode,
   HttpStatus,
   Post,
-  Query,
   UseGuards,
 } from '@nestjs/common';
 import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
 
-import { buildPaginated, parsePagination } from '../common/pagination/pagination';
 import { PrismaService } from '../prisma/prisma.service';
 import { CreateOperatorMessageDto } from './dto/create-operator-message.dto';
 import { OperatorAuthGuard } from './guards/operator-auth.guard';
+import { OperatorCsrfGuard } from './guards/operator-csrf.guard';
 
 @ApiTags('operator')
 @ApiBearerAuth()
 @Controller('v1/operator')
-@UseGuards(OperatorAuthGuard)
+@UseGuards(OperatorAuthGuard, OperatorCsrfGuard)
 export class OperatorController {
   constructor(private readonly prisma: PrismaService) {}
-
-  @Get('incidents')
-  async listIncidents(
-    @Query('cursor') cursor?: string,
-    @Query('limit') limit?: string
-  ) {
-    const pagination = parsePagination({
-      cursor,
-      limit: limit ? Number(limit) : undefined,
-    });
-    const rows = await this.prisma.incident.findMany({
-      take: pagination.limit + 1,
-      ...(pagination.cursor
-        ? { skip: 1, cursor: { id: pagination.cursor } }
-        : {}),
-      orderBy: { createdAt: 'desc' },
-    });
-    return buildPaginated(rows, pagination.limit);
-  }
 
   @Post('messages')
   @HttpCode(HttpStatus.CREATED)

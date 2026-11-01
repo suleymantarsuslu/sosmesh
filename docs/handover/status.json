@@ -665,22 +665,32 @@
       ],
       "deliverables": "apps/web/app/(operator), components/ui, auth session",
       "pass_criteria": "Operatör admin olmayan rol yetkisi dışında vaka göremez.",
-      "status": "NOT_STARTED",
-      "attempts": 0,
-      "commit": null,
-      "evidence": [],
-      "blockers": [],
-      "last_checked_at": null,
+      "status": "PARTIAL",
+      "attempts": 1,
+      "commit": "faa0626",
+      "evidence": [
+        "apps/api auth login (bcrypt, rate limit, httpOnly cookie) + RBAC incident scope + dashboard stats API",
+        "apps/web operator panel: login, dashboard, role denied, SSE polling fallback banner, Playwright 6/6",
+        "API auth-rbac.spec.ts: 401/403/scope 404",
+        "reports/operator-dashboard-1440.png (Playwright)",
+        "pnpm -r build EXIT=0; pnpm test EXIT=0; pnpm test:a11y:web EXIT=0; verify.sh lint fix pending CI"
+      ],
+      "blockers": [
+        "Self-hosted CI yeşil olana kadar PASS değil",
+        "GitHub-hosted Android Gradle Build 1 Kasım UTC faturalandırma nedeniyle düşebilir"
+      ],
+      "last_checked_at": "2026-11-01T02:55:00+03:00",
       "goal": "Yetkili ekip için hızlı, masaüstü ve mobil responsive web uygulaması oluştur.",
       "cursor_tasks": [
         "Next.js App Router + TS + UI tokens; auth, RBAC, route guard, role-based sidebar/nav.",
         "Dashboard kartları: yeni SOS, panelde açık, beklemede, ortalama ulaşım süresi (yalnızca gerçek veriyle).",
         "Table/mobile cards, command search, keyboard shortcuts, skeletons, toast ve disconnected state.",
-        "No direct public SOS detail URLs; server authorization her API’de kontrol edilir."
+        "No direct public SOS detail URLs; server authorization her API'de kontrol edilir."
       ],
       "verification_evidence": "Playwright auth/redirect; 390/768/1440 screenshots; role denied test.",
       "risk_note": "",
-      "gate_raw": "KAPI: HACKATHON / ÇEKİRDEK    •    BAĞIMLILIK: 4,17,19"
+      "gate_raw": "KAPI: HACKATHON / ÇEKİRDEK    •    BAĞIMLILIK: 4,17,19",
+      "notes": "390/768 ekran görüntüleri ERTELENDİ; 1440 Playwright kanıtı var"
     },
     {
       "id": "22",

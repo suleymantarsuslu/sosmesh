@@ -2,12 +2,23 @@ import { ConfigService } from '@nestjs/config';
 import { NestFactory } from '@nestjs/core';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 import { Logger } from 'nestjs-pino';
+import cookieParser from 'cookie-parser';
 
 import { AppModule } from './app.module';
 
 export async function createApp() {
   const app = await NestFactory.create(AppModule, { bufferLogs: true });
   app.useLogger(app.get(Logger));
+  app.use(cookieParser());
+
+  const configService = app.get(ConfigService);
+  const corsOrigins = configService.get<string>('CORS_ORIGINS');
+  if (corsOrigins) {
+    app.enableCors({
+      origin: corsOrigins.split(',').map((o) => o.trim()),
+      credentials: true,
+    });
+  }
 
   const config = new DocumentBuilder()
     .setTitle('SOSMesh API')

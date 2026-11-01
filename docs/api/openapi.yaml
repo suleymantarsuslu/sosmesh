@@ -17,6 +17,107 @@ paths:
         "200":
           description: ""
       tags: *a1
+  /v1/auth/login:
+    post:
+      operationId: AuthController_login
+      parameters: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/LoginDto"
+      responses:
+        "200":
+          description: ""
+      tags: &a2
+        - auth
+  /v1/auth/logout:
+    post:
+      operationId: AuthController_logout
+      parameters: []
+      responses:
+        "204":
+          description: ""
+      tags: *a2
+  /v1/auth/me:
+    get:
+      operationId: AuthController_me
+      parameters: []
+      responses:
+        "200":
+          description: ""
+      tags: *a2
+  /v1/operator/messages:
+    post:
+      operationId: OperatorController_createMessage
+      parameters: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateOperatorMessageDto"
+      responses:
+        "201":
+          description: ""
+      tags:
+        - operator
+      security:
+        - bearer: []
+  /v1/operator/dashboard/stats:
+    get:
+      operationId: OperatorPanelController_dashboardStats
+      parameters: []
+      responses:
+        "200":
+          description: ""
+      tags: &a3
+        - operator
+      security: &a4
+        - bearer: []
+  /v1/operator/incidents:
+    get:
+      operationId: OperatorPanelController_listIncidents
+      parameters:
+        - name: cursor
+          required: true
+          in: query
+          schema:
+            type: string
+        - name: limit
+          required: true
+          in: query
+          schema:
+            type: string
+      responses:
+        "200":
+          description: ""
+      tags: *a3
+      security: *a4
+  /v1/operator/incidents/{id}:
+    get:
+      operationId: OperatorPanelController_getIncident
+      parameters:
+        - name: id
+          required: true
+          in: path
+          schema:
+            type: string
+      responses:
+        "200":
+          description: ""
+      tags: *a3
+      security: *a4
+  /v1/operator/admin/users:
+    get:
+      operationId: OperatorPanelController_listUsers
+      parameters: []
+      responses:
+        "200":
+          description: ""
+      tags: *a3
+      security: *a4
   /v1/public/messages/{messageId}/status:
     get:
       operationId: PublicController_messageStatus
@@ -79,42 +180,6 @@ paths:
           description: Per-item receipts or errors
       tags:
         - public
-  /v1/operator/incidents:
-    get:
-      operationId: OperatorController_listIncidents
-      parameters:
-        - name: cursor
-          required: true
-          in: query
-          schema:
-            type: string
-        - name: limit
-          required: true
-          in: query
-          schema:
-            type: string
-      responses:
-        "200":
-          description: ""
-      tags: &a2
-        - operator
-      security: &a3
-        - bearer: []
-  /v1/operator/messages:
-    post:
-      operationId: OperatorController_createMessage
-      parameters: []
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: "#/components/schemas/CreateOperatorMessageDto"
-      responses:
-        "201":
-          description: ""
-      tags: *a2
-      security: *a3
 info:
   title: SOSMesh API
   description: Emergency mesh network API — public and operator surfaces
@@ -129,12 +194,15 @@ components:
       bearerFormat: JWT
       type: http
   schemas:
+    LoginDto:
+      type: object
+      properties: {}
+    CreateOperatorMessageDto:
+      type: object
+      properties: {}
     IngestRequestDto:
       type: object
       properties: {}
     IngestBatchRequestDto:
-      type: object
-      properties: {}
-    CreateOperatorMessageDto:
       type: object
       properties: {}

@@ -47,6 +47,38 @@ paths:
           description: SERVER_ACCEPTED signed receipt
       tags:
         - public
+  /v1/operator/events:
+    get:
+      operationId: OperatorEventsController_listEvents
+      parameters:
+        - name: after
+          required: true
+          in: query
+          schema:
+            type: string
+      responses:
+        "200":
+          description: ""
+      tags:
+        - operator
+      security:
+        - bearer: []
+  /v1/ingest/batch:
+    post:
+      operationId: BatchIngestController_ingestBatch
+      summary: Batch SOS ingest (per-item idempotent semantics)
+      parameters: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/IngestBatchRequestDto"
+      responses:
+        "200":
+          description: Per-item receipts or errors
+      tags:
+        - public
   /v1/operator/incidents:
     get:
       operationId: OperatorController_listIncidents
@@ -98,6 +130,9 @@ components:
       type: http
   schemas:
     IngestRequestDto:
+      type: object
+      properties: {}
+    IngestBatchRequestDto:
       type: object
       properties: {}
     CreateOperatorMessageDto:

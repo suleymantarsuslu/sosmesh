@@ -38,6 +38,7 @@ interface OutboxDao {
         """
         SELECT * FROM outbox
         WHERE retry_at <= :nowMs AND state = 'LOCAL_SAVED' AND origin = 'relay'
+        AND (last_error IS NULL OR last_error != 'needs_review')
         ORDER BY created_at ASC
         """,
     )

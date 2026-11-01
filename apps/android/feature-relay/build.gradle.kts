@@ -38,6 +38,7 @@ android {
     sourceSets {
         getByName("test") {
             resources.srcDir("${rootProject.projectDir}/../../packages/fixtures/transport")
+            resources.srcDir("${rootProject.projectDir}/../../packages/fixtures/protocol-v1")
         }
     }
 }

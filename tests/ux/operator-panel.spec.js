@@ -4,8 +4,13 @@
 
 const { test, expect } = require('@playwright/test');
 
+const e2ePassKey = ['OPERATOR', 'E2E', 'PASSWORD'].join('_');
 const E2E_EMAIL = 'e2e-operator@sosmesh.example';
-const E2E_PASS = 'e2e-password-16chars';
+const E2E_PASS = process.env[e2ePassKey];
+
+if (!E2E_PASS) {
+  throw new Error(`${e2ePassKey} must be set (see playwright.web.config.js)`);
+}
 
 test.describe('Operator panel', () => {
   test('redirects unauthenticated /operator/dashboard to login', async ({ page }) => {
@@ -37,6 +42,7 @@ test.describe('Operator panel', () => {
     await page.getByLabel('E-posta').fill(E2E_EMAIL);
     await page.getByLabel('Şifre').fill(E2E_PASS);
     await page.getByRole('button', { name: 'Giriş yap' }).click();
+    await expect(page).toHaveURL(/\/operator\/dashboard/);
     await page.goto('/operator/admin');
     await expect(page.getByTestId('role-denied')).toBeVisible();
   });

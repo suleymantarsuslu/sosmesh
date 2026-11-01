@@ -7,9 +7,9 @@ import {
   UseGuards,
 } from '@nestjs/common';
 import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
-import type { Request, Response } from 'express';
+import type { Response } from 'express';
 
-import { OperatorAuthGuard } from '../operator/guards/operator-auth.guard';
+import { OperatorAuthGuard, OperatorRequest } from '../operator/guards/operator-auth.guard';
 import { OperatorEventsService } from './operator-events.service';
 
 function parseAfterSeq(raw: string | undefined, headerLastEventId: string | undefined): bigint {
@@ -30,7 +30,7 @@ export class OperatorEventsController {
   @Get('events')
   async listEvents(
     @Query('after') after: string | undefined,
-    @Req() req: Request,
+    @Req() req: OperatorRequest,
     @Res() res: Response
   ): Promise<void> {
     const afterSeq = parseAfterSeq(after, req.headers['last-event-id'] as string | undefined);
@@ -43,7 +43,7 @@ export class OperatorEventsController {
 
       let cursor = afterSeq;
       const writeBatch = async (): Promise<void> => {
-        const batch = await this.operatorEvents.poll(cursor, 50);
+        const batch = await this.operatorEvents.poll(req.operatorUser, cursor, 50);
         for (const event of batch) {
           cursor = BigInt(event.id);
           res.write(`id: ${event.id}\n`);
@@ -67,7 +67,7 @@ export class OperatorEventsController {
       return;
     }
 
-    const events = await this.operatorEvents.poll(afterSeq, 100);
+    const events = await this.operatorEvents.poll(req.operatorUser, afterSeq, 100);
     res.json({ events });
   }
 }

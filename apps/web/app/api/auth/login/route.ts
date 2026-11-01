@@ -15,18 +15,19 @@ export async function POST(request: NextRequest) {
 
   if (isE2eMock()) {
     const secret = process.env.JWT_SECRET;
-    if (!secret) {
+    const expectedPass = process.env.OPERATOR_E2E_PASSWORD;
+    if (!secret || !expectedPass) {
       return NextResponse.json({ code: 'CONFIG_ERROR' }, { status: 500 });
     }
     let payload: { sub: string; role: 'OPERATOR' | 'ADMIN' };
-    if (email === 'e2e-operator@sosmesh.example' && password === 'e2e-password-16chars') {
+    if (email === 'e2e-operator@sosmesh.example' && password === expectedPass) {
       payload = { sub: 'e2e-operator', role: 'OPERATOR' };
-    } else if (email === 'e2e-viewer@sosmesh.example' && password === 'e2e-password-16chars') {
+    } else if (email === 'e2e-viewer@sosmesh.example' && password === expectedPass) {
       payload = { sub: 'e2e-viewer', role: 'OPERATOR' };
     } else {
       return NextResponse.json({ code: 'INVALID_CREDENTIALS' }, { status: 401 });
     }
-    const token = sign(payload, secret, { expiresIn: '1h' });
+    const token = sign(payload, secret, { expiresIn: '1h', algorithm: 'HS256' });
     const response = NextResponse.json({
       user: {
         id: payload.sub,

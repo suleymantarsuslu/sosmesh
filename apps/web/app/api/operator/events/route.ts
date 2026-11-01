@@ -4,7 +4,13 @@ import { apiBaseUrl, isE2eMock } from '../../../../lib/config';
 import { getSessionToken } from '../../../../lib/session';
 
 export async function GET(request: NextRequest) {
-  const after = request.nextUrl.searchParams.get('after') ?? '0';
+  const afterRaw = request.nextUrl.searchParams.get('after') ?? '0';
+  if (!/^\d+$/.test(afterRaw)) {
+    return NextResponse.json(
+      { code: 'INVALID_AFTER', message: 'after must be a non-negative integer' },
+      { status: 400 }
+    );
+  }
   if (isE2eMock()) {
     return NextResponse.json({ events: [] });
   }
@@ -12,10 +18,13 @@ export async function GET(request: NextRequest) {
   if (!token) {
     return NextResponse.json({ code: 'UNAUTHORIZED' }, { status: 401 });
   }
-  const res = await fetch(`${apiBaseUrl()}/v1/operator/events?after=${after}`, {
-    headers: { Authorization: `Bearer ${token}` },
-    cache: 'no-store',
-  });
+  const res = await fetch(
+    `${apiBaseUrl()}/v1/operator/events?after=${encodeURIComponent(afterRaw)}`,
+    {
+      headers: { Authorization: `Bearer ${token}` },
+      cache: 'no-store',
+    }
+  );
   const data = await res.json();
   return NextResponse.json(data, { status: res.status });
 }

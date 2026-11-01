@@ -31,7 +31,7 @@ export function readSession(): SessionUser | null {
     return null;
   }
   try {
-    const payload = verify(token, secret) as SessionPayload;
+    const payload = verify(token, secret, { algorithms: ['HS256'] }) as SessionPayload;
     if (isE2eMock() && payload.sub === 'e2e-viewer') {
       return {
         id: payload.sub,

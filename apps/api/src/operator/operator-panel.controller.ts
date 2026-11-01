@@ -13,6 +13,7 @@ import { UserRole } from '@prisma/client';
 import { buildPaginated, parsePagination } from '../common/pagination/pagination';
 import { PrismaService } from '../prisma/prisma.service';
 import { OperatorAuthGuard, OperatorRequest } from './guards/operator-auth.guard';
+import { OperatorCsrfGuard } from './guards/operator-csrf.guard';
 import { Roles } from './guards/roles.decorator';
 import { RolesGuard } from './guards/roles.guard';
 import { IncidentScopeService } from './incident-scope.service';
@@ -21,7 +22,7 @@ import { OperatorDashboardService } from './operator-dashboard.service';
 @ApiTags('operator')
 @ApiBearerAuth()
 @Controller('v1/operator')
-@UseGuards(OperatorAuthGuard, RolesGuard)
+@UseGuards(OperatorAuthGuard, OperatorCsrfGuard, RolesGuard)
 export class OperatorPanelController {
   constructor(
     private readonly prisma: PrismaService,

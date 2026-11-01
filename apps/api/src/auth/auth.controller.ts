@@ -18,6 +18,7 @@ import {
   OperatorAuthGuard,
   OperatorRequest,
 } from '../operator/guards/operator-auth.guard';
+import { OperatorCsrfGuard } from '../operator/guards/operator-csrf.guard';
 import { AuthService } from './auth.service';
 import { LoginDto } from './dto/login.dto';
 import { SESSION_COOKIE } from './auth.constants';
@@ -52,6 +53,7 @@ export class AuthController {
 
   @Post('logout')
   @HttpCode(HttpStatus.NO_CONTENT)
+  @UseGuards(OperatorCsrfGuard)
   logout(@Res({ passthrough: true }) res: Response): void {
     res.clearCookie(SESSION_COOKIE, { path: '/' });
   }

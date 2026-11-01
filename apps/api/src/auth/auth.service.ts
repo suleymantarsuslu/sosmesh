@@ -58,7 +58,7 @@ export class AuthService {
         message: 'Invalid email or password',
       });
     }
-    const token = sign(payload, secret, { expiresIn: '8h' });
+    const token = sign(payload, secret, { expiresIn: '8h', algorithm: 'HS256' });
     return {
       token,
       user: {

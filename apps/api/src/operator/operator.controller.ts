@@ -11,11 +11,12 @@ import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
 import { PrismaService } from '../prisma/prisma.service';
 import { CreateOperatorMessageDto } from './dto/create-operator-message.dto';
 import { OperatorAuthGuard } from './guards/operator-auth.guard';
+import { OperatorCsrfGuard } from './guards/operator-csrf.guard';
 
 @ApiTags('operator')
 @ApiBearerAuth()
 @Controller('v1/operator')
-@UseGuards(OperatorAuthGuard)
+@UseGuards(OperatorAuthGuard, OperatorCsrfGuard)
 export class OperatorController {
   constructor(private readonly prisma: PrismaService) {}
 

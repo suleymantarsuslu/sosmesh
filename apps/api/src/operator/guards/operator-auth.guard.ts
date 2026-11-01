@@ -21,7 +21,6 @@ export type OperatorRequestUser = {
   sub: string;
   role: UserRole;
   teamId?: string;
-  isLegacyTestAdmin?: boolean;
 };
 
 export type OperatorRequest = Request & {
@@ -49,15 +48,9 @@ export class OperatorAuthGuard implements CanActivate {
       });
     }
     try {
-      const payload = jwt.verify(token, secret) as OperatorJwtPayload;
-      if (payload.sub === 'operator-test') {
-        request.operatorUser = {
-          sub: payload.sub,
-          role: UserRole.ADMIN,
-          isLegacyTestAdmin: true,
-        };
-        return true;
-      }
+      const payload = jwt.verify(token, secret, {
+        algorithms: ['HS256'],
+      }) as OperatorJwtPayload;
       request.operatorUser = {
         sub: payload.sub,
         role: payload.role as UserRole,

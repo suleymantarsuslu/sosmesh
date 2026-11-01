@@ -7,7 +7,7 @@ import { OperatorRequestUser } from './guards/operator-auth.guard';
 @Injectable()
 export class IncidentScopeService {
   isAdmin(user: OperatorRequestUser): boolean {
-    return user.role === UserRole.ADMIN || user.isLegacyTestAdmin === true;
+    return user.role === UserRole.ADMIN;
   }
 
   incidentWhere(user: OperatorRequestUser): Prisma.IncidentWhereInput | undefined {

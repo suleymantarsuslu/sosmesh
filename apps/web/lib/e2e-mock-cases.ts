@@ -81,6 +81,112 @@ export function mockCasesResponse(searchParams: URLSearchParams) {
   return NextResponse.json({ items, nextCursor: null, limit: 100 });
 }
 
+/** XSS probe — must render as text only in UI tests. */
+export const E2E_XSS_ORIGINAL_TEXT = '<script>alert(1)</script> <img src=x onerror=alert(2)>';
+
+const mockState = {
+  version: 1,
+  reviewStatus: 'SEEN',
+  audit: [] as { id: string; action: string; createdAt: string }[],
+  seenRecorded: false,
+};
+
+function baseDetail(row: OperatorCaseRow) {
+  return {
+    ...row,
+    version: mockState.version,
+    reviewStatus: mockState.reviewStatus,
+    originalText: row.incidentId === E2E_CASE_GPS_ID ? E2E_XSS_ORIGINAL_TEXT : 'Sentetik bilinmeyen konum metni.',
+    verifiedMetadata: {
+      personCount: row.incidentId === E2E_CASE_GPS_ID ? 2 : null,
+      locationStatus: row.locationStatus,
+      latitude: row.latitude,
+      longitude: row.longitude,
+      accuracyMeters: row.accuracyMeters,
+    },
+    ai:
+      row.incidentId === E2E_CASE_GPS_ID
+        ? {
+            status: 'COMPLETED',
+            modelVersion: 'mock-e2e',
+            verified: false as const,
+            label: 'öneri/taslak, doğrulanmadı' as const,
+            suggestion: {
+              categories: ['medical'],
+              persons_estimate: 2,
+              injuries_reported: [],
+              needs: ['değerlendirme'],
+              urgency_suggestion: 'high',
+              uncertainty: true,
+              quoted_evidence: ['sentetik alıntı'],
+              location_unknown: false,
+              language: 'tr',
+              requires_human_review: true,
+            },
+          }
+        : null,
+    timeline: [
+      {
+        id: 'e2e-timeline-1',
+        deliveryState: 'SERVER_ACCEPTED',
+        source: row.source ?? 'ingest',
+        createdAt: row.receivedAt,
+      },
+    ],
+    audit: mockState.audit,
+  };
+}
+
+export function mockCaseDetailFullResponse(incidentId: string) {
+  const row = BASE_CASES.find((item) => item.incidentId === incidentId);
+  if (!row) {
+    return NextResponse.json({ code: 'NOT_FOUND' }, { status: 404 });
+  }
+  if (!mockState.seenRecorded) {
+    mockState.seenRecorded = true;
+    mockState.audit.unshift({
+      id: 'e2e-audit-seen',
+      action: 'OPERATOR_SEEN',
+      createdAt: new Date().toISOString(),
+    });
+  }
+  return NextResponse.json(baseDetail(row));
+}
+
+export function mockCaseCorrectionResponse(incidentId: string, body: Record<string, unknown>) {
+  const row = BASE_CASES.find((item) => item.incidentId === incidentId);
+  if (!row) {
+    return NextResponse.json({ code: 'NOT_FOUND' }, { status: 404 });
+  }
+  if (body.expectedVersion !== mockState.version) {
+    return NextResponse.json({ code: 'VERSION_CONFLICT' }, { status: 409 });
+  }
+  mockState.version += 1;
+  mockState.audit.unshift({
+    id: `e2e-audit-correction-${mockState.version}`,
+    action: 'METADATA_CORRECTION',
+    createdAt: new Date().toISOString(),
+  });
+  return NextResponse.json({
+    version: mockState.version,
+    before: { personCount: 2 },
+    after: { personCount: body.personCount },
+  });
+}
+
+export function mockCaseReviewStatusResponse(incidentId: string, body: Record<string, unknown>) {
+  const row = BASE_CASES.find((item) => item.incidentId === incidentId);
+  if (!row) {
+    return NextResponse.json({ code: 'NOT_FOUND' }, { status: 404 });
+  }
+  if (body.expectedVersion !== mockState.version) {
+    return NextResponse.json({ code: 'VERSION_CONFLICT' }, { status: 409 });
+  }
+  mockState.version += 1;
+  mockState.reviewStatus = String(body.reviewStatus);
+  return NextResponse.json({ version: mockState.version, reviewStatus: mockState.reviewStatus });
+}
+
 export function mockCaseDetailResponse(incidentId: string) {
   const row = BASE_CASES.find((item) => item.incidentId === incidentId);
   if (!row) {
@@ -151,4 +257,8 @@ export function mockSseResponse() {
 export function resetE2eMockCasesState() {
   feedSeq = 0;
   liveEventEmitted = false;
+  mockState.version = 1;
+  mockState.reviewStatus = 'SEEN';
+  mockState.audit = [];
+  mockState.seenRecorded = false;
 }

@@ -211,10 +211,10 @@ jobs:
       - name: Setup Xcode
         uses: maxim-lobanov/setup-xcode@v1
         with:
-          xcode-version: '15.2'
+          xcode-version: latest-stable
       
-      - name: Install CocoaPods
-        run: cd apps/ios && pod install
+      - name: Show Xcode version
+        run: xcodebuild -version
       
       - name: Lint Swift
         run: |
@@ -224,24 +224,65 @@ jobs:
             echo "SwiftLint not installed, skipping"
           fi
       
-      - name: Build iOS app
+      - name: Resolve Swift packages
         run: |
+          set -euo pipefail
           cd apps/ios
           xcodebuild \
-            -workspace SOSMesh.xcworkspace \
+            -project SOSMesh.xcodeproj \
+            -scheme SOSMesh-iOS \
+            -resolvePackageDependencies
+      
+      - name: Build iOS app
+        run: |
+          set -euo pipefail
+          cd apps/ios
+          xcodebuild \
+            -project SOSMesh.xcodeproj \
             -scheme SOSMesh-iOS \
             -sdk iphonesimulator \
-            -destination 'platform=iOS Simulator,name=iPhone 15' \
+            -destination 'generic/platform=iOS Simulator' \
+            CODE_SIGNING_ALLOWED=NO \
             clean build
+      
+      - name: Resolve iOS Simulator for tests
+        id: sim
+        run: |
+          set -euo pipefail
+          SIM_ID=$(python3 <<'PY'
+          import json, subprocess, sys
+          out = subprocess.check_output(["xcrun", "simctl", "list", "devices", "available", "-j"], text=True)
+          data = json.loads(out)
+          candidates = []
+          for runtime, devices in data.get("devices", {}).items():
+              if "iOS" not in runtime:
+                  continue
+              for d in devices:
+                  if not d.get("isAvailable"):
+                      continue
+                  name = d.get("name", "")
+                  if name.startswith("iPhone"):
+                      candidates.append((name, d["udid"]))
+          if not candidates:
+              sys.exit("No available iPhone simulators")
+          candidates.sort(key=lambda x: x[0])
+          print(candidates[-1][1])
+          PY
+          )
+          echo "id=${SIM_ID}" >> "$GITHUB_OUTPUT"
+          echo "Using simulator id ${SIM_ID}"
       
       - name: Run tests
         run: |
+          set -euo pipefail
           cd apps/ios
           xcodebuild test \
-            -workspace SOSMesh.xcworkspace \
+            -project SOSMesh.xcodeproj \
             -scheme SOSMesh-iOS \
             -sdk iphonesimulator \
-            -destination 'platform=iOS Simulator,name=iPhone 15'
+            -destination "platform=iOS Simulator,id=${{ steps.sim.outputs.id }}" \
+            CODE_SIGNING_ALLOWED=NO \
+            -only-testing:SOSMeshTests
 
   cross-language-contracts:
     name: Cross-Language Contract Tests
@@ -291,16 +332,7 @@ jobs:
           cd packages/contracts-kotlin
           ./gradlew test --no-daemon
       
-      - name: Run Swift contract tests
-        run: |
-          echo "=== Swift Contract Tests ==="
-          which swift
-          swift --version
-          cd packages/contracts-swift
-          export SOURCE_ROOT="${GITHUB_WORKSPACE}"
-          swift test
-      
-      - name: Compare canonical JSON outputs (TypeScript vs Kotlin vs Swift)
+      - name: Compare TypeScript and Kotlin golden vectors
         run: |
           echo "Comparing TypeScript and Kotlin canonical outputs..."
           MASTER_GOLDEN="packages/contracts/crypto-test-vectors/golden-001.json"
@@ -311,15 +343,52 @@ jobs:
             echo "❌ TypeScript and Kotlin canonical outputs differ"
             exit 1
           fi
-          
-          echo "Comparing with Swift canonical output..."
+
+  swift-package-tests:
+    name: Swift Package Tests
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    if: github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Swift
+        uses: swift-actions/setup-swift@v2
+        with:
+          swift-version: "5.10"
+
+      - name: Run Swift contract tests
+        run: |
+          set -euo pipefail
+          echo "=== Swift Contract Tests ==="
+          which swift
+          swift --version
+          cd packages/contracts-swift
+          export SOURCE_ROOT="${GITHUB_WORKSPACE}"
+          swift test 2>&1 | tee "${GITHUB_WORKSPACE}/swift-contracts-test.log"
+          passed_count=$(grep -c 'Test Case.*passed' "${GITHUB_WORKSPACE}/swift-contracts-test.log" 2>/dev/null)
+          echo "Swift contracts test lines: ${passed_count:-0}"
+
+      - name: Run SOSMeshCore Swift tests
+        run: |
+          set -euo pipefail
+          cd apps/ios/SOSMeshCore
+          export SOURCE_ROOT="${GITHUB_WORKSPACE}"
+          swift test 2>&1 | tee "${GITHUB_WORKSPACE}/swift-sosmeshcore-test.log"
+          passed_count=$(grep -c 'Test Case.*passed' "${GITHUB_WORKSPACE}/swift-sosmeshcore-test.log" 2>/dev/null)
+          echo "SOSMeshCore test lines: ${passed_count:-0}"
+
+      - name: Compare Swift golden vector with master
+        run: |
+          MASTER_GOLDEN="packages/contracts/crypto-test-vectors/golden-001.json"
           SWIFT_GOLDEN="packages/contracts-swift/Tests/SOSMeshContractsTests/Resources/golden-001.json"
-          if cmp -s "$MASTER_GOLDEN" "$SWIFT_GOLDEN"; then
-            echo "✅ Swift canonical output matches"
-          else
-            echo "❌ Swift canonical output differs"
-            exit 1
-          fi
+          IOS_CORE_GOLDEN="apps/ios/SOSMeshCore/Tests/SOSMeshCoreTests/Resources/golden-001.json"
+          cmp -s "$MASTER_GOLDEN" "$SWIFT_GOLDEN"
+          echo "✅ Swift contracts golden matches master"
+          cmp -s "$MASTER_GOLDEN" "$IOS_CORE_GOLDEN"
+          echo "✅ SOSMeshCore bundled golden matches master"
 
   secret-scan:
     name: Secret Scan

@@ -1,0 +1,7 @@
+# SOSMesh iOS — ADIM 31–33
+
+platform :ios, '17.0'
+
+target 'SOSMesh-iOS' do
+  use_frameworks!
+end

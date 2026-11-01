@@ -35,6 +35,7 @@ class MeshPlatformSignalBridge
         private val machine = MeshPlatformStateMachine()
 
         @Volatile private var lastTransferCorrupt: Boolean = false
+
         @Volatile private var lastApiUploadFailed: Boolean = false
 
         fun noteTransferCorrupt() {

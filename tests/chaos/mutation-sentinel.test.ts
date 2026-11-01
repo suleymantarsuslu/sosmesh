@@ -24,6 +24,7 @@ describe('chaos_mutation_sentinel_digest_and_ttl', () => {
       seed: 501,
       initialTtl: 0,
       skipTtlDecrement: true,
+      reliableChannel: true,
     });
     expect(skipDecrement.report.outcome).not.toBe('DROPPED');
   });

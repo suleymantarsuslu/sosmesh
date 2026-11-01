@@ -56,4 +56,24 @@ test.describe('Operator panel', () => {
     await expect(page.getByTestId('operator-dashboard')).toBeVisible();
     await page.screenshot({ path: 'reports/operator-dashboard-1440.png', fullPage: true });
   });
+
+  test('dashboard screenshot 390', async ({ page }) => {
+    await page.setViewportSize({ width: 390, height: 844 });
+    await page.goto('/operator/login');
+    await page.getByLabel('E-posta').fill(E2E_EMAIL);
+    await page.getByLabel('Şifre').fill(E2E_PASS);
+    await page.getByRole('button', { name: 'Giriş yap' }).click();
+    await expect(page.getByTestId('operator-dashboard')).toBeVisible();
+    await page.screenshot({ path: 'reports/operator-dashboard-390.png', fullPage: true });
+  });
+
+  test('dashboard screenshot 768', async ({ page }) => {
+    await page.setViewportSize({ width: 768, height: 1024 });
+    await page.goto('/operator/login');
+    await page.getByLabel('E-posta').fill(E2E_EMAIL);
+    await page.getByLabel('Şifre').fill(E2E_PASS);
+    await page.getByRole('button', { name: 'Giriş yap' }).click();
+    await expect(page.getByTestId('operator-dashboard')).toBeVisible();
+    await page.screenshot({ path: 'reports/operator-dashboard-768.png', fullPage: true });
+  });
 });

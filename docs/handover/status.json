@@ -519,23 +519,26 @@
       "deliverables": "apps/api, prisma/schema.prisma, apps/api/test; infra/compose",
       "pass_criteria": "İlk kez boş DB ile API başlar, tablo ilişkileri ve indexler doğru.",
       "status": "PARTIAL",
-      "attempts": 1,
+      "attempts": 2,
       "commit": "1aa936a",
       "evidence": [
         "apps/api embedded-postgres integration tests (5 senaryo)",
         "verify check-openapi",
-        "ADR-012"
+        "ADR-012",
+        "Gate H 2026-11-01: schema-introspection.spec.ts FK/index PASS",
+        "Gate H 2026-11-01: request-id-redaction.spec.ts x-request-id + pino redact paths PASS",
+        "Gate H 2026-11-01: env-validation-boot.spec.ts Joi DATABASE_URL zorunlu PASS",
+        "Gate H 2026-11-01: ingest.spec.ts 20 eşzamanlı ingest → 1 satır PASS",
+        "Gate H 2026-11-01: operator-feed-transaction.spec.ts 20 concurrent feed PASS",
+        "Gate H 2026-11-01: apps/api jest 91/91 PASS (reports/adim17-deferred-api-tests.log)",
+        "Gate H 2026-11-01: scripts/mesh-sim-mutation.sh 2/2 guard kırılımı (reports/mesh-sim-mutation.log); Nest Stryker yok"
       ],
-      "notes": "ağır testler ertelendi",
+      "notes": "Docker compose ve NestJS Stryker mutasyonu kapsam dışı; BLE mutasyon harness PASS",
       "blockers": [
         "infra/compose/docker-compose.yml NOT_TESTED (docker yok)",
-        "FK/index introspection test ertelendi",
-        "request-id/log redaction test ertelendi",
-        "env eksik boot test ertelendi",
-        "20-yarış insert test ertelendi",
-        "mutasyon testleri yapılmadı (scope)"
+        "API NestJS Stryker mutation score ölçülmedi (yalnız mesh-sim-mutation.sh)"
       ],
-      "last_checked_at": "2026-10-31T18:58:00Z",
+      "last_checked_at": "2026-11-01T17:20:00+00:00",
       "goal": "SOS durumlarının kalıcı ve denetlenebilir çekirdeğini kur.",
       "cursor_tasks": [
         "NestJS API, Prisma migrations, PostgreSQL, OpenAPI; auth ve validation interceptor kur.",
@@ -673,13 +676,13 @@
         "apps/web operator panel: login, dashboard, role denied, SSE polling fallback banner, Playwright 6/6",
         "API auth-rbac.spec.ts: 401/403/scope 404",
         "reports/operator-dashboard-1440.png (Playwright)",
-        "pnpm -r build EXIT=0; pnpm test EXIT=0; pnpm test:a11y:web EXIT=0; verify.sh lint fix pending CI"
+        "pnpm -r build EXIT=0; pnpm test EXIT=0; pnpm test:a11y:web 22/22 EXIT=0; verify.sh lint fix pending CI",
+        "Gate H 2026-11-01: reports/operator-dashboard-{390,768,1440}.png Playwright PASS"
       ],
       "blockers": [
-        "Self-hosted CI yeşil olana kadar PASS değil",
-        "GitHub-hosted Android Gradle Build 1 Kasım UTC faturalandırma nedeniyle düşebilir"
+        "Self-hosted CI yeşil olana kadar PASS değil"
       ],
-      "last_checked_at": "2026-11-01T02:55:00+03:00",
+      "last_checked_at": "2026-11-01T17:20:00+00:00",
       "goal": "Yetkili ekip için hızlı, masaüstü ve mobil responsive web uygulaması oluştur.",
       "cursor_tasks": [
         "Next.js App Router + TS + UI tokens; auth, RBAC, route guard, role-based sidebar/nav.",
@@ -690,7 +693,7 @@
       "verification_evidence": "Playwright auth/redirect; 390/768/1440 screenshots; role denied test.",
       "risk_note": "",
       "gate_raw": "KAPI: HACKATHON / ÇEKİRDEK    •    BAĞIMLILIK: 4,17,19",
-      "notes": "390/768 ekran görüntüleri ERTELENDİ; 1440 Playwright kanıtı var"
+      "notes": "390/768 ekran görüntüleri Gate H agent 2026-11-01 PASS (reports/operator-dashboard-*.png); 1440 önceden vardı"
     },
     {
       "id": "22",
@@ -710,14 +713,14 @@
         "apps/web/features/map (MapLibre + supercluster), case-list filtre/kuyruk/çekmece/SSE+polling",
         "docs/web/map-tiles.md OSM lisans + tile.openstreetmap.org prod uyarısı",
         "Vitest geo + filter; Playwright operator-map 5/5 + panel 5/5 (1440 screenshot reports/operator-map-cases-1440.png)",
-        "pnpm -r build EXIT=0; pnpm test EXIT=0; verify.sh (local) EXIT=0; test:a11y:web 11/11"
+        "Gate H 2026-11-01: reports/operator-map-cases-{390,768,1440}.png (390/768 mobil liste; harita sütunu CSS gizli)",
+        "Gate H 2026-11-01: pnpm test:a11y:web 22/22; verify.sh 24/24 EXIT=0"
       ],
       "blockers": [
         "Self-hosted CI yeşil olana kadar PASS değil",
-        "Bu VM'de ANDROID_HOME yok — Gradle assembleDebug yerelde koşulamadı",
-        "PR #35/#36 main'de değil — merge sırası bağımlılığı"
+        "prod tile kaynağı kullanıcı onayı (docs/web/map-tiles.md)"
       ],
-      "last_checked_at": "2026-11-01T05:00:00+00:00",
+      "last_checked_at": "2026-11-01T17:20:00+00:00",
       "goal": "En acil durumları kaynak, konum belirsizliği ve durumla birlikte görünür kıl.",
       "cursor_tasks": [
         "OpenStreetMap kaynaklarının lisans/hosting şartlarını kontrol ederek MapLibre/Leaflet harita modülü kur.",
@@ -728,7 +731,7 @@
       "verification_evidence": "3 responsive viewport ve 1000 vaka seed testi; null GPS test; search/filter E2E.",
       "risk_note": "",
       "gate_raw": "KAPI: HACKATHON / ÇEKİRDEK    •    BAĞIMLILIK: 19,21",
-      "notes": "1000 vaka E2E mock seed ~1.7s (Playwright); 390/768 ekran görüntüsü ERTELENDİ; prod tile kaynağı EKSİKLER'de"
+      "notes": "1000 vaka E2E mock seed ~1.7s (Playwright); 390/768 ekran görüntüsü Gate H 2026-11-01 PASS; prod tile kaynağı EKSİKLER'de"
     },
     {
       "id": "23",
@@ -1770,12 +1773,19 @@
       ],
       "deliverables": "docs/handover/final-report.md, docs/handover/status.json",
       "pass_criteria": "\"Tamamlandı\" yalnızca tüm gerekli kapılar gerçek kanıtla PASS olduğunda denebilir.",
-      "status": "NOT_STARTED",
-      "attempts": 0,
+      "status": "PARTIAL",
+      "attempts": 1,
       "commit": null,
-      "evidence": [],
-      "blockers": [],
-      "last_checked_at": null,
+      "evidence": [
+        "docs/handover/final-report.md (Gate H kapanış raporu, 2026-11-01)",
+        "docs/handover/status.json güncellendi (ADIM 01–25 dürüst durum)",
+        "Ertelenen ağır testler agent ortamında koşturuldu (log: reports/*gate-h*)"
+      ],
+      "blockers": [
+        "Hackathon kapısı (ADIM 01–25) tam PASS değil — ADIM 24 NOT_TESTED, çoklu PARTIAL",
+        "Tam ürün adımları 26–58 NOT_STARTED"
+      ],
+      "last_checked_at": "2026-11-01T17:20:00+00:00",
       "goal": "Grok son cevabı övgü yerine ölçülebilir teslim raporu versin.",
       "cursor_tasks": [
         "Her adım PASS/FAIL/BLOCKED ile tarih, commit, test link, platform kanıtı.",

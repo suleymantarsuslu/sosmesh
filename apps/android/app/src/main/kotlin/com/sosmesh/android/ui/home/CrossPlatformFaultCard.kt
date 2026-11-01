@@ -1,4 +1,4 @@
-package com.sosmesh.android.core.platform
+package com.sosmesh.android.ui.home
 
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -17,6 +17,7 @@ import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.dp
 import com.sosmesh.android.R
+import com.sosmesh.android.core.platform.CrossPlatformFaultHint
 
 @Composable
 fun CrossPlatformFaultCard(
@@ -39,7 +40,7 @@ fun CrossPlatformFaultCard(
             CrossPlatformFaultHint.NONE -> return
         }
     val titleRes = R.string.cross_platform_fault_title
-    val ariaRes = R.string.cross_platform_fault_aria
+    val ariaText = stringResource(R.string.cross_platform_fault_aria)
     Card(
         modifier =
             modifier
@@ -62,7 +63,7 @@ fun CrossPlatformFaultCard(
             Text(
                 text = stringResource(messageRes),
                 style = MaterialTheme.typography.bodyMedium,
-                modifier = Modifier.semantics { contentDescription = stringResource(ariaRes) },
+                modifier = Modifier.semantics { contentDescription = ariaText },
             )
             if (hint == CrossPlatformFaultHint.FIX_PERMISSIONS || hint == CrossPlatformFaultHint.FIX_BLUETOOTH) {
                 OutlinedButton(onClick = onOpenPermissions, modifier = Modifier.fillMaxWidth()) {

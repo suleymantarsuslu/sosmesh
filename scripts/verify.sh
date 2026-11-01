@@ -241,12 +241,30 @@ else
 fi
 
 # 20. Mesh simulator golden + chaos lab
-echo "20/20: bash scripts/mesh-sim-golden.sh"
+echo "20/21: bash scripts/mesh-sim-golden.sh"
 if bash "$SCRIPT_DIR/mesh-sim-golden.sh" > "$REPORTS_DIR/mesh-sim-golden.log" 2>&1; then
   check_exit "mesh-sim-golden" 0
 else
   EXIT_CODE=$?
   check_exit "mesh-sim-golden" $EXIT_CODE
+fi
+
+# 21. Android SOS privacy (no Log/Timber in SOS UI paths)
+echo "21/22: bash scripts/android-sos-privacy-log.sh"
+if bash "$SCRIPT_DIR/android-sos-privacy-log.sh" > "$REPORTS_DIR/android-sos-privacy.log" 2>&1; then
+  check_exit "android-sos-privacy-log" 0
+else
+  EXIT_CODE=$?
+  check_exit "android-sos-privacy-log" $EXIT_CODE
+fi
+
+# 22. Release build must not bundle dev-test SOS crypto
+echo "22/22: bash scripts/android-release-no-dev-crypto.sh"
+if bash "$SCRIPT_DIR/android-release-no-dev-crypto.sh" > "$REPORTS_DIR/android-release-no-dev-crypto.log" 2>&1; then
+  check_exit "android-release-no-dev-crypto" 0
+else
+  EXIT_CODE=$?
+  check_exit "android-release-no-dev-crypto" $EXIT_CODE
 fi
 
 # Summary

@@ -28,6 +28,8 @@ include(":core:model")
 include(":core:data")
 include(":core:permissions")
 include(":core:ble")
+include(":feature-sos")
+include(":feature-status")
 
 include(":contracts-kotlin")
 project(":contracts-kotlin").projectDir = file("../../packages/contracts-kotlin")

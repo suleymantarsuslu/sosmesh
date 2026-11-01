@@ -6,7 +6,7 @@ const outputDir = path.join(__dirname, '../build/canonical-json');
 
 fs.mkdirSync(outputDir, { recursive: true });
 
-const fixtures = ['valid-sos.json', 'unicode-sos.json'];
+const fixtures = ['valid-sos.json', 'unicode-sos.json', 'unknown-location-sos.json'];
 
 fixtures.forEach(fixture => {
   const content = JSON.parse(fs.readFileSync(path.join(fixturesDir, fixture), 'utf-8'));

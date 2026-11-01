@@ -59,6 +59,8 @@ dependencies {
     implementation(project(":core:data"))
     implementation(project(":core:permissions"))
     implementation(project(":core:ble"))
+    implementation(project(":feature-sos"))
+    implementation(project(":feature-status"))
 
     implementation("androidx.core:core-ktx:1.12.0")
     implementation("androidx.lifecycle:lifecycle-runtime-ktx:2.7.0")

@@ -4,7 +4,7 @@ import { Prisma } from '@prisma/client';
 import { buildPaginated, parsePagination } from '../common/pagination/pagination';
 import { PrismaService } from '../prisma/prisma.service';
 import { OperatorRequestUser } from './guards/operator-auth.guard';
-import { IncidentScopeService } from './incident-scope.service';
+import { IncidentScopeService } from '../organization/incident-scope.service';
 import { ListOperatorCasesQuery } from './dto/list-operator-cases.query';
 
 export type OperatorCaseRow = {

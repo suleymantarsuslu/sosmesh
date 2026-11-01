@@ -139,6 +139,54 @@
       "similarCases": "Similar Cases",
       "notes": "Notes",
       "addNote": "Add Note"
+    },
+    "shell": {
+      "brand": "SOSMesh",
+      "commandPalette": "Command palette",
+      "commandPlaceholder": "Search pages…",
+      "commandShortcut": "Search commands (Ctrl+K)",
+      "logout": "Sign out",
+      "themeLight": "Light theme",
+      "themeDark": "Dark theme",
+      "language": "Language",
+      "savedViews": "Saved views",
+      "saveView": "Save view",
+      "incidentSwitcher": "Incident switcher",
+      "incidentAll": "All incidents",
+      "mobileMenu": "Open menu",
+      "nav": {
+        "dashboard": "Dashboard",
+        "cases": "Map / Cases",
+        "teams": "Teams",
+        "tasks": "Tasks",
+        "activity": "Activity",
+        "admin": "Admin"
+      },
+      "orgHeader": "Organization"
+    },
+    "teams": {
+      "title": "Teams and resources",
+      "zone": "Zone",
+      "resources": "Resources",
+      "openTasks": "Open tasks",
+      "availability": "Availability",
+      "available": "Available",
+      "unavailable": "Unavailable"
+    },
+    "tasks": {
+      "title": "Task management",
+      "status": "Status",
+      "assignee": "Assignee",
+      "source": "Source",
+      "aiDraft": "AI draft",
+      "manual": "Manual",
+      "mapHint": "Location sharing is time-limited; map color alone does not indicate status."
+    },
+    "activity": {
+      "title": "Notifications and activity",
+      "notifications": "Notifications",
+      "timeline": "Timeline",
+      "unread": "Unread"
     }
   },
   "watch": {

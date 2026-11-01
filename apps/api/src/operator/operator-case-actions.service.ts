@@ -14,7 +14,7 @@ import { PrismaService } from '../prisma/prisma.service';
 import { validateSosAiOutput } from '../ai/schemas/sos-ai-output.schema';
 import { canTransitionDelivery } from './delivery-state.util';
 import { OperatorRequestUser } from './guards/operator-auth.guard';
-import { IncidentScopeService } from './incident-scope.service';
+import { IncidentScopeService } from '../organization/incident-scope.service';
 import {
   assertIncidentVersionAndIncrement,
   lockIncidentTransaction,

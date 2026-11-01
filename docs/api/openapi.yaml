@@ -201,6 +201,17 @@ paths:
           description: ""
       tags: *a3
       security: *a4
+  /v1/operator/organization/context:
+    get:
+      operationId: OrganizationController_context
+      parameters: []
+      responses:
+        "200":
+          description: ""
+      tags:
+        - organization
+      security:
+        - bearer: []
   /v1/public/messages/{messageId}/status:
     get:
       operationId: PublicController_messageStatus
@@ -367,6 +378,238 @@ paths:
           description: Per-item receipts or errors
       tags:
         - public
+  /v1/operator/teams:
+    get:
+      operationId: CoordinationController_listTeams
+      parameters: []
+      responses:
+        "200":
+          description: ""
+      tags: &a7
+        - operator-coordination
+      security: &a8
+        - bearer: []
+  /v1/operator/resources:
+    get:
+      operationId: CoordinationController_listResources
+      parameters:
+        - name: teamId
+          required: true
+          in: query
+          schema:
+            type: string
+      responses:
+        "200":
+          description: ""
+      tags: *a7
+      security: *a8
+    post:
+      operationId: CoordinationController_upsertResource
+      parameters: []
+      responses:
+        "201":
+          description: ""
+      tags: *a7
+      security: *a8
+  /v1/operator/tasks:
+    get:
+      operationId: CoordinationController_listTasks
+      parameters:
+        - name: incidentId
+          required: true
+          in: query
+          schema:
+            type: string
+      responses:
+        "200":
+          description: ""
+      tags: *a7
+      security: *a8
+    post:
+      operationId: CoordinationController_createTask
+      parameters: []
+      responses:
+        "201":
+          description: ""
+      tags: *a7
+      security: *a8
+  /v1/operator/tasks/ai-draft:
+    post:
+      operationId: CoordinationController_createAiDraft
+      parameters: []
+      responses:
+        "201":
+          description: ""
+      tags: *a7
+      security: *a8
+  /v1/operator/tasks/{taskId}/assign:
+    patch:
+      operationId: CoordinationController_assignTask
+      parameters:
+        - name: taskId
+          required: true
+          in: path
+          schema:
+            type: string
+      responses:
+        "200":
+          description: ""
+      tags: *a7
+      security: *a8
+  /v1/operator/tasks/{taskId}/accept:
+    patch:
+      operationId: CoordinationController_acceptTask
+      parameters:
+        - name: taskId
+          required: true
+          in: path
+          schema:
+            type: string
+      responses:
+        "200":
+          description: ""
+      tags: *a7
+      security: *a8
+  /v1/operator/tasks/{taskId}/withdraw:
+    patch:
+      operationId: CoordinationController_withdrawTask
+      parameters:
+        - name: taskId
+          required: true
+          in: path
+          schema:
+            type: string
+      responses:
+        "200":
+          description: ""
+      tags: *a7
+      security: *a8
+  /v1/operator/tasks/{taskId}/close:
+    patch:
+      operationId: CoordinationController_closeTask
+      parameters:
+        - name: taskId
+          required: true
+          in: path
+          schema:
+            type: string
+      responses:
+        "200":
+          description: ""
+      tags: *a7
+      security: *a8
+  /v1/operator/location-share:
+    post:
+      operationId: CoordinationController_grantLocationShare
+      parameters: []
+      responses:
+        "201":
+          description: ""
+      tags: *a7
+      security: *a8
+  /v1/operator/location-share/active:
+    get:
+      operationId: CoordinationController_listActiveLocations
+      parameters: []
+      responses:
+        "200":
+          description: ""
+      tags: *a7
+      security: *a8
+  /v1/operator/location-share/{grantId}/revoke:
+    post:
+      operationId: CoordinationController_revokeLocationShare
+      parameters:
+        - name: grantId
+          required: true
+          in: path
+          schema:
+            type: string
+      responses:
+        "201":
+          description: ""
+      tags: *a7
+      security: *a8
+  /v1/operator/notifications:
+    get:
+      operationId: NotificationsController_listNotifications
+      parameters:
+        - name: unreadOnly
+          required: true
+          in: query
+          schema:
+            type: string
+      responses:
+        "200":
+          description: ""
+      tags: &a9
+        - operator-notifications
+      security: &a10
+        - bearer: []
+  /v1/operator/notifications/{id}/read:
+    patch:
+      operationId: NotificationsController_markRead
+      parameters:
+        - name: id
+          required: true
+          in: path
+          schema:
+            type: string
+      responses:
+        "200":
+          description: ""
+      tags: *a9
+      security: *a10
+  /v1/operator/notification-preferences:
+    get:
+      operationId: NotificationsController_getPreferences
+      parameters: []
+      responses:
+        "200":
+          description: ""
+      tags: *a9
+      security: *a10
+    patch:
+      operationId: NotificationsController_updatePreferences
+      parameters: []
+      responses:
+        "200":
+          description: ""
+      tags: *a9
+      security: *a10
+  /v1/operator/activity:
+    get:
+      operationId: NotificationsController_listActivity
+      parameters:
+        - name: incidentId
+          required: true
+          in: query
+          schema:
+            type: string
+        - name: limit
+          required: true
+          in: query
+          schema:
+            type: string
+      responses:
+        "200":
+          description: ""
+      tags: *a9
+      security: *a10
+  /v1/operator/activity/export:
+    get:
+      operationId: NotificationsController_exportActivity
+      parameters:
+        - name: incidentId
+          required: true
+          in: query
+          schema:
+            type: string
+      responses:
+        "200":
+          description: ""
+      tags: *a9
+      security: *a10
 info:
   title: SOSMesh API
   description: Emergency mesh network API — public and operator surfaces

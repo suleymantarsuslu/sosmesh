@@ -103,6 +103,17 @@ async function mockFetch(path: string, init?: RequestInit): Promise<Response> {
     const incidentId = url.pathname.replace('/v1/operator/cases/', '');
     return mockCaseDetailResponse(incidentId);
   }
+  if (path === '/v1/operator/organization/context' && (!init?.method || init.method === 'GET')) {
+    return new Response(
+      JSON.stringify({
+        organization: { id: 'e2e-org', name: 'E2E Organization', slug: 'e2e-org' },
+        team: null,
+        role: 'OPERATOR',
+        incidents: [],
+      }),
+      { status: 200, headers: { 'Content-Type': 'application/json' } }
+    );
+  }
   if (path === '/v1/auth/me' && (!init?.method || init.method === 'GET')) {
     const session = readSession();
     if (!session) {

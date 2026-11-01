@@ -18,6 +18,7 @@ module.exports = defineConfig({
     '**/operator-panel.spec.js',
     '**/operator-map.spec.js',
     '**/operator-case-detail.spec.js',
+    '**/operator-tasks-teams.spec.js',
   ],
   fullyParallel: false,
   forbidOnly: !!process.env.CI,

@@ -124,19 +124,7 @@ for p in ["SOSMesh/Assets.xcassets"]:
     lines.append(f"\t\t{bf} /* Assets in Resources */ = {{isa = PBXBuildFile; fileRef = {file_refs[p]} /* Assets.xcassets */; }};")
     res_build_files.append(bf)
 
-lines.append(
-    f"\t\t{app_sources_phase} /* Sources */ = {{isa = PBXSourcesBuildPhase; buildActionMask = 2147483647; files = ({', '.join(f'{b} /* in Sources */' for b in app_build_files)}); runOnlyForDeploymentPostprocessing = 0; }};"
-)
-lines.append(
-    f"\t\t{test_sources_phase} /* Sources */ = {{isa = PBXSourcesBuildPhase; buildActionMask = 2147483647; files = ({', '.join(f'{b} /* in Sources */' for b in test_build_files)}); runOnlyForDeploymentPostprocessing = 0; }};"
-)
-lines.append(
-    f"\t\t{resources_phase} /* Resources */ = {{isa = PBXResourcesBuildPhase; buildActionMask = 2147483647; files = ({', '.join(f'{b} /* in Resources */' for b in res_build_files)}); runOnlyForDeploymentPostprocessing = 0; }};"
-)
-lines.append(f"\t\t{frameworks_phase} /* Frameworks */ = {{isa = PBXFrameworksBuildPhase; buildActionMask = 2147483647; files = (); runOnlyForDeploymentPostprocessing = 0; }};")
-lines.append(f"\t\t{test_frameworks_phase} /* Frameworks */ = {{isa = PBXFrameworksBuildPhase; buildActionMask = 2147483647; files = (); runOnlyForDeploymentPostprocessing = 0; }};")
-
-# Local packages
+# Local packages (define framework build files before PBXFrameworksBuildPhase)
 pkg_core = uid(5001)
 pkg_contracts = uid(5002)
 lines.append(f"\t\t{pkg_core} /* XCLocalSwiftPackageReference \"SOSMeshCore\" */ = {{isa = XCLocalSwiftPackageReference; relativePath = SOSMeshCore; }};")
@@ -146,12 +134,36 @@ lines.append(
 
 prod_dep_core = uid(5101)
 prod_dep_contracts = uid(5102)
+fw_core_app = uid(6701)
+fw_contracts_app = uid(6702)
+fw_core_test = uid(6703)
+lines.append(
+    f"\t\t{fw_core_app} /* SOSMeshCore in Frameworks */ = {{isa = PBXBuildFile; productRef = {prod_dep_core} /* SOSMeshCore */; }};"
+)
+lines.append(
+    f"\t\t{fw_contracts_app} /* SOSMeshContracts in Frameworks */ = {{isa = PBXBuildFile; productRef = {prod_dep_contracts} /* SOSMeshContracts */; }};"
+)
+lines.append(
+    f"\t\t{fw_core_test} /* SOSMeshCore in Frameworks */ = {{isa = PBXBuildFile; productRef = {prod_dep_core} /* SOSMeshCore */; }};"
+)
 lines.append(
     f"\t\t{prod_dep_core} /* SOSMeshCore */ = {{isa = XCSwiftPackageProductDependency; productName = SOSMeshCore; package = {pkg_core} /* SOSMeshCore */; }};"
 )
 lines.append(
     f"\t\t{prod_dep_contracts} /* SOSMeshContracts */ = {{isa = XCSwiftPackageProductDependency; productName = SOSMeshContracts; package = {pkg_contracts} /* contracts-swift */; }};"
 )
+
+lines.append(
+    f"\t\t{app_sources_phase} /* Sources */ = {{isa = PBXSourcesBuildPhase; buildActionMask = 2147483647; files = ({', '.join(f'{b} /* in Sources */' for b in app_build_files)}); runOnlyForDeploymentPostprocessing = 0; }};"
+)
+lines.append(
+    f"\t\t{test_sources_phase} /* Sources */ = {{isa = PBXSourcesBuildPhase; buildActionMask = 2147483647; files = ({', '.join(f'{b} /* in Sources */' for b in test_build_files)}); runOnlyForDeploymentPostprocessing = 0; }};"
+)
+lines.append(
+    f"\t\t{resources_phase} /* Resources */ = {{isa = PBXResourcesBuildPhase; buildActionMask = 2147483647; files = ({', '.join(f'{b} /* in Resources */' for b in res_build_files)}); runOnlyForDeploymentPostprocessing = 0; }};"
+)
+lines.append(f"\t\t{frameworks_phase} /* Frameworks */ = {{isa = PBXFrameworksBuildPhase; buildActionMask = 2147483647; files = ({fw_core_app} /* SOSMeshCore in Frameworks */, {fw_contracts_app} /* SOSMeshContracts in Frameworks */); runOnlyForDeploymentPostprocessing = 0; }};")
+lines.append(f"\t\t{test_frameworks_phase} /* Frameworks */ = {{isa = PBXFrameworksBuildPhase; buildActionMask = 2147483647; files = ({fw_core_test} /* SOSMeshCore in Frameworks */); runOnlyForDeploymentPostprocessing = 0; }};")
 
 # Targets
 app_target = uid(3001)
@@ -226,16 +238,25 @@ lines.append(
 # Configurations
 def build_settings(target_name: str, bundle_id: str, info_plist: str | None = None, test: bool = False) -> str:
     settings = [
+        "SDKROOT = iphoneos;",
         "SWIFT_VERSION = 5.0;",
         "IPHONEOS_DEPLOYMENT_TARGET = 17.0;",
         "TARGETED_DEVICE_FAMILY = 1;",
+        "SUPPORTED_PLATFORMS = \"iphoneos iphonesimulator\";",
+        "SUPPORTS_MACCATALYST = NO;",
+        '"EXCLUDED_ARCHS[sdk=iphonesimulator*]" = x86_64;',
+        "ONLY_ACTIVE_ARCH = YES;",
+        "PRODUCT_NAME = " + ("SOSMeshTests" if test else "SOSMesh") + ";",
         "PRODUCT_BUNDLE_IDENTIFIER = " + bundle_id + ";",
         "CODE_SIGNING_ALLOWED = NO;",
         "CODE_SIGNING_REQUIRED = NO;",
     ]
     if test:
         settings.append("GENERATE_INFOPLIST_FILE = YES;")
-        settings.append("TEST_HOST = \"\";")
+        settings.append("BUNDLE_LOADER = \"$(TEST_HOST)\";")
+        settings.append(
+            "TEST_HOST = \"$(BUILT_PRODUCTS_DIR)/SOSMesh.app/$(BUNDLE_EXECUTABLE_FOLDER_PATH)/SOSMesh\";"
+        )
     else:
         settings.append(f"INFOPLIST_FILE = {info_plist};")
         settings.append("ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;")
@@ -258,7 +279,16 @@ def config_list(list_id, name, target_debug, target_release):
 proj_debug = uid(4200)
 proj_release = uid(4201)
 for cfg_id, cfg_name in [(proj_debug, "Debug"), (proj_release, "Release")]:
-    lines.append(f"\t\t{cfg_id} /* {cfg_name} */ = {{isa = XCBuildConfiguration; buildSettings = {{}}; name = {cfg_name}; }};")
+    lines.append(
+        f"\t\t{cfg_id} /* {cfg_name} */ = {{isa = XCBuildConfiguration; buildSettings = {{"
+        f"\n\t\t\t\tSDKROOT = iphoneos;"
+        f"\n\t\t\t\tIPHONEOS_DEPLOYMENT_TARGET = 17.0;"
+        f"\n\t\t\t\tSUPPORTED_PLATFORMS = \"iphoneos iphonesimulator\";"
+        f"\n\t\t\t\tSUPPORTS_MACCATALYST = NO;"
+        f"\n\t\t\t\t\"EXCLUDED_ARCHS[sdk=iphonesimulator*]\" = x86_64;"
+        f"\n\t\t\t\tONLY_ACTIVE_ARCH = YES;"
+        f"\n\t\t\t}}; name = {cfg_name}; }};"
+    )
 config_list(uid(4000), 'PBXProject "SOSMesh"', proj_debug, proj_release)
 
 app_debug = uid(4210)

@@ -3,9 +3,10 @@
 import { useCallback, useState } from 'react';
 
 import { ConnectionBanner } from '../../../../../components/operator/ConnectionBanner';
-import { Card } from '../../../../../components/ui/Card';
+import { useOperatorPreferences } from '../../../../../components/operator/OperatorPreferencesProvider';
 import { StatCard } from '../../../../../components/ui/StatCard';
 import { useToast } from '../../../../../components/ui/ToastProvider';
+import { BentoCard, BentoGrid, ScreenState } from '../../../../../design-system';
 
 type Stats = {
   newSos: number | null;
@@ -24,12 +25,17 @@ type IncidentRow = {
 export function DashboardView({
   stats,
   incidents,
+  loading = false,
+  error = false,
 }: {
   stats: Stats;
   incidents: IncidentRow[];
+  loading?: boolean;
+  error?: boolean;
 }) {
   const { push } = useToast();
-  const emptyLabel = 'Henüz veri yok';
+  const { t } = useOperatorPreferences();
+  const emptyLabel = t('states.empty');
   const onReconnect = useCallback(() => push('Canlı akış yeniden bağlandı'), [push]);
   const [query, setQuery] = useState('');
 
@@ -37,71 +43,80 @@ export function DashboardView({
     row.id.toLowerCase().includes(query.toLowerCase())
   );
 
+  const screenState = loading ? 'loading' : error ? 'error' : 'idle';
+
   return (
     <div className="dashboard" data-testid="operator-dashboard">
       <ConnectionBanner onReconnect={onReconnect} />
       <header className="dashboard__header">
-        <h1>Panel</h1>
+        <h1>{t('web.dashboard.title')}</h1>
         <input
           className="dashboard__search"
           type="search"
-          placeholder="Vaka ara (Ctrl+K komut paleti)"
+          placeholder={t('web.shell.commandShortcut')}
           value={query}
           onChange={(e) => setQuery(e.target.value)}
-          aria-label="Vaka ara"
+          aria-label={t('web.dashboard.recentCases')}
         />
       </header>
-      <div className="dashboard__stats">
-        <StatCard label="Yeni SOS (24s)" value={stats.newSos} emptyLabel={emptyLabel} />
-        <StatCard label="Panelde açık" value={stats.openOnPanel} emptyLabel={emptyLabel} />
-        <StatCard label="Beklemede" value={stats.pending} emptyLabel={emptyLabel} />
-        <StatCard
-          label="Ort. ulaşım (sn)"
-          value={stats.avgReachSeconds}
-          emptyLabel={emptyLabel}
-        />
-      </div>
-      {!stats.hasData ? (
-        <p className="dashboard__empty" data-testid="dashboard-no-data">
-          Henüz veri yok
-        </p>
-      ) : null}
-      <Card title="Son vakalar" className="dashboard__cases">
-        <div id="cases" className="dashboard__table-wrap">
-          <table className="dashboard__table">
-            <thead>
-              <tr>
-                <th>Vaka</th>
-                <th>Durum</th>
-                <th>Oluşturulma</th>
-              </tr>
-            </thead>
-            <tbody>
-              {filtered.length === 0 ? (
+      <BentoGrid>
+        <BentoCard title={t('web.dashboard.widgets.totalCases')} testId="bento-new-sos">
+          <StatCard label="Yeni SOS (24s)" value={stats.newSos} emptyLabel={emptyLabel} />
+        </BentoCard>
+        <BentoCard title={t('web.dashboard.widgets.activeCases')} testId="bento-open">
+          <StatCard label="Panelde açık" value={stats.openOnPanel} emptyLabel={emptyLabel} />
+        </BentoCard>
+        <BentoCard title={t('web.dashboard.widgets.avgResponseTime')} span={2} testId="bento-pending">
+          <StatCard label="Beklemede" value={stats.pending} emptyLabel={emptyLabel} />
+          <StatCard
+            label="Ort. ulaşım (sn)"
+            value={stats.avgReachSeconds}
+            emptyLabel={emptyLabel}
+          />
+        </BentoCard>
+      </BentoGrid>
+      <ScreenState
+        state={screenState}
+        emptyLabel={emptyLabel}
+        errorLabel={t('states.error')}
+        loadingLabel={t('states.loading')}
+        testId="dashboard-screen-state"
+      >
+        {!stats.hasData ? (
+          <p className="dashboard__empty" data-testid="dashboard-no-data">
+            {emptyLabel}
+          </p>
+        ) : null}
+        <section className="dashboard__cases ui-card">
+          <h2>{t('web.dashboard.recentCases')}</h2>
+          <div id="cases" className="dashboard__table-wrap">
+            <table className="dashboard__table">
+              <thead>
                 <tr>
-                  <td colSpan={3}>Henüz vaka yok</td>
+                  <th>Vaka</th>
+                  <th>Durum</th>
+                  <th>Oluşturulma</th>
                 </tr>
-              ) : (
-                filtered.map((row) => (
-                  <tr key={row.id}>
-                    <td>{row.id.slice(0, 8)}…</td>
-                    <td>{row.state}</td>
-                    <td>{new Date(row.createdAt).toLocaleString('tr-TR')}</td>
+              </thead>
+              <tbody>
+                {filtered.length === 0 ? (
+                  <tr>
+                    <td colSpan={3}>{t('web.dashboard.empty')}</td>
                   </tr>
-                ))
-              )}
-            </tbody>
-          </table>
-          <ul className="dashboard__cards-mobile">
-            {filtered.map((row) => (
-              <li key={row.id} className="dashboard__case-card">
-                <strong>{row.state}</strong>
-                <span>{row.id.slice(0, 8)}…</span>
-              </li>
-            ))}
-          </ul>
-        </div>
-      </Card>
+                ) : (
+                  filtered.map((row) => (
+                    <tr key={row.id}>
+                      <td>{row.id.slice(0, 8)}…</td>
+                      <td>{row.state}</td>
+                      <td>{new Date(row.createdAt).toLocaleString('tr-TR')}</td>
+                    </tr>
+                  ))
+                )}
+              </tbody>
+            </table>
+          </div>
+        </section>
+      </ScreenState>
     </div>
   );
 }

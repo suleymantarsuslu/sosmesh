@@ -56,10 +56,16 @@ describe('ADIM 47 — perf indexes and DB profile', () => {
       LIMIT 51
     `;
     const planText = planRows.map((row) => row['QUERY PLAN']).join('\n');
-    expect(planText).toMatch(/sos_messages_priority_received_at_idx|Index Scan|Backward Index Scan/);
+    expect(planText).toContain('sos_messages_priority_received_at_idx');
   });
 
   it('documents read-replica non-requirement: feed poll stays index-backed on primary', async () => {
+    for (let i = 0; i < 80; i += 1) {
+      const body = buildValidIngestRequest({ messageId: randomUUID() });
+      const response = await request(app.getHttpServer()).post('/v1/ingest').send(body);
+      expect(response.status).toBe(200);
+    }
+
     const planRows = await prisma.$queryRaw<ExplainRow[]>`
       EXPLAIN
       SELECT seq, message_id, incident_id
@@ -69,7 +75,7 @@ describe('ADIM 47 — perf indexes and DB profile', () => {
       LIMIT 100
     `;
     const planText = planRows.map((row) => row['QUERY PLAN']).join('\n');
-    expect(planText).toMatch(/operator_feed_events_seq_idx|Index Scan|Seq Scan/);
+    expect(planText).toContain('operator_feed_events_seq_idx');
   });
 });
 

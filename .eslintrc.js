@@ -83,5 +83,6 @@ module.exports = {
     'playwright.config.js',
     'prototypes/**/*.html',
     'apps/api/**',
+    'tests/load/k6/**',
   ],
 };

@@ -5,6 +5,7 @@ set -euo pipefail
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
 PROFILE="${1:-100}"
 BASE_URL="${BASE_URL:-http://127.0.0.1:3001}"
+bash "$ROOT/tests/load/scripts/assert-local-base-url.sh" "$BASE_URL"
 
 if [[ "$PROFILE" != "100" && "$PROFILE" != "1000" && "$PROFILE" != "10000" ]]; then
   echo "Usage: $0 [100|1000|10000]" >&2

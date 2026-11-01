@@ -19,10 +19,10 @@
 
 | Metrik | Değer (ms) |
 |--------|------------|
-| **p50** | **5,93** |
-| **p95** | **7,50** |
+| **p50** | **6,68** |
+| **p95** | **10,15** |
 
-Kaynak: `apps/api/test/perf-adim47.spec.ts` — `ADIM47_JEST_LATENCY_SAMPLE` çıktısı (2026-11-01 VM koşusu).
+Kaynak: `apps/api/test/perf-adim47.spec.ts` — `ADIM47_JEST_LATENCY_SAMPLE` çıktısı (2026-11-01 inceleme VM koşusu; CI/yerel koşuda yeniden üretin).
 
 ### k6 (CI smoke: `K6_VUS=1`, 100 iterasyon, paylaşımlı sentetik gövdeler)
 

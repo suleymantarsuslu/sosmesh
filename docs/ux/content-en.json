@@ -139,6 +139,27 @@
       "similarCases": "Similar Cases",
       "notes": "Notes",
       "addNote": "Add Note"
+    },
+    "shell": {
+      "brand": "SOSMesh",
+      "commandPalette": "Command palette",
+      "commandPlaceholder": "Search pages…",
+      "commandShortcut": "Search commands (Ctrl+K)",
+      "logout": "Sign out",
+      "themeLight": "Light theme",
+      "themeDark": "Dark theme",
+      "language": "Language",
+      "savedViews": "Saved views",
+      "saveView": "Save view",
+      "incidentSwitcher": "Incident switcher",
+      "incidentAll": "All incidents",
+      "mobileMenu": "Open menu",
+      "nav": {
+        "dashboard": "Dashboard",
+        "cases": "Map / Cases",
+        "admin": "Admin"
+      },
+      "orgHeader": "Organization"
     }
   },
   "watch": {

@@ -201,6 +201,17 @@ paths:
           description: ""
       tags: *a3
       security: *a4
+  /v1/operator/organization/context:
+    get:
+      operationId: OrganizationController_context
+      parameters: []
+      responses:
+        "200":
+          description: ""
+      tags:
+        - organization
+      security:
+        - bearer: []
   /v1/public/messages/{messageId}/status:
     get:
       operationId: PublicController_messageStatus

@@ -3,7 +3,7 @@ import { IncidentState } from '@prisma/client';
 
 import { PrismaService } from '../prisma/prisma.service';
 import { OperatorRequestUser } from './guards/operator-auth.guard';
-import { IncidentScopeService } from './incident-scope.service';
+import { IncidentScopeService } from '../organization/incident-scope.service';
 
 export type DashboardStats = {
   newSos: number | null;

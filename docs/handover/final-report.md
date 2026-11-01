@@ -2,7 +2,7 @@
 
 **Tarih (UTC):** 2026-11-01  
 **Dal:** `cursor/gate-h-closure-a47c`  
-**HEAD (rapor yazımı anı, commit öncesi):** `008bbf0cd6ce46fa31cd6ad15dc7012f7ab5f711` — PR push sonrası güncel SHA ve CI run id aşağıdaki kapı tablosunda güncellenmelidir.  
+**HEAD:** `ef9cfae` (Gate H kapanış commit)  
 **Kaynak:** `docs/handover/status.json`, `docs/handover/tech-debt.md`, master plan (`docs/handover/step-index.md`)
 
 Bu rapor, ertelenmiş ağır testlerin bu cloud agent ortamında **gerçekten koşturulması** sonucunu özetler. Kanıtsız PASS yoktur; fiziksel cihaz gerektiren ADIM 24 **NOT_TESTED** olarak kalır.

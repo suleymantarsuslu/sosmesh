@@ -108,6 +108,8 @@ class ManifestPermissionsParameterizedTest(
                     setOf(
                         Manifest.permission.BLUETOOTH,
                         Manifest.permission.BLUETOOTH_ADMIN,
+                        Manifest.permission.INTERNET,
+                        Manifest.permission.ACCESS_NETWORK_STATE,
                     ),
                 ),
                 arrayOf(
@@ -116,21 +118,33 @@ class ManifestPermissionsParameterizedTest(
                         Manifest.permission.BLUETOOTH,
                         Manifest.permission.BLUETOOTH_ADMIN,
                         Manifest.permission.FOREGROUND_SERVICE,
+                        Manifest.permission.INTERNET,
+                        Manifest.permission.ACCESS_NETWORK_STATE,
                     ),
                 ),
                 arrayOf(
                     31,
-                    setOf(Manifest.permission.FOREGROUND_SERVICE),
+                    setOf(
+                        Manifest.permission.FOREGROUND_SERVICE,
+                        Manifest.permission.INTERNET,
+                        Manifest.permission.ACCESS_NETWORK_STATE,
+                    ),
                 ),
                 arrayOf(
                     33,
-                    setOf(Manifest.permission.FOREGROUND_SERVICE),
+                    setOf(
+                        Manifest.permission.FOREGROUND_SERVICE,
+                        Manifest.permission.INTERNET,
+                        Manifest.permission.ACCESS_NETWORK_STATE,
+                    ),
                 ),
                 arrayOf(
                     34,
                     setOf(
                         Manifest.permission.FOREGROUND_SERVICE,
                         Manifest.permission.FOREGROUND_SERVICE_CONNECTED_DEVICE,
+                        Manifest.permission.INTERNET,
+                        Manifest.permission.ACCESS_NETWORK_STATE,
                     ),
                 ),
                 arrayOf(
@@ -138,6 +152,8 @@ class ManifestPermissionsParameterizedTest(
                     setOf(
                         Manifest.permission.FOREGROUND_SERVICE,
                         Manifest.permission.FOREGROUND_SERVICE_CONNECTED_DEVICE,
+                        Manifest.permission.INTERNET,
+                        Manifest.permission.ACCESS_NETWORK_STATE,
                     ),
                 ),
                 arrayOf(
@@ -145,6 +161,8 @@ class ManifestPermissionsParameterizedTest(
                     setOf(
                         Manifest.permission.FOREGROUND_SERVICE,
                         Manifest.permission.FOREGROUND_SERVICE_CONNECTED_DEVICE,
+                        Manifest.permission.INTERNET,
+                        Manifest.permission.ACCESS_NETWORK_STATE,
                     ),
                 ),
             )

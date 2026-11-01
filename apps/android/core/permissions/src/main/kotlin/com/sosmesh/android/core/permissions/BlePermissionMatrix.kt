@@ -51,6 +51,9 @@ object BlePermissionMatrix {
             manifest += Manifest.permission.FOREGROUND_SERVICE_CONNECTED_DEVICE
         }
 
+        manifest += Manifest.permission.INTERNET
+        manifest += Manifest.permission.ACCESS_NETWORK_STATE
+
         return PermissionSet(manifest)
     }
 

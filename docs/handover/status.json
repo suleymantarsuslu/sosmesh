@@ -1567,7 +1567,7 @@
       "pass_criteria": "Unknown bilgisi asla uydurulmuyor, model outage vaka ingest’i bloklamıyor.",
       "status": "PARTIAL",
       "attempts": 1,
-      "commit": null,
+      "commit": "f284bc2",
       "evidence": [
         "apps/api/src/ai/evals (113 sentetik fixture, mock eval-runner, operator correction capture)",
         "apps/api/src/ai/schemas/safe-fallback.ts, deidentify-plaintext.ts, ai-metrics.ts, incident token budget",

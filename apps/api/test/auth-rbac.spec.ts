@@ -31,7 +31,7 @@ describe('Auth and operator RBAC', () => {
     await prisma.user.create({
       data: {
         id: operatorA,
-        email: 'operator-a@sosmesh.test',
+        email: 'operator-a@sosmesh.example',
         displayName: 'Operator A',
         role: 'OPERATOR',
         teamId: teamA,
@@ -68,7 +68,7 @@ describe('Auth and operator RBAC', () => {
   it('returns 401 for login with wrong password', async () => {
     const response = await request(app.getHttpServer())
       .post('/v1/auth/login')
-      .send({ email: 'operator-a@sosmesh.test', password: 'wrong-password-xyz' });
+      .send({ email: 'operator-a@sosmesh.example', password: 'wrong-password-xyz' });
     expect(response.status).toBe(401);
   });
 
@@ -81,7 +81,7 @@ describe('Auth and operator RBAC', () => {
   it('returns 403 when operator role calls admin endpoint', async () => {
     const login = await request(app.getHttpServer())
       .post('/v1/auth/login')
-      .send({ email: 'operator-a@sosmesh.test', password });
+      .send({ email: 'operator-a@sosmesh.example', password });
     expect(login.status).toBe(200);
     const token = login.body.token as string;
     const response = await request(app.getHttpServer())
@@ -94,7 +94,7 @@ describe('Auth and operator RBAC', () => {
   it('lists only team-scoped incidents for operator', async () => {
     const login = await request(app.getHttpServer())
       .post('/v1/auth/login')
-      .send({ email: 'operator-a@sosmesh.test', password });
+      .send({ email: 'operator-a@sosmesh.example', password });
     const token = login.body.token as string;
     const response = await request(app.getHttpServer())
       .get('/v1/operator/incidents')
@@ -108,7 +108,7 @@ describe('Auth and operator RBAC', () => {
   it('returns 404 for out-of-scope incident detail', async () => {
     const login = await request(app.getHttpServer())
       .post('/v1/auth/login')
-      .send({ email: 'operator-a@sosmesh.test', password });
+      .send({ email: 'operator-a@sosmesh.example', password });
     const token = login.body.token as string;
     const response = await request(app.getHttpServer())
       .get(`/v1/operator/incidents/${incidentOther}`)

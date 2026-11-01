@@ -19,9 +19,9 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ code: 'CONFIG_ERROR' }, { status: 500 });
     }
     let payload: { sub: string; role: 'OPERATOR' | 'ADMIN' };
-    if (email === 'e2e-operator@sosmesh.test' && password === 'e2e-password-16chars') {
+    if (email === 'e2e-operator@sosmesh.example' && password === 'e2e-password-16chars') {
       payload = { sub: 'e2e-operator', role: 'OPERATOR' };
-    } else if (email === 'e2e-viewer@sosmesh.test' && password === 'e2e-password-16chars') {
+    } else if (email === 'e2e-viewer@sosmesh.example' && password === 'e2e-password-16chars') {
       payload = { sub: 'e2e-viewer', role: 'OPERATOR' };
     } else {
       return NextResponse.json({ code: 'INVALID_CREDENTIALS' }, { status: 401 });

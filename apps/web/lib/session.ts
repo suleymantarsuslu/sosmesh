@@ -35,7 +35,7 @@ export function readSession(): SessionUser | null {
     if (isE2eMock() && payload.sub === 'e2e-viewer') {
       return {
         id: payload.sub,
-        email: 'e2e-viewer@sosmesh.test',
+        email: 'e2e-viewer@sosmesh.example',
         displayName: 'E2E Viewer',
         role: payload.role,
         teamId: null,
@@ -44,7 +44,7 @@ export function readSession(): SessionUser | null {
     if (isE2eMock() && payload.sub === 'e2e-operator') {
       return {
         id: payload.sub,
-        email: 'e2e-operator@sosmesh.test',
+        email: 'e2e-operator@sosmesh.example',
         displayName: 'E2E Operator',
         role: 'OPERATOR',
         teamId: null,

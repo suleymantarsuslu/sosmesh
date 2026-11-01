@@ -2,7 +2,7 @@
 
 **Tarih (UTC):** 2026-11-01  
 **Dal:** `cursor/gate-h-closure-a47c`  
-**HEAD:** `5c8274939096a7c03d220e58641f8c321c5e1c3a` (`merge origin/main` + Gate H kapanış)  
+**HEAD:** `344cc84e254282009ef827ceac8f0391788b63bc` (`merge origin/main` + Gate H kapanış)  
 **PR:** #41 (Gate H kapanış); **PR #40** (ADIM 26) **main’e merge edildi** — Gate H kapsamı dışı  
 **Kaynak:** `docs/handover/status.json`, `docs/handover/tech-debt.md`, master plan (`docs/handover/step-index.md`)
 

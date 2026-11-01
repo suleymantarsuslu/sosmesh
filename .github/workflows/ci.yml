@@ -94,7 +94,7 @@ jobs:
 
   contracts:
     name: Contracts Type Check
-    runs-on: [self-hosted, linux, ARM64, zulal]
+    runs-on: ubuntu-latest
     timeout-minutes: 10
     if: github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository
     
@@ -131,7 +131,7 @@ jobs:
 
   detect-mobile:
     name: Detect Mobile Projects
-    runs-on: [self-hosted, linux, ARM64, zulal]
+    runs-on: ubuntu-latest
     if: github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository
     outputs:
       android: ${{ steps.check.outputs.android }}
@@ -245,7 +245,7 @@ jobs:
 
   cross-language-contracts:
     name: Cross-Language Contract Tests
-    runs-on: [self-hosted, linux, ARM64, zulal]
+    runs-on: ubuntu-latest
     timeout-minutes: 15
     if: github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository
     
@@ -323,7 +323,7 @@ jobs:
 
   secret-scan:
     name: Secret Scan
-    runs-on: [self-hosted, linux, ARM64, zulal]
+    runs-on: ubuntu-latest
     timeout-minutes: 5
     if: github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository
     

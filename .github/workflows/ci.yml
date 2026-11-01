@@ -26,8 +26,8 @@ jobs:
         with:
           node-version: '20'
       
-      - name: Install pnpm
-        uses: pnpm/action-setup@v3
+      - name: Enable pnpm (Corepack)
+        run: corepack enable && corepack prepare pnpm@9.0.0 --activate
       
       - name: Get pnpm store directory
         shell: bash
@@ -110,8 +110,8 @@ jobs:
         with:
           node-version: '20'
       
-      - name: Install pnpm
-        uses: pnpm/action-setup@v3
+      - name: Enable pnpm (Corepack)
+        run: corepack enable && corepack prepare pnpm@9.0.0 --activate
       
       - name: Install dependencies, build, and typecheck contracts
         run: |
@@ -248,8 +248,8 @@ jobs:
         with:
           node-version: '20'
       
-      - name: Install pnpm
-        uses: pnpm/action-setup@v3
+      - name: Enable pnpm (Corepack)
+        run: corepack enable && corepack prepare pnpm@9.0.0 --activate
       
       - name: Setup Java
         uses: actions/setup-java@v4

@@ -696,7 +696,7 @@
       "pass_criteria": "Panel gelen SOS'u gerçek zamanlı gösterir; harita doğruluğunu abartmaz.",
       "status": "PARTIAL",
       "attempts": 1,
-      "commit": null,
+      "commit": "7173e19",
       "evidence": [
         "GET /v1/operator/cases + /cases/:incidentId (OperatorAuthGuard + IncidentScopeService); operator-cases.spec.ts 401/scope",
         "apps/web/features/map (MapLibre + supercluster), case-list filtre/kuyruk/çekmece/SSE+polling",

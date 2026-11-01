@@ -123,6 +123,21 @@ class RelayUploadExecutorTest {
     }
 
     @Test
+    fun http500_keepsLocalSavedWithoutServerAccepted() {
+        enqueueRelayBlob("http-500")
+        fakeUplink.nextResult = RelayIngestResult.HttpError(500, "internal_error")
+        executor.runUploadCycle(
+            nowMs = 7_000L,
+            networkConnected = true,
+            battery = RelayBatterySnapshot(90, false),
+        )
+        val entry = adapter.getByKey("http-500", digestFor("http-500"))
+        assertNotNull(entry)
+        assertEquals("LOCAL_SAVED", entry!!.state)
+        assertEquals("http_500", entry.lastError)
+    }
+
+    @Test
     fun hourlyLimit_defersUpload() {
         val limit = 64 * 1024L
         settings.hourlyLimitBytes = limit

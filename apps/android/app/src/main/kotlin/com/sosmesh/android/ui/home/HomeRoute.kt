@@ -11,6 +11,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
+import com.sosmesh.android.BuildConfig
 import com.sosmesh.android.R
 
 @Composable
@@ -28,6 +29,7 @@ fun HomeRoute(
                 .padding(24.dp),
         verticalArrangement = Arrangement.spacedBy(16.dp),
     ) {
+        DemoModeLabel(visible = BuildConfig.SHOW_DEMO_MODE_LABEL)
         Text(text = stringResource(R.string.home_title), style = MaterialTheme.typography.headlineMedium)
         Text(
             text = stringResource(com.sosmesh.android.core.permissions.R.string.permission_disclaimer_not112),

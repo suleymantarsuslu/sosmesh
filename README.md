@@ -47,6 +47,32 @@ sosmesh-monorepo/
 
 ## Quick Start
 
+### Hızlı kurulum (smoke)
+
+```bash
+git clone https://github.com/suleymantarsuslu/sosmesh.git
+cd sosmesh
+pnpm bootstrap
+cp .env.example .env   # secret repoya gitmez; MODEL_API_KEY boş bırakılabilir
+
+pnpm -r build
+pnpm test
+bash scripts/smoke.sh   # PostgreSQL gerekir (CI veya yerel PG)
+```
+
+Operatör mock yedek demo (yalnız geliştirme/CI): `OPERATOR_E2E_MOCK=1` — panelde **DEMO MODE** bandı görünür; **production build’de devre dışı** (`apps/web/lib/config.test.ts`).
+
+Mimari diyagram: [docs/architecture/system-diagram.md](docs/architecture/system-diagram.md) · Gereksinim haritası: [docs/architecture/requirements-map.md](docs/architecture/requirements-map.md) · M0 fiziksel prosedür: [docs/tests/m0-physical-report.md](docs/tests/m0-physical-report.md)
+
+### Gizlilik, güvenlik ve sınırlamalar
+
+- **112/911 yerine geçmez** — deneysel mesh prototipi; resmî acil hatları kullanın.
+- **Mesh/BLE garantisi yok** — Apple arka plan, force-quit, OEM kısıtları; yalnızca doğrulanmış senaryolar iddia edilir.
+- **Fiziksel BLE** yalnızca gerçek cihaz kanıtıyla (`NOT_TESTED` ise simülatör PASS sayılmaz).
+- **AI karar vermez** — operatör panelinde öneri/taslak; Meta anahtarı yoksa AI **BLOCKED_SECRET**.
+- **Röle SOS metnini görmez** — şifreli envelope; yasak düz metin alanları ingest’te reddedilir.
+- **Demo/mock** ayrı etiketli; gerçek acil verisi repoya/loglara yazılmaz.
+
 ### Prerequisites
 
 - **Node.js** 20+
@@ -133,6 +159,8 @@ Configuration files: `.eslintrc.js`, `.prettierrc.json`, `.editorconfig`, `.edit
 
 - **Getting Started:** [docs/getting-started.md](docs/getting-started.md)
 - **Architecture Decisions (ADRs):** [docs/adr/](docs/adr/)
+- **System diagram (Mermaid):** [docs/architecture/system-diagram.md](docs/architecture/system-diagram.md)
+- **Requirements map:** [docs/architecture/requirements-map.md](docs/architecture/requirements-map.md)
 - **Master Plan:** [docs/SOSMesh_Tam_Gelistirme_Master_Plani.docx](docs/SOSMesh_Tam_Gelistirme_Master_Plani.docx)
 - **Status Tracking:** [docs/handover/status.json](docs/handover/status.json)
 - **UX Design System:** [docs/ux/](docs/ux/)

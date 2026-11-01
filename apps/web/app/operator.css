@@ -158,6 +158,16 @@
   border-radius: var(--radius-base, 0.5rem);
 }
 
+.ui-demo-mode-banner {
+  background: #3d2e00;
+  color: #ffe8a3;
+  border-bottom: 2px solid #ffb800;
+  padding: var(--space-2, 0.5rem) var(--space-4, 1rem);
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+}
+
 .ui-connection-banner {
   background: var(--color-warning);
   color: var(--color-text-primary);

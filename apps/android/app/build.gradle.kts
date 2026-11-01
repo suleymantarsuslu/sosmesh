@@ -19,8 +19,12 @@ android {
     }
 
     buildTypes {
+        debug {
+            buildConfigField("boolean", "SHOW_DEMO_MODE_LABEL", "true")
+        }
         release {
             isMinifyEnabled = false
+            buildConfigField("boolean", "SHOW_DEMO_MODE_LABEL", "false")
         }
     }
 
@@ -35,6 +39,7 @@ android {
 
     buildFeatures {
         compose = true
+        buildConfig = true
     }
 
     composeOptions {

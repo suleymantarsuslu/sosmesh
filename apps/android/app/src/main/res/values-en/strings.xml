@@ -2,6 +2,7 @@
 <resources>
     <string name="app_name">SOSMesh</string>
     <string name="home_title">SOSMesh</string>
+    <string name="demo_mode_banner">DEMO MODE — Development build; not a real emergency record.</string>
     <string name="home_permissions_cta">Configure permissions</string>
     <string name="home_sos_cta">Send SOS</string>
     <string name="home_status_cta">Message status</string>

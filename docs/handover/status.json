@@ -788,12 +788,24 @@
       ],
       "deliverables": "docs/tests/m0-physical-report.md, evidence/m0/*, demo/",
       "pass_criteria": "Bağımsız bir kişi kanıtla A→B→API→AI→web akışını tekrarlayabilir.",
-      "status": "NOT_STARTED",
-      "attempts": 0,
+      "status": "NOT_TESTED",
+      "attempts": 1,
       "commit": null,
-      "evidence": [],
-      "blockers": [],
-      "last_checked_at": null,
+      "evidence": [
+        "docs/tests/m0-physical-report.md (NOT_TESTED şablon + prosedür)",
+        "evidence/m0/README.md",
+        "scripts/m0/collect-logs.sh (adb yoksa exit≠0, sahte log yok)",
+        "scripts/m0/fetch-api-trace.sh (yalnız localhost API + OPERATOR_BEARER_TOKEN)",
+        "tests/chaos/false-green-confidence.test.ts",
+        "apps/web map/config production guard testleri",
+        "apps/android RelayUploadExecutorTest http500",
+        "Fiziksel 2 cihaz kanıtı: yok (BLOCKED_DEVICE)"
+      ],
+      "blockers": [
+        "Fiziksel Android A/B cihazı yok",
+        "M0 video kaydı yok"
+      ],
+      "last_checked_at": "2026-11-01T09:30:00+00:00",
       "goal": "Hackathon çekirdeğini işleyen bir gerçek deney olarak kanıtla.",
       "cursor_tasks": [
         "Android A offline, B online; SOS oluştur, BLE aktar, peer ack, upload, Meta analyze, panelde aç, operator seen ack.’",
@@ -803,7 +815,8 @@
       ],
       "verification_evidence": "Kayıt + test timestamp + 2 cihaz modeli/OS + server trace + PASS/FAIL.",
       "risk_note": "Meta canlı anahtarı yoksa AI adımı BLOCKED_SECRET, “tam M0” sayılmaz.",
-      "gate_raw": "KAPI: HACKATHON / ÇEKİRDEK    •    BAĞIMLILIK: 12–23"
+      "gate_raw": "KAPI: HACKATHON / ÇEKİRDEK    •    BAĞIMLILIK: 12–23",
+      "notes": "ADIM 24 hazırlık tamam; PASS için fiziksel test kullanıcı/cihaz gerektirir"
     },
     {
       "id": "25",
@@ -814,12 +827,23 @@
       ],
       "deliverables": "docs/hackathon/submission.md, demo/storyboard.md, release/demo-tag",
       "pass_criteria": "Jüri kaynak koddan en az bir uçtan uca akışı doğrulayabilir.",
-      "status": "NOT_STARTED",
-      "attempts": 0,
+      "status": "PARTIAL",
+      "attempts": 1,
       "commit": null,
-      "evidence": [],
-      "blockers": [],
-      "last_checked_at": null,
+      "evidence": [
+        "demo/storyboard.md (video henüz yok)",
+        "docs/hackathon/submission.md checklist",
+        "docs/architecture/system-diagram.md",
+        "docs/architecture/requirements-map.md",
+        "Web DEMO MODE banner + production mock guard testleri",
+        "Android debug DEMO MODE etiketi + release gradle guard testi",
+        "Önerilen demo tag: demo-2026-hackathon (tag oluşturulmadı)"
+      ],
+      "blockers": [
+        "Hackathon teslim formu kullanıcı onayı",
+        "Fiziksel demo videosu yok"
+      ],
+      "last_checked_at": "2026-11-01T09:30:00+00:00",
       "goal": "Çalışan prototipi yarıştırılabilir, denetlenebilir şekilde anlat.",
       "cursor_tasks": [
         "2–3 dakikalık demo storyboard: kesilen bağlantı, offline SOS, telefon B geçişi, panel, AI sonucu.",

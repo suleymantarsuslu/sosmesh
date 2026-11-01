@@ -1,0 +1,89 @@
+=== Mutation (a): disable digest verification in receiver ===
+
+> @sosmesh/ble-protocol@0.1.0 build /workspace/packages/ble-protocol
+> tsc
+
+
+> @sosmesh/mesh-simulator@0.1.0 build /workspace/tools/mesh-simulator
+> tsc
+
+
+ RUN  v1.6.1 /workspace/tests/chaos
+
+ × mandatory-digest-chaos.test.ts > chaos_mesh_simulator_mandatory_digest_reject > chaos_mandatory_digest_invalid_never_completed
+   → expected 1 to be +0 // Object.is equality
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  mandatory-digest-chaos.test.ts > chaos_mesh_simulator_mandatory_digest_reject > chaos_mandatory_digest_invalid_never_completed
+AssertionError: expected 1 to be +0 // Object.is equality
+
+- Expected
++ Received
+
+- 0
++ 1
+
+ ❯ mandatory-digest-chaos.test.ts:81:28
+     79|     await clock.advanceAsync(100);
+     80| 
+     81|     expect(completedCount).toBe(0);
+       |                            ^
+     82|     expect(failedCount).toBeGreaterThan(0);
+     83|     expect(receiver.getState()).not.toBe(TransferState.COMPLETED);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+ Test Files  1 failed | 7 skipped (8)
+      Tests  1 failed | 22 skipped (23)
+   Start at  17:36:54
+   Duration  695ms (transform 187ms, setup 0ms, collect 549ms, tests 8ms, environment 1ms, prepare 495ms)
+
+undefined
+/workspace/tests/chaos:
+ ERR_PNPM_RECURSIVE_EXEC_FIRST_FAIL  Command failed with exit code 1: vitest run -t chaos_mandatory_digest_invalid_never_completed --reporter=verbose
+Mutation (a) targeted test exit: 1
+✅ Mutation (a) broke digest guard as expected
+=== Mutation (b): disable TTL decrement in relay mesh ===
+
+> @sosmesh/mesh-simulator@0.1.0 build /workspace/tools/mesh-simulator
+> tsc
+
+
+ RUN  v1.6.1 /workspace/tests/chaos
+
+ × relay-and-ux.test.ts > chaos_mesh_relay_privacy_and_ttl > chaos_negative_ttl_exceeded_drops_before_final_delivery
+   → expected 'FAILED' to be 'DROPPED' // Object.is equality
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  relay-and-ux.test.ts > chaos_mesh_relay_privacy_and_ttl > chaos_negative_ttl_exceeded_drops_before_final_delivery
+AssertionError: expected 'FAILED' to be 'DROPPED' // Object.is equality
+
+- Expected
++ Received
+
+- DROPPED
++ FAILED
+
+ ❯ relay-and-ux.test.ts:25:35
+     23|     const result = await runTtlExceededScenario(501);
+     24|     expect(result.delivered).toBe(false);
+     25|     expect(result.report.outcome).toBe('DROPPED');
+       |                                   ^
+     26|     expect(result.report.errorClasses).toContain('TTL_EXCEEDED');
+     27|     expect(result.report.environment).toBe('simulated');
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+ Test Files  1 failed | 7 skipped (8)
+      Tests  1 failed | 22 skipped (23)
+   Start at  17:36:56
+   Duration  697ms (transform 88ms, setup 1ms, collect 445ms, tests 31ms, environment 1ms, prepare 472ms)
+
+undefined
+/workspace/tests/chaos:
+ ERR_PNPM_RECURSIVE_EXEC_FIRST_FAIL  Command failed with exit code 1: vitest run -t chaos_negative_ttl_exceeded_drops_before_final_delivery --reporter=verbose
+Mutation (b) targeted test exit: 1
+✅ Mutation (b) broke TTL decrement as expected
+=== Mutation harness complete — sources restored; EXIT=0 ===

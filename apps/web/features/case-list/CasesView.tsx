@@ -3,6 +3,7 @@
 import Link from 'next/link';
 import { useCallback, useMemo, useState } from 'react';
 
+import { CaseDetailPanel } from './CaseDetailPanel';
 import { CaseDrawer } from './CaseDrawer';
 import { CaseFilters } from './CaseFilters';
 import { CaseListPanel } from './CaseListPanel';
@@ -12,6 +13,7 @@ import { hasPlottableCoordinates, isUnknownLocationQueue } from './geo';
 import type { FeedEvent, OperatorCaseRow } from './types';
 import { UnknownLocationQueue } from './UnknownLocationQueue';
 import { useLiveFeed } from './useLiveFeed';
+import { useOperatorPreferences } from '../../components/operator/OperatorPreferencesProvider';
 import { OperatorMap } from '../map/OperatorMap';
 
 type TimelineEntry = {
@@ -40,6 +42,7 @@ function feedEventToCase(event: FeedEvent, existing?: OperatorCaseRow): Operator
 }
 
 export function CasesView({ initialCases }: { initialCases: OperatorCaseRow[] }) {
+  const { activeIncidentId } = useOperatorPreferences();
   const [cases, setCases] = useState<OperatorCaseRow[]>(initialCases);
   const [filters, setFilters] = useState(defaultCaseFilters());
   const [selectedId, setSelectedId] = useState<string | null>(null);
@@ -88,7 +91,13 @@ export function CasesView({ initialCases }: { initialCases: OperatorCaseRow[] })
 
   const feed = useLiveFeed(onFeedEvent);
 
-  const filtered = useMemo(() => applyCaseFilters(cases, filters), [cases, filters]);
+  const filtered = useMemo(() => {
+    const base = applyCaseFilters(cases, filters);
+    if (!activeIncidentId) {
+      return base;
+    }
+    return base.filter((row) => row.incidentId === activeIncidentId);
+  }, [cases, filters, activeIncidentId]);
   const plottable = useMemo(
     () => filtered.filter((row) => hasPlottableCoordinates(row)),
     [filtered]
@@ -126,7 +135,7 @@ export function CasesView({ initialCases }: { initialCases: OperatorCaseRow[] })
 
       <CaseFilters filters={filters} onChange={setFilters} />
 
-      <div className="cases-view__layout">
+      <div className="cases-view__layout cases-view__layout--three-col">
         <div className="cases-view__map-column">
           <OperatorMap
             rows={plottable}
@@ -143,6 +152,9 @@ export function CasesView({ initialCases }: { initialCases: OperatorCaseRow[] })
             selectedId={selectedId}
             onSelect={openDrawer}
           />
+        </div>
+        <div className="cases-view__detail-column">
+          <CaseDetailPanel row={selectedRow} timeline={timeline} />
         </div>
       </div>
 

@@ -9,7 +9,7 @@ describe('Prisma migration up/down/up', () => {
   it('applies up, rolls back down, and applies up again', async () => {
     const databaseUrl = getTestDatabaseUrl();
     const afterUp = await countPublicTables(databaseUrl);
-    expect(afterUp).toBe(10);
+    expect(afterUp).toBe(17);
 
     runMigrationDown(databaseUrl);
     const afterDown = await countPublicTables(databaseUrl);
@@ -17,6 +17,6 @@ describe('Prisma migration up/down/up', () => {
 
     runPrismaMigrateDeploy(databaseUrl);
     const afterSecondUp = await countPublicTables(databaseUrl);
-    expect(afterSecondUp).toBe(10);
+    expect(afterSecondUp).toBe(17);
   });
 });

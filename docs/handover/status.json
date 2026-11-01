@@ -1,6 +1,32 @@
 {
   "source": "master.docx (SOSMesh_Tam_Gelistirme_Master_Plani)",
   "generated_note": "Parsed from master.txt; status values: PASS|FAIL|BLOCKED_DEVICE|BLOCKED_SECRET|BLOCKED_APPROVAL|NOT_TESTED|NOT_STARTED",
+  "gates": {
+    "H": {
+      "title": "Hackathon / Çekirdek (ADIM 01–25)",
+      "status": "PARTIAL",
+      "last_checked_at": "2026-11-01T20:16:00+00:00",
+      "head_ref": "91636f37ae5a663526b4c6e02d5255094a503869",
+      "ci_run_id": "41345163177",
+      "summary": "Ertelenen ağır testler koşturuldu; ADIM 24 NOT_TESTED; Android fiziksel ve M0 tam PASS yok",
+      "evidence": [
+        "docs/handover/final-report.md",
+        "docs/handover/evidence/gate-h/verify-gate-h-summary.txt",
+        "docs/handover/evidence/gate-h/pnpm-test-full.txt",
+        "docs/handover/evidence/gate-h/adim17-deferred-api-tests.txt",
+        "docs/handover/evidence/gate-h/mesh-sim-mutation.txt",
+        "docs/handover/evidence/gate-h/mutation-sentinel-ttl.txt",
+        "docs/handover/evidence/gate-h/digest-chaos-20runs.txt",
+        "docs/handover/evidence/gate-h/playwright-web-gate-h.txt",
+        "docs/handover/evidence/gate-h/contracts-kotlin-test.txt"
+      ],
+      "blockers": [
+        "ADIM 24 fiziksel M0 NOT_TESTED",
+        "Android 12–16 gerçek cihaz kanıtı yok",
+        "Self-hosted CI onayı bekleniyor"
+      ]
+    }
+  },
   "steps": [
     {
       "id": "01",
@@ -532,23 +558,27 @@
       "deliverables": "apps/api, prisma/schema.prisma, apps/api/test; infra/compose",
       "pass_criteria": "İlk kez boş DB ile API başlar, tablo ilişkileri ve indexler doğru.",
       "status": "PARTIAL",
-      "attempts": 1,
+      "attempts": 2,
       "commit": "1aa936a",
       "evidence": [
         "apps/api embedded-postgres integration tests (5 senaryo)",
         "verify check-openapi",
-        "ADR-012"
+        "ADR-012",
+        "Gate H 2026-11-01: schema-introspection.spec.ts FK/index PASS",
+        "Gate H 2026-11-01: request-id-redaction.spec.ts x-request-id + pino redact paths PASS",
+        "Gate H 2026-11-01: env-validation-boot.spec.ts Joi DATABASE_URL zorunlu PASS",
+        "Gate H 2026-11-01: ingest.spec.ts 20 eşzamanlı ingest → 1 satır PASS",
+        "Gate H 2026-11-01: operator-feed-transaction.spec.ts 20 concurrent feed PASS",
+        "Gate H 2026-11-01: tests/chaos/mandatory-digest-chaos.test.ts + docs/handover/evidence/gate-h/digest-chaos-20runs.txt",
+        "Gate H 2026-11-01: apps/api jest 91/91 (docs/handover/evidence/gate-h/adim17-deferred-api-tests.txt)",
+        "Gate H 2026-11-01: mesh-sim-mutation + mutation-sentinel (docs/handover/evidence/gate-h/*.txt)"
       ],
-      "notes": "ağır testler ertelendi",
+      "notes": "Docker compose ve NestJS Stryker mutasyonu kapsam dışı; BLE mutasyon harness PASS",
       "blockers": [
         "infra/compose/docker-compose.yml NOT_TESTED (docker yok)",
-        "FK/index introspection test ertelendi",
-        "request-id/log redaction test ertelendi",
-        "env eksik boot test ertelendi",
-        "20-yarış insert test ertelendi",
-        "mutasyon testleri yapılmadı (scope)"
+        "API NestJS Stryker mutation score ölçülmedi (yalnız mesh-sim-mutation.sh)"
       ],
-      "last_checked_at": "2026-10-31T18:58:00Z",
+      "last_checked_at": "2026-11-01T17:20:00+00:00",
       "goal": "SOS durumlarının kalıcı ve denetlenebilir çekirdeğini kur.",
       "cursor_tasks": [
         "NestJS API, Prisma migrations, PostgreSQL, OpenAPI; auth ve validation interceptor kur.",
@@ -686,13 +716,13 @@
         "apps/web operator panel: login, dashboard, role denied, SSE polling fallback banner, Playwright 6/6",
         "API auth-rbac.spec.ts: 401/403/scope 404",
         "reports/operator-dashboard-1440.png (Playwright)",
-        "pnpm -r build EXIT=0; pnpm test EXIT=0; pnpm test:a11y:web EXIT=0; verify.sh lint fix pending CI"
+        "pnpm -r build EXIT=0; pnpm test EXIT=0; pnpm test:a11y:web 22/22 EXIT=0; verify.sh lint fix pending CI",
+        "Gate H 2026-11-01: reports/operator-dashboard-{390,768,1440}.png Playwright PASS"
       ],
       "blockers": [
-        "Self-hosted CI yeşil olana kadar PASS değil",
-        "GitHub-hosted Android Gradle Build 1 Kasım UTC faturalandırma nedeniyle düşebilir"
+        "Self-hosted CI yeşil olana kadar PASS değil"
       ],
-      "last_checked_at": "2026-11-01T02:55:00+03:00",
+      "last_checked_at": "2026-11-01T17:20:00+00:00",
       "goal": "Yetkili ekip için hızlı, masaüstü ve mobil responsive web uygulaması oluştur.",
       "cursor_tasks": [
         "Next.js App Router + TS + UI tokens; auth, RBAC, route guard, role-based sidebar/nav.",
@@ -703,7 +733,7 @@
       "verification_evidence": "Playwright auth/redirect; 390/768/1440 screenshots; role denied test.",
       "risk_note": "",
       "gate_raw": "KAPI: HACKATHON / ÇEKİRDEK    •    BAĞIMLILIK: 4,17,19",
-      "notes": "390/768 ekran görüntüleri ERTELENDİ; 1440 Playwright kanıtı var"
+      "notes": "390/768 ekran görüntüleri Gate H agent 2026-11-01 PASS (reports/operator-dashboard-*.png); 1440 önceden vardı"
     },
     {
       "id": "22",
@@ -723,14 +753,14 @@
         "apps/web/features/map (MapLibre + supercluster), case-list filtre/kuyruk/çekmece/SSE+polling",
         "docs/web/map-tiles.md OSM lisans + tile.openstreetmap.org prod uyarısı",
         "Vitest geo + filter; Playwright operator-map 5/5 + panel 5/5 (1440 screenshot reports/operator-map-cases-1440.png)",
-        "pnpm -r build EXIT=0; pnpm test EXIT=0; verify.sh (local) EXIT=0; test:a11y:web 11/11"
+        "Gate H 2026-11-01: reports/operator-map-cases-{390,768,1440}.png (390/768 mobil liste; harita sütunu CSS gizli)",
+        "Gate H 2026-11-01: pnpm test:a11y:web 22/22; verify.sh 24/24 EXIT=0"
       ],
       "blockers": [
         "Self-hosted CI yeşil olana kadar PASS değil",
-        "Bu VM'de ANDROID_HOME yok — Gradle assembleDebug yerelde koşulamadı",
-        "PR #35/#36 main'de değil — merge sırası bağımlılığı"
+        "prod tile kaynağı kullanıcı onayı (docs/web/map-tiles.md)"
       ],
-      "last_checked_at": "2026-11-01T05:00:00+00:00",
+      "last_checked_at": "2026-11-01T17:20:00+00:00",
       "goal": "En acil durumları kaynak, konum belirsizliği ve durumla birlikte görünür kıl.",
       "cursor_tasks": [
         "OpenStreetMap kaynaklarının lisans/hosting şartlarını kontrol ederek MapLibre/Leaflet harita modülü kur.",
@@ -741,7 +771,7 @@
       "verification_evidence": "3 responsive viewport ve 1000 vaka seed testi; null GPS test; search/filter E2E.",
       "risk_note": "",
       "gate_raw": "KAPI: HACKATHON / ÇEKİRDEK    •    BAĞIMLILIK: 19,21",
-      "notes": "1000 vaka E2E mock seed ~1.7s (Playwright); 390/768 ekran görüntüsü ERTELENDİ; prod tile kaynağı EKSİKLER'de"
+      "notes": "1000 vaka E2E mock seed ~1.7s (Playwright); 390/768 ekran görüntüsü Gate H 2026-11-01 PASS; prod tile kaynağı EKSİKLER'de"
     },
     {
       "id": "23",
@@ -879,12 +909,20 @@
       ],
       "deliverables": "apps/web/design-system + organization module",
       "pass_criteria": "Profesyonel görünüm erişilebilirlikten ödün vermeden tutarlı.",
-      "status": "NOT_STARTED",
-      "attempts": 0,
-      "commit": null,
-      "evidence": [],
+      "status": "PARTIAL",
+      "attempts": 1,
+      "commit": "2b30a29",
+      "evidence": [
+        "apps/web/design-system (ScreenState, BentoCard, skeleton) + vitest screen-state.test.ts",
+        "apps/api/src/organization (TenantScopeService, OrganizationController, organization-isolation.spec.ts)",
+        "Prisma organizations + team.organization_id migration 20261101180000_organization_tenant",
+        "Operatör shell: org header, incident switcher, saved views, theme TR/EN, mobile drawer",
+        "Cases 3-col + tablet split; dashboard bento; axe AA 0 violations (test:a11y:web 16/16)",
+        "Playwright operator-dashboard-1440.png (reports/)",
+        "ERTELENDI: visual regression 320–1920px ve geniş ekran görüntüleri (PASS sayılmadı)"
+      ],
       "blockers": [],
-      "last_checked_at": null,
+      "last_checked_at": "2026-11-01T17:20:00+00:00",
       "goal": "Operasyon panelini premium, çok kuruluşlu ve ölçeklenebilir hale getir.",
       "cursor_tasks": [
         "Incident switcher, org header, command palette, saved views, theme, multilingual UI.",
@@ -906,12 +944,22 @@
       ],
       "deliverables": "api teams/assignments; web tasks/teams",
       "pass_criteria": "Her görev için açık sorumlu ve izlenebilir değişiklik geçmişi var.",
-      "status": "NOT_STARTED",
-      "attempts": 0,
-      "commit": null,
-      "evidence": [],
-      "blockers": [],
-      "last_checked_at": null,
+      "status": "PARTIAL",
+      "attempts": 1,
+      "commit": "70b2fe42c8768657da9e6059d34435785496a074",
+      "evidence": [
+        "Prisma migration 20261101193000_adim27_28 (resources, work_tasks, location_share_grants)",
+        "apps/api/src/coordination (teams/resources/tasks, optimistic version 409, audit_logs)",
+        "apps/api/test/work-tasks.spec.ts (RBAC, assignee org scope, resourceWhere fail-closed, lifecycle)",
+        "apps/web features/tasks + /operator/tasks,/teams (ScreenState, icon+label status)",
+        "reports/operator-tasks-1440.png (Playwright)",
+        "pnpm -r build EXIT=0; pnpm test EXIT=0; verify.sh 24/24 EXIT=0",
+        "ERTELENDI: mutation/geniş ekran görüntüleri PASS sayılmadı"
+      ],
+      "blockers": [
+        "Self-hosted CI yeşil olana kadar PASS değil (pnpm ENOTEMPTY — PR #41)"
+      ],
+      "last_checked_at": "2026-11-01T18:49:00+00:00",
       "goal": "Operatör önerisini onaylı operasyonel iş akışına dönüştür.",
       "cursor_tasks": [
         "Teams, resource types, capacity, zone, assignment statuses ve availability model.",
@@ -932,12 +980,21 @@
       ],
       "deliverables": "api notification worker, web activity center",
       "pass_criteria": "Aynı olaydan notification fırtınası yok; zaman çizelgesi doğru.",
-      "status": "NOT_STARTED",
-      "attempts": 0,
-      "commit": null,
-      "evidence": [],
-      "blockers": [],
-      "last_checked_at": null,
+      "status": "PARTIAL",
+      "attempts": 1,
+      "commit": "70b2fe42c8768657da9e6059d34435785496a074",
+      "evidence": [
+        "apps/api/src/notifications (dedupe upsert, quiet hours, preferences/subscriptions)",
+        "GET /v1/operator/notifications, /activity, /activity/export (role guard)",
+        "apps/api/test/notifications-adim28.spec.ts",
+        "apps/web /operator/activity (ActivityView)",
+        "pnpm test + verify.sh EXIT=0",
+        "Push/email gerçek sağlayıcı: in-app worker only (NOT_TESTED prod delivery)"
+      ],
+      "blockers": [
+        "Self-hosted CI yeşil olana kadar PASS değil (pnpm ENOTEMPTY — PR #41)"
+      ],
+      "last_checked_at": "2026-11-01T18:49:00+00:00",
       "goal": "Güvenilir kullanıcı bilgilendirmesi ile operasyonel gürültüyü dengede tut.",
       "cursor_tasks": [
         "Operator notification rules; urgency suggestions never silently escalate life-critical decisions.",

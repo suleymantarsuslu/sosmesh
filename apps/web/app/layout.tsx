@@ -2,6 +2,7 @@ import type { Metadata } from 'next';
 
 import { ToastProvider } from '../components/ui/ToastProvider';
 import './globals.css';
+import './design-system.css';
 import './operator.css';
 
 export const metadata: Metadata = {

@@ -6,9 +6,11 @@ import { PrismaService } from '../src/prisma/prisma.service';
 import { getTestDatabaseUrl } from './helpers/database-url';
 import { createTestApp } from './helpers/test-app';
 import { applyTestAuthEnv } from './helpers/operator-auth';
+import { createTestOrganization, ensureDefaultOrganization } from './helpers/test-organization';
 
 describe('Operator cases map/list API', () => {
   let app: INestApplication;
+  const orgA = '00000000-0000-4000-8000-000000000211';
   const teamA = '00000000-0000-4000-8000-000000000401';
   const teamB = '00000000-0000-4000-8000-000000000402';
   const incidentScoped = '00000000-0000-4000-8000-000000000501';
@@ -21,10 +23,12 @@ describe('Operator cases map/list API', () => {
     app = await createTestApp(getTestDatabaseUrl());
     const prisma = app.get(PrismaService);
     const hash = await bcrypt.hash(password, 10);
+    await ensureDefaultOrganization(prisma);
+    await createTestOrganization(prisma, { id: orgA, name: 'cases-org-a', slug: 'cases-org-a' });
     await prisma.team.createMany({
       data: [
-        { id: teamA, name: 'cases-team-a' },
-        { id: teamB, name: 'cases-team-b' },
+        { id: teamA, name: 'cases-team-a', organizationId: orgA },
+        { id: teamB, name: 'cases-team-b', organizationId: orgA },
       ],
       skipDuplicates: true,
     });

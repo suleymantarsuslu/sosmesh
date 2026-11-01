@@ -1,0 +1,83 @@
+=== SOSMesh Quality Gate Verification ===
+Started: 2026-11-01T17:38:41Z
+
+1/18: pnpm install --frozen-lockfile
+[0;32m✅ install PASSED[0m
+
+2/18: pnpm -r build
+[0;32m✅ build PASSED[0m
+
+3/18: pnpm lint
+[0;32m✅ lint PASSED[0m
+
+4/18: TypeScript typecheck
+  Checking apps/api...
+  Checking apps/web...
+  Checking packages/contracts...
+[0;32m✅ typecheck PASSED[0m
+
+5/18: pnpm test
+[0;32m✅ test PASSED[0m
+
+6/18: bash scripts/smoke.sh
+[0;32m✅ smoke PASSED[0m
+
+7/18: pnpm test:a11y:web
+[0;32m✅ a11y-web PASSED[0m
+
+8/18: npx playwright test
+[0;32m✅ playwright-ux PASSED[0m
+
+9/18: node scripts/ux-forbidden-copy.js
+[0;32m✅ ux-forbidden-copy PASSED[0m
+
+10/18: node scripts/ux-check-master-labels.js
+[0;32m✅ ux-master-labels PASSED[0m
+
+11/18: node scripts/ux-check-i18n-keys.js
+[0;32m✅ ux-i18n-keys PASSED[0m
+
+12/18: node scripts/ux-check-contrast.js
+[0;32m✅ ux-contrast PASSED[0m
+
+13/18: node scripts/ux-check-screen-states.js
+[0;32m✅ ux-screen-states PASSED[0m
+
+14/18: bash scripts/secret-scan.sh
+[0;32m✅ secret-scan PASSED[0m
+
+15/18: bash scripts/test-secret-scan.sh
+[0;32m✅ test-secret-scan PASSED[0m
+
+16/18: bash scripts/check-dependency-cycles.sh
+[0;32m✅ dependency-cycles PASSED[0m
+
+17/18: node scripts/check-compose.js
+[0;32m✅ check-compose PASSED[0m
+
+18/21: node scripts/check-no-skips.js
+[0;32m✅ check-no-skips PASSED[0m
+
+19/21: Golden vector byte-equality
+[0;32m✅ golden-vector-equality PASSED[0m
+
+20/21: bash scripts/mesh-sim-golden.sh
+[0;32m✅ mesh-sim-golden PASSED[0m
+
+21/25: node scripts/check-openapi.js
+[0;32m✅ check-openapi PASSED[0m
+
+22/25: bash scripts/android-sos-privacy-log.sh
+[0;32m✅ android-sos-privacy-log PASSED[0m
+
+23/25: bash scripts/android-release-no-dev-crypto.sh
+[0;32m✅ android-release-no-dev-crypto PASSED[0m
+
+24/25: bash scripts/android-relay-no-android-id.sh
+[0;32m✅ android-relay-no-android-id PASSED[0m
+
+============================================
+Finished: 2026-11-01T17:41:27Z
+Total checks: 24
+Failed: 0
+[0;32m✅ ALL CHECKS PASSED[0m

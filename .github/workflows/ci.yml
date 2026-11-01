@@ -113,14 +113,11 @@ jobs:
       - name: Install pnpm
         uses: pnpm/action-setup@v3
       
-      - name: Install dependencies
-        run: pnpm install --frozen-lockfile
-      
-      - name: Build contracts
-        run: pnpm --filter @sosmesh/contracts build
-      
-      - name: Type check
-        run: cd packages/contracts && npx tsc --noEmit
+      - name: Install dependencies, build, and typecheck contracts
+        run: |
+          pnpm install --frozen-lockfile
+          pnpm --filter @sosmesh/contracts build
+          cd packages/contracts && npx tsc --noEmit
 
   detect-mobile:
     name: Detect Mobile Projects

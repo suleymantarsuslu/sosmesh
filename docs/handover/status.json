@@ -1143,7 +1143,7 @@
       "pass_criteria": "Temel çapraz SOS PEER_RECEIVED/SERVER_ACCEPTED ayrımını korur.",
       "status": "PARTIAL",
       "attempts": 1,
-      "commit": null,
+      "commit": "74dda9e",
       "evidence": [
         "packages/fixtures/cross-platform: transfer-ack-gate.json, relay-scenarios.json, encrypted-payload-fixtures.json",
         "packages/contracts + contracts-kotlin + SOSMeshCore: aynı transfer-ack-gate fixture testleri",
@@ -1358,7 +1358,7 @@
       "pass_criteria": "Yalnız test edilen kombinasyonlar destek listesine girer.",
       "status": "PARTIAL",
       "attempts": 1,
-      "commit": null,
+      "commit": "74dda9e",
       "evidence": [
         "docs/research/ios-multihop.md",
         "SOSMeshCore/MeshRelayEngine.swift + MeshMultihopRelayCoordinator + MeshRelayFeatureFlags (default off)",

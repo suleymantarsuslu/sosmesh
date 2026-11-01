@@ -901,12 +901,23 @@
       ],
       "deliverables": "api teams/assignments; web tasks/teams",
       "pass_criteria": "Her görev için açık sorumlu ve izlenebilir değişiklik geçmişi var.",
-      "status": "NOT_STARTED",
-      "attempts": 0,
+      "status": "PARTIAL",
+      "attempts": 1,
       "commit": null,
-      "evidence": [],
-      "blockers": [],
-      "last_checked_at": null,
+      "evidence": [
+        "Prisma migration 20261101193000_adim27_28 (resources, work_tasks, location_share_grants)",
+        "apps/api/src/coordination (teams/resources/tasks, optimistic version 409, audit_logs)",
+        "apps/api/test/work-tasks.spec.ts (RBAC, AI PROPOSED, concurrency, location expiry)",
+        "apps/web features/tasks + /operator/tasks,/teams (ScreenState, icon+label status)",
+        "reports/operator-tasks-1440.png (Playwright)",
+        "pnpm -r build EXIT=0; pnpm test EXIT=0; verify.sh 24/24 EXIT=0",
+        "ERTELENDI: mutation/geniş ekran görüntüleri PASS sayılmadı"
+      ],
+      "blockers": [
+        "Self-hosted CI yeşil olana kadar PASS değil",
+        "PR #40 (ADIM 26) merge edilmeden main ile birleşme sırası"
+      ],
+      "last_checked_at": "2026-11-01T17:51:00+00:00",
       "goal": "Operatör önerisini onaylı operasyonel iş akışına dönüştür.",
       "cursor_tasks": [
         "Teams, resource types, capacity, zone, assignment statuses ve availability model.",
@@ -927,12 +938,21 @@
       ],
       "deliverables": "api notification worker, web activity center",
       "pass_criteria": "Aynı olaydan notification fırtınası yok; zaman çizelgesi doğru.",
-      "status": "NOT_STARTED",
-      "attempts": 0,
+      "status": "PARTIAL",
+      "attempts": 1,
       "commit": null,
-      "evidence": [],
-      "blockers": [],
-      "last_checked_at": null,
+      "evidence": [
+        "apps/api/src/notifications (dedupe upsert, quiet hours, preferences/subscriptions)",
+        "GET /v1/operator/notifications, /activity, /activity/export (role guard)",
+        "apps/api/test/notifications-adim28.spec.ts",
+        "apps/web /operator/activity (ActivityView)",
+        "pnpm test + verify.sh EXIT=0",
+        "Push/email gerçek sağlayıcı: in-app worker only (NOT_TESTED prod delivery)"
+      ],
+      "blockers": [
+        "Self-hosted CI yeşil olana kadar PASS değil"
+      ],
+      "last_checked_at": "2026-11-01T17:51:00+00:00",
       "goal": "Güvenilir kullanıcı bilgilendirmesi ile operasyonel gürültüyü dengede tut.",
       "cursor_tasks": [
         "Operator notification rules; urgency suggestions never silently escalate life-critical decisions.",

@@ -244,7 +244,7 @@ describe('Organization tenant isolation (ADIM 26)', () => {
     });
   }
 
-  it('COORDINATOR JWT does not list sibling team incidents in same org', async () => {
+  it('COORDINATOR JWT lists all in-org team incidents', async () => {
     const token = coordinatorToken();
     const response = await request(app.getHttpServer())
       .get('/v1/operator/cases')
@@ -254,15 +254,27 @@ describe('Organization tenant isolation (ADIM 26)', () => {
       (row) => row.incidentId
     );
     expect(incidentIds).toContain(incidentAlpha);
-    expect(incidentIds).not.toContain(incidentAlphaSibling);
+    expect(incidentIds).toContain(incidentAlphaSibling);
     expect(incidentIds).not.toContain(incidentBeta);
   });
 
-  it('COORDINATOR JWT returns 404 for sibling team case detail', async () => {
+  it('COORDINATOR JWT can open sibling team case detail in same org', async () => {
     const token = coordinatorToken();
     const response = await request(app.getHttpServer())
       .get(`/v1/operator/cases/${incidentAlphaSibling}/detail`)
       .set('Authorization', `Bearer ${token}`);
-    expect(response.status).toBe(404);
+    expect(response.status).toBe(200);
+  });
+
+  it('COORDINATOR JWT lists all in-org teams for assignment screens', async () => {
+    const token = coordinatorToken();
+    const response = await request(app.getHttpServer())
+      .get('/v1/operator/teams')
+      .set('Authorization', `Bearer ${token}`);
+    expect(response.status).toBe(200);
+    const teamIds = (response.body.items as { id: string }[]).map((row) => row.id);
+    expect(teamIds).toContain(teamAlpha);
+    expect(teamIds).toContain(teamAlphaSibling);
+    expect(teamIds).not.toContain(teamBeta);
   });
 });

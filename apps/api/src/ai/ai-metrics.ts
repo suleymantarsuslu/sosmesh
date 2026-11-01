@@ -10,6 +10,8 @@ export type AiMetricSnapshot = {
   skippedNoKey: number;
   estimatedUsdCharged: number;
   incidentTokensEstimated: number;
+  recommendationFeedbackHelpful: number;
+  recommendationFeedbackNotHelpful: number;
 };
 
 export class AiRunMetrics {
@@ -25,6 +27,8 @@ export class AiRunMetrics {
     skippedNoKey: 0,
     estimatedUsdCharged: 0,
     incidentTokensEstimated: 0,
+    recommendationFeedbackHelpful: 0,
+    recommendationFeedbackNotHelpful: 0,
   };
 
   recordAttempt(): void {
@@ -62,6 +66,14 @@ export class AiRunMetrics {
     this.snapshot.incidentTokensEstimated += amount;
   }
 
+  recordRecommendationFeedback(rating: 'HELPFUL' | 'NOT_HELPFUL'): void {
+    if (rating === 'HELPFUL') {
+      this.snapshot.recommendationFeedbackHelpful += 1;
+    } else {
+      this.snapshot.recommendationFeedbackNotHelpful += 1;
+    }
+  }
+
   getSnapshot(): AiMetricSnapshot {
     return { ...this.snapshot };
   }
@@ -79,6 +91,8 @@ export class AiRunMetrics {
       skippedNoKey: 0,
       estimatedUsdCharged: 0,
       incidentTokensEstimated: 0,
+      recommendationFeedbackHelpful: 0,
+      recommendationFeedbackNotHelpful: 0,
     };
   }
 }
@@ -94,4 +108,10 @@ export function getAiRunMetrics(): AiRunMetrics {
 
 export function resetAiRunMetricsForTests(): void {
   globalMetrics = new AiRunMetrics();
+}
+
+export function recordRecommendationFeedbackForScoring(
+  rating: 'HELPFUL' | 'NOT_HELPFUL'
+): void {
+  getAiRunMetrics().recordRecommendationFeedback(rating);
 }

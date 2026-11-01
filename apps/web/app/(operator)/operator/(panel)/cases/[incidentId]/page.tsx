@@ -1,4 +1,4 @@
-import { CaseDetailClient } from '../../../../../features/cases/CaseDetailClient';
+import { CaseDetailClient } from '../../../../../../features/cases/CaseDetailClient';
 
 type Params = { params: { incidentId: string } };
 

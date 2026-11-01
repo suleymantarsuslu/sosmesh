@@ -312,7 +312,7 @@ export class OperatorCaseActionsService {
       ...body.override,
       requires_human_review: true,
     });
-    if (!validated.ok) {
+    if (validated.ok === false) {
       throw new BadRequestException({
         code: 'INVALID_AI_OVERRIDE',
         message: validated.reason,

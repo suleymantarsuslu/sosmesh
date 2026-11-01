@@ -13,7 +13,12 @@ process.env[e2ePassKey] = e2ePassword;
 
 module.exports = defineConfig({
   testDir: './tests/ux',
-  testMatch: ['**/web-skeleton.spec.js', '**/operator-panel.spec.js', '**/operator-map.spec.js'],
+  testMatch: [
+    '**/web-skeleton.spec.js',
+    '**/operator-panel.spec.js',
+    '**/operator-map.spec.js',
+    '**/operator-case-detail.spec.js',
+  ],
   fullyParallel: false,
   forbidOnly: !!process.env.CI,
   retries: process.env.CI ? 2 : 0,

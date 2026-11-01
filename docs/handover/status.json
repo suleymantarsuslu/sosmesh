@@ -1702,7 +1702,7 @@
       "pass_criteria": "Kritik akışlarda blocker düzeyi a11y defect = 0.",
       "status": "PARTIAL",
       "attempts": 2,
-      "commit": "pending-review-push",
+      "commit": "0cfd3ca3bd28d3bc79bd3f82064a71c3c0b521c4",
       "evidence": [
         "tests/ux/adim50-web-closure.spec.js (axe WCAG2.2 AA 7 akış, klavye, 320-1920, zoom 200%, hydration, slow 3G, offline banner, RBAC UI + Nest 403 guard)",
         "tests/ux/adim50-cross-browser.spec.js + firefox/webkit Playwright projeleri",

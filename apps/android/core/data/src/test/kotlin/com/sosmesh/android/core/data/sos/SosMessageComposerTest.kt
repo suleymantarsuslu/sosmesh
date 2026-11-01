@@ -12,6 +12,23 @@ class SosMessageComposerTest {
     private val composer = SosMessageComposer(DevTestCryptoConfig.config())
 
     @Test
+    fun compose_messageIdOverride_usesProvidedId() {
+        val composed =
+            composer.compose(
+                SosComposeRequest(
+                    sosType = SosType.DIGER,
+                    personCount = 1,
+                    note = "",
+                    location = LocationSnapshot.unknown(),
+                    languageTag = "tr",
+                    nowMs = 1_700_000_000_000L,
+                    messageIdOverride = "550e8400-e29b-41d4-a716-446655440000",
+                ),
+            )
+        assertEquals("550e8400-e29b-41d4-a716-446655440000", composed.message.id)
+    }
+
+    @Test
     fun compose_unknownLocation_envelopeMarksUnknownWithoutCoordinates() {
         val composed =
             composer.compose(

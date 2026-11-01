@@ -1183,12 +1183,21 @@
       ],
       "deliverables": "apps/wearos, wear screenshots, phone companion module",
       "pass_criteria": "Saatten basılan SOS Android outbox’ta tek kez görülür.",
-      "status": "NOT_STARTED",
-      "attempts": 0,
-      "commit": null,
-      "evidence": [],
-      "blockers": [],
-      "last_checked_at": null,
+      "status": "PARTIAL",
+      "attempts": 1,
+      "commit": "7470ffc",
+      "evidence": [
+        "apps/android/wear Wear Compose iki adımlı SOS (bas-bırak + onay diyaloğu)",
+        "apps/android/core/wear-companion Data Layer yolları /sosmesh/v1/sos/create + phone_ack",
+        "PhoneWearSosIngress + PhoneWearCompanionListenerService → Room outbox origin=wear_os",
+        "apps/wearos/README.md → :wear modülü",
+        "JVM: PhoneWearSosIngressIdempotencyTest, WearOfflineQueueTest (idempotency)",
+        "Wear emulator / gerçek saat: NOT_TESTED (B-04)"
+      ],
+      "blockers": [
+        "B-04"
+      ],
+      "last_checked_at": "2026-11-01T17:45:00Z",
       "goal": "Android saatten güvenli ve okunabilir bir SOS başlatma deneyimi oluştur.",
       "cursor_tasks": [
         "Kotlin Wear Compose, round/rect layouts, haptic confirmation, 2-stage accidental tap protection.",
@@ -1209,12 +1218,20 @@
       ],
       "deliverables": "apps/wearos/state-sync; docs/watches/wear-policy.md",
       "pass_criteria": "Telefon çevrimdışı olsa bile saat doğru “beklemede” der; sahte başarı yok.",
-      "status": "NOT_STARTED",
-      "attempts": 0,
-      "commit": null,
-      "evidence": [],
-      "blockers": [],
-      "last_checked_at": null,
+      "status": "PARTIAL",
+      "attempts": 1,
+      "commit": "7470ffc",
+      "evidence": [
+        "WearOfflineQueue + WearRetryPolicy + WearStateSyncEngine (PHONE_UNREACHABLE, sahte başarı yok)",
+        "WearSosCoordinator + WearPhoneAckListenerService ACK senkronu",
+        "docs/watches/wear-policy.md; apps/wearos/state-sync/README.md",
+        "JVM: WearOfflineQueueTest, WearRetryPolicyTest",
+        "Paired/unpaired gerçek cihaz, tile/complication: NOT_TESTED / ERTELENDİ"
+      ],
+      "blockers": [
+        "B-04"
+      ],
+      "last_checked_at": "2026-11-01T17:45:00Z",
       "goal": "Saatten gönderilen isteğin gerçek transfer seviyesini dürüstçe izlet.",
       "cursor_tasks": [
         "Watch message UUID/nonce, retry queue ve ack state synchronization; Data Layer send mode policy.",

@@ -1374,7 +1374,7 @@
       "pass_criteria": "Rapor gerçek ölçüm sunar; pil sürüklenmesi belirsizse “ölçülemedi”.",
       "status": "PARTIAL",
       "attempts": 1,
-      "commit": "1caf843",
+      "commit": "8b3081b",
       "evidence": [
         "AdaptiveRadioPlanner (Kotlin + Swift) + packages/contracts/radio-planner/vectors/radio-planner-cases.json",
         "MeshPlatformStateMachine ADIM 42 planlayıcı entegrasyonu; termal/rıza sinyalleri MeshPlatformSignalBridge",

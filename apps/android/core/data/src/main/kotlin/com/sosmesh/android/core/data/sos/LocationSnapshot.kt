@@ -11,6 +11,8 @@ data class LocationSnapshot(
     val latitude: Double? = null,
     val longitude: Double? = null,
     val accuracyMeters: Double? = null,
+    /** Wall-clock ms when this snapshot was captured; null for unknown/manual without timestamp. */
+    val capturedAtMs: Long? = null,
 ) {
     val isKnown: Boolean
         get() = source != LocationSource.UNKNOWN
@@ -28,12 +30,14 @@ data class LocationSnapshot(
             latitude: Double,
             longitude: Double,
             accuracyMeters: Double? = null,
+            capturedAtMs: Long? = null,
         ): LocationSnapshot =
             LocationSnapshot(
                 source = LocationSource.GPS,
                 latitude = latitude,
                 longitude = longitude,
                 accuracyMeters = accuracyMeters,
+                capturedAtMs = capturedAtMs,
             )
 
         fun manual(

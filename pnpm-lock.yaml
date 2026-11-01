@@ -325,6 +325,9 @@ importers:
       '@sosmesh/ble-protocol':
         specifier: workspace:*
         version: link:../../packages/ble-protocol
+      '@sosmesh/contracts':
+        specifier: workspace:*
+        version: link:../../packages/contracts
       '@sosmesh/mesh-simulator':
         specifier: workspace:*
         version: link:../../tools/mesh-simulator

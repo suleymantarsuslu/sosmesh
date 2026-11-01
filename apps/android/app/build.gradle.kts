@@ -64,6 +64,7 @@ dependencies {
     implementation(project(":core:data"))
     implementation(project(":core:permissions"))
     implementation(project(":core:ble"))
+    implementation(project(":core:platform"))
     implementation(project(":core:protocol"))
     implementation(project(":feature-relay"))
     implementation(project(":feature-sos"))

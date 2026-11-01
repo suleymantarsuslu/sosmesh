@@ -28,7 +28,6 @@ export interface RunTransferOptions {
   transferConfig?: Partial<TransferConfig>;
   fixture?: LabFixtureCase;
   maxSimTime?: number;
-  injectCorruptLastChunk?: boolean;
 }
 
 export interface RunTransferResult {
@@ -192,17 +191,6 @@ export async function runSimulatedTransfer(
       node: 'lab',
       kind: 'digest_mismatch',
       errorClass: MeshTraceErrorClass.DIGEST_INVALID,
-    });
-  }
-
-  if (options.injectCorruptLastChunk) {
-    outcome = 'FAILED';
-    received = null;
-    timeline.push({
-      t: clock.now(),
-      node: 'lab',
-      kind: 'injected_corrupt',
-      errorClass: MeshTraceErrorClass.CORRUPT_PACKET,
     });
   }
 

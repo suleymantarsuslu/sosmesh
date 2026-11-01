@@ -15,6 +15,8 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import com.sosmesh.android.feature.status.R
+import com.sosmesh.android.feature.status.StatusHopProgress
+import com.sosmesh.android.feature.status.StatusTimelineFormatter
 import com.sosmesh.android.feature.status.StatusUiState
 import com.sosmesh.contracts.transport.OutboxEntryMeta
 
@@ -54,14 +56,25 @@ fun StatusScreen(
 @Composable
 private fun StatusEntryTimeline(entry: OutboxEntryMeta) {
     Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-        TimelineRow(active = entry.state == "LOCAL_SAVED", label = stringResource(R.string.status_timeline_step_1))
-        TimelineRow(active = entry.state == "PEER_RECEIVED", label = stringResource(R.string.status_timeline_step_2))
-        TimelineRow(active = entry.state == "SERVER_ACCEPTED", label = stringResource(R.string.status_timeline_step_3))
-        TimelineRow(active = entry.state == "OPERATOR_SEEN", label = stringResource(R.string.status_timeline_step_4))
-        TimelineRow(
-            active = entry.state == "CASE_IN_PROGRESS",
-            label = stringResource(R.string.status_timeline_step_5),
+        Text(
+            stringResource(R.string.status_evidence_created, StatusTimelineFormatter.formatUtcMinute(entry.createdAtMs)),
+            style = MaterialTheme.typography.bodySmall,
         )
+        Text(
+            stringResource(R.string.status_evidence_updated, StatusTimelineFormatter.formatUtcMinute(entry.updatedAtMs)),
+            style = MaterialTheme.typography.bodySmall,
+        )
+        entry.lastError?.let { err ->
+            Text(
+                stringResource(R.string.status_evidence_last_error, err),
+                style = MaterialTheme.typography.bodySmall,
+            )
+        }
+        HopRow(entry, "LOCAL_SAVED", stringResource(R.string.status_timeline_step_1))
+        HopRow(entry, "PEER_RECEIVED", stringResource(R.string.status_timeline_step_2))
+        HopRow(entry, "SERVER_ACCEPTED", stringResource(R.string.status_timeline_step_3))
+        HopRow(entry, "OPERATOR_SEEN", stringResource(R.string.status_timeline_step_4))
+        HopRow(entry, "CASE_IN_PROGRESS", stringResource(R.string.status_timeline_step_5))
         when (entry.state) {
             "LOCAL_SAVED" -> Text(stringResource(R.string.status_timeline_desc_local))
             "PEER_RECEIVED" -> Text(stringResource(R.string.status_timeline_desc_peer))
@@ -75,15 +88,23 @@ private fun StatusEntryTimeline(entry: OutboxEntryMeta) {
 }
 
 @Composable
-private fun TimelineRow(
-    active: Boolean,
+private fun HopRow(
+    entry: OutboxEntryMeta,
+    hopState: String,
     label: String,
 ) {
+    val reached = StatusHopProgress.isHopReached(entry.state, hopState)
+    val text =
+        if (reached) {
+            stringResource(R.string.status_hop_reached, label)
+        } else {
+            stringResource(R.string.status_hop_pending, label)
+        }
     val style =
-        if (active) {
+        if (reached) {
             MaterialTheme.typography.titleSmall
         } else {
             MaterialTheme.typography.bodySmall
         }
-    Text(text = label, style = style)
+    Text(text = text, style = style)
 }

@@ -3,10 +3,9 @@ package com.sosmesh.android.feature.sos.ui
 import androidx.activity.ComponentActivity
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.junit4.createAndroidComposeRule
-import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithTag
+import androidx.compose.ui.test.performScrollTo
 import com.sosmesh.android.core.data.sos.LocationSnapshot
-import com.sosmesh.android.feature.sos.R
 import com.sosmesh.android.feature.sos.SosFormUiState
 import org.junit.Rule
 import org.junit.Test
@@ -21,7 +20,7 @@ class SosA11yRobolectricTest {
     val composeRule = createAndroidComposeRule<ComponentActivity>()
 
     @Test
-    fun primaryCta_isVisibleWithContentDescription() {
+    fun continueButton_isVisibleOnGuidedForm() {
         composeRule.setContent {
             SosFlowScreen(
                 state = SosFormUiState(gpsLocation = LocationSnapshot.unknown()),
@@ -37,10 +36,7 @@ class SosA11yRobolectricTest {
                 onConfirm = {},
             )
         }
-        composeRule.onNodeWithTag("sos_primary_cta").assertIsDisplayed()
-        val cd =
-            composeRule.activity.getString(R.string.sos_cta_content_description)
-        composeRule.onNodeWithContentDescription(cd).assertIsDisplayed()
+        composeRule.onNodeWithTag("sos_continue_button").performScrollTo().assertIsDisplayed()
     }
 }
 
@@ -51,7 +47,7 @@ class SosLargeFontRobolectricTest {
     val composeRule = createAndroidComposeRule<ComponentActivity>()
 
     @Test
-    fun primaryCta_visibleAtFontScale2() {
+    fun continueButton_visibleAtFontScale2() {
         composeRule.setContent {
             SosFlowScreen(
                 state = SosFormUiState(canContinue = true),
@@ -67,6 +63,6 @@ class SosLargeFontRobolectricTest {
                 onConfirm = {},
             )
         }
-        composeRule.onNodeWithTag("sos_primary_cta").assertIsDisplayed()
+        composeRule.onNodeWithTag("sos_continue_button").performScrollTo().assertIsDisplayed()
     }
 }

@@ -16,4 +16,9 @@
     <string name="status_timeline_desc_server">Sunucuya ulaştı; operatör panelinde görünür.</string>
     <string name="status_timeline_desc_operator">Operatör gördü.</string>
     <string name="status_timeline_desc_case">Vaka işlemde.</string>
+    <string name="status_evidence_created">Kayıt zamanı (UTC): %1$s</string>
+    <string name="status_evidence_updated">Son güncelleme (UTC): %1$s</string>
+    <string name="status_evidence_last_error">Son hata kodu: %1$s</string>
+    <string name="status_hop_reached">✓ %1$s</string>
+    <string name="status_hop_pending">○ %1$s</string>
 </resources>

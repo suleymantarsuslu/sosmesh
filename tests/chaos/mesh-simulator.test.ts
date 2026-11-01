@@ -136,8 +136,8 @@ describe('chaos_mesh_simulator_negative_corrupt_packet', () => {
         minLatency: 2,
         maxLatency: 4,
         partialWriteRate: 0,
+        partialCorruptRate: 1,
       },
-      injectCorruptLastChunk: true,
     });
     expect(result.report.outcome).not.toBe('COMPLETED');
     expect(result.received).toBeNull();

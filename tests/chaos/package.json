@@ -9,6 +9,7 @@
   },
   "dependencies": {
     "@sosmesh/ble-protocol": "workspace:*",
+    "@sosmesh/contracts": "workspace:*",
     "@sosmesh/mesh-simulator": "workspace:*",
     "@sosmesh/transport": "workspace:*"
   },

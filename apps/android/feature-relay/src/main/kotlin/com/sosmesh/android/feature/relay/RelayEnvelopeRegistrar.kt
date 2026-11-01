@@ -27,7 +27,13 @@ class RelayEnvelopeRegistrar
         ): Result<Unit> {
             return try {
                 val root = Json.parseToJsonElement(String(payload, Charsets.UTF_8)).jsonObject
-                val sosId = root.getValue("id").jsonPrimitive.content
+                val protocolVersion = root["protocolVersion"]?.jsonPrimitive?.content?.toIntOrNull()
+                val sosId =
+                    if (protocolVersion == 2) {
+                        root.getValue("messageId").jsonPrimitive.content
+                    } else {
+                        root.getValue("id").jsonPrimitive.content
+                    }
                 val digest = Base64.getEncoder().encodeToString(BleProtocol.calculateSHA256(payload))
                 val blob = Base64.getEncoder().encodeToString(payload)
                 outbox.enqueue(

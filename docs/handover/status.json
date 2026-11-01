@@ -1296,12 +1296,22 @@
       ],
       "deliverables": "apps/watchos and iOS companion target; watch setup docs",
       "pass_criteria": "Saatten SOS iPhone outbox’a girer; saat sadece doğrulanmış alım teyidi gösterir.",
-      "status": "NOT_STARTED",
-      "attempts": 0,
+      "status": "PARTIAL",
+      "attempts": 1,
       "commit": null,
-      "evidence": [],
-      "blockers": [],
-      "last_checked_at": null,
+      "evidence": [
+        "apps/watchos/SOSMeshWatch SwiftUI iki adımlı SOS + WatchSessionBridge (WCSession)",
+        "apps/ios/SOSMesh/Companion PhoneWatchSessionManager + PhoneWatchSosIngress → outbox origin=watch_os",
+        "SOSMeshCore/WatchCompanion wire, offline queue, ingress idempotency",
+        "docs/watchos/setup.md",
+        "Swift: WatchOfflineQueueTests, WatchConnectivitySendPlannerTests, PhoneWatchSosIngressTests",
+        "Gerçek Apple Watch + eşleşmiş iPhone: NOT_TESTED (B-04); ADIM 34 (#48) main dışı"
+      ],
+      "blockers": [
+        "B-04",
+        "ADIM-34-PR-48"
+      ],
+      "last_checked_at": "2026-11-01T22:00:00Z",
       "goal": "Apple Watch’tan iPhone companion’a tek tuşla güvenilir SOS ilet.",
       "cursor_tasks": [
         "WatchKit/watchOS SwiftUI screens, accidental triggers guard, haptics + visually accessible result.",
@@ -1322,12 +1332,20 @@
       ],
       "deliverables": "apps/watchos/complications; docs/tests/watchos-matrix.md",
       "pass_criteria": "Yeniden erişildiğinde kuyruk doğru eşitlenir; gecikme açıkça gösterilir.",
-      "status": "NOT_STARTED",
-      "attempts": 0,
+      "status": "PARTIAL",
+      "attempts": 1,
       "commit": null,
-      "evidence": [],
-      "blockers": [],
-      "last_checked_at": null,
+      "evidence": [
+        "apps/watchos/SOSMeshWatchWidgets WidgetKit complication + WatchRetryPolicy backoff",
+        "WatchConnectivitySendPlanner sendMessage vs transferUserInfo",
+        "docs/tests/watchos-matrix.md",
+        "Swift: WatchOfflineQueueTests, WatchConnectivitySendPlannerTests",
+        "Gerçek saat komplikasyon tap / phone off: NOT_TESTED (B-04)"
+      ],
+      "blockers": [
+        "B-04"
+      ],
+      "last_checked_at": "2026-11-01T22:00:00Z",
       "goal": "Zor koşulda saat yüzeyinden erişilebilir kısa yol ve güvenli durum sağlayın.",
       "cursor_tasks": [
         "Complication/widget supported surfaces; quick action, reachability status and localized copy.",
@@ -1349,12 +1367,20 @@
       ],
       "deliverables": "docs/watches/capability-matrix.md; companion fallback flows",
       "pass_criteria": "Her saat özelliği “supported/tested/experimental” olarak sınıflandırılır.",
-      "status": "NOT_STARTED",
-      "attempts": 0,
+      "status": "PARTIAL",
+      "attempts": 1,
       "commit": null,
-      "evidence": [],
-      "blockers": [],
-      "last_checked_at": null,
+      "evidence": [
+        "docs/watches/capability-matrix.md + WatchCapabilityMatrix.swift",
+        "WatchOfflineHelpView + phoneNotReachableCopy (TR/EN)",
+        "Mesh relay iddiası unsupported; direct HTTPS experimental",
+        "Wear OS ile ortak offline kopya (wear-policy referans)",
+        "6 senaryo matrisi dokümante; fiziksel doğrulama NOT_TESTED"
+      ],
+      "blockers": [
+        "B-04"
+      ],
+      "last_checked_at": "2026-11-01T22:00:00Z",
       "goal": "Saatlerin gerçek yeteneklerine göre net fallback ve taahhüt ver.",
       "cursor_tasks": [
         "Wear OS / watchOS “phone not reachable” tasarımını ortak kopya diliyle eşle.",

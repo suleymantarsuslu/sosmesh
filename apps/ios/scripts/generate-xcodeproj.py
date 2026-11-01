@@ -15,9 +15,28 @@ APP_SOURCES = [
     "SOSMesh/Features/StatusView.swift",
     "SOSMesh/Features/RelayView.swift",
     "SOSMesh/Features/SettingsView.swift",
+    "SOSMesh/Companion/PhoneWatchSessionManager.swift",
+    "SOSMesh/Companion/PhoneWatchOutboxAdapter.swift",
+    "SOSMesh/Companion/PhoneWatchCompanionHolder.swift",
     "CoreBLE/BleCentralCoordinator.swift",
     "CoreBLE/BlePeripheralCoordinator.swift",
     "CoreBLE/BleBackgroundConfiguration.swift",
+]
+
+WATCH_APP_SOURCES = [
+    "../watchos/SOSMeshWatch/SOSMeshWatchApp.swift",
+    "../watchos/SOSMeshWatch/WatchAppModel.swift",
+    "../watchos/SOSMeshWatch/WatchRootView.swift",
+    "../watchos/SOSMeshWatch/WatchSessionBridge.swift",
+]
+
+WATCH_WIDGET_SOURCES = [
+    "../watchos/SOSMeshWatchWidgets/SOSMeshWatchWidgetsBundle.swift",
+    "../watchos/SOSMeshWatch/Complications/SOSMeshComplicationWidget.swift",
+]
+
+WATCH_RESOURCES = [
+    "../watchos/SOSMeshWatch/Info.plist",
 ]
 
 RESOURCES = [
@@ -34,6 +53,10 @@ def uid(n: int) -> str:
     return f"A31{n:04d}0000000000000001"
 
 
+def uid37(n: int) -> str:
+    return f"A37{n:04d}0000000000000001"
+
+
 lines = []
 lines.append("// !$*UTF8*$!")
 lines.append("{")
@@ -44,8 +67,9 @@ lines.append("\tobjectVersion = 56;")
 lines.append("\tobjects = {")
 
 # File references
+all_source_paths = APP_SOURCES + TEST_SOURCES + WATCH_APP_SOURCES + WATCH_WIDGET_SOURCES
 file_refs = {}
-for i, path in enumerate(APP_SOURCES + TEST_SOURCES + RESOURCES, start=1):
+for i, path in enumerate(all_source_paths + RESOURCES + WATCH_RESOURCES, start=1):
     ref = uid(i)
     file_refs[path] = ref
     isa = "PBXFileReference"
@@ -63,6 +87,12 @@ prod_ref = uid(9001)
 lines.append(f"\t\t{prod_ref} /* SOSMesh.app */ = {{isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = SOSMesh.app; sourceTree = BUILT_PRODUCTS_DIR; }};")
 test_prod_ref = uid(9002)
 lines.append(f"\t\t{test_prod_ref} /* SOSMeshTests.xctest */ = {{isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = SOSMeshTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; }};")
+watch_prod_ref = uid37(9001)
+lines.append(f"\t\t{watch_prod_ref} /* SOSMeshWatch.app */ = {{isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = SOSMeshWatch.app; sourceTree = BUILT_PRODUCTS_DIR; }};")
+watch_widget_prod_ref = uid37(9002)
+lines.append(
+    f"\t\t{watch_widget_prod_ref} /* SOSMeshWatchWidgets.appex */ = {{isa = PBXFileReference; explicitFileType = \"wrapper.app-extension\"; includeInIndex = 0; path = SOSMeshWatchWidgets.appex; sourceTree = BUILT_PRODUCTS_DIR; }};"
+)
 
 # Groups
 main_group = uid(8000)
@@ -71,8 +101,13 @@ app_group = uid(8002)
 coreble_group = uid(8003)
 features_group = uid(8004)
 tests_group = uid(8005)
+watch_group = uid37(8001)
+watch_widget_group = uid37(8002)
+companion_group = uid37(8003)
 
-lines.append(f"\t\t{products_group} = {{isa = PBXGroup; children = ({prod_ref} /* SOSMesh.app */, {test_prod_ref} /* SOSMeshTests.xctest */); name = Products; sourceTree = \"<group>\"; }};")
+lines.append(
+    f"\t\t{products_group} = {{isa = PBXGroup; children = ({prod_ref} /* SOSMesh.app */, {test_prod_ref} /* SOSMeshTests.xctest */, {watch_prod_ref} /* SOSMeshWatch.app */, {watch_widget_prod_ref} /* SOSMeshWatchWidgets.appex */); name = Products; sourceTree = \"<group>\"; }};"
+)
 
 feat_children = ", ".join(file_refs[p] + f" /* {p.split('/')[-1]} */" for p in APP_SOURCES if "Features/" in p)
 lines.append(f"\t\t{features_group} = {{isa = PBXGroup; children = ({feat_children}); path = Features; sourceTree = \"<group>\"; }};")
@@ -80,11 +115,25 @@ lines.append(f"\t\t{features_group} = {{isa = PBXGroup; children = ({feat_childr
 ble_children = ", ".join(file_refs[p] + f" /* {p.split('/')[-1]} */" for p in APP_SOURCES if p.startswith("CoreBLE"))
 lines.append(f"\t\t{coreble_group} = {{isa = PBXGroup; children = ({ble_children}); path = CoreBLE; sourceTree = \"<group>\"; }};")
 
+companion_children = ", ".join(
+    file_refs[p] + f" /* {p.split('/')[-1]} */" for p in APP_SOURCES if p.startswith("SOSMesh/Companion/")
+)
+lines.append(f"\t\t{companion_group} = {{isa = PBXGroup; children = ({companion_children}); path = Companion; sourceTree = \"<group>\"; }};")
+
+watch_children = ", ".join(file_refs[p] + f" /* {p.split('/')[-1]} */" for p in WATCH_APP_SOURCES)
+lines.append(f"\t\t{watch_group} = {{isa = PBXGroup; children = ({watch_children}); name = SOSMeshWatch; path = ../watchos/SOSMeshWatch; sourceTree = \"<group>\"; }};")
+
+watch_widget_children = ", ".join(file_refs[p] + f" /* {p.split('/')[-1]} */" for p in WATCH_WIDGET_SOURCES)
+lines.append(
+    f"\t\t{watch_widget_group} = {{isa = PBXGroup; children = ({watch_widget_children}); name = SOSMeshWatchWidgets; path = ../watchos/SOSMeshWatchWidgets; sourceTree = \"<group>\"; }};"
+)
+
 app_children = []
 for p in APP_SOURCES:
-    if not p.startswith("CoreBLE/") and "Features/" not in p:
+    if not p.startswith("CoreBLE/") and "Features/" not in p and not p.startswith("SOSMesh/Companion/"):
         app_children.append(f"{file_refs[p]} /* {p.split('/')[-1]} */")
 app_children.append(f"{features_group} /* Features */")
+app_children.append(f"{companion_group} /* Companion */")
 app_children.append(f"{file_refs['SOSMesh/tr.lproj/Localizable.strings']} /* Localizable.strings */")
 app_children.append(f"{file_refs['SOSMesh/en.lproj/Localizable.strings']} /* Localizable.strings */")
 app_children.append(f"{file_refs['SOSMesh/Assets.xcassets']} /* Assets.xcassets */")
@@ -95,7 +144,7 @@ test_children = ", ".join(file_refs[p] + f" /* {p.split('/')[-1]} */" for p in T
 lines.append(f"\t\t{tests_group} = {{isa = PBXGroup; children = ({test_children}); path = SOSMeshTests; sourceTree = \"<group>\"; }};")
 
 lines.append(
-    f"\t\t{main_group} = {{isa = PBXGroup; children = ({app_group} /* SOSMesh */, {coreble_group} /* CoreBLE */, {tests_group} /* SOSMeshTests */, {products_group} /* Products */); sourceTree = \"<group>\"; }};"
+    f"\t\t{main_group} = {{isa = PBXGroup; children = ({app_group} /* SOSMesh */, {coreble_group} /* CoreBLE */, {watch_group} /* SOSMeshWatch */, {watch_widget_group} /* SOSMeshWatchWidgets */, {tests_group} /* SOSMeshTests */, {products_group} /* Products */); sourceTree = \"<group>\"; }};"
 )
 
 # Build phases
@@ -104,6 +153,11 @@ test_sources_phase = uid(7002)
 resources_phase = uid(7003)
 frameworks_phase = uid(7004)
 test_frameworks_phase = uid(7005)
+watch_sources_phase = uid37(7001)
+watch_resources_phase = uid37(7002)
+watch_frameworks_phase = uid37(7003)
+watch_widget_sources_phase = uid37(7004)
+watch_widget_frameworks_phase = uid37(7005)
 
 app_build_files = []
 for p in APP_SOURCES:
@@ -116,6 +170,72 @@ for p in TEST_SOURCES:
     bf = uid(6500 + len(test_build_files))
     lines.append(f"\t\t{bf} /* {p.split('/')[-1]} in Sources */ = {{isa = PBXBuildFile; fileRef = {file_refs[p]} /* {p.split('/')[-1]} */; }};")
     test_build_files.append(bf)
+
+watch_build_files = []
+for p in WATCH_APP_SOURCES:
+    bf = uid37(6000 + len(watch_build_files))
+    lines.append(f"\t\t{bf} /* {p.split('/')[-1]} in Sources */ = {{isa = PBXBuildFile; fileRef = {file_refs[p]} /* {p.split('/')[-1]} */; }};")
+    watch_build_files.append(bf)
+
+watch_widget_build_files = []
+for p in WATCH_WIDGET_SOURCES:
+    bf = uid37(6100 + len(watch_widget_build_files))
+    lines.append(f"\t\t{bf} /* {p.split('/')[-1]} in Sources */ = {{isa = PBXBuildFile; fileRef = {file_refs[p]} /* {p.split('/')[-1]} */; }};")
+    watch_widget_build_files.append(bf)
+
+# Local packages and framework build files (referenced by build phases below)
+pkg_core = uid(5001)
+pkg_contracts = uid(5002)
+lines.append(f"\t\t{pkg_core} /* XCLocalSwiftPackageReference \"SOSMeshCore\" */ = {{isa = XCLocalSwiftPackageReference; relativePath = SOSMeshCore; }};")
+lines.append(
+    f"\t\t{pkg_contracts} /* XCLocalSwiftPackageReference \"contracts-swift\" */ = {{isa = XCLocalSwiftPackageReference; relativePath = ../../packages/contracts-swift; }};"
+)
+
+prod_dep_core = uid(5101)
+prod_dep_contracts = uid(5102)
+prod_dep_core_watch = uid37(5103)
+fw_core_app = uid(6701)
+fw_contracts_app = uid(6702)
+fw_core_test = uid(6703)
+fw_core_watch = uid37(6710)
+fw_core_watch_widget = uid37(6711)
+wc_ios_bf = uid37(6720)
+wc_watch_bf = uid37(6721)
+wk_bf = uid37(6722)
+wc_ios_ref = uid37(6801)
+wc_watch_ref = uid37(6802)
+wk_ref = uid37(6803)
+
+lines.append(
+    f"\t\t{fw_core_app} /* SOSMeshCore in Frameworks */ = {{isa = PBXBuildFile; productRef = {prod_dep_core} /* SOSMeshCore */; }};"
+)
+lines.append(
+    f"\t\t{fw_contracts_app} /* SOSMeshContracts in Frameworks */ = {{isa = PBXBuildFile; productRef = {prod_dep_contracts} /* SOSMeshContracts */; }};"
+)
+lines.append(
+    f"\t\t{fw_core_test} /* SOSMeshCore in Frameworks */ = {{isa = PBXBuildFile; productRef = {prod_dep_core} /* SOSMeshCore */; }};"
+)
+lines.append(
+    f"\t\t{fw_core_watch} /* SOSMeshCore in Frameworks */ = {{isa = PBXBuildFile; productRef = {prod_dep_core_watch} /* SOSMeshCore */; }};"
+)
+lines.append(
+    f"\t\t{fw_core_watch_widget} /* SOSMeshCore in Frameworks */ = {{isa = PBXBuildFile; productRef = {prod_dep_core_watch} /* SOSMeshCore */; }};"
+)
+lines.append(f"\t\t{wc_ios_bf} /* WatchConnectivity.framework in Frameworks */ = {{isa = PBXBuildFile; fileRef = {wc_ios_ref} /* WatchConnectivity.framework */; }};")
+lines.append(f"\t\t{wc_watch_bf} /* WatchConnectivity.framework in Frameworks */ = {{isa = PBXBuildFile; fileRef = {wc_watch_ref} /* WatchConnectivity.framework */; }};")
+lines.append(f"\t\t{wk_bf} /* WidgetKit.framework in Frameworks */ = {{isa = PBXBuildFile; fileRef = {wk_ref} /* WidgetKit.framework */; }};")
+lines.append(f"\t\t{wc_ios_ref} /* WatchConnectivity.framework */ = {{isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = WatchConnectivity.framework; path = System/Library/Frameworks/WatchConnectivity.framework; sourceTree = SDKROOT; }};")
+lines.append(f"\t\t{wc_watch_ref} /* WatchConnectivity.framework */ = {{isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = WatchConnectivity.framework; path = System/Library/Frameworks/WatchConnectivity.framework; sourceTree = SDKROOT; }};")
+lines.append(f"\t\t{wk_ref} /* WidgetKit.framework */ = {{isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = WidgetKit.framework; path = System/Library/Frameworks/WidgetKit.framework; sourceTree = SDKROOT; }};")
+lines.append(
+    f"\t\t{prod_dep_core} /* SOSMeshCore */ = {{isa = XCSwiftPackageProductDependency; productName = SOSMeshCore; package = {pkg_core} /* SOSMeshCore */; }};"
+)
+lines.append(
+    f"\t\t{prod_dep_core_watch} /* SOSMeshCore */ = {{isa = XCSwiftPackageProductDependency; productName = SOSMeshCore; package = {pkg_core} /* SOSMeshCore */; }};"
+)
+lines.append(
+    f"\t\t{prod_dep_contracts} /* SOSMeshContracts */ = {{isa = XCSwiftPackageProductDependency; productName = SOSMeshContracts; package = {pkg_contracts} /* contracts-swift */; }};"
+)
 
 res_build_files = []
 for p in ["SOSMesh/Assets.xcassets"]:
@@ -130,43 +250,28 @@ lines.append(
     f"\t\t{test_sources_phase} /* Sources */ = {{isa = PBXSourcesBuildPhase; buildActionMask = 2147483647; files = ({', '.join(f'{b} /* in Sources */' for b in test_build_files)}); runOnlyForDeploymentPostprocessing = 0; }};"
 )
 lines.append(
+    f"\t\t{watch_sources_phase} /* Sources */ = {{isa = PBXSourcesBuildPhase; buildActionMask = 2147483647; files = ({', '.join(f'{b} /* in Sources */' for b in watch_build_files)}); runOnlyForDeploymentPostprocessing = 0; }};"
+)
+lines.append(
+    f"\t\t{watch_widget_sources_phase} /* Sources */ = {{isa = PBXSourcesBuildPhase; buildActionMask = 2147483647; files = ({', '.join(f'{b} /* in Sources */' for b in watch_widget_build_files)}); runOnlyForDeploymentPostprocessing = 0; }};"
+)
+lines.append(
     f"\t\t{resources_phase} /* Resources */ = {{isa = PBXResourcesBuildPhase; buildActionMask = 2147483647; files = ({', '.join(f'{b} /* in Resources */' for b in res_build_files)}); runOnlyForDeploymentPostprocessing = 0; }};"
 )
-lines.append(f"\t\t{frameworks_phase} /* Frameworks */ = {{isa = PBXFrameworksBuildPhase; buildActionMask = 2147483647; files = ({fw_core_app} /* SOSMeshCore in Frameworks */, {fw_contracts_app} /* SOSMeshContracts in Frameworks */); runOnlyForDeploymentPostprocessing = 0; }};")
+lines.append(f"\t\t{frameworks_phase} /* Frameworks */ = {{isa = PBXFrameworksBuildPhase; buildActionMask = 2147483647; files = ({fw_core_app} /* SOSMeshCore in Frameworks */, {fw_contracts_app} /* SOSMeshContracts in Frameworks */, {wc_ios_bf} /* WatchConnectivity in Frameworks */); runOnlyForDeploymentPostprocessing = 0; }};")
 lines.append(f"\t\t{test_frameworks_phase} /* Frameworks */ = {{isa = PBXFrameworksBuildPhase; buildActionMask = 2147483647; files = ({fw_core_test} /* SOSMeshCore in Frameworks */); runOnlyForDeploymentPostprocessing = 0; }};")
-
-# Local packages
-pkg_core = uid(5001)
-pkg_contracts = uid(5002)
-lines.append(f"\t\t{pkg_core} /* XCLocalSwiftPackageReference \"SOSMeshCore\" */ = {{isa = XCLocalSwiftPackageReference; relativePath = SOSMeshCore; }};")
 lines.append(
-    f"\t\t{pkg_contracts} /* XCLocalSwiftPackageReference \"contracts-swift\" */ = {{isa = XCLocalSwiftPackageReference; relativePath = ../../packages/contracts-swift; }};"
-)
-
-prod_dep_core = uid(5101)
-prod_dep_contracts = uid(5102)
-fw_core_app = uid(6701)
-fw_contracts_app = uid(6702)
-fw_core_test = uid(6703)
-lines.append(
-    f"\t\t{fw_core_app} /* SOSMeshCore in Frameworks */ = {{isa = PBXBuildFile; productRef = {prod_dep_core} /* SOSMeshCore */; }};"
+    f"\t\t{watch_frameworks_phase} /* Frameworks */ = {{isa = PBXFrameworksBuildPhase; buildActionMask = 2147483647; files = ({fw_core_watch} /* SOSMeshCore in Frameworks */, {wc_watch_bf} /* WatchConnectivity in Frameworks */); runOnlyForDeploymentPostprocessing = 0; }};"
 )
 lines.append(
-    f"\t\t{fw_contracts_app} /* SOSMeshContracts in Frameworks */ = {{isa = PBXBuildFile; productRef = {prod_dep_contracts} /* SOSMeshContracts */; }};"
-)
-lines.append(
-    f"\t\t{fw_core_test} /* SOSMeshCore in Frameworks */ = {{isa = PBXBuildFile; productRef = {prod_dep_core} /* SOSMeshCore */; }};"
-)
-lines.append(
-    f"\t\t{prod_dep_core} /* SOSMeshCore */ = {{isa = XCSwiftPackageProductDependency; productName = SOSMeshCore; package = {pkg_core} /* SOSMeshCore */; }};"
-)
-lines.append(
-    f"\t\t{prod_dep_contracts} /* SOSMeshContracts */ = {{isa = XCSwiftPackageProductDependency; productName = SOSMeshContracts; package = {pkg_contracts} /* contracts-swift */; }};"
+    f"\t\t{watch_widget_frameworks_phase} /* Frameworks */ = {{isa = PBXFrameworksBuildPhase; buildActionMask = 2147483647; files = ({fw_core_watch_widget} /* SOSMeshCore in Frameworks */, {wk_bf} /* WidgetKit in Frameworks */); runOnlyForDeploymentPostprocessing = 0; }};"
 )
 
 # Targets
 app_target = uid(3001)
 test_target = uid(3002)
+watch_target = uid37(3001)
+watch_widget_target = uid37(3002)
 lines.append(
     textwrap.dedent(
         f"""
@@ -205,6 +310,44 @@ lines.append(
     ).strip()
 )
 
+lines.append(
+    textwrap.dedent(
+        f"""
+\t\t{watch_target} /* SOSMesh-Watch */ = {{
+\t\t\tisa = PBXNativeTarget;
+\t\t\tbuildConfigurationList = {uid37(4001)} /* Build configuration list for PBXNativeTarget "SOSMesh-Watch" */;
+\t\t\tbuildPhases = ({watch_sources_phase} /* Sources */, {watch_frameworks_phase} /* Frameworks */);
+\t\t\tbuildRules = ();
+\t\t\tdependencies = ();
+\t\t\tname = "SOSMesh-Watch";
+\t\t\tpackageProductDependencies = ({prod_dep_core_watch} /* SOSMeshCore */);
+\t\t\tproductName = SOSMeshWatch;
+\t\t\tproductReference = {watch_prod_ref} /* SOSMeshWatch.app */;
+\t\t\tproductType = "com.apple.product-type.application";
+\t\t}};
+"""
+    ).strip()
+)
+
+lines.append(
+    textwrap.dedent(
+        f"""
+\t\t{watch_widget_target} /* SOSMeshWatchWidgets */ = {{
+\t\t\tisa = PBXNativeTarget;
+\t\t\tbuildConfigurationList = {uid37(4002)} /* Build configuration list for PBXNativeTarget "SOSMeshWatchWidgets" */;
+\t\t\tbuildPhases = ({watch_widget_sources_phase} /* Sources */, {watch_widget_frameworks_phase} /* Frameworks */);
+\t\t\tbuildRules = ();
+\t\t\tdependencies = ();
+\t\t\tname = "SOSMeshWatchWidgets";
+\t\t\tpackageProductDependencies = ({prod_dep_core_watch} /* SOSMeshCore */);
+\t\t\tproductName = SOSMeshWatchWidgets;
+\t\t\tproductReference = {watch_widget_prod_ref} /* SOSMeshWatchWidgets.appex */;
+\t\t\tproductType = "com.apple.product-type.app-extension";
+\t\t}};
+"""
+    ).strip()
+)
+
 proj_uid = uid(2001)
 lines.append(
     textwrap.dedent(
@@ -222,7 +365,7 @@ lines.append(
 \t\t\tproductRefGroup = {products_group} /* Products */;
 \t\t\tprojectDirPath = "";
 \t\t\tprojectRoot = "";
-\t\t\ttargets = ({app_target} /* SOSMesh-iOS */, {test_target} /* SOSMeshTests */);
+\t\t\ttargets = ({app_target} /* SOSMesh-iOS */, {test_target} /* SOSMeshTests */, {watch_target} /* SOSMesh-Watch */, {watch_widget_target} /* SOSMeshWatchWidgets */);
 \t\t}};
 """
     ).strip()
@@ -260,6 +403,27 @@ def build_settings(target_name: str, bundle_id: str, info_plist: str | None = No
         settings.append(f"INFOPLIST_FILE = {info_plist};")
         settings.append("ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;")
         settings.append("LD_RUNPATH_SEARCH_PATHS = \"$(inherited) @executable_path/Frameworks\";")
+    return "\n\t\t\t\t" + "\n\t\t\t\t".join(settings)
+
+
+def watch_build_settings(bundle_id: str, info_plist: str, product_name: str, extension: bool = False) -> str:
+    settings = [
+        "SDKROOT = watchos;",
+        "SWIFT_VERSION = 5.0;",
+        "WATCHOS_DEPLOYMENT_TARGET = 10.0;",
+        "TARGETED_DEVICE_FAMILY = 4;",
+        'SUPPORTED_PLATFORMS = "watchos watchsimulator";',
+        "ONLY_ACTIVE_ARCH = YES;",
+        f"PRODUCT_NAME = {product_name};",
+        "PRODUCT_BUNDLE_IDENTIFIER = " + bundle_id + ";",
+        "CODE_SIGNING_ALLOWED = NO;",
+        "CODE_SIGNING_REQUIRED = NO;",
+        f"INFOPLIST_FILE = {info_plist};",
+        "LD_RUNPATH_SEARCH_PATHS = \"$(inherited) @executable_path/Frameworks\";",
+    ]
+    if extension:
+        settings.append("SKIP_INSTALL = YES;")
+        settings.append("APPLICATION_EXTENSION_API_ONLY = YES;")
     return "\n\t\t\t\t" + "\n\t\t\t\t".join(settings)
 
 
@@ -305,6 +469,22 @@ for cfg_id, cfg_name in [(test_debug, "Debug"), (test_release, "Release")]:
         f"\t\t{cfg_id} /* {cfg_name} */ = {{isa = XCBuildConfiguration; buildSettings = {{{build_settings('SOSMeshTests', 'com.sosmesh.ios.tests', test=True)}\n\t\t\t}}; name = {cfg_name}; }};"
     )
 config_list(uid(4002), 'PBXNativeTarget "SOSMeshTests"', test_debug, test_release)
+
+watch_debug = uid37(4210)
+watch_release = uid37(4211)
+for cfg_id, cfg_name in [(watch_debug, "Debug"), (watch_release, "Release")]:
+    lines.append(
+        f"\t\t{cfg_id} /* {cfg_name} */ = {{isa = XCBuildConfiguration; buildSettings = {{{watch_build_settings('com.sosmesh.ios.watch', '../watchos/SOSMeshWatch/Info.plist', 'SOSMeshWatch')}\n\t\t\t}}; name = {cfg_name}; }};"
+    )
+config_list(uid37(4001), 'PBXNativeTarget "SOSMesh-Watch"', watch_debug, watch_release)
+
+watch_widget_debug = uid37(4220)
+watch_widget_release = uid37(4221)
+for cfg_id, cfg_name in [(watch_widget_debug, "Debug"), (watch_widget_release, "Release")]:
+    lines.append(
+        f"\t\t{cfg_id} /* {cfg_name} */ = {{isa = XCBuildConfiguration; buildSettings = {{{watch_build_settings('com.sosmesh.ios.watch.widgets', '../watchos/SOSMeshWatch/Info.plist', 'SOSMeshWatchWidgets', extension=True)}\n\t\t\t}}; name = {cfg_name}; }};"
+    )
+config_list(uid37(4002), 'PBXNativeTarget "SOSMeshWatchWidgets"', watch_widget_debug, watch_widget_release)
 
 lines.append("\t};")
 lines.append(f"\trootObject = {proj_uid} /* Project object */;")

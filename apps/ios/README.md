@@ -8,7 +8,7 @@ Native iOS client for the SOSMesh emergency mesh network.
 
 **Tech stack:** Swift, SwiftUI, Core Bluetooth, local package `SOSMeshCore`, shared `packages/contracts-swift`.
 
-**Target:** iOS 17.0+ (watchOS later)
+**Target:** iOS 17.0+, watchOS 10.0+ (SOSMesh-Watch)
 
 ## Setup
 

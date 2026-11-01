@@ -1283,7 +1283,7 @@
       "pass_criteria": "3 telefonlu doğrulanmış gerçek transfer; no infinite flood.",
       "status": "PARTIAL",
       "attempts": 1,
-      "commit": null,
+      "commit": "9cfb6e9",
       "evidence": [
         "packages/contracts/protocol-v2: mesh-relay-envelope-v2 schema + relay-engine cross-language vectors",
         "packages/contracts-kotlin/meshv2: MeshRelayEngine JVM tests (vectors PASS)",

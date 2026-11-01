@@ -99,11 +99,55 @@ TD-<ADIM>-<ID>: Kısa açıklama
 
 ---
 
+## ADIM 26 — Çoklu organizasyon ve operatör kapsamı
+
+### TD-26-A1: Multi-tenant admin kapsamı (org-admin vs platform-admin)
+
+**Durum:** OPEN  
+**Tanımlandığı ADIM:** 26  
+**Hedef Kapatma ADIM:** Ürün/ADR kararı sonrası (org-admin modeli netleşince)  
+**Etki:** HIGH  
+**Detay:**  
+- `UserRole.ADMIN` şu an tüm organizasyonlardaki vakalara global erişim alır (`TenantScopeService` admin için filtre uygulamaz).
+- Org-admin ile platform-admin ayrımı henüz ürün kararına bağlı değil; multi-tenant üretim öncesi netleştirilmeli.
+
+**Kanıt:** `apps/api/src/organization/tenant-scope.service.ts` — `isAdmin` → `undefined` where
+
+---
+
+### TD-26-A2: JWT rol/org yenileme (organizationId bayatlaması)
+
+**Durum:** OPEN  
+**Tanımlandığı ADIM:** 26  
+**Hedef Kapatma ADIM:** Oturum yenileme / zorunlu re-login politikası ADR’si  
+**Etki:** MEDIUM  
+**Detay:**  
+- Operatör JWT’si `teamId` ve `organizationId` taşır; kullanıcı başka ekibe/org’a taşındığında mevcut token eski kapsamla kalır (rol değişimi senaryosu ile aynı borç).
+- Kısa vadede 8 saatlik token süresi sınırlar; uzun vadede `/v1/auth/me` ile scope doğrulama veya zorunlu re-login gerekir.
+
+**Kanıt:** `apps/api/src/auth/auth.service.ts` login payload; `apps/api/src/operator/guards/operator-auth.guard.ts`
+
+---
+
+### TD-26-A3: Org geneli coordinator kapsamı (atama ekranı)
+
+**Durum:** CLOSED  
+**Tanımlandığı ADIM:** 26  
+**Hedef Kapatma ADIM:** 27  
+**Etki:** MEDIUM  
+**Detay:**  
+- ADIM 27 ile COORDINATOR rolü aynı `organizationId` içindeki tüm ekiplerin vakalarını, ekip listesini ve görevlerini görebilir; cross-org erişim yok.
+- OPERATOR hâlâ yalnızca kendi `teamId` kapsamında kalır (fail-closed).
+
+**Kanıt:** `apps/api/src/organization/tenant-scope.service.ts`; `apps/api/test/organization-isolation.spec.ts` (COORDINATOR org-geneli testleri)
+
+---
+
 ## Kapalı Borçlar
 
 _(Şu anda kapalı borç yok)_
 
 ---
 
-**Son Güncelleme:** 2026-10-29  
-**Toplam Açık Borç:** 4 (ADIM 04 watch UI)
+**Son Güncelleme:** 2026-11-01  
+**Toplam Açık Borç:** 7 (ADIM 04 watch UI: 4; ADIM 26 tenant/admin: 3)

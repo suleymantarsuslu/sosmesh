@@ -1,0 +1,234 @@
+
+> sosmesh-monorepo@0.1.0 test /workspace
+> pnpm -r test
+
+Scope: 7 of 8 workspace projects
+apps/web test$ vitest run
+packages/ble-protocol test$ vitest run
+packages/transport test$ pnpm build && vitest run
+packages/contracts test$ vitest run
+packages/transport test: > @sosmesh/transport@0.1.0 build /workspace/packages/transport
+packages/transport test: > tsc
+packages/contracts test:  RUN  v1.6.1 /workspace/packages/contracts
+packages/ble-protocol test:  RUN  v1.6.1 /workspace/packages/ble-protocol
+apps/web test: [33mThe CJS build of Vite's Node API is deprecated. See https://vite.dev/guide/troubleshooting.html#vite-cjs-node-api-deprecated for more details.[39m
+apps/web test:  RUN  v1.6.1 /workspace/apps/web
+apps/web test:  ✓ features/case-list/filter-cases.test.ts  (2 tests) 3ms
+packages/ble-protocol test:  ✓ src/chunk.test.ts  (7 tests) 12ms
+apps/web test:  ✓ features/case-list/geo.test.ts  (3 tests) 2ms
+apps/web test: stderr | lib/demo-mode.test.ts > demo mode banner visibility > hides banner in production even if OPERATOR_E2E_MOCK is set
+apps/web test: [SOSMesh] OPERATOR_E2E_MOCK is set but ignored in production (mock disabled).
+apps/web test:  ✓ lib/demo-mode.test.ts  (3 tests) 55ms
+packages/contracts test:  ✓ src/golden-vectors.test.ts  (3 tests) 72ms
+packages/contracts test: stdout | src/golden-vectors.test.ts > Golden Test Vectors - Cross-Language Compatibility > testGoldenEncryptMatches - should produce identical ciphertext with fixed inputs
+packages/contracts test: ✓ TypeScript: Golden encrypt matches (byte-for-byte)
+packages/contracts test: stdout | src/golden-vectors.test.ts > Golden Test Vectors - Cross-Language Compatibility > testGoldenDecrypt - should decrypt golden vector ciphertext
+packages/contracts test: ✓ TypeScript: Golden decrypt successful
+packages/contracts test: stdout | src/golden-vectors.test.ts > Golden Test Vectors - Cross-Language Compatibility > testGoldenTamperedRejected - should reject tampered golden vector
+packages/contracts test: ✓ TypeScript: Tampered golden rejected
+packages/contracts test:  ✓ src/validator.test.ts  (8 tests) 11ms
+packages/ble-protocol test:  ✓ src/integration.test.ts  (11 tests) 41ms
+apps/web test:  ✓ features/map/map-config.test.ts  (2 tests) 32ms
+apps/web test:  ✓ lib/config.test.ts  (2 tests) 11ms
+apps/web test:  ✓ features/cases/ai-panel.test.ts  (3 tests) 2ms
+packages/contracts test:  ✓ src/error-codes.test.ts  (6 tests) 2ms
+packages/ble-protocol test:  ✓ src/transfer-states.test.ts  (9 tests) 14ms
+apps/web test:  Test Files  6 passed (6)
+apps/web test:       Tests  15 passed (15)
+apps/web test:    Start at  17:37:41
+apps/web test:    Duration  1.45s (transform 285ms, setup 0ms, collect 339ms, tests 105ms, environment 1ms, prepare 1.16s)
+apps/web test: Done
+packages/contracts test:  ✓ src/cross-language.test.ts  (2 tests) 5ms
+packages/ble-protocol test:  ✓ src/fuzz.test.ts  (8 tests) 789ms
+packages/ble-protocol test: stdout | src/fuzz.test.ts > BLE Protocol Fuzz Testing (Simulated Clock) > should run 2000 fuzz scenarios with 0 invariant violations
+packages/ble-protocol test: Fuzz test results:
+packages/ble-protocol test: Total scenarios: 2000
+packages/ble-protocol test: Completed: 718
+packages/ble-protocol test: Controlled FAILED: 1282
+packages/ble-protocol test: Invariant violations: 0
+packages/ble-protocol test: Seed range: 42000 to 43999
+packages/ble-protocol test:  Test Files  4 passed (4)
+packages/ble-protocol test:       Tests  35 passed (35)
+packages/ble-protocol test:    Start at  17:37:41
+packages/ble-protocol test:    Duration  1.74s (transform 674ms, setup 0ms, collect 989ms, tests 856ms, environment 1ms, prepare 896ms)
+packages/ble-protocol test: Done
+packages/transport test:  RUN  v1.6.1 /workspace/packages/transport
+packages/transport test:  ✓ src/ux-status-labels.test.ts  (3 tests) 2ms
+packages/transport test:  ✓ src/state-machine.test.ts  (6 tests) 6ms
+packages/transport test:  ✓ src/outbox.test.ts  (9 tests) 140ms
+packages/transport test:  Test Files  3 passed (3)
+packages/transport test:       Tests  18 passed (18)
+packages/transport test:    Start at  17:37:43
+packages/transport test:    Duration  458ms (transform 141ms, setup 0ms, collect 227ms, tests 148ms, environment 0ms, prepare 228ms)
+packages/transport test: Done
+packages/contracts test:  ✓ src/crypto.test.ts  (19 tests) 13717ms
+packages/contracts test: stdout | src/crypto.test.ts > Crypto - Nonce Uniqueness > should generate unique nonces in 100k iterations (≥100k required)
+packages/contracts test: ✓ 100k nonces: 100000/100000 unique, 0 collisions, 218ms (0.002ms/nonce)
+packages/contracts test:  Test Files  5 passed (5)
+packages/contracts test:       Tests  38 passed (38)
+packages/contracts test:    Start at  17:37:41
+packages/contracts test:    Duration  14.56s (transform 404ms, setup 0ms, collect 959ms, tests 13.81s, environment 1ms, prepare 961ms)
+packages/contracts test: Done
+tools/mesh-simulator test$ vitest run --passWithNoTests --reporter=verbose
+apps/api test$ jest --config jest.config.ts
+tools/mesh-simulator test:  RUN  v1.6.1 /workspace/tools/mesh-simulator
+tools/mesh-simulator test: include: **/*.{test,spec}.?(c|m)[jt]s?(x)
+tools/mesh-simulator test: exclude:  **/node_modules/**, **/dist/**, **/cypress/**, **/.{idea,git,cache,output,temp}/**, **/{karma,rollup,webpack,vite,vitest,jest,ava,babel,nyc,cypress,tsup,build,eslint,prettier}.config.*
+tools/mesh-simulator test: watch exclude:  **/node_modules/**, **/dist/**
+tools/mesh-simulator test: No test files found, exiting with code 0
+tools/mesh-simulator test: Done
+apps/api test: The files belonging to this database system will be owned by user "ubuntu".
+apps/api test: This user must also own the server process.
+apps/api test: The database cluster will be initialized with this locale configuration:
+apps/api test:   locale provider:   libc
+apps/api test:   LC_COLLATE:  C
+apps/api test:   LC_CTYPE:    C
+apps/api test:   LC_MESSAGES: en_US.UTF-8
+apps/api test:   LC_MONETARY: C
+apps/api test:   LC_NUMERIC:  C
+apps/api test:   LC_TIME:     C
+apps/api test: The default text search configuration will be set to "english".
+apps/api test: Data page checksums are disabled.
+apps/api test: fixing permissions on existing directory /tmp/sosmesh-pg-a1-AlZ9bp ... ok
+apps/api test: creating subdirectories ... ok
+apps/api test: selecting dynamic shared memory implementation ... posix
+apps/api test: selecting default "max_connections" ... 100
+apps/api test: selecting default "shared_buffers" ... 128MB
+apps/api test: selecting default time zone ... Etc/UTC
+apps/api test: creating configuration files ... ok
+apps/api test: running bootstrap script ... ok
+apps/api test: performing post-bootstrap initialization ... ok
+apps/api test: syncing data to disk ... ok
+apps/api test: Success. You can now start the database server using:
+apps/api test:     '/workspace/node_modules/.pnpm/@embedded-postgres+linux-x64@17.5.0-beta.15/node_modules/@embedded-postgres/linux-x64/native/bin/pg_ctl' -D /tmp/sosmesh-pg-a1-AlZ9bp -l logfile start
+apps/api test: 2026-11-01 17:37:58.445 UTC [117776] LOG:  starting PostgreSQL 17.5 on x86_64-pc-linux-gnu, compiled by gcc (Ubuntu 7.5.0-3ubuntu1~18.04) 7.5.0, 64-bit
+apps/api test: 2026-11-01 17:37:58.445 UTC [117776] LOG:  listening on IPv6 address "::1", port 33357
+apps/api test: 2026-11-01 17:37:58.445 UTC [117776] LOG:  listening on IPv4 address "127.0.0.1", port 33357
+apps/api test: 2026-11-01 17:37:58.446 UTC [117776] LOG:  listening on Unix socket "/tmp/.s.PGSQL.33357"
+apps/api test: 2026-11-01 17:37:58.448 UTC [117779] LOG:  database system was shut down at 2026-11-01 17:37:58 UTC
+apps/api test: 2026-11-01 17:37:58.450 UTC [117776] LOG:  database system is ready to accept connections
+apps/api test: PASS test/migration.spec.ts
+apps/api test: PASS test/operator-case-detail.spec.ts
+apps/api test: 2026-11-01 17:38:02.192 UTC [117979] ERROR:  duplicate key value violates unique constraint "sos_messages_message_id_key"
+apps/api test: 2026-11-01 17:38:02.192 UTC [117979] DETAIL:  Key (message_id)=(aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa) already exists.
+apps/api test: 2026-11-01 17:38:02.192 UTC [117979] STATEMENT:  INSERT INTO "public"."sos_messages" ("id","message_id","incident_id","delivery_state","sos_type","location_status","latitude","longitude","accuracy_meters","encrypted_payload_ref","priority","received_at","server_receipt_at","needs_human_review","packet_hash","created_at","updated_at") VALUES ($1,$2,$3,CAST($4::text AS "public"."DeliveryState"),CAST($5::text AS "public"."SosType"),CAST($6::text AS "public"."LocationStatus"),$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17) RETURNING "public"."sos_messages"."id", "public"."sos_messages"."message_id", "public"."sos_messages"."incident_id", "public"."sos_messages"."delivery_state"::text, "public"."sos_messages"."sos_type"::text, "public"."sos_messages"."location_status"::text, "public"."sos_messages"."latitude", "public"."sos_messages"."longitude", "public"."sos_messages"."accuracy_meters", "public"."sos_messages"."encrypted_note_blob", "public"."sos_messages"."encrypted_payload_ref", "public"."sos_messages"."person_count", "public"."sos_messages"."operator_display_text", "public"."sos_messages"."priority", "public"."sos_messages"."received_at", "public"."sos_messages"."server_receipt_at", "public"."sos_messages"."needs_human_review", "public"."sos_messages"."packet_hash", "public"."sos_messages"."created_at", "public"."sos_messages"."updated_at"
+apps/api test: 2026-11-01 17:38:02.196 UTC [117982] ERROR:  duplicate key value violates unique constraint "sos_messages_message_id_key"
+apps/api test: 2026-11-01 17:38:02.196 UTC [117982] DETAIL:  Key (message_id)=(aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa) already exists.
+apps/api test: 2026-11-01 17:38:02.196 UTC [117982] STATEMENT:  INSERT INTO "public"."sos_messages" ("id","message_id","incident_id","delivery_state","sos_type","location_status","latitude","longitude","accuracy_meters","encrypted_payload_ref","priority","received_at","server_receipt_at","needs_human_review","packet_hash","created_at","updated_at") VALUES ($1,$2,$3,CAST($4::text AS "public"."DeliveryState"),CAST($5::text AS "public"."SosType"),CAST($6::text AS "public"."LocationStatus"),$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17) RETURNING "public"."sos_messages"."id", "public"."sos_messages"."message_id", "public"."sos_messages"."incident_id", "public"."sos_messages"."delivery_state"::text, "public"."sos_messages"."sos_type"::text, "public"."sos_messages"."location_status"::text, "public"."sos_messages"."latitude", "public"."sos_messages"."longitude", "public"."sos_messages"."accuracy_meters", "public"."sos_messages"."encrypted_note_blob", "public"."sos_messages"."encrypted_payload_ref", "public"."sos_messages"."person_count", "public"."sos_messages"."operator_display_text", "public"."sos_messages"."priority", "public"."sos_messages"."received_at", "public"."sos_messages"."server_receipt_at", "public"."sos_messages"."needs_human_review", "public"."sos_messages"."packet_hash", "public"."sos_messages"."created_at", "public"."sos_messages"."updated_at"
+apps/api test: 2026-11-01 17:38:02.202 UTC [117981] ERROR:  duplicate key value violates unique constraint "sos_messages_message_id_key"
+apps/api test: 2026-11-01 17:38:02.202 UTC [117981] DETAIL:  Key (message_id)=(aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa) already exists.
+apps/api test: 2026-11-01 17:38:02.202 UTC [117981] STATEMENT:  INSERT INTO "public"."sos_messages" ("id","message_id","incident_id","delivery_state","sos_type","location_status","latitude","longitude","accuracy_meters","encrypted_payload_ref","priority","received_at","server_receipt_at","needs_human_review","packet_hash","created_at","updated_at") VALUES ($1,$2,$3,CAST($4::text AS "public"."DeliveryState"),CAST($5::text AS "public"."SosType"),CAST($6::text AS "public"."LocationStatus"),$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17) RETURNING "public"."sos_messages"."id", "public"."sos_messages"."message_id", "public"."sos_messages"."incident_id", "public"."sos_messages"."delivery_state"::text, "public"."sos_messages"."sos_type"::text, "public"."sos_messages"."location_status"::text, "public"."sos_messages"."latitude", "public"."sos_messages"."longitude", "public"."sos_messages"."accuracy_meters", "public"."sos_messages"."encrypted_note_blob", "public"."sos_messages"."encrypted_payload_ref", "public"."sos_messages"."person_count", "public"."sos_messages"."operator_display_text", "public"."sos_messages"."priority", "public"."sos_messages"."received_at", "public"."sos_messages"."server_receipt_at", "public"."sos_messages"."needs_human_review", "public"."sos_messages"."packet_hash", "public"."sos_messages"."created_at", "public"."sos_messages"."updated_at"
+apps/api test: 2026-11-01 17:38:02.209 UTC [117980] ERROR:  duplicate key value violates unique constraint "sos_messages_message_id_key"
+apps/api test: 2026-11-01 17:38:02.209 UTC [117980] DETAIL:  Key (message_id)=(aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa) already exists.
+apps/api test: 2026-11-01 17:38:02.209 UTC [117980] STATEMENT:  INSERT INTO "public"."sos_messages" ("id","message_id","incident_id","delivery_state","sos_type","location_status","latitude","longitude","accuracy_meters","encrypted_payload_ref","priority","received_at","server_receipt_at","needs_human_review","packet_hash","created_at","updated_at") VALUES ($1,$2,$3,CAST($4::text AS "public"."DeliveryState"),CAST($5::text AS "public"."SosType"),CAST($6::text AS "public"."LocationStatus"),$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17) RETURNING "public"."sos_messages"."id", "public"."sos_messages"."message_id", "public"."sos_messages"."incident_id", "public"."sos_messages"."delivery_state"::text, "public"."sos_messages"."sos_type"::text, "public"."sos_messages"."location_status"::text, "public"."sos_messages"."latitude", "public"."sos_messages"."longitude", "public"."sos_messages"."accuracy_meters", "public"."sos_messages"."encrypted_note_blob", "public"."sos_messages"."encrypted_payload_ref", "public"."sos_messages"."person_count", "public"."sos_messages"."operator_display_text", "public"."sos_messages"."priority", "public"."sos_messages"."received_at", "public"."sos_messages"."server_receipt_at", "public"."sos_messages"."needs_human_review", "public"."sos_messages"."packet_hash", "public"."sos_messages"."created_at", "public"."sos_messages"."updated_at"
+apps/api test: 2026-11-01 17:38:02.209 UTC [117985] ERROR:  duplicate key value violates unique constraint "sos_messages_message_id_key"
+apps/api test: 2026-11-01 17:38:02.209 UTC [117985] DETAIL:  Key (message_id)=(aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa) already exists.
+apps/api test: 2026-11-01 17:38:02.209 UTC [117985] STATEMENT:  INSERT INTO "public"."sos_messages" ("id","message_id","incident_id","delivery_state","sos_type","location_status","latitude","longitude","accuracy_meters","encrypted_payload_ref","priority","received_at","server_receipt_at","needs_human_review","packet_hash","created_at","updated_at") VALUES ($1,$2,$3,CAST($4::text AS "public"."DeliveryState"),CAST($5::text AS "public"."SosType"),CAST($6::text AS "public"."LocationStatus"),$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17) RETURNING "public"."sos_messages"."id", "public"."sos_messages"."message_id", "public"."sos_messages"."incident_id", "public"."sos_messages"."delivery_state"::text, "public"."sos_messages"."sos_type"::text, "public"."sos_messages"."location_status"::text, "public"."sos_messages"."latitude", "public"."sos_messages"."longitude", "public"."sos_messages"."accuracy_meters", "public"."sos_messages"."encrypted_note_blob", "public"."sos_messages"."encrypted_payload_ref", "public"."sos_messages"."person_count", "public"."sos_messages"."operator_display_text", "public"."sos_messages"."priority", "public"."sos_messages"."received_at", "public"."sos_messages"."server_receipt_at", "public"."sos_messages"."needs_human_review", "public"."sos_messages"."packet_hash", "public"."sos_messages"."created_at", "public"."sos_messages"."updated_at"
+apps/api test: 2026-11-01 17:38:02.210 UTC [117984] ERROR:  duplicate key value violates unique constraint "sos_messages_message_id_key"
+apps/api test: 2026-11-01 17:38:02.210 UTC [117984] DETAIL:  Key (message_id)=(aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa) already exists.
+apps/api test: 2026-11-01 17:38:02.210 UTC [117984] STATEMENT:  INSERT INTO "public"."sos_messages" ("id","message_id","incident_id","delivery_state","sos_type","location_status","latitude","longitude","accuracy_meters","encrypted_payload_ref","priority","received_at","server_receipt_at","needs_human_review","packet_hash","created_at","updated_at") VALUES ($1,$2,$3,CAST($4::text AS "public"."DeliveryState"),CAST($5::text AS "public"."SosType"),CAST($6::text AS "public"."LocationStatus"),$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17) RETURNING "public"."sos_messages"."id", "public"."sos_messages"."message_id", "public"."sos_messages"."incident_id", "public"."sos_messages"."delivery_state"::text, "public"."sos_messages"."sos_type"::text, "public"."sos_messages"."location_status"::text, "public"."sos_messages"."latitude", "public"."sos_messages"."longitude", "public"."sos_messages"."accuracy_meters", "public"."sos_messages"."encrypted_note_blob", "public"."sos_messages"."encrypted_payload_ref", "public"."sos_messages"."person_count", "public"."sos_messages"."operator_display_text", "public"."sos_messages"."priority", "public"."sos_messages"."received_at", "public"."sos_messages"."server_receipt_at", "public"."sos_messages"."needs_human_review", "public"."sos_messages"."packet_hash", "public"."sos_messages"."created_at", "public"."sos_messages"."updated_at"
+apps/api test: PASS test/ingest.spec.ts
+apps/api test: PASS test/auth-rbac.spec.ts
+apps/api test: PASS test/ai-worker.spec.ts
+apps/api test: PASS test/operator-cases.spec.ts
+apps/api test: PASS test/operator-feed-transaction.spec.ts
+apps/api test: PASS test/ai-meta.spec.ts
+apps/api test: PASS test/sync-events.spec.ts
+apps/api test: PASS test/api-boot.spec.ts
+apps/api test: 2026-11-01 17:38:05.363 UTC [118025] ERROR:  duplicate key value violates unique constraint "sos_messages_message_id_key"
+apps/api test: 2026-11-01 17:38:05.363 UTC [118025] DETAIL:  Key (message_id)=(11111111-1111-4111-8111-111111111111) already exists.
+apps/api test: 2026-11-01 17:38:05.363 UTC [118025] STATEMENT:  INSERT INTO "public"."sos_messages" ("id","message_id","incident_id","delivery_state","sos_type","location_status","encrypted_note_blob","priority","received_at","needs_human_review","created_at","updated_at") VALUES ($1,$2,$3,CAST($4::text AS "public"."DeliveryState"),CAST($5::text AS "public"."SosType"),CAST($6::text AS "public"."LocationStatus"),$7,$8,$9,$10,$11,$12) RETURNING "public"."sos_messages"."id", "public"."sos_messages"."message_id", "public"."sos_messages"."incident_id", "public"."sos_messages"."delivery_state"::text, "public"."sos_messages"."sos_type"::text, "public"."sos_messages"."location_status"::text, "public"."sos_messages"."latitude", "public"."sos_messages"."longitude", "public"."sos_messages"."accuracy_meters", "public"."sos_messages"."encrypted_note_blob", "public"."sos_messages"."encrypted_payload_ref", "public"."sos_messages"."person_count", "public"."sos_messages"."operator_display_text", "public"."sos_messages"."priority", "public"."sos_messages"."received_at", "public"."sos_messages"."server_receipt_at", "public"."sos_messages"."needs_human_review", "public"."sos_messages"."packet_hash", "public"."sos_messages"."created_at", "public"."sos_messages"."updated_at"
+apps/api test: PASS test/duplicate-message.spec.ts
+apps/api test: PASS test/request-id-redaction.spec.ts
+apps/api test: PASS test/operator-auth.spec.ts
+apps/api test: PASS test/validation.spec.ts
+apps/api test: PASS src/health/health.controller.spec.ts
+apps/api test: PASS test/schema-introspection.spec.ts
+apps/api test: PASS test/env-validation-boot.spec.ts
+apps/api test: PASS src/ai/evals/fixtures.spec.ts
+apps/api test: Test Suites: 18 passed, 18 total
+apps/api test: Tests:       91 passed, 91 total
+apps/api test: Snapshots:   0 total
+apps/api test: Time:        6.984 s, estimated 7 s
+apps/api test: Ran all test suites.
+apps/api test: 2026-11-01 17:38:06.140 UTC [117776] LOG:  received fast shutdown request
+apps/api test: 2026-11-01 17:38:06.142 UTC [117776] LOG:  aborting any active transactions
+apps/api test: 2026-11-01 17:38:06.142 UTC [118027] FATAL:  terminating connection due to administrator command
+apps/api test: 2026-11-01 17:38:06.142 UTC [118031] FATAL:  terminating connection due to administrator command
+apps/api test: 2026-11-01 17:38:06.142 UTC [118025] FATAL:  terminating connection due to administrator command
+apps/api test: 2026-11-01 17:38:06.142 UTC [118019] FATAL:  terminating connection due to administrator command
+apps/api test: 2026-11-01 17:38:06.142 UTC [118023] FATAL:  terminating connection due to administrator command
+apps/api test: 2026-11-01 17:38:06.143 UTC [118029] FATAL:  terminating connection due to administrator command
+apps/api test: 2026-11-01 17:38:06.143 UTC [118021] FATAL:  terminating connection due to administrator command
+apps/api test: 2026-11-01 17:38:06.143 UTC [117994] FATAL:  terminating connection due to administrator command
+apps/api test: 2026-11-01 17:38:06.143 UTC [117995] FATAL:  terminating connection due to administrator command
+apps/api test: 2026-11-01 17:38:06.143 UTC [118018] FATAL:  terminating connection due to administrator command
+apps/api test: 2026-11-01 17:38:06.144 UTC [118014] FATAL:  terminating connection due to administrator command
+apps/api test: 2026-11-01 17:38:06.144 UTC [118016] FATAL:  terminating connection due to administrator command
+apps/api test: 2026-11-01 17:38:06.144 UTC [118012] FATAL:  terminating connection due to administrator command
+apps/api test: 2026-11-01 17:38:06.144 UTC [118015] FATAL:  terminating connection due to administrator command
+apps/api test: 2026-11-01 17:38:06.144 UTC [118013] FATAL:  terminating connection due to administrator command
+apps/api test: 2026-11-01 17:38:06.144 UTC [118011] FATAL:  terminating connection due to administrator command
+apps/api test: 2026-11-01 17:38:06.145 UTC [117996] FATAL:  terminating connection due to administrator command
+apps/api test: 2026-11-01 17:38:06.145 UTC [117993] FATAL:  terminating connection due to administrator command
+apps/api test: 2026-11-01 17:38:06.145 UTC [118010] FATAL:  terminating connection due to administrator command
+apps/api test: 2026-11-01 17:38:06.145 UTC [118009] FATAL:  terminating connection due to administrator command
+apps/api test: 2026-11-01 17:38:06.146 UTC [117989] FATAL:  terminating connection due to administrator command
+apps/api test: 2026-11-01 17:38:06.146 UTC [118008] FATAL:  terminating connection due to administrator command
+apps/api test: 2026-11-01 17:38:06.147 UTC [117987] FATAL:  terminating connection due to administrator command
+apps/api test: 2026-11-01 17:38:06.147 UTC [117979] FATAL:  terminating connection due to administrator command
+apps/api test: 2026-11-01 17:38:06.147 UTC [117981] FATAL:  terminating connection due to administrator command
+apps/api test: 2026-11-01 17:38:06.147 UTC [118006] FATAL:  terminating connection due to administrator command
+apps/api test: 2026-11-01 17:38:06.148 UTC [117998] FATAL:  terminating connection due to administrator command
+apps/api test: 2026-11-01 17:38:06.148 UTC [117977] FATAL:  terminating connection due to administrator command
+apps/api test: 2026-11-01 17:38:06.148 UTC [117975] FATAL:  terminating connection due to administrator command
+apps/api test: 2026-11-01 17:38:06.148 UTC [117991] FATAL:  terminating connection due to administrator command
+apps/api test: 2026-11-01 17:38:06.148 UTC [117986] FATAL:  terminating connection due to administrator command
+apps/api test: 2026-11-01 17:38:06.149 UTC [117971] FATAL:  terminating connection due to administrator command
+apps/api test: 2026-11-01 17:38:06.149 UTC [117969] FATAL:  terminating connection due to administrator command
+apps/api test: 2026-11-01 17:38:06.149 UTC [117974] FATAL:  terminating connection due to administrator command
+apps/api test: 2026-11-01 17:38:06.149 UTC [117985] FATAL:  terminating connection due to administrator command
+apps/api test: 2026-11-01 17:38:06.149 UTC [117972] FATAL:  terminating connection due to administrator command
+apps/api test: 2026-11-01 17:38:06.150 UTC [117970] FATAL:  terminating connection due to administrator command
+apps/api test: 2026-11-01 17:38:06.150 UTC [117984] FATAL:  terminating connection due to administrator command
+apps/api test: 2026-11-01 17:38:06.150 UTC [117973] FATAL:  terminating connection due to administrator command
+apps/api test: 2026-11-01 17:38:06.150 UTC [117983] FATAL:  terminating connection due to administrator command
+apps/api test: 2026-11-01 17:38:06.151 UTC [117976] FATAL:  terminating connection due to administrator command
+apps/api test: 2026-11-01 17:38:06.151 UTC [117980] FATAL:  terminating connection due to administrator command
+apps/api test: 2026-11-01 17:38:06.151 UTC [117982] FATAL:  terminating connection due to administrator command
+apps/api test: 2026-11-01 17:38:06.152 UTC [117776] LOG:  background worker "logical replication launcher" (PID 117782) exited with exit code 1
+apps/api test: 2026-11-01 17:38:06.152 UTC [117777] LOG:  shutting down
+apps/api test: 2026-11-01 17:38:06.153 UTC [117777] LOG:  checkpoint starting: shutdown immediate
+apps/api test: 2026-11-01 17:38:06.160 UTC [117777] LOG:  checkpoint complete: wrote 195 buffers (1.2%); 0 WAL file(s) added, 0 removed, 0 recycled; write=0.003 s, sync=0.003 s, total=0.008 s; sync files=164, longest=0.001 s, average=0.001 s; distance=1058 kB, estimate=1058 kB; lsn=0/15E2078, redo lsn=0/15E2078
+apps/api test: 2026-11-01 17:38:06.162 UTC [117776] LOG:  database system is shut down
+apps/api test: Done
+tests/chaos test$ vitest run --reporter=verbose
+tests/chaos test:  RUN  v1.6.1 /workspace/tests/chaos
+tests/chaos test:  ✓ mandatory-digest-chaos.test.ts > chaos_mesh_simulator_mandatory_digest_reject > chaos_mandatory_digest_invalid_never_completed
+tests/chaos test:  ✓ relay-and-ux.test.ts > chaos_mesh_relay_privacy_and_ttl > chaos_multi_hop_relay_B_never_sees_plaintext_markers
+tests/chaos test:  ✓ relay-and-ux.test.ts > chaos_mesh_relay_privacy_and_ttl > chaos_negative_ttl_exceeded_drops_before_final_delivery
+tests/chaos test:  ✓ relay-and-ux.test.ts > chaos_mesh_outbox_low_battery_pause > chaos_low_battery_pause_blocks_outbox_until_resumed
+tests/chaos test:  ✓ relay-and-ux.test.ts > chaos_ux_simulated_not_real_device_copy > chaos_lab_matrix_marks_real_device_column_not_tested
+tests/chaos test:  ✓ relay-and-ux.test.ts > chaos_ux_simulated_not_real_device_copy > chaos_web_home_does_not_claim_real_ble_verified
+tests/chaos test:  ✓ relay-and-ux.test.ts > chaos_mesh_unicode_fixture_case > chaos_unicode_multilingual_fixture_transfer_strict_success
+tests/chaos test:  ✓ mesh-simulator.test.ts > chaos_mesh_simulator_environment_field > chaos_trace_report_requires_environment_simulated
+tests/chaos test:  ✓ mesh-simulator.test.ts > chaos_mesh_simulator_trace_schema_golden > chaos_golden_trace_matches_schema_and_fixture_file
+tests/chaos test:  ✓ mesh-simulator.test.ts > chaos_mesh_simulator_deterministic_trace_bytes > chaos_same_seed_produces_byte_identical_trace_json
+tests/chaos test:  ✓ mesh-simulator.test.ts > chaos_mesh_simulator_hundred_transfer_batch > chaos_hundred_sequential_fixture_transfers_exact_success_failed_counts
+tests/chaos test:  ✓ mesh-simulator.test.ts > chaos_mesh_simulator_mtu23_and_chaos30 > chaos_mtu23_scenario_never_reports_verified_success_without_receiver_completed
+tests/chaos test:  ✓ mesh-simulator.test.ts > chaos_mesh_simulator_mtu23_and_chaos30 > chaos_thirty_percent_loss_profile_does_not_crash
+tests/chaos test:  ✓ mesh-simulator.test.ts > chaos_mesh_simulator_negative_corrupt_packet > chaos_negative_corrupt_injection_never_marks_completed
+tests/chaos test:  ✓ m0-redact-logcat.test.ts > m0_logcat_redaction > masks SOS field values through end of line
+tests/chaos test:  ✓ m0-redact-logcat.test.ts > m0_logcat_redaction > masks coordinates, email, and phone patterns
+tests/chaos test:  ✓ mutation-sentinel.test.ts > chaos_mutation_sentinel_digest_and_ttl > chaos_mutation_sentinel_digest_verification_enabled_in_receiver
+tests/chaos test:  ✓ mutation-sentinel.test.ts > chaos_mutation_sentinel_digest_and_ttl > chaos_mutation_sentinel_ttl_drop_without_decrement_would_fail
+tests/chaos test:  ✓ mutation-sentinel.test.ts > chaos_mutation_sentinel_unverified_not_completed > chaos_mutation_sentinel_corrupt_never_completed
+tests/chaos test:  ✓ m0-redact-api-trace.test.ts > m0_api_trace_redaction > jq masks audit coordinates and sensitive text fields
+tests/chaos test:  ✓ false-green-confidence.test.ts > false_green_confidence_gates > forbidden_copy_scan_still_passes
+tests/chaos test:  ✓ false-green-confidence.test.ts > false_green_confidence_gates > shared_transport_state_chart_never_jumps_LOCAL_SAVED_to_SERVER_ACCEPTED
+tests/chaos test:  ✓ ux-forbidden-simulation.test.ts > chaos_ux_forbidden_simulation_device_copy > chaos_ux_forbidden_copy_rejects_simulation_as_real_device_wording
+tests/chaos test:  Test Files  8 passed (8)
+tests/chaos test:       Tests  23 passed (23)
+tests/chaos test:    Start at  17:38:06
+tests/chaos test:    Duration  908ms (transform 143ms, setup 0ms, collect 498ms, tests 537ms, environment 1ms, prepare 497ms)
+tests/chaos test: Done

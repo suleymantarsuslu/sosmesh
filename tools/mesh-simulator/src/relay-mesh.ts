@@ -109,6 +109,8 @@ export interface MultiHopOptions {
   fixture?: LabFixtureCase;
   /** When true, skip TTL decrement (mutation testing hook). */
   skipTtlDecrement?: boolean;
+  /** Zero packet loss — TTL/idempotency tests must not fail on hop noise. */
+  reliableChannel?: boolean;
 }
 
 const PLAINText_MARKERS = ['مرحبا', 'İstanbul', '🚨', 'ÇŞĞÜÖİ', 'SENTETIK_YARDIM'];
@@ -122,14 +124,23 @@ export async function runMultiHopRelay(options: MultiHopOptions): Promise<MultiH
   const messageId = `mesh-${options.seed}`;
   const hop0 = wrapForRelay(innerCiphertext, messageId, 0, options.initialTtl);
 
-  const lowLoss: ChaosChannelConfig = {
-    packetLoss: 0.02,
-    duplicateRate: 0,
-    reorderRate: 0.02,
-    minLatency: 5,
-    maxLatency: 15,
-    partialWriteRate: 0,
-  };
+  const lowLoss: ChaosChannelConfig = options.reliableChannel
+    ? {
+        packetLoss: 0,
+        duplicateRate: 0,
+        reorderRate: 0,
+        minLatency: 5,
+        maxLatency: 15,
+        partialWriteRate: 0,
+      }
+    : {
+        packetLoss: 0.02,
+        duplicateRate: 0,
+        reorderRate: 0.02,
+        minLatency: 5,
+        maxLatency: 15,
+        partialWriteRate: 0,
+      };
 
   const hopA = await runSingleHop(
     options.seed + 1,
@@ -280,5 +291,5 @@ export async function runMultiHopRelay(options: MultiHopOptions): Promise<MultiH
 }
 
 export async function runTtlExceededScenario(seed: number): Promise<MultiHopResult> {
-  return runMultiHopRelay({ seed, initialTtl: 0 });
+  return runMultiHopRelay({ seed, initialTtl: 0, reliableChannel: true });
 }

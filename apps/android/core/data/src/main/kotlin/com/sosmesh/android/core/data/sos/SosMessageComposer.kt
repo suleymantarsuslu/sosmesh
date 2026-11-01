@@ -22,6 +22,7 @@ data class SosComposeRequest(
     val location: LocationSnapshot,
     val languageTag: String,
     val nowMs: Long,
+    val messageIdOverride: String? = null,
 )
 
 data class ComposedSosMessage(
@@ -37,7 +38,7 @@ class SosMessageComposer(
 ) {
     fun compose(request: SosComposeRequest): ComposedSosMessage {
         val isoTimestamp = instantToIso8601(Instant.ofEpochMilli(request.nowMs))
-        val messageId = UUID.randomUUID().toString()
+        val messageId = request.messageIdOverride?.takeIf { it.isNotBlank() } ?: UUID.randomUUID().toString()
         val trimmedNote = request.note.trim().ifEmpty { null }
         val locationStatus = locationStatusWire(request.location)
 

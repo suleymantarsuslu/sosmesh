@@ -7,6 +7,7 @@ export type OperatorTokenOptions = {
   sub?: string;
   role?: UserRole | 'OPERATOR' | 'ADMIN' | 'COORDINATOR';
   teamId?: string;
+  organizationId?: string;
 };
 
 export function operatorBearerToken(options: OperatorTokenOptions = {}): string {
@@ -14,6 +15,7 @@ export function operatorBearerToken(options: OperatorTokenOptions = {}): string 
     sub: options.sub ?? '00000000-0000-4000-8000-000000000099',
     role: options.role ?? UserRole.ADMIN,
     ...(options.teamId ? { teamId: options.teamId } : {}),
+    ...(options.organizationId ? { organizationId: options.organizationId } : {}),
   };
   return sign(payload, OPERATOR_JWT_SIGNING_KEY, { algorithm: 'HS256' });
 }

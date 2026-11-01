@@ -16,7 +16,7 @@ import { OperatorAuthGuard, OperatorRequest } from './guards/operator-auth.guard
 import { OperatorCsrfGuard } from './guards/operator-csrf.guard';
 import { Roles } from './guards/roles.decorator';
 import { RolesGuard } from './guards/roles.guard';
-import { IncidentScopeService } from './incident-scope.service';
+import { IncidentScopeService } from '../organization/incident-scope.service';
 import { OperatorDashboardService } from './operator-dashboard.service';
 import { OperatorCasesService } from './operator-cases.service';
 import {

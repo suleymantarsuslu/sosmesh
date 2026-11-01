@@ -1,0 +1,18 @@
+{
+  "description": "ADIM 43 JSON Schema adversarial patches for mesh-relay-envelope-v2.",
+  "schemaPath": "protocol-v2/schemas/mesh-relay-envelope-v2.schema.json",
+  "invalidDocuments": [
+    { "id": "adv_schema_missing_message_id", "omit": ["messageId"] },
+    { "id": "adv_schema_extra_plaintext_field", "add": { "decryptedSosText": "must-not-appear" } },
+    { "id": "adv_schema_protocol_v99", "patch": { "protocolVersion": 99 } },
+    { "id": "adv_schema_hop_count_string", "patch": { "hopCount": "0" } },
+    { "id": "adv_schema_invalid_datetime", "patch": { "originCreatedAt": "not-a-date" } },
+    { "id": "adv_schema_peer_ack_wrong", "patch": { "peerAckHint": "OPERATOR_RESCUED" } },
+    { "id": "adv_schema_hop_chain_not_array", "patch": { "hopChainReceipt": { "relayDeviceIdHashes": "bad" } } },
+    { "id": "adv_schema_too_many_hops", "patch": { "hopChainReceipt": { "relayDeviceIdHashes": [] }, "hopCount": 33 } },
+    { "id": "adv_schema_negative_copy", "patch": { "copyCount": -1 } },
+    { "id": "adv_schema_ciphertext_too_short", "patch": { "opaqueCiphertextBase64": "ab" } },
+    { "id": "adv_schema_null_envelope", "document": null },
+    { "id": "adv_schema_array_root", "document": [] }
+  ]
+}

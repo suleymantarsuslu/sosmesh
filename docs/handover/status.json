@@ -1476,12 +1476,27 @@
       ],
       "deliverables": "docs/security/threat-model.md, findings.csv, security tests",
       "pass_criteria": "Critical risk = 0; high risk için onaylı remediated status.",
-      "status": "NOT_STARTED",
-      "attempts": 0,
+      "status": "PARTIAL",
+      "attempts": 1,
       "commit": null,
-      "evidence": [],
-      "blockers": [],
-      "last_checked_at": null,
+      "evidence": [
+        "docs/security/threat-model.md (STRIDE/TARA; bağımsız denetim NOT_TESTED)",
+        "docs/security/findings.csv (açık critical npm + SEC-RADIO-SPOOF-001)",
+        "packages/contracts/src/security/adversarial-security.test.ts (49 test, ≥30 fixture id)",
+        "packages/contracts/fixtures/security/adversarial-{mesh-relay,crypto,schema}.json",
+        "apps/api/test/security-adim43.spec.ts (auth RL, CSRF, RBAC, HTTP başlıkları)",
+        "apps/api/src/common/middleware/security-headers.middleware.ts",
+        "apps/web/lib/security-headers.js + lib/security-headers.test.ts (CSP)",
+        "CI: secret-scan job + verify.sh 14–15; pnpm audit bulguları findings.csv",
+        "ADIM 34 / PR #48: protocol-v2 sözleşme düzeyi; merge sonrası git fetch && merge origin/main"
+      ],
+      "blockers": [
+        "Bağımsız insan güvenlik denetimi NOT_TESTED",
+        "pnpm audit critical/high açık (next, vitest, maplibre-gl transitive)",
+        "SEC-RADIO-SPOOF-001 fiziksel BLE lab yok",
+        "ADIM 34 main'de değil (#48 kısmi bağımlılık)"
+      ],
+      "last_checked_at": "2026-11-01T21:40:00+00:00",
       "goal": "Kötü niyetli aktarıcı, sahte SOS ve PII ifşasını sistematik test et.",
       "cursor_tasks": [
         "STRIDE/TARA threat model; malicious peer, replay, duplicate floods, radio spoofing and server abuse.",
@@ -1491,7 +1506,8 @@
       ],
       "verification_evidence": "Security test receipts, 30+ adversarial fixtures, artifact scans.",
       "risk_note": "",
-      "gate_raw": "KAPI: TAM ÜRÜN    •    BAĞIMLILIK: 9,18,34,40"
+      "gate_raw": "KAPI: TAM ÜRÜN    •    BAĞIMLILIK: 9,18,34,40",
+      "notes": "GEÇTİ ölçütü critical=0 karşılanmadı → PARTIAL. #48 merge sonrası adversarial suite yeniden koşturulacak."
     },
     {
       "id": "44",

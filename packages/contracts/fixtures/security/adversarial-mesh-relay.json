@@ -1,0 +1,48 @@
+{
+  "description": "ADIM 43 adversarial mesh relay engine fixtures (opaque envelope; no SOS plaintext).",
+  "relayDeviceIdHash": "cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc",
+  "validBase": {
+    "protocolVersion": 2,
+    "messageId": "adv-base-001",
+    "hopCount": 0,
+    "maxHops": 5,
+    "ttlHops": 2,
+    "copyCount": 1,
+    "maxCopyCount": 3,
+    "originCreatedAt": "2026-11-01T12:00:00Z",
+    "opaqueCiphertextBase64": "AQIDBAUGBwgJCgsMDQ4PEBESExQVFhcYGRobHB0eHyAhIiMkJSYnKCkqKywtLi8=",
+    "hopChainReceipt": { "relayDeviceIdHashes": [] }
+  },
+  "expectDrop": [
+    { "id": "adv_mesh_proto_v1", "patch": { "protocolVersion": 1 }, "dropReason": "INVALID_ENVELOPE" },
+    { "id": "adv_mesh_hop_negative", "patch": { "hopCount": -1 }, "dropReason": "INVALID_ENVELOPE" },
+    { "id": "adv_mesh_hop_over_max", "patch": { "hopCount": 6, "maxHops": 5 }, "dropReason": "INVALID_ENVELOPE" },
+    { "id": "adv_mesh_ttl_negative", "patch": { "ttlHops": -1 }, "dropReason": "INVALID_ENVELOPE" },
+    { "id": "adv_mesh_copy_zero", "patch": { "copyCount": 0 }, "dropReason": "INVALID_ENVELOPE" },
+    { "id": "adv_mesh_copy_over_cap", "patch": { "copyCount": 4, "maxCopyCount": 3 }, "dropReason": "INVALID_ENVELOPE" },
+    { "id": "adv_mesh_ciphertext_short", "patch": { "opaqueCiphertextBase64": "abc" }, "dropReason": "INVALID_ENVELOPE" },
+    { "id": "adv_mesh_ciphertext_empty", "patch": { "opaqueCiphertextBase64": "" }, "dropReason": "INVALID_ENVELOPE" },
+    { "id": "adv_mesh_bad_hop_hash", "patch": { "hopChainReceipt": { "relayDeviceIdHashes": ["not-a-valid-sha256-hex"] } }, "dropReason": "INVALID_ENVELOPE" },
+    { "id": "adv_mesh_hop_hash_uppercase", "patch": { "hopChainReceipt": { "relayDeviceIdHashes": ["CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC"] } }, "dropReason": "INVALID_ENVELOPE" },
+    { "id": "adv_mesh_ttl_exhausted", "patch": { "messageId": "adv-ttl0", "ttlHops": 0 }, "dropReason": "TTL_EXCEEDED" },
+    { "id": "adv_mesh_max_hops", "patch": { "messageId": "adv-maxhop", "hopCount": 5, "maxHops": 5 }, "dropReason": "MAX_HOPS" },
+    { "id": "adv_mesh_copy_cap", "patch": { "messageId": "adv-copycap", "copyCount": 3, "maxCopyCount": 3 }, "dropReason": "COPY_CAP" },
+    { "id": "adv_mesh_loop", "patch": { "messageId": "adv-loop", "hopCount": 1, "hopChainReceipt": { "relayDeviceIdHashes": ["cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc"] } }, "dropReason": "LOOP_DETECTED" },
+    { "id": "adv_mesh_bad_relay_id_short", "relayDeviceIdHash": "abc", "patch": {}, "dropReason": "INVALID_ENVELOPE" },
+    { "id": "adv_mesh_bad_relay_id_nonhex", "relayDeviceIdHash": "gggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggg", "patch": {}, "dropReason": "INVALID_ENVELOPE" },
+    { "id": "adv_mesh_ttl1_then_forward", "patch": { "messageId": "adv-ttl1", "ttlHops": 1 }, "dropReason": null, "decision": "FORWARD" },
+    { "id": "adv_mesh_hop_manip_inflate", "patch": { "messageId": "adv-hop-inflate", "hopCount": 4, "maxHops": 5, "ttlHops": 0 }, "dropReason": "TTL_EXCEEDED" },
+    { "id": "adv_mesh_duplicate_seed", "patch": { "messageId": "adv-dup-seed" }, "dropReason": "DUPLICATE", "seedDedup": true },
+    { "id": "adv_mesh_replay_same_hop", "patch": { "messageId": "adv-replay-hop0", "hopCount": 0 }, "dropReason": "DUPLICATE", "seedDedup": true },
+    { "id": "adv_mesh_spoof_extra_property", "patch": { "messageId": "adv-spoof-meta", "spoofedPeerName": "fake-rescue" }, "dropReason": null, "decision": "FORWARD" },
+    { "id": "adv_mesh_ttl_hop_mismatch", "patch": { "messageId": "adv-mismatch", "hopCount": 5, "ttlHops": 2, "maxHops": 5 }, "dropReason": "MAX_HOPS" },
+    { "id": "adv_mesh_zero_max_hops_invalid", "patch": { "maxHops": 0, "hopCount": 0 }, "dropReason": "MAX_HOPS" },
+    { "id": "adv_mesh_huge_ciphertext_meta", "patch": { "messageId": "adv-huge", "opaqueCiphertextBase64": "QUJD" }, "dropReason": null, "decision": "FORWARD", "oversizedNote": "engine accepts; size cap tracked SEC-MESH-SIZE-001" }
+  ],
+  "duplicateFlood": {
+    "id": "adv_mesh_duplicate_flood",
+    "attempts": 50,
+    "expectForwards": 1,
+    "expectDrops": 49
+  }
+}

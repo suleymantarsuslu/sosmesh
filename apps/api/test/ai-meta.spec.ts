@@ -30,7 +30,7 @@ describe('Meta AI provider', () => {
     expect(rejected.ok).toBe(false);
   });
 
-  it('MockMetaProvider returns schema-valid suggestions for 30+ fixtures', async () => {
+  it('MockMetaProvider returns schema-valid suggestions for 100+ fixtures', async () => {
     const provider = buildMockMetaProvider(EVAL_FIXTURES);
     for (const fixture of EVAL_FIXTURES) {
       const result = await provider.classify({ plaintext: fixture.input });

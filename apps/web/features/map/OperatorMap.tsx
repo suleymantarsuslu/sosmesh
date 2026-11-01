@@ -13,7 +13,7 @@ import {
   SYNTHETIC_MAP_CENTER,
 } from '../case-list/geo';
 import type { OperatorCaseRow } from '../case-list/types';
-import { osmAttribution, resolveMapStyle } from './map-config';
+import { osmAttribution, isMapTestMode, resolveMapStyle } from './map-config';
 
 type Props = {
   rows: OperatorCaseRow[];
@@ -72,6 +72,32 @@ export function OperatorMap({ rows, selectedId, onSelect, zoom, onZoomChange }: 
     }
     return rowMap;
   }, [plottable]);
+
+  if (isMapTestMode()) {
+    return (
+      <div className="operator-map-wrap" data-testid="operator-map">
+        <div className="operator-map__test-pins" aria-label="Harita test modu">
+          {plottable.map((row) => (
+            <button
+              key={row.incidentId}
+              type="button"
+              className={
+                selectedId === row.incidentId
+                  ? 'operator-map__pin operator-map__pin--selected'
+                  : 'operator-map__pin'
+              }
+              aria-label={`Vaka öncelik ${row.priority}`}
+              data-testid={`map-pin-${row.incidentId.slice(0, 8)}`}
+              onClick={() => onSelect(row.incidentId)}
+            >
+              {row.priority}
+            </button>
+          ))}
+        </div>
+        <p className="operator-map__attribution">{osmAttribution()}</p>
+      </div>
+    );
+  }
 
   return (
     <div className="operator-map-wrap" data-testid="operator-map">

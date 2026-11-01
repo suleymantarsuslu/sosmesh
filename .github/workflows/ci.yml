@@ -9,10 +9,29 @@ on:
 jobs:
   verify:
     name: Verify Quality Gates
-    runs-on: [self-hosted, linux, ARM64, zulal]
+    runs-on: ubuntu-latest
     timeout-minutes: 30
     if: github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository
-    
+
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: postgres
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
+    env:
+      SOSMESH_CI_PG_ADMIN_URL: postgresql://postgres:postgres@localhost:5432/postgres
+      SOSMESH_CI_DATABASE_URL: postgresql://postgres:postgres@localhost:5432/postgres
+
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -44,31 +63,8 @@ jobs:
             ${{ runner.os }}-pnpm-${{ github.job }}-
       
       - name: Install Playwright browsers
-        run: npx playwright install chromium
-      
-      - name: Load CI PostgreSQL credentials
-        shell: bash
-        run: |
-          PG_ENV=/etc/sosmesh-ci/pg.env
-          if [ ! -f "$PG_ENV" ]; then
-            echo "Missing ${PG_ENV} on self-hosted runner (required for API DB tests)"
-            exit 1
-          fi
-          set -a
-          # shellcheck disable=SC1090
-          source "$PG_ENV"
-          set +a
-          if [ -z "${SOSMESH_CI_PG_ADMIN_URL:-}" ] || [ -z "${SOSMESH_CI_DATABASE_URL:-}" ]; then
-            echo "pg.env must define SOSMESH_CI_PG_ADMIN_URL and SOSMESH_CI_DATABASE_URL"
-            exit 1
-          fi
-          echo "::add-mask::${SOSMESH_CI_PG_ADMIN_URL}"
-          echo "::add-mask::${SOSMESH_CI_DATABASE_URL}"
-          {
-            echo "SOSMESH_CI_PG_ADMIN_URL=${SOSMESH_CI_PG_ADMIN_URL}"
-            echo "SOSMESH_CI_DATABASE_URL=${SOSMESH_CI_DATABASE_URL}"
-          } >> "$GITHUB_ENV"
-      
+        run: npx playwright install --with-deps chromium
+
       - name: Run verification script
         run: bash scripts/verify.sh
       

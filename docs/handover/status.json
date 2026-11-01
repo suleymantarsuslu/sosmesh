@@ -1019,8 +1019,8 @@
       "deliverables": "Android complete feature set; screenshot goldens",
       "pass_criteria": "Kullanıcı yanlış teslim algısına düşmeden iki dakikadan kısa temel akışı tamamlar.",
       "status": "PARTIAL",
-      "attempts": 1,
-      "commit": "61a0d7c",
+      "attempts": 2,
+      "commit": "ff07ca5",
       "evidence": [
         "HomeRoute: express SOS (ExpressSosSaver) + rehberli sihirbaz (OutlinedButton); PlatformSelfRepairCard; RelayEducationCard",
         "SosFlowScreen: konum tazelik rozeti (LocationFreshness); birincil/ikincil CTA ayrımı (continue pill, express ana ekranda)",
@@ -1028,7 +1028,8 @@
         "SettingsRoute: yüksek kontrast + yerel veri kontrolü metni",
         "Robolectric: ExpressSosSaverTest, SosA11yRobolectricTest (fontScale 2), LocationFreshnessTest",
         "TalkBack canlı / screenshot golden / 30fps ölçümü: NOT_TESTED (ERTELENDİ)",
-        "Gradle testDebugUnitTest + ktlintCheck + assembleDebug EXIT=0 (JDK 17, ANDROID_HOME=/opt/android-sdk)"
+        "Bağımsız PR #44 inceleme: BleScannerEnergyProfileTest BleScanner.start(EnergyRadioProfile) → ScanRequest (sabit-only test kaldırıldı)",
+        "Gradle :core:ble/:core:platform testDebugUnitTest + ktlintCheck EXIT=0 (review VM, JDK 17 bytecode, ANDROID_HOME=/opt/android-sdk); tam monorepo CI android-gradle job"
       ],
       "blockers": [
         "Fiziksel cihaz TalkBack ve akış süresi ölçümü yok",
@@ -1057,16 +1058,16 @@
       "deliverables": "apps/android/core/platform; docs/compat/android-matrix.csv",
       "pass_criteria": "Desteklenen senaryolar belgeli; yanlış sürekli arka plan garantisi yok.",
       "status": "PARTIAL",
-      "attempts": 1,
-      "commit": "61a0d7c",
+      "attempts": 2,
+      "commit": "ff07ca5",
       "evidence": [
         "apps/android/core/platform: MeshPlatformStateMachine + EnergyRadioProfile (SOS_URGENT vs CONSTRAINED vs relay)",
         "MeshPlatformSignalBridge: ağ/BT/izin/pil/güç tasarrufu/doze sinyalleri",
         "docs/compat/android-matrix.csv (fiziksel OEM satırları NOT_TESTED)",
         "BleScanner.start(EnergyRadioProfile); RelayBatteryPolicy duty-cycle EnergyRadioProfile ile hizalı",
-        "MeshPlatformStateMachineTest (BT kapalı, izin reddi, pil, doze, ağ)",
+        "MeshPlatformStateMachineTest (BT kapalı, izin reddi, pil, doze, ağ); bozuk reduce mantığında test kırmızı (denetçi doğruladı)",
         "Gerçek cihaz pil ölçümü / 3+ OEM / BLE: NOT_TESTED",
-        "Gradle testDebugUnitTest + ktlintCheck + assembleDebug EXIT=0"
+        "Gradle :core:ble/:core:platform testDebugUnitTest + ktlintCheck EXIT=0 (review VM); tam monorepo CI android-gradle job PR #44"
       ],
       "blockers": [
         "Fiziksel Android matrisi ve pil tüketimi ölçümü yok"
@@ -1095,12 +1096,20 @@
       ],
       "deliverables": "apps/ios/SOSMesh.xcodeproj; Swift packages; docs/ios/setup.md",
       "pass_criteria": "iOS uygulaması derlenir; offline SOS kuyrukta kalıcıdır.",
-      "status": "NOT_STARTED",
-      "attempts": 0,
-      "commit": null,
-      "evidence": [],
-      "blockers": [],
-      "last_checked_at": null,
+      "status": "PARTIAL",
+      "attempts": 1,
+      "commit": "f88d87b",
+      "evidence": [
+        "apps/ios/SOSMesh.xcodeproj + SwiftUI tab iskelet (SOS/Status/Relay/Settings)",
+        "apps/ios/SOSMeshCore DiskOutboxQueue reopen test (Linux swift test when toolchain OK)",
+        "docs/ios/setup.md",
+        "Fiziksel imzalama/simulator UI NOT_TESTED"
+      ],
+      "blockers": [
+        "Fiziksel iPhone/Mac imzalama (B-13)",
+        "Simulator erişimi cloud agent'ta yok"
+      ],
+      "last_checked_at": "2026-11-01T17:45:00+00:00",
       "goal": "iPhone için Apple HIG uyumlu native ve erişilebilir istemci kur.",
       "cursor_tasks": [
         "SwiftUI navigation/tab, persistence, keychain, async/await networking, localization.",
@@ -1122,12 +1131,18 @@
       ],
       "deliverables": "apps/ios/CoreBLE; docs/tests/cross-platform-ble.md",
       "pass_criteria": "Foregound iPhone ↔ Android SOS aktarımları kayıpsız; arka plan ayrı matris.",
-      "status": "NOT_STARTED",
-      "attempts": 0,
-      "commit": null,
-      "evidence": [],
-      "blockers": [],
-      "last_checked_at": null,
+      "status": "PARTIAL",
+      "attempts": 1,
+      "commit": "f88d87b",
+      "evidence": [
+        "apps/ios/CoreBLE central/peripheral + GATT UUID parity",
+        "docs/tests/cross-platform-ble.md",
+        "iPhone↔Android 20 test NOT_TESTED"
+      ],
+      "blockers": [
+        "Fiziksel BLE lab (ADIM 34)"
+      ],
+      "last_checked_at": "2026-11-01T17:45:00+00:00",
       "goal": "iPhone ile Android arasında protokol uyumlu BLE bağlantı kur.",
       "cursor_tasks": [
         "CBCentralManager, CBPeripheralManager, GATT service/characteristic matching ve state handling.",
@@ -1148,12 +1163,19 @@
       ],
       "deliverables": "docs/compat/ios-background-matrix.csv; core lifecycle tests",
       "pass_criteria": "Destek vaatleri yalnızca doğrulanmış OS/sürüm/cihaz kombinasyonlarıyla sınırlı.",
-      "status": "NOT_STARTED",
-      "attempts": 0,
-      "commit": null,
-      "evidence": [],
-      "blockers": [],
-      "last_checked_at": null,
+      "status": "PARTIAL",
+      "attempts": 1,
+      "commit": "f88d87b",
+      "evidence": [
+        "BleRestorationStateMachine unit tests (force-quit terminal)",
+        "docs/compat/ios-background-matrix.csv (NOT_TESTED rows)",
+        "UIBackgroundModes bluetooth-central/peripheral in Info.plist",
+        "Fiziksel video/trace NOT_TESTED"
+      ],
+      "blockers": [
+        "Apple background/force-quit cihaz kanıtı yok — garanti verilmez"
+      ],
+      "last_checked_at": "2026-11-01T17:45:00+00:00",
       "goal": "Apple’ın sınırlarını şeffaf biçimde ölç ve kullanıcıyı doğru yönlendir.",
       "cursor_tasks": [
         "Core Bluetooth state restoration + etkinlik koşulları Apple güncel docs’a göre uygula.",
@@ -1204,12 +1226,21 @@
       ],
       "deliverables": "apps/wearos, wear screenshots, phone companion module",
       "pass_criteria": "Saatten basılan SOS Android outbox’ta tek kez görülür.",
-      "status": "NOT_STARTED",
-      "attempts": 0,
-      "commit": null,
-      "evidence": [],
-      "blockers": [],
-      "last_checked_at": null,
+      "status": "PARTIAL",
+      "attempts": 1,
+      "commit": "7470ffc",
+      "evidence": [
+        "apps/android/wear Wear Compose iki adımlı SOS (bas-bırak + onay diyaloğu)",
+        "apps/android/core/wear-companion Data Layer yolları /sosmesh/v1/sos/create + phone_ack",
+        "PhoneWearSosIngress + PhoneWearCompanionListenerService → Room outbox origin=wear_os",
+        "apps/wearos/README.md → :wear modülü",
+        "JVM: PhoneWearSosIngressIdempotencyTest, WearOfflineQueueTest (idempotency)",
+        "Wear emulator / gerçek saat: NOT_TESTED (B-04)"
+      ],
+      "blockers": [
+        "B-04"
+      ],
+      "last_checked_at": "2026-11-01T17:45:00Z",
       "goal": "Android saatten güvenli ve okunabilir bir SOS başlatma deneyimi oluştur.",
       "cursor_tasks": [
         "Kotlin Wear Compose, round/rect layouts, haptic confirmation, 2-stage accidental tap protection.",
@@ -1230,12 +1261,20 @@
       ],
       "deliverables": "apps/wearos/state-sync; docs/watches/wear-policy.md",
       "pass_criteria": "Telefon çevrimdışı olsa bile saat doğru “beklemede” der; sahte başarı yok.",
-      "status": "NOT_STARTED",
-      "attempts": 0,
-      "commit": null,
-      "evidence": [],
-      "blockers": [],
-      "last_checked_at": null,
+      "status": "PARTIAL",
+      "attempts": 1,
+      "commit": "7470ffc",
+      "evidence": [
+        "WearOfflineQueue + WearRetryPolicy + WearStateSyncEngine (PHONE_UNREACHABLE, sahte başarı yok)",
+        "WearSosCoordinator + WearPhoneAckListenerService ACK senkronu",
+        "docs/watches/wear-policy.md; apps/wearos/state-sync/README.md",
+        "JVM: WearOfflineQueueTest, WearRetryPolicyTest",
+        "Paired/unpaired gerçek cihaz, tile/complication: NOT_TESTED / ERTELENDİ"
+      ],
+      "blockers": [
+        "B-04"
+      ],
+      "last_checked_at": "2026-11-01T17:45:00Z",
       "goal": "Saatten gönderilen isteğin gerçek transfer seviyesini dürüstçe izlet.",
       "cursor_tasks": [
         "Watch message UUID/nonce, retry queue ve ack state synchronization; Data Layer send mode policy.",

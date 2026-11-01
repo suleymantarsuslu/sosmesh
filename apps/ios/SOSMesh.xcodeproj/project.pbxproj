@@ -1,0 +1,200 @@
+// !$*UTF8*$!
+{
+	archiveVersion = 1;
+	classes = {
+	};
+	objectVersion = 56;
+	objects = {
+		A3100010000000000000001 /* SOSMeshApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SOSMeshApp.swift; sourceTree = "<group>"; };
+		A3100020000000000000001 /* AppModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppModel.swift; sourceTree = "<group>"; };
+		A3100030000000000000001 /* RootTabView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RootTabView.swift; sourceTree = "<group>"; };
+		A3100040000000000000001 /* HomeView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HomeView.swift; sourceTree = "<group>"; };
+		A3100050000000000000001 /* StatusView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StatusView.swift; sourceTree = "<group>"; };
+		A3100060000000000000001 /* RelayView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RelayView.swift; sourceTree = "<group>"; };
+		A3100070000000000000001 /* SettingsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SettingsView.swift; sourceTree = "<group>"; };
+		A3100080000000000000001 /* BleCentralCoordinator.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BleCentralCoordinator.swift; sourceTree = "<group>"; };
+		A3100090000000000000001 /* BlePeripheralCoordinator.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BlePeripheralCoordinator.swift; sourceTree = "<group>"; };
+		A3100100000000000000001 /* BleBackgroundConfiguration.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BleBackgroundConfiguration.swift; sourceTree = "<group>"; };
+		A3100110000000000000001 /* SOSMeshCoreLinkTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SOSMeshCoreLinkTests.swift; sourceTree = "<group>"; };
+		A3100120000000000000001 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
+		A3100130000000000000001 /* Localizable.strings */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; path = Localizable.strings; sourceTree = "<group>"; };
+		A3100140000000000000001 /* Localizable.strings */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; path = Localizable.strings; sourceTree = "<group>"; };
+		A3100150000000000000001 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
+		A3190010000000000000001 /* SOSMesh.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = SOSMesh.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		A3190020000000000000001 /* SOSMeshTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = SOSMeshTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
+		A3180010000000000000001 = {isa = PBXGroup; children = (A3190010000000000000001 /* SOSMesh.app */, A3190020000000000000001 /* SOSMeshTests.xctest */); name = Products; sourceTree = "<group>"; };
+		A3180040000000000000001 = {isa = PBXGroup; children = (A3100040000000000000001 /* HomeView.swift */, A3100050000000000000001 /* StatusView.swift */, A3100060000000000000001 /* RelayView.swift */, A3100070000000000000001 /* SettingsView.swift */); path = Features; sourceTree = "<group>"; };
+		A3180030000000000000001 = {isa = PBXGroup; children = (A3100080000000000000001 /* BleCentralCoordinator.swift */, A3100090000000000000001 /* BlePeripheralCoordinator.swift */, A3100100000000000000001 /* BleBackgroundConfiguration.swift */); path = CoreBLE; sourceTree = "<group>"; };
+		A3180020000000000000001 = {isa = PBXGroup; children = (A3100010000000000000001 /* SOSMeshApp.swift */, A3100020000000000000001 /* AppModel.swift */, A3100030000000000000001 /* RootTabView.swift */, A3180040000000000000001 /* Features */, A3100130000000000000001 /* Localizable.strings */, A3100140000000000000001 /* Localizable.strings */, A3100150000000000000001 /* Assets.xcassets */, A3100120000000000000001 /* Info.plist */); path = SOSMesh; sourceTree = "<group>"; };
+		A3180050000000000000001 = {isa = PBXGroup; children = (A3100110000000000000001 /* SOSMeshCoreLinkTests.swift */); path = SOSMeshTests; sourceTree = "<group>"; };
+		A3180000000000000000001 = {isa = PBXGroup; children = (A3180020000000000000001 /* SOSMesh */, A3180030000000000000001 /* CoreBLE */, A3180050000000000000001 /* SOSMeshTests */, A3180010000000000000001 /* Products */); sourceTree = "<group>"; };
+		A3160000000000000000001 /* SOSMeshApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = A3100010000000000000001 /* SOSMeshApp.swift */; };
+		A3160010000000000000001 /* AppModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = A3100020000000000000001 /* AppModel.swift */; };
+		A3160020000000000000001 /* RootTabView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A3100030000000000000001 /* RootTabView.swift */; };
+		A3160030000000000000001 /* HomeView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A3100040000000000000001 /* HomeView.swift */; };
+		A3160040000000000000001 /* StatusView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A3100050000000000000001 /* StatusView.swift */; };
+		A3160050000000000000001 /* RelayView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A3100060000000000000001 /* RelayView.swift */; };
+		A3160060000000000000001 /* SettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A3100070000000000000001 /* SettingsView.swift */; };
+		A3160070000000000000001 /* BleCentralCoordinator.swift in Sources */ = {isa = PBXBuildFile; fileRef = A3100080000000000000001 /* BleCentralCoordinator.swift */; };
+		A3160080000000000000001 /* BlePeripheralCoordinator.swift in Sources */ = {isa = PBXBuildFile; fileRef = A3100090000000000000001 /* BlePeripheralCoordinator.swift */; };
+		A3160090000000000000001 /* BleBackgroundConfiguration.swift in Sources */ = {isa = PBXBuildFile; fileRef = A3100100000000000000001 /* BleBackgroundConfiguration.swift */; };
+		A3165000000000000000001 /* SOSMeshCoreLinkTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = A3100110000000000000001 /* SOSMeshCoreLinkTests.swift */; };
+		A3166000000000000000001 /* Assets in Resources */ = {isa = PBXBuildFile; fileRef = A3100150000000000000001 /* Assets.xcassets */; };
+		A3167010000000000000001 /* SOSMeshCore in Frameworks */ = {isa = PBXBuildFile; productRef = A3151010000000000000001 /* SOSMeshCore */; };
+		A3167020000000000000001 /* SOSMeshContracts in Frameworks */ = {isa = PBXBuildFile; productRef = A3151020000000000000001 /* SOSMeshContracts */; };
+		A3167030000000000000001 /* SOSMeshCore in Frameworks */ = {isa = PBXBuildFile; productRef = A3151010000000000000001 /* SOSMeshCore */; };
+		A3170010000000000000001 /* Sources */ = {isa = PBXSourcesBuildPhase; buildActionMask = 2147483647; files = (A3160000000000000000001 /* in Sources */, A3160010000000000000001 /* in Sources */, A3160020000000000000001 /* in Sources */, A3160030000000000000001 /* in Sources */, A3160040000000000000001 /* in Sources */, A3160050000000000000001 /* in Sources */, A3160060000000000000001 /* in Sources */, A3160070000000000000001 /* in Sources */, A3160080000000000000001 /* in Sources */, A3160090000000000000001 /* in Sources */); runOnlyForDeploymentPostprocessing = 0; };
+		A3170020000000000000001 /* Sources */ = {isa = PBXSourcesBuildPhase; buildActionMask = 2147483647; files = (A3165000000000000000001 /* in Sources */); runOnlyForDeploymentPostprocessing = 0; };
+		A3170030000000000000001 /* Resources */ = {isa = PBXResourcesBuildPhase; buildActionMask = 2147483647; files = (A3166000000000000000001 /* in Resources */); runOnlyForDeploymentPostprocessing = 0; };
+		A3170040000000000000001 /* Frameworks */ = {isa = PBXFrameworksBuildPhase; buildActionMask = 2147483647; files = (A3167010000000000000001 /* SOSMeshCore in Frameworks */, A3167020000000000000001 /* SOSMeshContracts in Frameworks */); runOnlyForDeploymentPostprocessing = 0; };
+		A3170050000000000000001 /* Frameworks */ = {isa = PBXFrameworksBuildPhase; buildActionMask = 2147483647; files = (A3167030000000000000001 /* SOSMeshCore in Frameworks */); runOnlyForDeploymentPostprocessing = 0; };
+		A3150010000000000000001 /* XCLocalSwiftPackageReference "SOSMeshCore" */ = {isa = XCLocalSwiftPackageReference; relativePath = SOSMeshCore; };
+		A3150020000000000000001 /* XCLocalSwiftPackageReference "contracts-swift" */ = {isa = XCLocalSwiftPackageReference; relativePath = ../../packages/contracts-swift; };
+		A3151010000000000000001 /* SOSMeshCore */ = {isa = XCSwiftPackageProductDependency; productName = SOSMeshCore; package = A3150010000000000000001 /* SOSMeshCore */; };
+		A3151020000000000000001 /* SOSMeshContracts */ = {isa = XCSwiftPackageProductDependency; productName = SOSMeshContracts; package = A3150020000000000000001 /* contracts-swift */; };
+A3130010000000000000001 /* SOSMesh-iOS */ = {
+	isa = PBXNativeTarget;
+	buildConfigurationList = A3140010000000000000001 /* Build configuration list for PBXNativeTarget "SOSMesh-iOS" */;
+	buildPhases = (A3170010000000000000001 /* Sources */, A3170040000000000000001 /* Frameworks */, A3170030000000000000001 /* Resources */);
+	buildRules = ();
+	dependencies = ();
+	name = "SOSMesh-iOS";
+	packageProductDependencies = (A3151010000000000000001 /* SOSMeshCore */, A3151020000000000000001 /* SOSMeshContracts */);
+	productName = SOSMesh;
+	productReference = A3190010000000000000001 /* SOSMesh.app */;
+	productType = "com.apple.product-type.application";
+};
+A3130020000000000000001 /* SOSMeshTests */ = {
+	isa = PBXNativeTarget;
+	buildConfigurationList = A3140020000000000000001 /* Build configuration list for PBXNativeTarget "SOSMeshTests" */;
+	buildPhases = (A3170020000000000000001 /* Sources */, A3170050000000000000001 /* Frameworks */);
+	buildRules = ();
+	dependencies = (A3131010000000000000001 /* PBXTargetDependency */);
+	name = SOSMeshTests;
+	packageProductDependencies = (A3151010000000000000001 /* SOSMeshCore */);
+	productName = SOSMeshTests;
+	productReference = A3190020000000000000001 /* SOSMeshTests.xctest */;
+	productType = "com.apple.product-type.bundle.unit-test";
+};
+A3120010000000000000001 /* Project object */ = {
+	isa = PBXProject;
+	attributes = { LastSwiftUpdateCheck = 1500; LastUpgradeCheck = 1500; };
+	buildConfigurationList = A3140000000000000000001 /* Build configuration list for PBXProject "SOSMesh" */;
+	compatibilityVersion = "Xcode 14.0";
+	developmentRegion = tr;
+	hasScannedForEncodings = 0;
+	knownRegions = (en, tr, Base);
+	mainGroup = A3180000000000000000001;
+	packageReferences = (A3150010000000000000001 /* SOSMeshCore */, A3150020000000000000001 /* contracts-swift */);
+	productRefGroup = A3180010000000000000001 /* Products */;
+	projectDirPath = "";
+	projectRoot = "";
+	targets = (A3130010000000000000001 /* SOSMesh-iOS */, A3130020000000000000001 /* SOSMeshTests */);
+};
+		A3131010000000000000001 /* PBXTargetDependency */ = {isa = PBXTargetDependency; target = A3130010000000000000001 /* SOSMesh-iOS */; targetProxy = A3131020000000000000001 /* PBXContainerItemProxy */; };
+		A3131020000000000000001 /* PBXContainerItemProxy */ = {isa = PBXContainerItemProxy; containerPortal = A3120010000000000000001 /* Project */; proxyType = 1; remoteGlobalIDString = A3130010000000000000001; remoteInfo = "SOSMesh-iOS"; };
+		A3142000000000000000001 /* Debug */ = {isa = XCBuildConfiguration; buildSettings = {
+				SDKROOT = iphoneos;
+				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
+				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator";
+				SUPPORTS_MACCATALYST = NO;
+				"EXCLUDED_ARCHS[sdk=iphonesimulator*]" = x86_64;
+				ONLY_ACTIVE_ARCH = YES;
+			}; name = Debug; };
+		A3142010000000000000001 /* Release */ = {isa = XCBuildConfiguration; buildSettings = {
+				SDKROOT = iphoneos;
+				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
+				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator";
+				SUPPORTS_MACCATALYST = NO;
+				"EXCLUDED_ARCHS[sdk=iphonesimulator*]" = x86_64;
+			}; name = Release; };
+		A3140000000000000000001 /* Build configuration list for PBXProject "SOSMesh" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				A3142000000000000000001 /* Debug */,
+				A3142010000000000000001 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		A3142100000000000000001 /* Debug */ = {isa = XCBuildConfiguration; buildSettings = {
+				SDKROOT = iphoneos;
+				SWIFT_VERSION = 5.0;
+				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
+				TARGETED_DEVICE_FAMILY = 1;
+				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator";
+				SUPPORTS_MACCATALYST = NO;
+				PRODUCT_NAME = SOSMesh;
+				PRODUCT_BUNDLE_IDENTIFIER = com.sosmesh.ios;
+				CODE_SIGNING_ALLOWED = NO;
+				CODE_SIGNING_REQUIRED = NO;
+				INFOPLIST_FILE = SOSMesh/Info.plist;
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/Frameworks";
+			}; name = Debug; };
+		A3142110000000000000001 /* Release */ = {isa = XCBuildConfiguration; buildSettings = {
+				SDKROOT = iphoneos;
+				SWIFT_VERSION = 5.0;
+				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
+				TARGETED_DEVICE_FAMILY = 1;
+				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator";
+				SUPPORTS_MACCATALYST = NO;
+				PRODUCT_NAME = SOSMesh;
+				PRODUCT_BUNDLE_IDENTIFIER = com.sosmesh.ios;
+				CODE_SIGNING_ALLOWED = NO;
+				CODE_SIGNING_REQUIRED = NO;
+				INFOPLIST_FILE = SOSMesh/Info.plist;
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/Frameworks";
+			}; name = Release; };
+		A3140010000000000000001 /* Build configuration list for PBXNativeTarget "SOSMesh-iOS" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				A3142100000000000000001 /* Debug */,
+				A3142110000000000000001 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		A3142200000000000000001 /* Debug */ = {isa = XCBuildConfiguration; buildSettings = {
+				SDKROOT = iphoneos;
+				SWIFT_VERSION = 5.0;
+				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
+				TARGETED_DEVICE_FAMILY = 1;
+				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator";
+				SUPPORTS_MACCATALYST = NO;
+				PRODUCT_NAME = SOSMeshTests;
+				PRODUCT_BUNDLE_IDENTIFIER = com.sosmesh.ios.tests;
+				CODE_SIGNING_ALLOWED = NO;
+				CODE_SIGNING_REQUIRED = NO;
+				GENERATE_INFOPLIST_FILE = YES;
+				BUNDLE_LOADER = "$(TEST_HOST)";
+				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/SOSMesh.app/$(BUNDLE_EXECUTABLE_FOLDER_PATH)/SOSMesh";
+			}; name = Debug; };
+		A3142210000000000000001 /* Release */ = {isa = XCBuildConfiguration; buildSettings = {
+				SDKROOT = iphoneos;
+				SWIFT_VERSION = 5.0;
+				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
+				TARGETED_DEVICE_FAMILY = 1;
+				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator";
+				SUPPORTS_MACCATALYST = NO;
+				PRODUCT_NAME = SOSMeshTests;
+				PRODUCT_BUNDLE_IDENTIFIER = com.sosmesh.ios.tests;
+				CODE_SIGNING_ALLOWED = NO;
+				CODE_SIGNING_REQUIRED = NO;
+				GENERATE_INFOPLIST_FILE = YES;
+				BUNDLE_LOADER = "$(TEST_HOST)";
+				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/SOSMesh.app/$(BUNDLE_EXECUTABLE_FOLDER_PATH)/SOSMesh";
+			}; name = Release; };
+		A3140020000000000000001 /* Build configuration list for PBXNativeTarget "SOSMeshTests" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				A3142200000000000000001 /* Debug */,
+				A3142210000000000000001 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+	};
+	rootObject = A3120010000000000000001 /* Project object */;
+}

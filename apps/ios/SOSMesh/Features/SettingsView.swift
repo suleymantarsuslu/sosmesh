@@ -1,0 +1,43 @@
+import SwiftUI
+
+struct SettingsView: View {
+    @EnvironmentObject private var appModel: AppModel
+
+    var body: some View {
+        NavigationStack {
+            Form {
+                Section("settings.permissions.title") {
+                    Text("settings.permissions.bluetooth")
+                    Text("settings.permissions.location")
+                }
+                Section("ios.background.section") {
+                    Text("ios.limitation.background")
+                    Text("ios.limitation.force_quit")
+                    Text("Phase: \(appModel.restorationPhase.rawValue)")
+                        .font(.caption)
+                        .accessibilityLabel(Text("ios.restoration.phase"))
+                }
+            }
+            .navigationTitle("settings.title")
+        }
+    }
+}
+
+struct OnboardingDisclaimerView: View {
+    let onAccept: () -> Void
+
+    var body: some View {
+        ScrollView {
+            VStack(alignment: .leading, spacing: 16) {
+                Text("onboarding.not112")
+                    .font(.headline)
+                Text("onboarding.experimental")
+                Button("onboarding.accept") {
+                    onAccept()
+                }
+                .buttonStyle(.borderedProminent)
+            }
+            .padding()
+        }
+    }
+}

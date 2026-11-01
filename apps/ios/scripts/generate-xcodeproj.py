@@ -225,16 +225,22 @@ lines.append(
 # Configurations
 def build_settings(target_name: str, bundle_id: str, info_plist: str | None = None, test: bool = False) -> str:
     settings = [
+        "SDKROOT = iphoneos;",
         "SWIFT_VERSION = 5.0;",
         "IPHONEOS_DEPLOYMENT_TARGET = 17.0;",
         "TARGETED_DEVICE_FAMILY = 1;",
+        "SUPPORTED_PLATFORMS = \"iphoneos iphonesimulator\";",
+        "SUPPORTS_MACCATALYST = NO;",
         "PRODUCT_BUNDLE_IDENTIFIER = " + bundle_id + ";",
         "CODE_SIGNING_ALLOWED = NO;",
         "CODE_SIGNING_REQUIRED = NO;",
     ]
     if test:
         settings.append("GENERATE_INFOPLIST_FILE = YES;")
-        settings.append("TEST_HOST = \"\";")
+        settings.append("BUNDLE_LOADER = \"$(TEST_HOST)\";")
+        settings.append(
+            "TEST_HOST = \"$(BUILT_PRODUCTS_DIR)/SOSMesh.app/$(BUNDLE_EXECUTABLE_FOLDER_PATH)/SOSMesh\";"
+        )
     else:
         settings.append(f"INFOPLIST_FILE = {info_plist};")
         settings.append("ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;")
@@ -257,7 +263,14 @@ def config_list(list_id, name, target_debug, target_release):
 proj_debug = uid(4200)
 proj_release = uid(4201)
 for cfg_id, cfg_name in [(proj_debug, "Debug"), (proj_release, "Release")]:
-    lines.append(f"\t\t{cfg_id} /* {cfg_name} */ = {{isa = XCBuildConfiguration; buildSettings = {{}}; name = {cfg_name}; }};")
+    lines.append(
+        f"\t\t{cfg_id} /* {cfg_name} */ = {{isa = XCBuildConfiguration; buildSettings = {{"
+        f"\n\t\t\t\tSDKROOT = iphoneos;"
+        f"\n\t\t\t\tIPHONEOS_DEPLOYMENT_TARGET = 17.0;"
+        f"\n\t\t\t\tSUPPORTED_PLATFORMS = \"iphoneos iphonesimulator\";"
+        f"\n\t\t\t\tSUPPORTS_MACCATALYST = NO;"
+        f"\n\t\t\t}}; name = {cfg_name}; }};"
+    )
 config_list(uid(4000), 'PBXProject "SOSMesh"', proj_debug, proj_release)
 
 app_debug = uid(4210)

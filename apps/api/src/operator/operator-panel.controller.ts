@@ -18,6 +18,10 @@ import { Roles } from './guards/roles.decorator';
 import { RolesGuard } from './guards/roles.guard';
 import { IncidentScopeService } from './incident-scope.service';
 import { OperatorDashboardService } from './operator-dashboard.service';
+import { OperatorCasesService } from './operator-cases.service';
+import {
+  parseListOperatorCasesQuery,
+} from './dto/list-operator-cases.query';
 
 @ApiTags('operator')
 @ApiBearerAuth()
@@ -27,7 +31,8 @@ export class OperatorPanelController {
   constructor(
     private readonly prisma: PrismaService,
     private readonly scope: IncidentScopeService,
-    private readonly dashboard: OperatorDashboardService
+    private readonly dashboard: OperatorDashboardService,
+    private readonly cases: OperatorCasesService
   ) {}
 
   @Get('dashboard/stats')
@@ -61,6 +66,51 @@ export class OperatorPanelController {
       },
     });
     return buildPaginated(rows, pagination.limit);
+  }
+
+  @Get('cases')
+  async listCases(
+    @Req() req: OperatorRequest,
+    @Query('cursor') cursor?: string,
+    @Query('limit') limit?: string,
+    @Query('category') category?: string,
+    @Query('incidentState') incidentState?: string,
+    @Query('deliveryState') deliveryState?: string,
+    @Query('locationStatus') locationStatus?: string,
+    @Query('source') source?: string,
+    @Query('from') from?: string,
+    @Query('to') to?: string,
+    @Query('accuracyMin') accuracyMin?: string,
+    @Query('accuracyMax') accuracyMax?: string,
+    @Query('search') search?: string
+  ) {
+    const query = parseListOperatorCasesQuery({
+      cursor,
+      limit,
+      category,
+      incidentState,
+      deliveryState,
+      locationStatus,
+      source,
+      from,
+      to,
+      accuracyMin,
+      accuracyMax,
+      search,
+    });
+    return this.cases.listCases(req.operatorUser, query);
+  }
+
+  @Get('cases/:incidentId')
+  async getCase(@Req() req: OperatorRequest, @Param('incidentId') incidentId: string) {
+    const detail = await this.cases.getCaseDetail(req.operatorUser, incidentId);
+    if (!detail) {
+      throw new NotFoundException({
+        code: 'NOT_FOUND',
+        message: 'Case not found',
+      });
+    }
+    return detail;
   }
 
   @Get('incidents/:id')

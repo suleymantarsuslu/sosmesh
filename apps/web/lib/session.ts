@@ -94,6 +94,15 @@ async function mockFetch(path: string, init?: RequestInit): Promise<Response> {
       headers: { 'Content-Type': 'application/json' },
     });
   }
+  if (path.startsWith('/v1/operator/cases') && (!init?.method || init.method === 'GET')) {
+    const { mockCasesResponse, mockCaseDetailResponse } = await import('./e2e-mock-cases');
+    const url = new URL(path, 'http://local');
+    if (url.pathname === '/v1/operator/cases') {
+      return mockCasesResponse(url.searchParams);
+    }
+    const incidentId = url.pathname.replace('/v1/operator/cases/', '');
+    return mockCaseDetailResponse(incidentId);
+  }
   if (path === '/v1/auth/me' && (!init?.method || init.method === 'GET')) {
     const session = readSession();
     if (!session) {

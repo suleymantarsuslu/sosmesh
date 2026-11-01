@@ -12,7 +12,8 @@ export async function GET(request: NextRequest) {
     );
   }
   if (isE2eMock()) {
-    return NextResponse.json({ events: [] });
+    const { mockEventsPoll } = await import('../../../../lib/e2e-mock-cases');
+    return mockEventsPoll(afterRaw);
   }
   const token = getSessionToken();
   if (!token) {

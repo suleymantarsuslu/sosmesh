@@ -12,7 +12,7 @@ type NavItem = { href: string; label: string; roles?: string[] };
 
 const NAV: NavItem[] = [
   { href: '/operator/dashboard', label: 'Panel' },
-  { href: '/operator/dashboard#cases', label: 'Vakalar' },
+  { href: '/operator/cases', label: 'Harita / Vakalar' },
   { href: '/operator/admin', label: 'Yönetim', roles: ['ADMIN'] },
 ];
 

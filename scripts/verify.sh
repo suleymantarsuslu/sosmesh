@@ -250,7 +250,7 @@ else
 fi
 
 # 21. OpenAPI spec freshness
-echo "21/24: node scripts/check-openapi.js"
+echo "21/25: node scripts/check-openapi.js"
 if node "$SCRIPT_DIR/check-openapi.js" > "$REPORTS_DIR/check-openapi.log" 2>&1; then
   check_exit "check-openapi" 0
 else
@@ -259,7 +259,7 @@ else
 fi
 
 # 22. Android SOS privacy (no Log/Timber in SOS UI paths)
-echo "22/24: bash scripts/android-sos-privacy-log.sh"
+echo "22/25: bash scripts/android-sos-privacy-log.sh"
 if bash "$SCRIPT_DIR/android-sos-privacy-log.sh" > "$REPORTS_DIR/android-sos-privacy.log" 2>&1; then
   check_exit "android-sos-privacy-log" 0
 else

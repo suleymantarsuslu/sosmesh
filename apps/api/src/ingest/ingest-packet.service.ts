@@ -10,7 +10,7 @@ import {
   SUPPORTED_PROTOCOL_VERSION,
 } from './ingest.constants';
 import type { IngestRequestDto } from './dto/ingest-request.dto';
-import { isUnknownLocationEnvelope } from './envelope-location';
+import { findForbiddenEnvelopeFieldKey } from './envelope-sensitive-fields';
 
 function stableStringify(value: unknown): string {
   if (value === null || typeof value !== 'object') {
@@ -66,23 +66,25 @@ export class IngestPacketService {
     }
 
     const envelope = sosMessage.envelope as Record<string, unknown> | undefined;
-    if (!envelope || typeof envelope !== 'object') {
-      throw new HttpException(
-        { code: 'INVALID_SOS_PACKET', message: 'SOS envelope is required' },
-        HttpStatus.BAD_REQUEST
-      );
-    }
-
-    if (isUnknownLocationEnvelope(envelope)) {
-      this.validateUnknownLocationMessage(sosMessage);
-    } else {
-      const schemaResult = validateSosMessage(sosMessage);
-      if (!schemaResult.valid) {
+    if (envelope && typeof envelope === 'object') {
+      const forbiddenKey = findForbiddenEnvelopeFieldKey(envelope);
+      if (forbiddenKey) {
         throw new HttpException(
-          { code: 'INVALID_SOS_SCHEMA', message: 'SOS message failed schema validation' },
+          {
+            code: 'ENVELOPE_SENSITIVE_FIELD',
+            message: 'Envelope must not contain plaintext or message-like fields visible to relays',
+          },
           HttpStatus.BAD_REQUEST
         );
       }
+    }
+
+    const schemaResult = validateSosMessage(sosMessage);
+    if (!schemaResult.valid) {
+      throw new HttpException(
+        { code: 'INVALID_SOS_SCHEMA', message: 'SOS message failed schema validation' },
+        HttpStatus.BAD_REQUEST
+      );
     }
 
     const messageId = sosMessage.id;
@@ -146,46 +148,6 @@ export class IngestPacketService {
     if (ageSeconds > MAX_ENVELOPE_AGE_SECONDS) {
       throw new HttpException(
         { code: 'ENVELOPE_TOO_OLD', message: 'Envelope timestamp is too old' },
-        HttpStatus.BAD_REQUEST
-      );
-    }
-  }
-
-  private validateUnknownLocationMessage(sosMessage: Record<string, unknown>): void {
-    const envelope = sosMessage.envelope as Record<string, unknown>;
-    if (envelope.locationStatus !== 'UNKNOWN') {
-      throw new HttpException(
-        { code: 'INVALID_SOS_SCHEMA', message: 'SOS message failed schema validation' },
-        HttpStatus.BAD_REQUEST
-      );
-    }
-    if (envelope.location !== null && envelope.location !== undefined) {
-      throw new HttpException(
-        { code: 'INVALID_ENVELOPE_LOCATION', message: 'UNKNOWN locationStatus requires null location' },
-        HttpStatus.BAD_REQUEST
-      );
-    }
-    if (typeof envelope.timestamp !== 'string') {
-      throw new HttpException(
-        { code: 'INVALID_ENVELOPE_TIME', message: 'Envelope timestamp is required' },
-        HttpStatus.BAD_REQUEST
-      );
-    }
-    if (typeof envelope.priority !== 'number') {
-      throw new HttpException(
-        { code: 'INVALID_SOS_SCHEMA', message: 'SOS message failed schema validation' },
-        HttpStatus.BAD_REQUEST
-      );
-    }
-    if (typeof envelope.ackLevel !== 'string') {
-      throw new HttpException(
-        { code: 'INVALID_SOS_SCHEMA', message: 'SOS message failed schema validation' },
-        HttpStatus.BAD_REQUEST
-      );
-    }
-    if (typeof sosMessage.encryptedPayload !== 'string' || sosMessage.encryptedPayload.length < 1) {
-      throw new HttpException(
-        { code: 'INVALID_SOS_SCHEMA', message: 'SOS message failed schema validation' },
         HttpStatus.BAD_REQUEST
       );
     }

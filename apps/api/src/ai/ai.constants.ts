@@ -1,0 +1,16 @@
+export const AI_ANALYSIS_STATUS = {
+  PENDING: 'PENDING',
+  COMPLETED: 'COMPLETED',
+  FAILED: 'FAILED',
+  NO_PLAINTEXT: 'NO_PLAINTEXT',
+  SKIPPED_DISABLED: 'SKIPPED_DISABLED',
+  SKIPPED_NO_KEY: 'SKIPPED_NO_KEY',
+  SKIPPED_RATE_LIMIT: 'SKIPPED_RATE_LIMIT',
+  SKIPPED_COST_CAP: 'SKIPPED_COST_CAP',
+} as const;
+
+export type AiAnalysisStatus = (typeof AI_ANALYSIS_STATUS)[keyof typeof AI_ANALYSIS_STATUS];
+
+export const DEFAULT_META_BASE_URL = 'https://api.meta.ai/v1';
+export const DEFAULT_META_MODEL = 'muse-spark-1.3';
+export const DEFAULT_META_MAX_TOKENS = 4096;

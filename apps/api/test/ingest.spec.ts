@@ -283,6 +283,41 @@ describe('POST /v1/ingest', () => {
   });
 });
 
+describe('POST /v1/ingest envelope privacy', () => {
+  let app: INestApplication;
+  let prisma: PrismaService;
+
+  beforeAll(async () => {
+    app = await createTestApp(getTestDatabaseUrl());
+    prisma = app.get(PrismaService);
+  });
+
+  afterAll(async () => {
+    await app.close();
+  });
+
+  it('rejects envelope plaintext-like fields and does not persist a new message', async () => {
+    const messageId = 'f1f1f1f1-f1f1-4f1f-8f1f-f1f1f1f1f1f1';
+    const beforeCount = await prisma.sosMessage.count();
+    const body = buildValidIngestRequest({
+      messageId,
+      mutate: (message) => {
+        (message.envelope as Record<string, unknown>).plaintextForOperator = 'secret sos text';
+      },
+    });
+
+    const response = await request(app.getHttpServer()).post('/v1/ingest').send(body);
+    expect(response.status).toBe(400);
+    expect(response.body.code).toBe('ENVELOPE_SENSITIVE_FIELD');
+    expect(JSON.stringify(response.body)).not.toMatch(/secret sos text/i);
+
+    const afterCount = await prisma.sosMessage.count();
+    expect(afterCount).toBe(beforeCount);
+    const stored = await prisma.sosMessage.findUnique({ where: { messageId } });
+    expect(stored).toBeNull();
+  });
+});
+
 describe('POST /v1/ingest rate limit', () => {
   let app: INestApplication;
 

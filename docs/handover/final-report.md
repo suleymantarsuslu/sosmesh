@@ -47,7 +47,7 @@ Gate H özeti ayrıca `status.json` → `gates.H` alanında tutulur. **ADIM 58**
 | Kotlin sözleşme | `packages/contracts-kotlin ./gradlew test` | **PASS** (OpenJDK 17) | `docs/handover/evidence/gate-h/contracts-kotlin-test.txt` |
 | Android Gradle | `assembleDebug` | **NOT_RUN (`ANDROID_HOME` yok)** | status.json ADIM 12–16 notları; CI doğrular |
 
-**CI run id:** push sonrası PR #41 checks (aşağıdaki merge raporunda güncellenir).
+**CI run id:** [41337733762](https://github.com/suleymantarsuslu/sosmesh/actions/runs/41337733762) (PR #41, `HEAD` 344cc84).
 
 ---
 

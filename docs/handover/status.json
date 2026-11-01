@@ -6,8 +6,8 @@
       "title": "Hackathon / Çekirdek (ADIM 01–25)",
       "status": "PARTIAL",
       "last_checked_at": "2026-11-01T18:39:00+00:00",
-      "head_ref": "5c8274939096a7c03d220e58641f8c321c5e1c3a",
-      "ci_run_id": null,
+      "head_ref": "344cc84e254282009ef827ceac8f0391788b63bc",
+      "ci_run_id": "41337733762",
       "summary": "Ertelenen ağır testler koşturuldu; ADIM 24 NOT_TESTED; Android fiziksel ve M0 tam PASS yok",
       "evidence": [
         "docs/handover/final-report.md",

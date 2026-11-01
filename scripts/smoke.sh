@@ -45,12 +45,6 @@ cleanup() {
     # Force kill if still running
     kill -9 -$WEB_PGID 2>/dev/null || true
   fi
-
-  for port in "$API_PORT" "$WEB_PORT"; do
-    if command -v fuser >/dev/null 2>&1; then
-      fuser -k "${port}/tcp" 2>/dev/null || true
-    fi
-  done
   
   # Wait for ports to be released (max 10 seconds)
   echo "Waiting for ports to be released..."

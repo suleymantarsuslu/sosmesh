@@ -7,6 +7,7 @@ import {
   MeshRelayEngine,
   type MeshRelayEnvelopeV2,
   buildDedupKey,
+  relayLogSnapshot,
 } from './mesh-relay-engine';
 
 interface VectorCase {
@@ -70,6 +71,33 @@ describe('protocol_v2_dedup_key_stable', () => {
   });
 });
 
+describe('protocol_v2_relay_log_snapshot_opaque', () => {
+  it('relay_log_snapshot_uses_metadata_and_ciphertext_prefix_only', () => {
+    const plaintextNote = 'مرحبا İstanbul 🚨 SENTETIK_YARDIM';
+    const envelope: MeshRelayEnvelopeV2 = {
+      protocolVersion: 2,
+      messageId: 'snap-001',
+      hopCount: 1,
+      maxHops: 5,
+      ttlHops: 2,
+      copyCount: 1,
+      maxCopyCount: 3,
+      originCreatedAt: '2026-11-01T12:00:00Z',
+      opaqueCiphertextBase64: Buffer.from(plaintextNote, 'utf-8').toString('base64'),
+      hopChainReceipt: { relayDeviceIdHashes: [] },
+    };
+    const snapshot = relayLogSnapshot(envelope);
+    expect(snapshot).toContain('"messageId":"snap-001"');
+    expect(snapshot).not.toContain(plaintextNote);
+    expect(snapshot).not.toContain('مرحبا');
+    expect(snapshot).not.toContain('İstanbul');
+    expect(JSON.parse(snapshot).ciphertextPrefix).toBe(
+      envelope.opaqueCiphertextBase64.slice(0, 24)
+    );
+    expect(snapshot.length).toBeLessThan(JSON.stringify(envelope).length);
+  });
+});
+
 describe('protocol_v2_mutation_ttl_decrement', () => {
   it('skip_ttl_decrement_changes_drop_vs_baseline', () => {
     const envelope: MeshRelayEnvelopeV2 = {
@@ -90,6 +118,79 @@ describe('protocol_v2_mutation_ttl_decrement', () => {
     expect(baseline.dropReason).toBe('TTL_EXCEEDED');
 
     const mutated = new MeshRelayEngine({ lruCapacity: 8, skipTtlDecrement: true }).evaluateForward(
+      envelope,
+      relayHash
+    );
+    expect(mutated.decision).toBe('FORWARD');
+  });
+});
+
+describe('protocol_v2_mutation_dedup_loop_and_hops', () => {
+  const relayHash = 'aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa';
+
+  it('skip_dedup_check_changes_duplicate_vs_baseline', () => {
+    const envelope: MeshRelayEnvelopeV2 = {
+      protocolVersion: 2,
+      messageId: 'mut-dedup',
+      hopCount: 0,
+      maxHops: 5,
+      ttlHops: 2,
+      copyCount: 1,
+      maxCopyCount: 3,
+      originCreatedAt: '2026-11-01T12:00:00Z',
+      opaqueCiphertextBase64: 'dGVzdA==',
+      hopChainReceipt: { relayDeviceIdHashes: [] },
+    };
+    const key = buildDedupKey(envelope);
+    const baseline = new MeshRelayEngine({ lruCapacity: 8 });
+    baseline.seedDedupKey(key);
+    expect(baseline.evaluateForward(envelope, relayHash).dropReason).toBe('DUPLICATE');
+
+    const mutated = new MeshRelayEngine({ lruCapacity: 8, skipDedupCheck: true });
+    mutated.seedDedupKey(key);
+    expect(mutated.evaluateForward(envelope, relayHash).decision).toBe('FORWARD');
+  });
+
+  it('skip_loop_guard_changes_loop_detected_vs_baseline', () => {
+    const envelope: MeshRelayEnvelopeV2 = {
+      protocolVersion: 2,
+      messageId: 'mut-loop',
+      hopCount: 1,
+      maxHops: 5,
+      ttlHops: 2,
+      copyCount: 1,
+      maxCopyCount: 3,
+      originCreatedAt: '2026-11-01T12:00:00Z',
+      opaqueCiphertextBase64: 'dGVzdA==',
+      hopChainReceipt: { relayDeviceIdHashes: [relayHash] },
+    };
+    const baseline = new MeshRelayEngine({ lruCapacity: 8 }).evaluateForward(envelope, relayHash);
+    expect(baseline.dropReason).toBe('LOOP_DETECTED');
+
+    const mutated = new MeshRelayEngine({ lruCapacity: 8, skipLoopGuard: true }).evaluateForward(
+      envelope,
+      relayHash
+    );
+    expect(mutated.decision).toBe('FORWARD');
+  });
+
+  it('skip_max_hops_check_changes_max_hops_vs_baseline', () => {
+    const envelope: MeshRelayEnvelopeV2 = {
+      protocolVersion: 2,
+      messageId: 'mut-hops',
+      hopCount: 5,
+      maxHops: 5,
+      ttlHops: 2,
+      copyCount: 1,
+      maxCopyCount: 3,
+      originCreatedAt: '2026-11-01T12:00:00Z',
+      opaqueCiphertextBase64: 'dGVzdA==',
+      hopChainReceipt: { relayDeviceIdHashes: [] },
+    };
+    const baseline = new MeshRelayEngine({ lruCapacity: 8 }).evaluateForward(envelope, relayHash);
+    expect(baseline.dropReason).toBe('MAX_HOPS');
+
+    const mutated = new MeshRelayEngine({ lruCapacity: 8, skipMaxHopsCheck: true }).evaluateForward(
       envelope,
       relayHash
     );

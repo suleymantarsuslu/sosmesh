@@ -37,6 +37,12 @@ export interface MeshRelayEngineConfig {
   lruCapacity: number;
   /** When true, skip TTL decrement (mutation testing only). */
   skipTtlDecrement?: boolean;
+  /** When true, skip dedup drop (mutation testing only). */
+  skipDedupCheck?: boolean;
+  /** When true, skip loop detection (mutation testing only). */
+  skipLoopGuard?: boolean;
+  /** When true, skip max-hop drop (mutation testing only). */
+  skipMaxHopsCheck?: boolean;
 }
 
 const DEVICE_HASH = /^[a-f0-9]{64}$/;
@@ -124,15 +130,18 @@ export class MeshRelayEngine {
     }
 
     const dedupKey = buildDedupKey(envelope);
-    if (this.dedup.has(dedupKey)) {
+    if (!this.config.skipDedupCheck && this.dedup.has(dedupKey)) {
       return { decision: 'DROP', dropReason: 'DUPLICATE', dedupKey };
     }
 
-    if (envelope.hopChainReceipt.relayDeviceIdHashes.includes(relayDeviceIdHash)) {
+    if (
+      !this.config.skipLoopGuard &&
+      envelope.hopChainReceipt.relayDeviceIdHashes.includes(relayDeviceIdHash)
+    ) {
       return { decision: 'DROP', dropReason: 'LOOP_DETECTED', dedupKey };
     }
 
-    if (envelope.hopCount >= envelope.maxHops) {
+    if (!this.config.skipMaxHopsCheck && envelope.hopCount >= envelope.maxHops) {
       return { decision: 'DROP', dropReason: 'MAX_HOPS', dedupKey };
     }
 

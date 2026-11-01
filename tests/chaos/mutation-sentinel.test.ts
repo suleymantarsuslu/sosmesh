@@ -41,8 +41,8 @@ describe('chaos_mutation_sentinel_unverified_not_completed', () => {
         minLatency: 1,
         maxLatency: 2,
         partialWriteRate: 0,
+        partialCorruptRate: 1,
       },
-      injectCorruptLastChunk: true,
     });
     expect(result.report.outcome).not.toBe('COMPLETED');
   });

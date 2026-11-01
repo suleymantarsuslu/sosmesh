@@ -95,4 +95,35 @@ class MeshV2RelayCoordinatorTest {
         assertEquals(MeshV2RelayAction.Dropped, result.action)
         assertEquals(MeshRelayDropReason.TTL_EXCEEDED, result.dropReason)
     }
+
+    @Test(expected = IllegalArgumentException::class)
+    fun privacy_guard_blocks_forbidden_marker_in_relay_log_snapshot() {
+        val coordinator =
+            MeshV2RelayCoordinator(
+                forwardQueue = MeshForwardQueue(maxDepth = 4),
+                routeSelector = MeshRouteSelector(),
+            )
+        val payload =
+            """
+            {
+              "protocolVersion": 2,
+              "messageId": "coord-SENTETIK-leak",
+              "hopCount": 0,
+              "maxHops": 5,
+              "ttlHops": 2,
+              "copyCount": 1,
+              "maxCopyCount": 3,
+              "originCreatedAt": "2026-11-01T12:00:00Z",
+              "opaqueCiphertextBase64": "AQIDBA==",
+              "hopChainReceipt": { "relayDeviceIdHashes": [] }
+            }
+            """.trimIndent().toByteArray()
+        coordinator.onWirePayload(
+            payload = payload,
+            relayDeviceIdHash = relayHash,
+            nowMs = 1L,
+            batteryQuotaAllowsForward = true,
+            uplinkInternetAvailable = false,
+        )
+    }
 }

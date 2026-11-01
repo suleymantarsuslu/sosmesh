@@ -46,6 +46,9 @@ data class MeshRelayEngineOutcome(
 data class MeshRelayEngineConfig(
     val lruCapacity: Int,
     val skipTtlDecrement: Boolean = false,
+    val skipDedupCheck: Boolean = false,
+    val skipLoopGuard: Boolean = false,
+    val skipMaxHopsCheck: Boolean = false,
 )
 
 private val DEVICE_HASH = Regex("^[a-f0-9]{64}$")
@@ -103,7 +106,7 @@ class MeshRelayEngine(
         }
 
         val dedupKey = buildDedupKey(envelope)
-        if (dedup.has(dedupKey)) {
+        if (!config.skipDedupCheck && dedup.has(dedupKey)) {
             return MeshRelayEngineOutcome(
                 MeshRelayDecision.DROP,
                 MeshRelayDropReason.DUPLICATE,
@@ -111,7 +114,10 @@ class MeshRelayEngine(
             )
         }
 
-        if (envelope.hopChainReceipt.relayDeviceIdHashes.contains(relayDeviceIdHash)) {
+        if (
+            !config.skipLoopGuard &&
+            envelope.hopChainReceipt.relayDeviceIdHashes.contains(relayDeviceIdHash)
+        ) {
             return MeshRelayEngineOutcome(
                 MeshRelayDecision.DROP,
                 MeshRelayDropReason.LOOP_DETECTED,
@@ -119,7 +125,7 @@ class MeshRelayEngine(
             )
         }
 
-        if (envelope.hopCount >= envelope.maxHops) {
+        if (!config.skipMaxHopsCheck && envelope.hopCount >= envelope.maxHops) {
             return MeshRelayEngineOutcome(
                 MeshRelayDecision.DROP,
                 MeshRelayDropReason.MAX_HOPS,

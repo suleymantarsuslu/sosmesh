@@ -31,8 +31,20 @@ final class CrossPlatformAckGateFixtureTests: XCTestCase {
             }
             if let deliveryState = input["deliveryState"] as? String {
                 let state = CrossPlatformAckDeliveryGate.evaluateDeliveryState(deliveryState)
-                XCTAssertEqual(state.mayEmitPeerReceived, expect["mayEmitPeerReceived"] as? Bool)
-                XCTAssertEqual(state.mayEmitServerAccepted, expect["mayEmitServerAccepted"] as? Bool)
+                if let expectedPeer = expect["mayEmitPeerReceived"] as? Bool {
+                    XCTAssertEqual(state.mayEmitPeerReceived, expectedPeer)
+                }
+                if let expectedServer = expect["mayEmitServerAccepted"] as? Bool {
+                    XCTAssertEqual(state.mayEmitServerAccepted, expectedServer)
+                }
+                if let allowed = expect["allowedNextStates"] as? [String] {
+                    XCTAssertEqual(state.allowedNextStates, allowed)
+                }
+                if let forbidden = expect["forbiddenNextStates"] as? [String] {
+                    for item in forbidden {
+                        XCTAssertTrue(state.forbiddenNextStates.contains(item))
+                    }
+                }
             }
         }
     }

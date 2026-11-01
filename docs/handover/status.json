@@ -405,12 +405,17 @@
         "11",
         "12"
       ],
-      "deliverables": "apps/android/core-ble, docs/tests/android-radio.md",
+      "deliverables": "apps/android/core/ble, docs/tests/android-radio.md",
       "pass_criteria": "En az 2 Android cihaz birbirini keşfeder ve GATT oturumu kurar.",
-      "status": "NOT_STARTED",
-      "attempts": 0,
-      "commit": null,
-      "evidence": [],
+      "status": "PARTIAL",
+      "attempts": 1,
+      "commit": "622ed30",
+      "evidence": [
+        "JVM unit: GattClientSession, PeerRegistry, PermissionAndAdapterGuard, BleAdvertiser payload",
+        "docs/tests/android-radio.md prosedür + OEM şablon",
+        "Gerçek 2 cihaz keşif/GATT: NOT_TESTED"
+      ],
+      "notes": "Simülatör/Robolectric gerçek BLE kanıtı sayılmaz; PARTIAL beklenen durum.",
       "blockers": [],
       "last_checked_at": null,
       "goal": "İki gerçek Android’in internetsiz yakındaki cihazları keşfetmesini sağla.",

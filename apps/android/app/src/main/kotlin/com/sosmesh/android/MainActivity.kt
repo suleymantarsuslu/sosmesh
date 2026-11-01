@@ -12,6 +12,7 @@ import com.sosmesh.android.feature.sos.SosRoute
 import com.sosmesh.android.feature.status.StatusRoute
 import com.sosmesh.android.ui.home.HomeRoute
 import com.sosmesh.android.ui.permissions.PermissionsRoute
+import com.sosmesh.android.ui.radio.RadioDebugRoute
 import com.sosmesh.android.ui.theme.SosMeshTheme
 import dagger.hilt.android.AndroidEntryPoint
 
@@ -36,12 +37,16 @@ private fun SosMeshNavHost() {
         composable("home") {
             HomeRoute(
                 onOpenPermissions = { navController.navigate("permissions") },
+                onOpenRadioDebug = { navController.navigate("radio") },
                 onOpenSos = { navController.navigate("sos") },
                 onOpenStatus = { navController.navigate("status") },
             )
         }
         composable("permissions") {
             PermissionsRoute(onBack = { navController.popBackStack() })
+        }
+        composable("radio") {
+            RadioDebugRoute(onBack = { navController.popBackStack() })
         }
         composable("sos") {
             SosRoute()

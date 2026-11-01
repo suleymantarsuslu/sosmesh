@@ -2,8 +2,6 @@ package com.sosmesh.android.di
 
 import android.content.Context
 import android.os.Build
-import com.sosmesh.android.core.ble.BleMeshRadio
-import com.sosmesh.android.core.ble.BleMeshRadioSkeleton
 import com.sosmesh.android.core.permissions.PermissionFlowCoordinator
 import com.sosmesh.android.core.permissions.PermissionStatusReader
 import dagger.Module
@@ -29,8 +27,4 @@ object AppModule {
             sdkInt = Build.VERSION.SDK_INT,
             statusReader = reader,
         )
-
-    @Provides
-    @Singleton
-    fun provideBleMeshRadio(skeleton: BleMeshRadioSkeleton): BleMeshRadio = skeleton
 }

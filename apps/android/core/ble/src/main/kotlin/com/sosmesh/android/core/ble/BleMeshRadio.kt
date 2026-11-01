@@ -1,13 +1,16 @@
 package com.sosmesh.android.core.ble
 
 /**
- * BLE scan/advertise port (ADIM 14 will provide real implementation).
+ * Facade for peer discovery lifecycle (ADIM 14).
  */
 interface BleMeshRadio {
-    fun startScan(): Result<Unit>
+    fun startPeerDiscovery(foregroundVisible: Boolean = true): Result<Unit>
 
-    fun stopScan()
+    fun stopPeerDiscovery()
+
+    fun refreshStatus(): BleRadioStatus
+
+    fun connectFirstDiscoveredPeer(): Result<Unit>
+
+    fun disconnectPeerSession()
 }
-
-class MissingBlePermissionsException :
-    IllegalStateException("Bluetooth permissions missing; scan cannot start.")

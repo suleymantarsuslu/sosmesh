@@ -19,6 +19,7 @@ import com.sosmesh.android.service.MeshConnectionForegroundService
 @Composable
 fun HomeRoute(
     onOpenPermissions: () -> Unit,
+    onOpenRadioDebug: () -> Unit,
     onOpenSos: () -> Unit,
     onOpenStatus: () -> Unit,
 ) {
@@ -43,6 +44,9 @@ fun HomeRoute(
         }
         Button(onClick = onOpenPermissions) {
             Text(stringResource(R.string.home_permissions_cta))
+        }
+        Button(onClick = onOpenRadioDebug) {
+            Text(stringResource(R.string.home_radio_debug_cta))
         }
         Button(
             onClick = {

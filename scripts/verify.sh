@@ -138,25 +138,35 @@ release_dev_ports() {
   sleep 2
 }
 
+wait_for_port_free() {
+  local port=$1
+  local attempt
+  for attempt in 1 2 3 4 5 6 7 8 9 10; do
+    release_dev_ports
+    if ! lsof -ti:"$port" >/dev/null 2>&1; then
+      return 0
+    fi
+    sleep 2
+  done
+  echo -e "${RED}Port $port still in use after cleanup:${NC}" >&2
+  lsof -i:"$port" 2>/dev/null || true
+  return 1
+}
+
 # Smoke may leave next/node bound on shared self-hosted runners; free before Playwright webServer.
-release_dev_ports
+if ! wait_for_port_free 3000; then
+  check_exit "smoke-port-cleanup" 1
+fi
+if ! wait_for_port_free 3001; then
+  check_exit "smoke-port-cleanup" 1
+fi
 
 # 7. Web a11y test
 echo "7/18: pnpm test:a11y:web"
-# Ensure port 3000 is free before starting
-PORT_CHECK_FAILED=false
-if lsof -ti:3000 >/dev/null 2>&1; then
-  echo -e "${YELLOW}Port 3000 is still in use before a11y-web test. Cleaning up...${NC}"
-  release_dev_ports
-  if lsof -ti:3000 >/dev/null 2>&1; then
-    echo -e "${RED}❌ Failed to free port 3000${NC}" | tee "$REPORTS_DIR/a11y-web.log"
-    PORT_CHECK_FAILED=true
-  fi
-fi
-
-if [ "$PORT_CHECK_FAILED" = true ]; then
+if ! wait_for_port_free 3000; then
   check_exit "a11y-web" 1
-elif pnpm test:a11y:web > "$REPORTS_DIR/a11y-web.log" 2>&1; then
+fi
+if pnpm test:a11y:web > "$REPORTS_DIR/a11y-web.log" 2>&1; then
   check_exit "a11y-web" 0
 else
   EXIT_CODE=$?

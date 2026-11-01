@@ -48,6 +48,22 @@ check_exit() {
 
 cd "$REPO_ROOT"
 
+ensure_pnpm() {
+  if command -v pnpm >/dev/null 2>&1 && pnpm --version >/dev/null 2>&1; then
+    return 0
+  fi
+  if command -v corepack >/dev/null 2>&1; then
+    corepack enable
+    corepack prepare pnpm@9.0.0 --activate
+  fi
+  command -v pnpm >/dev/null 2>&1
+}
+
+if ! ensure_pnpm; then
+  echo -e "${RED}pnpm is not available (install Node corepack or pnpm/action-setup)${NC}"
+  exit 1
+fi
+
 # 1. Install dependencies
 echo "1/18: pnpm install --frozen-lockfile"
 if pnpm install --frozen-lockfile > "$REPORTS_DIR/install.log" 2>&1; then
@@ -91,6 +107,8 @@ check_exit "typecheck" $TYPECHECK_EXIT
 
 # 5. Unit tests
 echo "5/18: pnpm test"
+hash -r
+ensure_pnpm
 if pnpm test > "$REPORTS_DIR/test.log" 2>&1; then
   check_exit "test" 0
 else

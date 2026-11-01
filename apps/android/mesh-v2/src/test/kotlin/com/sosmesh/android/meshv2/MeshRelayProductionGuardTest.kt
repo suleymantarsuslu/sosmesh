@@ -2,7 +2,6 @@ package com.sosmesh.android.meshv2
 
 import com.sosmesh.contracts.meshv2.MeshRelayDropReason
 import com.sosmesh.contracts.meshv2.MeshRelayEngineFactory
-import com.sosmesh.contracts.meshv2.MeshV2RelayAction
 import org.junit.Assert.assertEquals
 import org.junit.Test
 

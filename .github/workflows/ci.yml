@@ -28,6 +28,8 @@ jobs:
       
       - name: Install pnpm
         uses: pnpm/action-setup@v3
+        with:
+          version: 9
       
       - name: Get pnpm store directory
         shell: bash
@@ -204,7 +206,7 @@ jobs:
       - name: Setup Xcode
         uses: maxim-lobanov/setup-xcode@v1
         with:
-          xcode-version: '15.2'
+          xcode-version: latest-stable
       
       - name: Install CocoaPods
         run: cd apps/ios && pod install
@@ -236,7 +238,7 @@ jobs:
             -project SOSMesh.xcodeproj \
             -scheme SOSMesh-iOS \
             -sdk iphonesimulator \
-            -destination 'platform=iOS Simulator,name=iPhone 15,OS=latest' \
+            -destination 'generic/platform=iOS Simulator' \
             -only-testing:SOSMeshTests
 
   cross-language-contracts:

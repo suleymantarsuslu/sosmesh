@@ -1,0 +1,17 @@
+
+> sosmesh-monorepo@0.1.0 test:a11y:web /workspace
+> playwright test --config=playwright.web.config.js
+
+
+Running 22 tests using 1 worker
+(node:118323) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+·····················Web Skeleton A11y Test:
+  Total violations: 0
+  Serious/Critical: 0
+  Lang attribute: tr
+  Contains 'SOSMesh': true
+  Contains '112' warning: true
+·
+  22 passed (31.9s)
+::notice title=🎭 Playwright Run Summary::  22 passed (31.9s)

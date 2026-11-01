@@ -5,6 +5,8 @@ import { useEffect, useState } from 'react';
 
 import { Button } from '../ui/Button';
 
+import { useOperatorPreferences } from './OperatorPreferencesProvider';
+
 type Item = { href: string; label: string };
 
 export function CommandPalette({
@@ -17,6 +19,7 @@ export function CommandPalette({
   items: Item[];
 }) {
   const router = useRouter();
+  const { t } = useOperatorPreferences();
   const [query, setQuery] = useState('');
 
   useEffect(() => {
@@ -38,13 +41,13 @@ export function CommandPalette({
       <div
         className="ui-palette"
         role="dialog"
-        aria-label="Komut paleti"
+        aria-label={t('web.shell.commandPalette')}
         onClick={(e) => e.stopPropagation()}
       >
         <input
           autoFocus
           className="ui-palette__input"
-          placeholder="Sayfa ara…"
+          placeholder={t('web.shell.commandPlaceholder')}
           value={query}
           onChange={(e) => setQuery(e.target.value)}
         />

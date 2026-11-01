@@ -1,0 +1,135 @@
+
+> @sosmesh/api@0.1.0 test /workspace/apps/api
+> jest --config jest.config.ts
+
+The files belonging to this database system will be owned by user "ubuntu".
+This user must also own the server process.
+
+The database cluster will be initialized with this locale configuration:
+  locale provider:   libc
+  LC_COLLATE:  C
+  LC_CTYPE:    C
+  LC_MESSAGES: en_US.UTF-8
+  LC_MONETARY: C
+  LC_NUMERIC:  C
+  LC_TIME:     C
+The default text search configuration will be set to "english".
+
+Data page checksums are disabled.
+
+fixing permissions on existing directory /tmp/sosmesh-pg-a1-i1HOAz ... ok
+creating subdirectories ... ok
+selecting dynamic shared memory implementation ... posix
+selecting default "max_connections" ... 100
+selecting default "shared_buffers" ... 128MB
+selecting default time zone ... Etc/UTC
+creating configuration files ... ok
+running bootstrap script ... ok
+performing post-bootstrap initialization ... ok
+syncing data to disk ... ok
+
+Success. You can now start the database server using:
+
+    '/workspace/node_modules/.pnpm/@embedded-postgres+linux-x64@17.5.0-beta.15/node_modules/@embedded-postgres/linux-x64/native/bin/pg_ctl' -D /tmp/sosmesh-pg-a1-i1HOAz -l logfile start
+
+2026-11-01 17:36:44.608 UTC [114134] LOG:  starting PostgreSQL 17.5 on x86_64-pc-linux-gnu, compiled by gcc (Ubuntu 7.5.0-3ubuntu1~18.04) 7.5.0, 64-bit
+2026-11-01 17:36:44.608 UTC [114134] LOG:  listening on IPv6 address "::1", port 20597
+2026-11-01 17:36:44.608 UTC [114134] LOG:  listening on IPv4 address "127.0.0.1", port 20597
+2026-11-01 17:36:44.610 UTC [114134] LOG:  listening on Unix socket "/tmp/.s.PGSQL.20597"
+2026-11-01 17:36:44.611 UTC [114137] LOG:  database system was shut down at 2026-11-01 17:36:44 UTC
+2026-11-01 17:36:44.613 UTC [114134] LOG:  database system is ready to accept connections
+PASS test/migration.spec.ts
+PASS test/operator-case-detail.spec.ts
+2026-11-01 17:36:48.267 UTC [114338] ERROR:  duplicate key value violates unique constraint "sos_messages_message_id_key"
+2026-11-01 17:36:48.267 UTC [114338] DETAIL:  Key (message_id)=(aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa) already exists.
+2026-11-01 17:36:48.267 UTC [114338] STATEMENT:  INSERT INTO "public"."sos_messages" ("id","message_id","incident_id","delivery_state","sos_type","location_status","latitude","longitude","accuracy_meters","encrypted_payload_ref","priority","received_at","server_receipt_at","needs_human_review","packet_hash","created_at","updated_at") VALUES ($1,$2,$3,CAST($4::text AS "public"."DeliveryState"),CAST($5::text AS "public"."SosType"),CAST($6::text AS "public"."LocationStatus"),$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17) RETURNING "public"."sos_messages"."id", "public"."sos_messages"."message_id", "public"."sos_messages"."incident_id", "public"."sos_messages"."delivery_state"::text, "public"."sos_messages"."sos_type"::text, "public"."sos_messages"."location_status"::text, "public"."sos_messages"."latitude", "public"."sos_messages"."longitude", "public"."sos_messages"."accuracy_meters", "public"."sos_messages"."encrypted_note_blob", "public"."sos_messages"."encrypted_payload_ref", "public"."sos_messages"."person_count", "public"."sos_messages"."operator_display_text", "public"."sos_messages"."priority", "public"."sos_messages"."received_at", "public"."sos_messages"."server_receipt_at", "public"."sos_messages"."needs_human_review", "public"."sos_messages"."packet_hash", "public"."sos_messages"."created_at", "public"."sos_messages"."updated_at"
+2026-11-01 17:36:48.268 UTC [114343] ERROR:  duplicate key value violates unique constraint "sos_messages_message_id_key"
+2026-11-01 17:36:48.268 UTC [114343] DETAIL:  Key (message_id)=(aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa) already exists.
+2026-11-01 17:36:48.268 UTC [114343] STATEMENT:  INSERT INTO "public"."sos_messages" ("id","message_id","incident_id","delivery_state","sos_type","location_status","latitude","longitude","accuracy_meters","encrypted_payload_ref","priority","received_at","server_receipt_at","needs_human_review","packet_hash","created_at","updated_at") VALUES ($1,$2,$3,CAST($4::text AS "public"."DeliveryState"),CAST($5::text AS "public"."SosType"),CAST($6::text AS "public"."LocationStatus"),$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17) RETURNING "public"."sos_messages"."id", "public"."sos_messages"."message_id", "public"."sos_messages"."incident_id", "public"."sos_messages"."delivery_state"::text, "public"."sos_messages"."sos_type"::text, "public"."sos_messages"."location_status"::text, "public"."sos_messages"."latitude", "public"."sos_messages"."longitude", "public"."sos_messages"."accuracy_meters", "public"."sos_messages"."encrypted_note_blob", "public"."sos_messages"."encrypted_payload_ref", "public"."sos_messages"."person_count", "public"."sos_messages"."operator_display_text", "public"."sos_messages"."priority", "public"."sos_messages"."received_at", "public"."sos_messages"."server_receipt_at", "public"."sos_messages"."needs_human_review", "public"."sos_messages"."packet_hash", "public"."sos_messages"."created_at", "public"."sos_messages"."updated_at"
+2026-11-01 17:36:48.268 UTC [114341] ERROR:  duplicate key value violates unique constraint "sos_messages_message_id_key"
+2026-11-01 17:36:48.268 UTC [114341] DETAIL:  Key (message_id)=(aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa) already exists.
+2026-11-01 17:36:48.268 UTC [114341] STATEMENT:  INSERT INTO "public"."sos_messages" ("id","message_id","incident_id","delivery_state","sos_type","location_status","latitude","longitude","accuracy_meters","encrypted_payload_ref","priority","received_at","server_receipt_at","needs_human_review","packet_hash","created_at","updated_at") VALUES ($1,$2,$3,CAST($4::text AS "public"."DeliveryState"),CAST($5::text AS "public"."SosType"),CAST($6::text AS "public"."LocationStatus"),$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17) RETURNING "public"."sos_messages"."id", "public"."sos_messages"."message_id", "public"."sos_messages"."incident_id", "public"."sos_messages"."delivery_state"::text, "public"."sos_messages"."sos_type"::text, "public"."sos_messages"."location_status"::text, "public"."sos_messages"."latitude", "public"."sos_messages"."longitude", "public"."sos_messages"."accuracy_meters", "public"."sos_messages"."encrypted_note_blob", "public"."sos_messages"."encrypted_payload_ref", "public"."sos_messages"."person_count", "public"."sos_messages"."operator_display_text", "public"."sos_messages"."priority", "public"."sos_messages"."received_at", "public"."sos_messages"."server_receipt_at", "public"."sos_messages"."needs_human_review", "public"."sos_messages"."packet_hash", "public"."sos_messages"."created_at", "public"."sos_messages"."updated_at"
+2026-11-01 17:36:48.268 UTC [114340] ERROR:  duplicate key value violates unique constraint "sos_messages_message_id_key"
+2026-11-01 17:36:48.268 UTC [114340] DETAIL:  Key (message_id)=(aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa) already exists.
+2026-11-01 17:36:48.268 UTC [114340] STATEMENT:  INSERT INTO "public"."sos_messages" ("id","message_id","incident_id","delivery_state","sos_type","location_status","latitude","longitude","accuracy_meters","encrypted_payload_ref","priority","received_at","server_receipt_at","needs_human_review","packet_hash","created_at","updated_at") VALUES ($1,$2,$3,CAST($4::text AS "public"."DeliveryState"),CAST($5::text AS "public"."SosType"),CAST($6::text AS "public"."LocationStatus"),$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17) RETURNING "public"."sos_messages"."id", "public"."sos_messages"."message_id", "public"."sos_messages"."incident_id", "public"."sos_messages"."delivery_state"::text, "public"."sos_messages"."sos_type"::text, "public"."sos_messages"."location_status"::text, "public"."sos_messages"."latitude", "public"."sos_messages"."longitude", "public"."sos_messages"."accuracy_meters", "public"."sos_messages"."encrypted_note_blob", "public"."sos_messages"."encrypted_payload_ref", "public"."sos_messages"."person_count", "public"."sos_messages"."operator_display_text", "public"."sos_messages"."priority", "public"."sos_messages"."received_at", "public"."sos_messages"."server_receipt_at", "public"."sos_messages"."needs_human_review", "public"."sos_messages"."packet_hash", "public"."sos_messages"."created_at", "public"."sos_messages"."updated_at"
+2026-11-01 17:36:48.269 UTC [114339] ERROR:  duplicate key value violates unique constraint "sos_messages_message_id_key"
+2026-11-01 17:36:48.269 UTC [114339] DETAIL:  Key (message_id)=(aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa) already exists.
+2026-11-01 17:36:48.269 UTC [114339] STATEMENT:  INSERT INTO "public"."sos_messages" ("id","message_id","incident_id","delivery_state","sos_type","location_status","latitude","longitude","accuracy_meters","encrypted_payload_ref","priority","received_at","server_receipt_at","needs_human_review","packet_hash","created_at","updated_at") VALUES ($1,$2,$3,CAST($4::text AS "public"."DeliveryState"),CAST($5::text AS "public"."SosType"),CAST($6::text AS "public"."LocationStatus"),$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17) RETURNING "public"."sos_messages"."id", "public"."sos_messages"."message_id", "public"."sos_messages"."incident_id", "public"."sos_messages"."delivery_state"::text, "public"."sos_messages"."sos_type"::text, "public"."sos_messages"."location_status"::text, "public"."sos_messages"."latitude", "public"."sos_messages"."longitude", "public"."sos_messages"."accuracy_meters", "public"."sos_messages"."encrypted_note_blob", "public"."sos_messages"."encrypted_payload_ref", "public"."sos_messages"."person_count", "public"."sos_messages"."operator_display_text", "public"."sos_messages"."priority", "public"."sos_messages"."received_at", "public"."sos_messages"."server_receipt_at", "public"."sos_messages"."needs_human_review", "public"."sos_messages"."packet_hash", "public"."sos_messages"."created_at", "public"."sos_messages"."updated_at"
+2026-11-01 17:36:48.282 UTC [114344] ERROR:  duplicate key value violates unique constraint "sos_messages_message_id_key"
+2026-11-01 17:36:48.282 UTC [114344] DETAIL:  Key (message_id)=(aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa) already exists.
+2026-11-01 17:36:48.282 UTC [114344] STATEMENT:  INSERT INTO "public"."sos_messages" ("id","message_id","incident_id","delivery_state","sos_type","location_status","latitude","longitude","accuracy_meters","encrypted_payload_ref","priority","received_at","server_receipt_at","needs_human_review","packet_hash","created_at","updated_at") VALUES ($1,$2,$3,CAST($4::text AS "public"."DeliveryState"),CAST($5::text AS "public"."SosType"),CAST($6::text AS "public"."LocationStatus"),$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17) RETURNING "public"."sos_messages"."id", "public"."sos_messages"."message_id", "public"."sos_messages"."incident_id", "public"."sos_messages"."delivery_state"::text, "public"."sos_messages"."sos_type"::text, "public"."sos_messages"."location_status"::text, "public"."sos_messages"."latitude", "public"."sos_messages"."longitude", "public"."sos_messages"."accuracy_meters", "public"."sos_messages"."encrypted_note_blob", "public"."sos_messages"."encrypted_payload_ref", "public"."sos_messages"."person_count", "public"."sos_messages"."operator_display_text", "public"."sos_messages"."priority", "public"."sos_messages"."received_at", "public"."sos_messages"."server_receipt_at", "public"."sos_messages"."needs_human_review", "public"."sos_messages"."packet_hash", "public"."sos_messages"."created_at", "public"."sos_messages"."updated_at"
+PASS test/ingest.spec.ts
+PASS test/auth-rbac.spec.ts
+PASS test/operator-cases.spec.ts
+PASS test/ai-worker.spec.ts
+PASS test/operator-feed-transaction.spec.ts
+PASS test/ai-meta.spec.ts
+PASS test/sync-events.spec.ts
+2026-11-01 17:36:51.099 UTC [114381] ERROR:  duplicate key value violates unique constraint "sos_messages_message_id_key"
+2026-11-01 17:36:51.099 UTC [114381] DETAIL:  Key (message_id)=(11111111-1111-4111-8111-111111111111) already exists.
+2026-11-01 17:36:51.099 UTC [114381] STATEMENT:  INSERT INTO "public"."sos_messages" ("id","message_id","incident_id","delivery_state","sos_type","location_status","encrypted_note_blob","priority","received_at","needs_human_review","created_at","updated_at") VALUES ($1,$2,$3,CAST($4::text AS "public"."DeliveryState"),CAST($5::text AS "public"."SosType"),CAST($6::text AS "public"."LocationStatus"),$7,$8,$9,$10,$11,$12) RETURNING "public"."sos_messages"."id", "public"."sos_messages"."message_id", "public"."sos_messages"."incident_id", "public"."sos_messages"."delivery_state"::text, "public"."sos_messages"."sos_type"::text, "public"."sos_messages"."location_status"::text, "public"."sos_messages"."latitude", "public"."sos_messages"."longitude", "public"."sos_messages"."accuracy_meters", "public"."sos_messages"."encrypted_note_blob", "public"."sos_messages"."encrypted_payload_ref", "public"."sos_messages"."person_count", "public"."sos_messages"."operator_display_text", "public"."sos_messages"."priority", "public"."sos_messages"."received_at", "public"."sos_messages"."server_receipt_at", "public"."sos_messages"."needs_human_review", "public"."sos_messages"."packet_hash", "public"."sos_messages"."created_at", "public"."sos_messages"."updated_at"
+PASS test/duplicate-message.spec.ts
+PASS test/validation.spec.ts
+PASS test/operator-auth.spec.ts
+PASS test/request-id-redaction.spec.ts
+PASS test/api-boot.spec.ts
+PASS src/health/health.controller.spec.ts
+PASS test/schema-introspection.spec.ts
+PASS test/env-validation-boot.spec.ts
+PASS src/ai/evals/fixtures.spec.ts
+
+Test Suites: 18 passed, 18 total
+Tests:       91 passed, 91 total
+Snapshots:   0 total
+Time:        6.69 s, estimated 7 s
+Ran all test suites.
+2026-11-01 17:36:52.008 UTC [114134] LOG:  received fast shutdown request
+2026-11-01 17:36:52.009 UTC [114134] LOG:  aborting any active transactions
+2026-11-01 17:36:52.009 UTC [114379] FATAL:  terminating connection due to administrator command
+2026-11-01 17:36:52.009 UTC [114389] FATAL:  terminating connection due to administrator command
+2026-11-01 17:36:52.009 UTC [114385] FATAL:  terminating connection due to administrator command
+2026-11-01 17:36:52.009 UTC [114387] FATAL:  terminating connection due to administrator command
+2026-11-01 17:36:52.010 UTC [114353] FATAL:  terminating connection due to administrator command
+2026-11-01 17:36:52.010 UTC [114381] FATAL:  terminating connection due to administrator command
+2026-11-01 17:36:52.010 UTC [114383] FATAL:  terminating connection due to administrator command
+2026-11-01 17:36:52.010 UTC [114374] FATAL:  terminating connection due to administrator command
+2026-11-01 17:36:52.011 UTC [114349] FATAL:  terminating connection due to administrator command
+2026-11-01 17:36:52.011 UTC [114376] FATAL:  terminating connection due to administrator command
+2026-11-01 17:36:52.011 UTC [114377] FATAL:  terminating connection due to administrator command
+2026-11-01 17:36:52.011 UTC [114373] FATAL:  terminating connection due to administrator command
+2026-11-01 17:36:52.011 UTC [114354] FATAL:  terminating connection due to administrator command
+2026-11-01 17:36:52.011 UTC [114352] FATAL:  terminating connection due to administrator command
+2026-11-01 17:36:52.011 UTC [114347] FATAL:  terminating connection due to administrator command
+2026-11-01 17:36:52.012 UTC [114372] FATAL:  terminating connection due to administrator command
+2026-11-01 17:36:52.012 UTC [114327] FATAL:  terminating connection due to administrator command
+2026-11-01 17:36:52.012 UTC [114371] FATAL:  terminating connection due to administrator command
+2026-11-01 17:36:52.012 UTC [114370] FATAL:  terminating connection due to administrator command
+2026-11-01 17:36:52.012 UTC [114369] FATAL:  terminating connection due to administrator command
+2026-11-01 17:36:52.013 UTC [114368] FATAL:  terminating connection due to administrator command
+2026-11-01 17:36:52.013 UTC [114367] FATAL:  terminating connection due to administrator command
+2026-11-01 17:36:52.013 UTC [114366] FATAL:  terminating connection due to administrator command
+2026-11-01 17:36:52.013 UTC [114358] FATAL:  terminating connection due to administrator command
+2026-11-01 17:36:52.014 UTC [114356] FATAL:  terminating connection due to administrator command
+2026-11-01 17:36:52.014 UTC [114351] FATAL:  terminating connection due to administrator command
+2026-11-01 17:36:52.014 UTC [114345] FATAL:  terminating connection due to administrator command
+2026-11-01 17:36:52.014 UTC [114344] FATAL:  terminating connection due to administrator command
+2026-11-01 17:36:52.014 UTC [114343] FATAL:  terminating connection due to administrator command
+2026-11-01 17:36:52.014 UTC [114342] FATAL:  terminating connection due to administrator command
+2026-11-01 17:36:52.015 UTC [114341] FATAL:  terminating connection due to administrator command
+2026-11-01 17:36:52.015 UTC [114340] FATAL:  terminating connection due to administrator command
+2026-11-01 17:36:52.015 UTC [114339] FATAL:  terminating connection due to administrator command
+2026-11-01 17:36:52.015 UTC [114338] FATAL:  terminating connection due to administrator command
+2026-11-01 17:36:52.015 UTC [114337] FATAL:  terminating connection due to administrator command
+2026-11-01 17:36:52.015 UTC [114335] FATAL:  terminating connection due to administrator command
+2026-11-01 17:36:52.016 UTC [114334] FATAL:  terminating connection due to administrator command
+2026-11-01 17:36:52.016 UTC [114333] FATAL:  terminating connection due to administrator command
+2026-11-01 17:36:52.016 UTC [114332] FATAL:  terminating connection due to administrator command
+2026-11-01 17:36:52.016 UTC [114331] FATAL:  terminating connection due to administrator command
+2026-11-01 17:36:52.016 UTC [114330] FATAL:  terminating connection due to administrator command
+2026-11-01 17:36:52.017 UTC [114329] FATAL:  terminating connection due to administrator command
+2026-11-01 17:36:52.017 UTC [114328] FATAL:  terminating connection due to administrator command
+2026-11-01 17:36:52.018 UTC [114134] LOG:  background worker "logical replication launcher" (PID 114140) exited with exit code 1
+2026-11-01 17:36:52.018 UTC [114135] LOG:  shutting down
+2026-11-01 17:36:52.019 UTC [114135] LOG:  checkpoint starting: shutdown immediate
+2026-11-01 17:36:52.028 UTC [114135] LOG:  checkpoint complete: wrote 193 buffers (1.2%); 0 WAL file(s) added, 0 removed, 0 recycled; write=0.004 s, sync=0.004 s, total=0.011 s; sync files=164, longest=0.002 s, average=0.001 s; distance=1058 kB, estimate=1058 kB; lsn=0/15E2078, redo lsn=0/15E2078
+2026-11-01 17:36:52.030 UTC [114134] LOG:  database system is shut down

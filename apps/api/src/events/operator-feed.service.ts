@@ -2,7 +2,7 @@ import { Injectable } from '@nestjs/common';
 import { LocationStatus, Prisma, SosMessage } from '@prisma/client';
 
 import { OperatorRequestUser } from '../operator/guards/operator-auth.guard';
-import { IncidentScopeService } from '../operator/incident-scope.service';
+import { IncidentScopeService } from '../organization/incident-scope.service';
 import { PrismaService } from '../prisma/prisma.service';
 import { OPERATOR_FEED_ADVISORY_LOCK_KEY } from './operator-feed.constants';
 

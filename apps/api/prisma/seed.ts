@@ -4,6 +4,16 @@ import * as bcrypt from 'bcrypt';
 const prisma = new PrismaClient();
 
 async function main() {
+  const organization = await prisma.organization.upsert({
+    where: { id: '00000000-0000-4000-8000-0000000000f0' },
+    update: {},
+    create: {
+      id: '00000000-0000-4000-8000-0000000000f0',
+      name: 'Demo Organization',
+      slug: 'demo-org',
+    },
+  });
+
   const team = await prisma.team.upsert({
     where: { id: '00000000-0000-4000-8000-000000000001' },
     update: {},
@@ -11,6 +21,7 @@ async function main() {
       id: '00000000-0000-4000-8000-000000000001',
       name: 'demo-response-unit',
       zoneCode: 'SYNTH-Z1',
+      organizationId: organization.id,
     },
   });
 

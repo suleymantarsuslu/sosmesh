@@ -29,4 +29,8 @@
     <string name="sos_type_yaralanma">Injury</string>
     <string name="sos_type_diger">Other</string>
     <string name="sos_offline_badge">Offline</string>
+    <string name="sos_location_fresh">Location is fresh</string>
+    <string name="sos_location_aging">Location is aging</string>
+    <string name="sos_location_stale">Location is stale — pick manually</string>
+    <string name="sos_secondary_continue_hint">Fill in details, then continue</string>
 </resources>

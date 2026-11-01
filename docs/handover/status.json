@@ -948,12 +948,23 @@
       ],
       "deliverables": "Android complete feature set; screenshot goldens",
       "pass_criteria": "Kullanıcı yanlış teslim algısına düşmeden iki dakikadan kısa temel akışı tamamlar.",
-      "status": "NOT_STARTED",
-      "attempts": 0,
+      "status": "PARTIAL",
+      "attempts": 1,
       "commit": null,
-      "evidence": [],
-      "blockers": [],
-      "last_checked_at": null,
+      "evidence": [
+        "HomeRoute: express SOS (ExpressSosSaver) + rehberli sihirbaz (OutlinedButton); PlatformSelfRepairCard; RelayEducationCard",
+        "SosFlowScreen: konum tazelik rozeti (LocationFreshness); birincil/ikincil CTA ayrımı (continue pill, express ana ekranda)",
+        "StatusScreen: hop kanıtı (StatusHopProgress) + UTC created/updated meta",
+        "SettingsRoute: yüksek kontrast + yerel veri kontrolü metni",
+        "Robolectric: ExpressSosSaverTest, SosA11yRobolectricTest (fontScale 2), LocationFreshnessTest",
+        "TalkBack canlı / screenshot golden / 30fps ölçümü: NOT_TESTED (ERTELENDİ)",
+        "Gradle testDebugUnitTest + ktlintCheck + assembleDebug EXIT=0 (JDK 17, ANDROID_HOME=/opt/android-sdk)"
+      ],
+      "blockers": [
+        "Fiziksel cihaz TalkBack ve akış süresi ölçümü yok",
+        "Screenshot golden suite ERTELENDİ"
+      ],
+      "last_checked_at": "2026-11-01T17:55:00+00:00",
       "goal": "Afetzede ve gönüllü deneyimini ürün seviyesine çıkar.",
       "cursor_tasks": [
         "Guided SOS wizard + express one-tap, last location freshness badge, manual point selection.",
@@ -973,14 +984,24 @@
         "16",
         "29"
       ],
-      "deliverables": "apps/android/core-platform; docs/compat/android-matrix.csv",
+      "deliverables": "apps/android/core/platform; docs/compat/android-matrix.csv",
       "pass_criteria": "Desteklenen senaryolar belgeli; yanlış sürekli arka plan garantisi yok.",
-      "status": "NOT_STARTED",
-      "attempts": 0,
+      "status": "PARTIAL",
+      "attempts": 1,
       "commit": null,
-      "evidence": [],
-      "blockers": [],
-      "last_checked_at": null,
+      "evidence": [
+        "apps/android/core/platform: MeshPlatformStateMachine + EnergyRadioProfile (SOS_URGENT vs CONSTRAINED vs relay)",
+        "MeshPlatformSignalBridge: ağ/BT/izin/pil/güç tasarrufu/doze sinyalleri",
+        "docs/compat/android-matrix.csv (fiziksel OEM satırları NOT_TESTED)",
+        "BleScanner.start(EnergyRadioProfile); RelayBatteryPolicy duty-cycle EnergyRadioProfile ile hizalı",
+        "MeshPlatformStateMachineTest (BT kapalı, izin reddi, pil, doze, ağ)",
+        "Gerçek cihaz pil ölçümü / 3+ OEM / BLE: NOT_TESTED",
+        "Gradle testDebugUnitTest + ktlintCheck + assembleDebug EXIT=0"
+      ],
+      "blockers": [
+        "Fiziksel Android matrisi ve pil tüketimi ölçümü yok"
+      ],
+      "last_checked_at": "2026-11-01T17:55:00+00:00",
       "goal": "Android OEM ve OS varyasyonlarında güvenilirlik sınırını ölç.",
       "cursor_tasks": [
         "Connection state broadcast and permission flow instrumentation; bluetooth off/on events.",

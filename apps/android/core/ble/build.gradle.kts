@@ -26,6 +26,7 @@ android {
 dependencies {
     implementation(project(":contracts-kotlin"))
     implementation(project(":core:permissions"))
+    implementation(project(":core:platform"))
     implementation("androidx.core:core-ktx:1.12.0")
     implementation("com.google.dagger:hilt-android:2.50")
     kapt("com.google.dagger:hilt-compiler:2.50")

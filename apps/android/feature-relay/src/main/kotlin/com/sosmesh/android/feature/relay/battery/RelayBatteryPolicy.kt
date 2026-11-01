@@ -1,6 +1,6 @@
 package com.sosmesh.android.feature.relay.battery
 
-import com.sosmesh.android.core.ble.BleScanProfile
+import com.sosmesh.android.core.platform.EnergyRadioProfile
 import com.sosmesh.android.feature.relay.settings.RelayHourlyDataBudget
 import com.sosmesh.android.feature.relay.settings.RelaySettingsPort
 import javax.inject.Inject
@@ -64,8 +64,11 @@ class RelayBatteryPolicy
                 return 0
             }
             val scanDutyFactor =
-                BleScanProfile.FOREGROUND_SCAN_PERIOD_MS.toDouble() /
-                    (BleScanProfile.FOREGROUND_SCAN_PERIOD_MS + BleScanProfile.FOREGROUND_SCAN_PAUSE_MS)
+                EnergyRadioProfile.RELAY_FOREGROUND_LOW_POWER.scanPeriodMs.toDouble() /
+                    (
+                        EnergyRadioProfile.RELAY_FOREGROUND_LOW_POWER.scanPeriodMs +
+                            EnergyRadioProfile.RELAY_FOREGROUND_LOW_POWER.scanPauseMs
+                    )
             val scanComponent = (scanDutyFactor * 4.0).toInt().coerceAtMost(6)
             return (scanComponent + 2).coerceAtMost(8)
         }

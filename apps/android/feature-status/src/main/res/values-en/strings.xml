@@ -16,4 +16,9 @@
     <string name="status_timeline_desc_server">Reached the server and is visible to operators.</string>
     <string name="status_timeline_desc_operator">An operator viewed the case.</string>
     <string name="status_timeline_desc_case">Case is in progress.</string>
+    <string name="status_evidence_created">Recorded (UTC): %1$s</string>
+    <string name="status_evidence_updated">Last update (UTC): %1$s</string>
+    <string name="status_evidence_last_error">Last error code: %1$s</string>
+    <string name="status_hop_reached">✓ %1$s</string>
+    <string name="status_hop_pending">○ %1$s</string>
 </resources>

@@ -216,9 +216,6 @@ jobs:
       - name: Show Xcode version
         run: xcodebuild -version
       
-      - name: Install CocoaPods
-        run: cd apps/ios && pod install
-      
       - name: Lint Swift
         run: |
           if command -v swiftlint &> /dev/null; then

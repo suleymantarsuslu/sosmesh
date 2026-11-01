@@ -1,67 +1,102 @@
 package com.sosmesh.android.core.platform
 
-import org.json.JSONObject
+import kotlinx.serialization.json.Json
+import kotlinx.serialization.json.boolean
+import kotlinx.serialization.json.int
+import kotlinx.serialization.json.jsonArray
+import kotlinx.serialization.json.jsonObject
+import kotlinx.serialization.json.jsonPrimitive
+import kotlinx.serialization.json.long
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Test
-import java.io.File
+import java.nio.file.Paths
 
 class AdaptiveRadioPlannerCrossLanguageTest {
+    private val json = Json { ignoreUnknownKeys = true }
+
     @Test
     fun crossLanguageVectorsMatchGolden() {
-        val vectorsFile =
-            File("../../../../packages/contracts/radio-planner/vectors/radio-planner-cases.json")
-                .canonicalFile
-        val root = JSONObject(vectorsFile.readText())
-        val cases = root.getJSONArray("cases")
-        for (index in 0 until cases.length()) {
-            val case = cases.getJSONObject(index)
-            val id = case.getString("id")
-            val inputJson = case.getJSONObject("input")
-            val expect = case.getJSONObject("expect")
+        val vectorsPath =
+            Paths.get(
+                System.getProperty("user.dir"),
+                "..",
+                "..",
+                "..",
+                "..",
+                "packages",
+                "contracts",
+                "radio-planner",
+                "vectors",
+                "radio-planner-cases.json",
+            ).normalize()
+        val root = json.parseToJsonElement(vectorsPath.toFile().readText()).jsonObject
+        val cases = root.getValue("cases").jsonArray
+        for (element in cases) {
+            val case = element.jsonObject
+            val id = case.getValue("id").jsonPrimitive.content
+            val inputJson = case.getValue("input").jsonObject
+            val expect = case.getValue("expect").jsonObject
             val input =
                 RadioPlannerInput(
-                    bluetoothEnabled = inputJson.getBoolean("bluetoothEnabled"),
-                    blePermissionsGranted = inputJson.getBoolean("blePermissionsGranted"),
-                    sosTransferActive = inputJson.getBoolean("sosTransferActive"),
-                    relayOptIn = inputJson.getBoolean("relayOptIn"),
-                    batteryLevelPercent = inputJson.getInt("batteryLevelPercent"),
-                    batteryLowThresholdPercent = inputJson.getInt("batteryLowThresholdPercent"),
-                    powerSaveEnabled = inputJson.getBoolean("powerSaveEnabled"),
-                    deviceIdle = inputJson.getBoolean("deviceIdle"),
-                    thermalThrottled = inputJson.getBoolean("thermalThrottled"),
-                    highPowerRadioConsent = inputJson.getBoolean("highPowerRadioConsent"),
-                    duplicateTrafficRatioBps = inputJson.getInt("duplicateTrafficRatioBps"),
-                    linkQualityScoreBps = inputJson.getInt("linkQualityScoreBps"),
+                    bluetoothEnabled = inputJson.getValue("bluetoothEnabled").jsonPrimitive.boolean,
+                    blePermissionsGranted = inputJson.getValue("blePermissionsGranted").jsonPrimitive.boolean,
+                    sosTransferActive = inputJson.getValue("sosTransferActive").jsonPrimitive.boolean,
+                    relayOptIn = inputJson.getValue("relayOptIn").jsonPrimitive.boolean,
+                    batteryLevelPercent = inputJson.getValue("batteryLevelPercent").jsonPrimitive.int,
+                    batteryLowThresholdPercent =
+                        inputJson.getValue("batteryLowThresholdPercent").jsonPrimitive.int,
+                    powerSaveEnabled = inputJson.getValue("powerSaveEnabled").jsonPrimitive.boolean,
+                    deviceIdle = inputJson.getValue("deviceIdle").jsonPrimitive.boolean,
+                    thermalThrottled = inputJson.getValue("thermalThrottled").jsonPrimitive.boolean,
+                    highPowerRadioConsent = inputJson.getValue("highPowerRadioConsent").jsonPrimitive.boolean,
+                    duplicateTrafficRatioBps = inputJson.getValue("duplicateTrafficRatioBps").jsonPrimitive.int,
+                    linkQualityScoreBps = inputJson.getValue("linkQualityScoreBps").jsonPrimitive.int,
                 )
             val decision = AdaptiveRadioPlanner.plan(input)
-            assertEquals("case $id profileId", expect.getString("profileId"), decision.profileId.name)
-            assertEquals("case $id scanMode", expect.getInt("scanMode"), decision.radioProfile.scanMode)
-            assertEquals("case $id scanPeriodMs", expect.getLong("scanPeriodMs"), decision.radioProfile.scanPeriodMs)
-            assertEquals("case $id scanPauseMs", expect.getLong("scanPauseMs"), decision.radioProfile.scanPauseMs)
+            assertEquals(
+                "case $id profileId",
+                expect.getValue("profileId").jsonPrimitive.content,
+                decision.profileId.name,
+            )
+            assertEquals(
+                "case $id scanMode",
+                expect.getValue("scanMode").jsonPrimitive.int,
+                decision.radioProfile.scanMode,
+            )
+            assertEquals(
+                "case $id scanPeriodMs",
+                expect.getValue("scanPeriodMs").jsonPrimitive.long,
+                decision.radioProfile.scanPeriodMs,
+            )
+            assertEquals(
+                "case $id scanPauseMs",
+                expect.getValue("scanPauseMs").jsonPrimitive.long,
+                decision.radioProfile.scanPauseMs,
+            )
             assertEquals(
                 "case $id scanningAllowed",
-                expect.getBoolean("scanningAllowed"),
+                expect.getValue("scanningAllowed").jsonPrimitive.boolean,
                 decision.radioProfile.scanningAllowed,
             )
             assertEquals(
                 "case $id advertiseIntervalMs",
-                expect.getLong("advertiseIntervalMs"),
+                expect.getValue("advertiseIntervalMs").jsonPrimitive.long,
                 decision.radioProfile.advertiseIntervalMs,
             )
             assertEquals(
                 "case $id advertiseAllowed",
-                expect.getBoolean("advertiseAllowed"),
+                expect.getValue("advertiseAllowed").jsonPrimitive.boolean,
                 decision.radioProfile.advertiseAllowed,
             )
             assertEquals(
                 "case $id requiresHighPowerConsentPrompt",
-                expect.getBoolean("requiresHighPowerConsentPrompt"),
+                expect.getValue("requiresHighPowerConsentPrompt").jsonPrimitive.boolean,
                 decision.requiresHighPowerConsentPrompt,
             )
             assertEquals(
                 "case $id dutyCycleClass",
-                expect.getString("dutyCycleClass"),
+                expect.getValue("dutyCycleClass").jsonPrimitive.content,
                 decision.dutyCycleClass.name,
             )
         }
@@ -90,7 +125,7 @@ class AdaptiveRadioPlannerMutationTest {
         assertEquals(RadioProfileId.SOS_CONSTRAINED, baseline.profileId)
 
         val mutated =
-            AdaptiveRadioPlanner.plan(
+            AdaptiveRadioPlannerTesting.plan(
                 input,
                 RadioPlannerTestingHooks(ignoreLowPowerConstraints = true),
             )
@@ -118,7 +153,7 @@ class AdaptiveRadioPlannerMutationTest {
         assertEquals(RadioProfileId.RELAY_CONSTRAINED, baseline.profileId)
 
         val mutated =
-            AdaptiveRadioPlanner.plan(
+            AdaptiveRadioPlannerTesting.plan(
                 input,
                 RadioPlannerTestingHooks(ignoreLowPowerConstraints = true),
             )

@@ -64,23 +64,18 @@ data class RadioPlannerDecision(
     val dutyCycleClass: RadioDutyCycleClass,
 )
 
-data class RadioPlannerTestingHooks(
-    val ignoreLowPowerConstraints: Boolean = false,
-) {
-    companion object {
-        val NONE = RadioPlannerTestingHooks()
-    }
-}
-
 object AdaptiveRadioPlanner {
     private const val DUPLICATE_SLOW_THRESHOLD_BPS = 2500
     private const val LINK_POOR_THRESHOLD_BPS = 2500
     private const val DUPLICATE_LOW_FOR_BOOST_BPS = 2000
     private const val RELAY_BATTERY_SOFT_CONSTRAINED_PERCENT = 25
 
-    fun plan(
+    fun plan(input: RadioPlannerInput): RadioPlannerDecision =
+        planInternal(input, RadioPlannerTestingHooks.NONE)
+
+    internal fun planInternal(
         input: RadioPlannerInput,
-        testingHooks: RadioPlannerTestingHooks = RadioPlannerTestingHooks.NONE,
+        testingHooks: RadioPlannerTestingHooks,
     ): RadioPlannerDecision {
         if (!input.blePermissionsGranted) {
             return blockedDecision()

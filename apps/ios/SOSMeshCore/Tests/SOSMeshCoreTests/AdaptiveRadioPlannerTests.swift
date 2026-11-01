@@ -76,6 +76,40 @@ final class AdaptiveRadioPlannerCrossLanguageTests: XCTestCase {
 }
 
 final class AdaptiveRadioPlannerMutationTests: XCTestCase {
+    func testProductionPlanEnforcesLowPowerConstraintsWithoutTestingHooks() {
+        let sosInput = RadioPlannerInput(
+            bluetoothEnabled: true,
+            blePermissionsGranted: true,
+            sosTransferActive: true,
+            relayOptIn: false,
+            batteryLevelPercent: 70,
+            batteryLowThresholdPercent: 15,
+            powerSaveEnabled: false,
+            deviceIdle: false,
+            thermalThrottled: true,
+            highPowerRadioConsent: false,
+            duplicateTrafficRatioBps: 0,
+            linkQualityScoreBps: 5000
+        )
+        XCTAssertEqual(AdaptiveRadioPlanner.plan(sosInput).profileId, .sosConstrained)
+
+        let relayInput = RadioPlannerInput(
+            bluetoothEnabled: true,
+            blePermissionsGranted: true,
+            sosTransferActive: false,
+            relayOptIn: true,
+            batteryLevelPercent: 55,
+            batteryLowThresholdPercent: 15,
+            powerSaveEnabled: true,
+            deviceIdle: false,
+            thermalThrottled: false,
+            highPowerRadioConsent: true,
+            duplicateTrafficRatioBps: 0,
+            linkQualityScoreBps: 5000
+        )
+        XCTAssertEqual(AdaptiveRadioPlanner.plan(relayInput).profileId, .relayConstrained)
+    }
+
     func testIgnoreLowPowerConstraintsChangesSosConstrainedVsBaseline() {
         let input = RadioPlannerInput(
             bluetoothEnabled: true,
@@ -94,7 +128,7 @@ final class AdaptiveRadioPlannerMutationTests: XCTestCase {
         let baseline = AdaptiveRadioPlanner.plan(input)
         XCTAssertEqual(baseline.profileId, .sosConstrained)
 
-        let mutated = AdaptiveRadioPlanner.plan(
+        let mutated = AdaptiveRadioPlanner.planInternal(
             input,
             testingHooks: RadioPlannerTestingHooks(ignoreLowPowerConstraints: true)
         )

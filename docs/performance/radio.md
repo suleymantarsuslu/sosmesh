@@ -35,8 +35,8 @@ Bu belge, **adaptif BLE scan/advertise planlayıcısının** tasarımını özet
 
 ## Test kanıtı
 
-- Kotlin: `AdaptiveRadioPlannerTest` (vektör + mutation `ignoreLowPowerConstraints`)
-- Swift: `AdaptiveRadioPlannerTests` (aynı JSON, bundled byte-match)
+- Kotlin: `AdaptiveRadioPlannerTest` (vektör + mutation `AdaptiveRadioPlannerTesting` / internal hooks)
+- Swift: `AdaptiveRadioPlannerTests` (aynı JSON, bundled byte-match; production guard testi)
 
 ## Doğrulama kanıtı (master plan)
 

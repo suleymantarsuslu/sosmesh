@@ -94,14 +94,14 @@ public struct RadioPlannerDecision: Equatable, Sendable {
     public var dutyCycleClass: RadioDutyCycleClass
 }
 
-public struct RadioPlannerTestingHooks: Sendable {
-    public var ignoreLowPowerConstraints: Bool
+struct RadioPlannerTestingHooks: Sendable {
+    var ignoreLowPowerConstraints: Bool
 
-    public init(ignoreLowPowerConstraints: Bool = false) {
+    init(ignoreLowPowerConstraints: Bool = false) {
         self.ignoreLowPowerConstraints = ignoreLowPowerConstraints
     }
 
-    public static let none = RadioPlannerTestingHooks()
+    static let none = RadioPlannerTestingHooks()
 }
 
 public enum AdaptiveRadioPlanner {
@@ -110,9 +110,13 @@ public enum AdaptiveRadioPlanner {
     private static let duplicateLowForBoostBps = 2000
     private static let relayBatterySoftConstrainedPercent = 25
 
-    public static func plan(
+    public static func plan(_ input: RadioPlannerInput) -> RadioPlannerDecision {
+        planInternal(input, testingHooks: .none)
+    }
+
+    static func planInternal(
         _ input: RadioPlannerInput,
-        testingHooks: RadioPlannerTestingHooks = .none
+        testingHooks: RadioPlannerTestingHooks
     ) -> RadioPlannerDecision {
         if !input.blePermissionsGranted {
             return blockedDecision()

@@ -41,6 +41,12 @@ fun SettingsRoute(
             checked = state.highContrast,
             onCheckedChange = viewModel::setHighContrast,
         )
+        Text(stringResource(R.string.settings_high_power_radio_intro), style = MaterialTheme.typography.bodySmall)
+        RowToggle(
+            label = stringResource(R.string.settings_high_power_radio_consent),
+            checked = state.highPowerRadioConsent,
+            onCheckedChange = viewModel::setHighPowerRadioConsent,
+        )
         Text(stringResource(R.string.settings_local_data_note), style = MaterialTheme.typography.bodySmall)
         Button(onClick = onBack, modifier = Modifier.fillMaxWidth()) {
             Text(stringResource(R.string.settings_back))

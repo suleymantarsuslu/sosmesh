@@ -27,6 +27,8 @@ export const envValidationSchema = Joi.object({
   AI_TENANT_RATE_LIMIT_WINDOW_MS: Joi.number().integer().min(1000).default(60000),
   AI_DAILY_COST_CAP_USD: Joi.number().min(0).default(5),
   AI_ESTIMATED_COST_USD: Joi.number().min(0).default(0.002),
+  RETENTION_JOB_ENABLED: Joi.string().valid('true', 'false').default('false'),
+  RETENTION_SOS_MESSAGE_MAX_AGE_SECONDS: Joi.string().allow('').optional(),
 });
 
 export type AppEnv = {

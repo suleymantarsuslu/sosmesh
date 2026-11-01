@@ -13,4 +13,6 @@
     <string name="relay_pause_hourly_limit">Hourly data limit reached; upload deferred.</string>
     <string name="relay_constraints_title">Android and OEM limits</string>
     <string name="relay_stop_exit">Stop relay and exit</string>
+    <string name="relay_opt_out_label">Turn off volunteer relay</string>
+    <string name="relay_opt_out_hint">When off, you stop carrying encrypted packets; your own SOS records on device are not deleted.</string>
 </resources>

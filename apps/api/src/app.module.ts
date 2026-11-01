@@ -25,6 +25,7 @@ import { CoordinationModule } from './coordination/coordination.module';
 import { NotificationsModule } from './notifications/notifications.module';
 import { PrismaModule } from './prisma/prisma.module';
 import { PublicModule } from './public/public.module';
+import { PrivacyModule } from './privacy/privacy.module';
 
 @Module({
   imports: [
@@ -77,6 +78,7 @@ import { PublicModule } from './public/public.module';
     OrganizationModule,
     CoordinationModule,
     NotificationsModule,
+    PrivacyModule,
   ],
   providers: [
     {

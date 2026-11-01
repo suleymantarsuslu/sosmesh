@@ -23,6 +23,10 @@
     <string name="sos_error_note_long">Not en fazla 200 karakter olabilir</string>
     <string name="sos_saved_local">Cihazda kaydedildi — yakındaki cihaz aranıyor</string>
     <string name="sos_not112_disclaimer">SOSMesh 112\'nin yerine geçmez. Acil durumda 112\'yi arayın.</string>
+    <string name="sos_consent_title">SOS ve veri kullanımı</string>
+    <string name="sos_consent_body">Hesap gerekmez. Konum ve mesajınız şifreli iletilir; yalnızca yetkili operatörler sunucuda çözer. Devam etmek için onaylayın.</string>
+    <string name="sos_consent_accept">Onayla ve devam et</string>
+    <string name="sos_consent_decline">Vazgeç</string>
     <string name="sos_type_deprem">Deprem</string>
     <string name="sos_type_yangin">Yangın</string>
     <string name="sos_type_sel">Sel</string>

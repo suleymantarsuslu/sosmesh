@@ -1518,12 +1518,21 @@
       ],
       "deliverables": "docs/legal/privacy-policy-draft.md, retention ADR, API deletions",
       "pass_criteria": "Her veri alanı için amaç, erişim, retention ve silme yolu belli.",
-      "status": "NOT_STARTED",
-      "attempts": 0,
+      "status": "PARTIAL",
+      "attempts": 1,
       "commit": null,
-      "evidence": [],
-      "blockers": [],
-      "last_checked_at": null,
+      "evidence": [
+        "docs/legal/privacy-policy-draft.md, docs/legal/kvkk-gdpr-legal-review-checklist.md (hukuki inceleme NOT_TESTED)",
+        "docs/privacy/data-map.md, docs/privacy/lawful-emergency-access.md",
+        "docs/adr/ADR-013-retention-and-erasure.md (RETENTION_* onay gerektirir; varsayılan süre yok)",
+        "docs/ux/content-tr.json + content-en.json privacy.*; Android feature-sos/feature-relay consent strings",
+        "apps/api/src/privacy/* erase/export/retention + audit-redaction.util.ts",
+        "apps/api/test/privacy-adim44.spec.ts (RBAC, retention purge, seed sentetik guard)"
+      ],
+      "blockers": [
+        "Hukuki onay NOT_TESTED — tam uyumlu denmez"
+      ],
+      "last_checked_at": "2026-11-01T22:30:00+00:00",
       "goal": "Hassas konum/sağlık bildirimlerinin saklanmasını sınırlı ve denetlenebilir yap.",
       "cursor_tasks": [
         "KVKK/GDPR applicability için hukuki inceleme listesi; privacy-by-design ve role-based access.",

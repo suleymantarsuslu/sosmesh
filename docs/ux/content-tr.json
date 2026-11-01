@@ -212,6 +212,20 @@
       "cancelled": "SOS gönderilmedi"
     }
   },
+  "privacy": {
+    "accountlessSos": {
+      "title": "SOS gönderimi ve veri kullanımı",
+      "body": "Hesap oluşturmadan SOS gönderebilirsiniz. Konum ve mesajınız şifreli iletilir; yalnızca yetkili operatörler sunucuda çözebilir. SOSMesh 112'nin yerine geçmez.",
+      "accept": "Okudum, SOS göndermek istiyorum",
+      "decline": "Vazgeç"
+    },
+    "relayOptIn": {
+      "title": "Gönüllü röle",
+      "body": "Röle modu kapalıdır. Açarsanız yalnızca şifreli paket taşırsınız; içeriği göremezsiniz. İstediğiniz zaman kapatabilirsiniz.",
+      "enable": "Röleyi etkinleştir",
+      "disable": "Röleyi kapat"
+    }
+  },
   "a11y": {
     "skipToMain": "Ana içeriğe geç",
     "menu": "Menü",

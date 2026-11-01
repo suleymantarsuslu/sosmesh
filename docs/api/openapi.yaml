@@ -95,6 +95,89 @@ paths:
           description: ""
       tags: *a3
       security: *a4
+  /v1/operator/cases:
+    get:
+      operationId: OperatorPanelController_listCases
+      parameters:
+        - name: cursor
+          required: true
+          in: query
+          schema:
+            type: string
+        - name: limit
+          required: true
+          in: query
+          schema:
+            type: string
+        - name: category
+          required: true
+          in: query
+          schema:
+            type: string
+        - name: incidentState
+          required: true
+          in: query
+          schema:
+            type: string
+        - name: deliveryState
+          required: true
+          in: query
+          schema:
+            type: string
+        - name: locationStatus
+          required: true
+          in: query
+          schema:
+            type: string
+        - name: source
+          required: true
+          in: query
+          schema:
+            type: string
+        - name: from
+          required: true
+          in: query
+          schema:
+            type: string
+        - name: to
+          required: true
+          in: query
+          schema:
+            type: string
+        - name: accuracyMin
+          required: true
+          in: query
+          schema:
+            type: string
+        - name: accuracyMax
+          required: true
+          in: query
+          schema:
+            type: string
+        - name: search
+          required: true
+          in: query
+          schema:
+            type: string
+      responses:
+        "200":
+          description: ""
+      tags: *a3
+      security: *a4
+  /v1/operator/cases/{incidentId}:
+    get:
+      operationId: OperatorPanelController_getCase
+      parameters:
+        - name: incidentId
+          required: true
+          in: path
+          schema:
+            type: string
+      responses:
+        "200":
+          description: ""
+      tags: *a3
+      security: *a4
   /v1/operator/incidents/{id}:
     get:
       operationId: OperatorPanelController_getIncident

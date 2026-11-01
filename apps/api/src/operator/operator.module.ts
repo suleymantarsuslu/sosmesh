@@ -7,6 +7,7 @@ import { OperatorAuthGuard } from './guards/operator-auth.guard';
 import { OperatorCsrfGuard } from './guards/operator-csrf.guard';
 import { RolesGuard } from './guards/roles.guard';
 import { OperatorDashboardService } from './operator-dashboard.service';
+import { OperatorCasesService } from './operator-cases.service';
 
 @Module({
   controllers: [OperatorController, OperatorPanelController],
@@ -16,6 +17,7 @@ import { OperatorDashboardService } from './operator-dashboard.service';
     RolesGuard,
     IncidentScopeService,
     OperatorDashboardService,
+    OperatorCasesService,
   ],
   exports: [OperatorAuthGuard, OperatorCsrfGuard, IncidentScopeService],
 })

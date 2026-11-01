@@ -693,23 +693,34 @@
         "21"
       ],
       "deliverables": "apps/web/features/map, case-list; map provider config",
-      "pass_criteria": "Panel gelen SOS’u gerçek zamanlı gösterir; harita doğruluğunu abartmaz.",
-      "status": "NOT_STARTED",
-      "attempts": 0,
+      "pass_criteria": "Panel gelen SOS'u gerçek zamanlı gösterir; harita doğruluğunu abartmaz.",
+      "status": "PARTIAL",
+      "attempts": 1,
       "commit": null,
-      "evidence": [],
-      "blockers": [],
-      "last_checked_at": null,
+      "evidence": [
+        "GET /v1/operator/cases + /cases/:incidentId (OperatorAuthGuard + IncidentScopeService); operator-cases.spec.ts 401/scope",
+        "apps/web/features/map (MapLibre + supercluster), case-list filtre/kuyruk/çekmece/SSE+polling",
+        "docs/web/map-tiles.md OSM lisans + tile.openstreetmap.org prod uyarısı",
+        "Vitest geo + filter; Playwright operator-map 5/5 + panel 5/5 (1440 screenshot reports/operator-map-cases-1440.png)",
+        "pnpm -r build EXIT=0; pnpm test EXIT=0; verify.sh (local) EXIT=0; test:a11y:web 11/11"
+      ],
+      "blockers": [
+        "Self-hosted CI yeşil olana kadar PASS değil",
+        "Bu VM'de ANDROID_HOME yok — Gradle assembleDebug yerelde koşulamadı",
+        "PR #35/#36 main'de değil — merge sırası bağımlılığı"
+      ],
+      "last_checked_at": "2026-11-01T05:00:00+00:00",
       "goal": "En acil durumları kaynak, konum belirsizliği ve durumla birlikte görünür kıl.",
       "cursor_tasks": [
         "OpenStreetMap kaynaklarının lisans/hosting şartlarını kontrol ederek MapLibre/Leaflet harita modülü kur.",
         "Map marker clustering, selected case drawer, evidence timeline, filters: category/time/source/status/accuracy.",
-        "Konum bilinmiyor için ayrı list queue; koordinat yoksa otomatik 0,0’a pin koyma.",
+        "Konum bilinmiyor için ayrı list queue; koordinat yoksa otomatik 0,0'a pin koyma.",
         "Live feed reconnect, stale indicator, screen-reader alternatif data table ve mobile full-screen list."
       ],
       "verification_evidence": "3 responsive viewport ve 1000 vaka seed testi; null GPS test; search/filter E2E.",
       "risk_note": "",
-      "gate_raw": "KAPI: HACKATHON / ÇEKİRDEK    •    BAĞIMLILIK: 19,21"
+      "gate_raw": "KAPI: HACKATHON / ÇEKİRDEK    •    BAĞIMLILIK: 19,21",
+      "notes": "1000 vaka E2E mock seed ~1.7s (Playwright); 390/768 ekran görüntüsü ERTELENDİ; prod tile kaynağı EKSİKLER'de"
     },
     {
       "id": "23",

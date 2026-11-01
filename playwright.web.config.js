@@ -13,7 +13,7 @@ process.env[e2ePassKey] = e2ePassword;
 
 module.exports = defineConfig({
   testDir: './tests/ux',
-  testMatch: ['**/web-skeleton.spec.js', '**/operator-panel.spec.js'],
+  testMatch: ['**/web-skeleton.spec.js', '**/operator-panel.spec.js', '**/operator-map.spec.js'],
   fullyParallel: false,
   forbidOnly: !!process.env.CI,
   retries: process.env.CI ? 2 : 0,
@@ -31,6 +31,7 @@ module.exports = defineConfig({
     env: {
       NODE_ENV: 'development',
       OPERATOR_E2E_MOCK: '1',
+      NEXT_PUBLIC_MAP_TEST_MODE: '1',
       JWT_SECRET: 'test-operator-jwt-signing-key-16',
       [e2ePassKey]: e2ePassword,
     },

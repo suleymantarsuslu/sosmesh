@@ -25,6 +25,15 @@ final class BleRestorationStateMachineTests: XCTestCase {
         XCTAssertFalse(machine.canResumeBleWork)
     }
 
+    func testForceQuitTerminalAbsorbsFurtherEvents() throws {
+        var machine = BleRestorationStateMachine(phase: .scanning)
+        try machine.apply(.userForceQuit)
+        XCTAssertEqual(machine.phase, .forceQuitTerminal)
+        try machine.apply(.bluetoothPoweredOn)
+        XCTAssertEqual(machine.phase, .forceQuitTerminal)
+        XCTAssertFalse(machine.canResumeBleWork)
+    }
+
     func testSystemRestorationPath() throws {
         var machine = BleRestorationStateMachine(phase: .backgroundSuspended)
         try machine.apply(.systemWillRestoreState)

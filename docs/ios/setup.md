@@ -32,7 +32,7 @@ cd apps/ios/SOSMeshCore
 swift test
 ```
 
-Cloud agent Linux ortamında `swift-crypto` BoringSSL derlemesi araç zincirine bağlı olabilir; macOS Xcode job ve self-hosted `cross-language-contracts` job kanonik doğrulamayı yapar.
+Cloud agent Linux ortamında `swift-crypto` BoringSSL derlemesi araç zincirine bağlı olabilir; kanonik Swift doğrulaması GitHub-hosted `Swift Package Tests` job'ında (`swiftlang/setup-swift` + `swift test`) yapılır; macOS `ios-xcode` job uygulama derlemesini doğrular.
 
 ## İmzalama
 

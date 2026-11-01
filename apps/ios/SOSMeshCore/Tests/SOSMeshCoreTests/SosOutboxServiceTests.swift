@@ -38,6 +38,11 @@ final class SosOutboxServiceTests: XCTestCase {
         defer { try? FileManager.default.removeItem(at: tmp) }
         let service = try SosOutboxService(storePath: tmp.path, sourceRoot: sourceRoot())
         let peer = try service.markPeerReceived(sosId: "x", digest: "d", fromState: "LOCAL_SAVED")
+        XCTAssertEqual(peer, "PEER_RECEIVED")
+        XCTAssertNotEqual(peer, "SERVER_ACCEPTED")
         XCTAssertTrue(service.peerAckIsNotServerAccepted(peer))
+        XCTAssertThrowsError(
+            try service.markPeerReceived(sosId: "x", digest: "d", fromState: "SERVER_ACCEPTED")
+        )
     }
 }

@@ -3,6 +3,17 @@ import XCTest
 import SOSMeshContracts
 
 final class GoldenVectorCoreTests: XCTestCase {
+    func sourceRoot() -> String {
+        if let envRoot = ProcessInfo.processInfo.environment["SOURCE_ROOT"] {
+            return envRoot
+        }
+        var url = URL(fileURLWithPath: #filePath)
+        for _ in 0..<5 {
+            url.deleteLastPathComponent()
+        }
+        return url.path
+    }
+
     let goldenVector: [String: Any] = {
         guard let url = Bundle.module.url(forResource: "golden-001", withExtension: "json"),
               let data = try? Data(contentsOf: url),
@@ -11,6 +22,18 @@ final class GoldenVectorCoreTests: XCTestCase {
         }
         return json
     }()
+
+    func testGolden001BundledBytesMatchMasterVector() throws {
+        guard let bundledURL = Bundle.module.url(forResource: "golden-001", withExtension: "json") else {
+            XCTFail("Bundled golden-001.json missing")
+            return
+        }
+        let masterURL = URL(fileURLWithPath: sourceRoot())
+            .appendingPathComponent("packages/contracts/crypto-test-vectors/golden-001.json")
+        let bundled = try Data(contentsOf: bundledURL)
+        let master = try Data(contentsOf: masterURL)
+        XCTAssertEqual(bundled, master, "iOS bundled golden-001 must byte-match TypeScript master vector")
+    }
 
     func testGoldenEncryptMatchesContractsPackage() throws {
         let inputs = goldenVector["inputs"] as! [String: Any]

@@ -1629,12 +1629,22 @@
       ],
       "deliverables": "tests/load, perf-report, dashboards",
       "pass_criteria": "Ölçülen limitler yayınlanır; kapasiteyi kanıtsız “ölçeklenebilir” diye yazma.",
-      "status": "NOT_STARTED",
-      "attempts": 0,
+      "status": "PARTIAL",
+      "attempts": 1,
       "commit": null,
-      "evidence": [],
-      "blockers": [],
-      "last_checked_at": null,
+      "evidence": [
+        "tests/load/k6 + ci-k6-smoke.sh (profile 100 CI; 1000/10000 ERTELENDİ manual)",
+        "apps/api/test/perf-adim47.spec.ts (EXPLAIN indexes, restart cursor, 429 backpressure, AI off)",
+        "apps/api/prisma/migrations/20261101220000_adim47_perf_indexes",
+        "docs/perf/perf-report.md",
+        "infra/monitoring/grafana/dashboard-sosmesh-perf.json",
+        "Android OutboxAdim47CapacityTest + Swift TransportOutboxTests 1k/TTL"
+      ],
+      "blockers": [
+        "k6 profile 1000/10000: ERTELENDİ (CI runner/VM kapasitesi üretimi temsil etmez)",
+        "Grafana panelleri yalnızca şablon; metrik export ADIM 48 ile tamamlanacak"
+      ],
+      "last_checked_at": "2026-11-01T22:30:00+00:00",
       "goal": "Afet sırasında ani burst ve bağlantı kopmasını karşılamak için sınırları ölç.",
       "cursor_tasks": [
         "k6/Artillery API: 100, 1000, 10000 synthetic SOS scenarios; gerçek altyapı maliyet limitine uy.",

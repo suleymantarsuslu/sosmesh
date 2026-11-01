@@ -127,6 +127,8 @@ model SosMessage {
   relayReceipts       RelayReceipt[]
 
   @@index([incidentId])
+  @@index([priority, receivedAt(sort: Desc)], map: "sos_messages_priority_received_at_idx")
+  @@index([receivedAt(sort: Desc)], map: "sos_messages_received_at_idx")
   @@map("sos_messages")
 }
 

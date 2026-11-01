@@ -129,4 +129,46 @@ final class TransportOutboxTests: XCTestCase {
         XCTAssertEqual(try queue.countDueForSend(nowMs: 181_999, paused: false), 0)
         XCTAssertEqual(try queue.countDueForSend(nowMs: 182_000, paused: false), 1)
     }
+
+    func testThousandPendingEnvelopesListable() throws {
+        let storePath = URL(fileURLWithPath: NSTemporaryDirectory())
+            .appendingPathComponent("outbox-swift-1k-\(UUID().uuidString).json")
+            .path
+        defer { try? FileManager.default.removeItem(atPath: storePath) }
+        let queue = try DiskOutboxQueue(storePath: storePath, defaultRetentionMs: 604_800_000)
+        for index in 0..<1000 {
+            _ = try queue.enqueue(
+                input: EnqueueInput(
+                    sosId: "ios-adim47-\(index)",
+                    digest: "d-\(index)",
+                    origin: "ios-adim47",
+                    encryptedBlobBase64: "YQ=="
+                ),
+                nowMs: Int64(index)
+            )
+        }
+        XCTAssertEqual(try queue.listAll().count, 1000)
+    }
+
+    func testLowStorageRecoveryViaTtlPurge() throws {
+        let storePath = URL(fileURLWithPath: NSTemporaryDirectory())
+            .appendingPathComponent("outbox-swift-storage-\(UUID().uuidString).json")
+            .path
+        defer { try? FileManager.default.removeItem(atPath: storePath) }
+        let queue = try DiskOutboxQueue(storePath: storePath, defaultRetentionMs: 500)
+        for index in 0..<128 {
+            _ = try queue.enqueue(
+                input: EnqueueInput(
+                    sosId: "exp-\(index)",
+                    digest: "d-\(index)",
+                    origin: "ios-adim47",
+                    encryptedBlobBase64: "Yg==",
+                    retentionMs: 100
+                ),
+                nowMs: 0
+            )
+        }
+        XCTAssertEqual(try queue.purgeExpired(nowMs: 200), 128)
+        XCTAssertTrue(try queue.listAll().isEmpty)
+    }
 }

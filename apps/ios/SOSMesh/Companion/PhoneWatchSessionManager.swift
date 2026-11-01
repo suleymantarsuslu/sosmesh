@@ -2,17 +2,16 @@ import Foundation
 import SOSMeshCore
 import WatchConnectivity
 
-@MainActor
-final class PhoneWatchSessionManager: NSObject, WCSessionDelegate {
+final class PhoneWatchSessionManager: NSObject, @preconcurrency WCSessionDelegate {
     private let ingress: PhoneWatchSosIngress
     private var session: WCSession?
 
-    init(ingress: PhoneWatchSosIngress) {
+    nonisolated init(ingress: PhoneWatchSosIngress) {
         self.ingress = ingress
         super.init()
     }
 
-    func activate() {
+    nonisolated func activate() {
         guard WCSession.isSupported() else { return }
         let session = WCSession.default
         session.delegate = self
@@ -20,23 +19,31 @@ final class PhoneWatchSessionManager: NSObject, WCSessionDelegate {
         self.session = session
     }
 
-    func session(_ session: WCSession, activationDidCompleteWith activationState: WCSessionActivationState, error: Error?) {}
+    nonisolated func session(
+        _ session: WCSession,
+        activationDidCompleteWith activationState: WCSessionActivationState,
+        error: Error?
+    ) {}
 
-    func sessionDidBecomeInactive(_ session: WCSession) {}
+    nonisolated func sessionDidBecomeInactive(_ session: WCSession) {}
 
-    func sessionDidDeactivate(_ session: WCSession) {
+    nonisolated func sessionDidDeactivate(_ session: WCSession) {
         session.activate()
     }
 
-    func session(_ session: WCSession, didReceiveMessage message: [String: Any], replyHandler: @escaping ([String: Any]) -> Void) {
+    nonisolated func session(
+        _ session: WCSession,
+        didReceiveMessage message: [String: Any],
+        replyHandler: @escaping ([String: Any]) -> Void
+    ) {
         handle(message: message, replyHandler: replyHandler)
     }
 
-    func session(_ session: WCSession, didReceiveUserInfo userInfo: [String: Any]) {
+    nonisolated func session(_ session: WCSession, didReceiveUserInfo userInfo: [String: Any]) {
         handle(message: userInfo, replyHandler: nil)
     }
 
-    private func handle(message: [String: Any], replyHandler: (([String: Any]) -> Void)?) {
+    nonisolated private func handle(message: [String: Any], replyHandler: (([String: Any]) -> Void)?) {
         guard let path = message[WatchCompanionPaths.MessageKey.path] as? String,
               path == WatchCompanionPaths.sosCreate,
               let b64 = message[WatchCompanionPaths.MessageKey.payloadBase64] as? String,
@@ -56,8 +63,8 @@ final class PhoneWatchSessionManager: NSObject, WCSessionDelegate {
             if let replyHandler {
                 replyHandler(["status": "ok"])
             }
-            session?.sendMessage(ackMessage, replyHandler: nil, errorHandler: nil)
-            session?.transferUserInfo(ackMessage)
+            self.session?.sendMessage(ackMessage, replyHandler: nil, errorHandler: nil)
+            self.session?.transferUserInfo(ackMessage)
         } catch {
             replyHandler?(["status": "error"])
         }

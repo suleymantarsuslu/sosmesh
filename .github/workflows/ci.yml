@@ -9,13 +9,13 @@ on:
 jobs:
   verify:
     name: Verify Quality Gates
-    runs-on: ubuntu-latest
+    runs-on: ${{ vars.SOSMESH_CI_RUNNER == 'zulal' && fromJSON('["self-hosted","linux","ARM64","zulal"]') || 'ubuntu-latest' }}
     timeout-minutes: 30
     if: github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository
 
     services:
       postgres:
-        image: postgres:16
+        image: ${{ vars.SOSMESH_CI_RUNNER != 'zulal' && 'postgres:16' || '' }}
         env:
           POSTGRES_USER: postgres
           POSTGRES_PASSWORD: postgres
@@ -62,8 +62,37 @@ jobs:
           restore-keys: |
             ${{ runner.os }}-pnpm-${{ github.job }}-
       
-      - name: Install Playwright browsers
+      - name: Install Playwright browsers (GitHub-hosted)
+        if: vars.SOSMESH_CI_RUNNER != 'zulal'
         run: npx playwright install --with-deps chromium
+
+      - name: Install Playwright browsers (Zulal self-hosted)
+        if: vars.SOSMESH_CI_RUNNER == 'zulal'
+        run: npx playwright install chromium
+
+      - name: Load CI PostgreSQL credentials
+        if: vars.SOSMESH_CI_RUNNER == 'zulal'
+        shell: bash
+        run: |
+          PG_ENV=/etc/sosmesh-ci/pg.env
+          if [ ! -f "$PG_ENV" ]; then
+            echo "Missing ${PG_ENV} on self-hosted runner (required for API DB tests)"
+            exit 1
+          fi
+          set -a
+          # shellcheck disable=SC1090
+          source "$PG_ENV"
+          set +a
+          if [ -z "${SOSMESH_CI_PG_ADMIN_URL:-}" ] || [ -z "${SOSMESH_CI_DATABASE_URL:-}" ]; then
+            echo "pg.env must define SOSMESH_CI_PG_ADMIN_URL and SOSMESH_CI_DATABASE_URL"
+            exit 1
+          fi
+          echo "::add-mask::${SOSMESH_CI_PG_ADMIN_URL}"
+          echo "::add-mask::${SOSMESH_CI_DATABASE_URL}"
+          {
+            echo "SOSMESH_CI_PG_ADMIN_URL=${SOSMESH_CI_PG_ADMIN_URL}"
+            echo "SOSMESH_CI_DATABASE_URL=${SOSMESH_CI_DATABASE_URL}"
+          } >> "$GITHUB_ENV"
 
       - name: Run verification script
         run: bash scripts/verify.sh
@@ -94,7 +123,7 @@ jobs:
 
   contracts:
     name: Contracts Type Check
-    runs-on: ubuntu-latest
+    runs-on: ${{ vars.SOSMESH_CI_RUNNER == 'zulal' && fromJSON('["self-hosted","linux","ARM64","zulal"]') || 'ubuntu-latest' }}
     timeout-minutes: 10
     if: github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository
     
@@ -131,7 +160,7 @@ jobs:
 
   detect-mobile:
     name: Detect Mobile Projects
-    runs-on: ubuntu-latest
+    runs-on: ${{ vars.SOSMESH_CI_RUNNER == 'zulal' && fromJSON('["self-hosted","linux","ARM64","zulal"]') || 'ubuntu-latest' }}
     if: github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository
     outputs:
       android: ${{ steps.check.outputs.android }}
@@ -286,7 +315,7 @@ jobs:
 
   cross-language-contracts:
     name: Cross-Language Contract Tests
-    runs-on: ubuntu-latest
+    runs-on: ${{ vars.SOSMESH_CI_RUNNER == 'zulal' && fromJSON('["self-hosted","linux","ARM64","zulal"]') || 'ubuntu-latest' }}
     timeout-minutes: 15
     if: github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository
     
@@ -396,7 +425,7 @@ jobs:
 
   secret-scan:
     name: Secret Scan
-    runs-on: ubuntu-latest
+    runs-on: ${{ vars.SOSMESH_CI_RUNNER == 'zulal' && fromJSON('["self-hosted","linux","ARM64","zulal"]') || 'ubuntu-latest' }}
     timeout-minutes: 5
     if: github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository
     

@@ -1631,7 +1631,7 @@
       "pass_criteria": "Ölçülen limitler yayınlanır; kapasiteyi kanıtsız “ölçeklenebilir” diye yazma.",
       "status": "PARTIAL",
       "attempts": 1,
-      "commit": null,
+      "commit": "2e9bded",
       "evidence": [
         "tests/load/k6 + ci-k6-smoke.sh (profile 100 CI; 1000/10000 ERTELENDİ manual)",
         "apps/api/test/perf-adim47.spec.ts (EXPLAIN indexes, restart cursor, 429 backpressure, AI off)",

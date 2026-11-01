@@ -28,9 +28,9 @@ Bu dosya **fiziksel M0 kanıtı üretilmedi**. Aşağıdaki prosedür, bağıms�
 6. **Meta analyze (opsiyonel):** `MODEL_API_KEY` yoksa AI worker **BLOCKED_SECRET** — panelde AI önerisi boş/hata durumu; ingest kaydı korunur.
 7. **Panel:** Operatör girişi → harita/liste → vaka açılır → **OPERATOR_SEEN** denetim kaydı oluşur.
 8. **Kanıt toplama:**  
-   - `bash scripts/m0/collect-logs.sh <correlation-id> evidence/m0/logcat-a.redacted.log` (A)  
+   - `bash scripts/m0/collect-logs.sh <correlation-id> evidence/m0/logcat-a.redacted.log` (A) — `message=` / `plaintext:` vb. satır sonuna kadar `[REDACTED_TEXT]`, koordinat/e-posta/telefon maskeleri  
    - Aynı komut B için ikinci dosya  
-   - `OPERATOR_BEARER_TOKEN=… bash scripts/m0/fetch-api-trace.sh <correlation-id> > evidence/m0/api-trace.json`
+   - `OPERATOR_BEARER_TOKEN` ortam değişkeni ile `bash scripts/m0/fetch-api-trace.sh <correlation-id> > evidence/m0/api-trace.json` — correlation ID URL-encode; audit/detail alanları `jq` ile maskelenir
 
 ## Prosedür B — Rol değiştirme
 

@@ -3,6 +3,8 @@
 # Masks GPS coordinates, SOS-like free text, and common PII patterns before writing output.
 set -euo pipefail
 
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+
 usage() {
   echo "Usage: $0 <correlation-id> [output-file]" >&2
   echo "Requires: adb, exactly one authorized device (adb devices)." >&2
@@ -47,12 +49,6 @@ if [[ ! -s "$TMP_RAW" ]]; then
   exit 6
 fi
 
-# Redact before persisting: lat/lon pairs, emails, phone-ish sequences, long free-text blobs.
-sed -E \
-  -e 's/[-+]?[0-9]{1,3}\.[0-9]{4,}/[REDACTED_COORD]/g' \
-  -e 's/[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}/[REDACTED_EMAIL]/g' \
-  -e 's/\b[0-9]{10,14}\b/[REDACTED_PHONE]/g' \
-  -e 's/(SOS|sos|message|plaintext|note)([^[:print:]]{0,20})[^[:print:]]{8,}/\1\2[REDACTED_TEXT]/g' \
-  "$TMP_RAW" >"$OUT_FILE"
+node "${SCRIPT_DIR}/redact-logcat.mjs" <"$TMP_RAW" >"$OUT_FILE"
 
 echo "Wrote redacted logcat ($(wc -l <"$OUT_FILE") lines) to $OUT_FILE"

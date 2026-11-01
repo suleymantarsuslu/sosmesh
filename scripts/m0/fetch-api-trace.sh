@@ -3,6 +3,8 @@
 # Only talks to local/test API hosts; requires bearer token from environment.
 set -euo pipefail
 
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+
 usage() {
   echo "Usage: $0 <correlation-id>" >&2
   echo "Env: SOSMESH_API_URL (default http://127.0.0.1:3001)" >&2
@@ -14,11 +16,17 @@ if [[ "${1:-}" == "" ]]; then
   exit 2
 fi
 
-CORRELATION_ID="$1"
-API_URL="${SOSMESH_API_URL:-http://127.0.0.1:3001}"
-TOKEN="${OPERATOR_BEARER_TOKEN:-}"
+if ! command -v jq >/dev/null 2>&1; then
+  echo "ERROR: jq is required for API trace redaction." >&2
+  exit 5
+fi
 
-if [[ "$TOKEN" == "" ]]; then
+CORRELATION_ID="$1"
+CORRELATION_ENC="$(node -p "encodeURIComponent(process.argv[0])" "$CORRELATION_ID")"
+API_URL="${SOSMESH_API_URL:-http://127.0.0.1:3001}"
+BEARER="${OPERATOR_BEARER_TOKEN:-}"
+
+if [[ "$BEARER" == "" ]]; then
   echo "ERROR: OPERATOR_BEARER_TOKEN is not set." >&2
   exit 3
 fi
@@ -32,9 +40,9 @@ case "$API_URL" in
     ;;
 esac
 
-auth_header=( -H "Authorization: Bearer ${TOKEN}" -H "Accept: application/json" )
+auth_header=( -H "Authorization: Bearer ${BEARER}" -H "Accept: application/json" )
 
-list_json="$(curl -fsS "${auth_header[@]}" "${API_URL}/v1/operator/cases?search=${CORRELATION_ID}&limit=20")"
+list_json="$(curl -fsS "${auth_header[@]}" "${API_URL}/v1/operator/cases?search=${CORRELATION_ENC}&limit=20")"
 incident_id="$(node -e "
 const rows = JSON.parse(process.argv[1]).items || [];
 const hit = rows.find(r => r.messageId === process.argv[2] || r.sosMessageId === process.argv[2]);
@@ -58,10 +66,13 @@ const out = {
   correlationId: correlation,
   incidentId: detail.incidentId,
   deliveryState: detail.deliveryState,
+  locationStatus: detail.locationStatus,
+  verifiedMetadata: detail.verifiedMetadata,
+  originalText: detail.originalText,
   timeline: detail.timeline,
   audit: audit.items,
   feedEvents: filteredEvents,
   exportedAt: new Date().toISOString(),
 };
-console.log(JSON.stringify(out, null, 2));
-" "$CORRELATION_ID" "$detail_json" "$audit_json" "$events_json"
+console.log(JSON.stringify(out));
+" "$CORRELATION_ID" "$detail_json" "$audit_json" "$events_json" | jq -f "${SCRIPT_DIR}/redact-api-trace.jq"

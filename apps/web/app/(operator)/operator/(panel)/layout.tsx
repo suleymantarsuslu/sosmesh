@@ -2,7 +2,7 @@ import { redirect } from 'next/navigation';
 import type { ReactNode } from 'react';
 
 import { OperatorShell } from '../../../../components/operator/OperatorShell';
-import { isE2eMock } from '../../../../lib/config';
+import { shouldShowDemoModeBanner } from '../../../../lib/demo-mode';
 import { readSession } from '../../../../lib/session';
 
 export default function OperatorPanelLayout({ children }: { children: ReactNode }) {
@@ -12,7 +12,7 @@ export default function OperatorPanelLayout({ children }: { children: ReactNode 
   }
   return (
     <OperatorShell
-      demoMode={isE2eMock()}
+      demoMode={shouldShowDemoModeBanner()}
       user={{
         displayName: session.displayName,
         role: session.role,

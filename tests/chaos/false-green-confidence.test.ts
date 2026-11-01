@@ -1,8 +1,8 @@
 import { execSync } from 'child_process';
-import { readFileSync } from 'fs';
 import { join } from 'path';
 
 import { describe, expect, it } from 'vitest';
+import { DeliveryStateMachine, InvalidStateTransitionError } from '@sosmesh/transport';
 
 describe('false_green_confidence_gates', () => {
   const repoRoot = join(__dirname, '..', '..');
@@ -15,11 +15,13 @@ describe('false_green_confidence_gates', () => {
     expect(output).toContain('Yasak ifade bulunamadı');
   });
 
-  it('android_relay_upload_failure_test_exists', () => {
-    const kotlin = readFileSync(
-      join(repoRoot, 'apps/android/feature-relay/src/test/kotlin/com/sosmesh/android/feature/relay/RelayUploadExecutorTest.kt'),
-      'utf-8'
+  it('shared_transport_state_chart_never_jumps_LOCAL_SAVED_to_SERVER_ACCEPTED', () => {
+    const machine = new DeliveryStateMachine();
+    expect(machine.canTransition('LOCAL_SAVED', 'SERVER_ACCEPTED')).toBe(false);
+    expect(() => machine.transition('LOCAL_SAVED', 'SERVER_ACCEPTED')).toThrow(
+      InvalidStateTransitionError
     );
-    expect(kotlin).toContain('http500_keepsLocalSavedWithoutServerAccepted');
+    expect(machine.transition('LOCAL_SAVED', 'PEER_RECEIVED')).toBe('PEER_RECEIVED');
+    expect(machine.transition('LOCAL_SAVED', 'PEER_RECEIVED')).not.toBe('SERVER_ACCEPTED');
   });
 });

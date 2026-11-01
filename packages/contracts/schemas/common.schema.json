@@ -35,6 +35,11 @@
       ],
       "description": "Acknowledgment level - peer ACK != server/operator read"
     },
+    "locationStatus": {
+      "type": "string",
+      "enum": ["UNKNOWN", "GPS", "MANUAL"],
+      "description": "UNKNOWN: no coordinates on the wire (not Null Island). GPS/MANUAL: location object required."
+    },
     "incidentState": {
       "type": "string",
       "enum": [

@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="sos_flow_title">SOS gönder</string>
+    <string name="sos_cta_label">SOS</string>
+    <string name="sos_cta_content_description">SOS gönder; formu aç</string>
+    <string name="sos_type_label">Olay türü</string>
+    <string name="sos_person_count_label">Kişi sayısı</string>
+    <string name="sos_person_unknown">Bilinmiyor</string>
+    <string name="sos_note_label">Kısa not</string>
+    <string name="sos_note_hint">En fazla 200 karakter</string>
+    <string name="sos_location_label">Konum</string>
+    <string name="sos_location_unknown">Konum bilinmiyor</string>
+    <string name="sos_location_accuracy">Doğruluk: %1$.0f m</string>
+    <string name="sos_manual_location">Manuel konum kullan</string>
+    <string name="sos_manual_lat">Enlem</string>
+    <string name="sos_manual_lng">Boylam</string>
+    <string name="sos_preview_title">Önizleme</string>
+    <string name="sos_preview_confirm">Onayla ve kaydet</string>
+    <string name="sos_preview_back">Geri</string>
+    <string name="sos_continue">Devam</string>
+    <string name="sos_error_person_low">Kişi sayısı en az 1 olmalı</string>
+    <string name="sos_error_person_high">Kişi sayısı en fazla 99 olabilir</string>
+    <string name="sos_error_note_long">Not en fazla 200 karakter olabilir</string>
+    <string name="sos_saved_local">Cihazda kaydedildi — yakındaki cihaz aranıyor</string>
+    <string name="sos_not112_disclaimer">SOSMesh 112\'nin yerine geçmez. Acil durumda 112\'yi arayın.</string>
+    <string name="sos_type_deprem">Deprem</string>
+    <string name="sos_type_yangin">Yangın</string>
+    <string name="sos_type_sel">Sel</string>
+    <string name="sos_type_yaralanma">Yaralanma</string>
+    <string name="sos_type_diger">Diğer</string>
+    <string name="sos_offline_badge">Çevrimdışı</string>
+</resources>

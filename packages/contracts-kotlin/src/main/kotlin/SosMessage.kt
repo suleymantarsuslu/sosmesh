@@ -2,6 +2,12 @@ package com.sosmesh.contracts
 
 import kotlinx.serialization.Serializable
 
+object LocationStatus {
+    const val UNKNOWN = "UNKNOWN"
+    const val GPS = "GPS"
+    const val MANUAL = "MANUAL"
+}
+
 @Serializable
 data class Location(
     val latitude: Double,
@@ -12,7 +18,8 @@ data class Location(
 @Serializable
 data class Envelope(
     val timestamp: String,
-    val location: Location,
+    val locationStatus: String,
+    val location: Location? = null,
     val priority: Int,
     val ackLevel: String,
     val relayCount: Int? = null,

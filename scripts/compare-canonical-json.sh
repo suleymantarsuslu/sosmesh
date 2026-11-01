@@ -32,7 +32,7 @@ fi
 
 FAILED=0
 
-for fixture in valid-sos unicode-sos; do
+for fixture in valid-sos unicode-sos unknown-location-sos; do
   echo "Comparing $fixture across TypeScript, Kotlin, and Swift..."
   
   TS_FILE="$TS_DIR/${fixture}-typescript.json"

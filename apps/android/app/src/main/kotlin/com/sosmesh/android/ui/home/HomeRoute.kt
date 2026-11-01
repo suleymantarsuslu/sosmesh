@@ -17,7 +17,11 @@ import com.sosmesh.android.R
 import com.sosmesh.android.service.MeshConnectionForegroundService
 
 @Composable
-fun HomeRoute(onOpenPermissions: () -> Unit) {
+fun HomeRoute(
+    onOpenPermissions: () -> Unit,
+    onOpenSos: () -> Unit,
+    onOpenStatus: () -> Unit,
+) {
     val context = LocalContext.current
     Column(
         modifier =
@@ -31,6 +35,12 @@ fun HomeRoute(onOpenPermissions: () -> Unit) {
             text = stringResource(com.sosmesh.android.core.permissions.R.string.permission_disclaimer_not112),
             style = MaterialTheme.typography.bodyMedium,
         )
+        Button(onClick = onOpenSos) {
+            Text(stringResource(R.string.home_sos_cta))
+        }
+        Button(onClick = onOpenStatus) {
+            Text(stringResource(R.string.home_status_cta))
+        }
         Button(onClick = onOpenPermissions) {
             Text(stringResource(R.string.home_permissions_cta))
         }

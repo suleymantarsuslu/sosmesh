@@ -340,7 +340,7 @@
       "pass_criteria": "Uygulama en az bir gerçek Android’de açılır ve izin akışı çalışır.",
       "status": "PARTIAL",
       "attempts": 1,
-      "commit": "5e64683",
+      "commit": "516329f",
       "evidence": [
         "PR #24",
         "CI run 41142459079",
@@ -372,11 +372,18 @@
       ],
       "deliverables": "apps/android/feature-sos, feature-status; UI screenshots",
       "pass_criteria": "Gerçek SOS offline queue’ya kaydolur; yanlış “ekibe ulaştı” mesajı yok.",
-      "status": "NOT_STARTED",
-      "attempts": 0,
-      "commit": null,
-      "evidence": [],
-      "blockers": [],
+      "status": "PARTIAL",
+      "attempts": 1,
+      "commit": "3149beb",
+      "evidence": [
+        "Compose/Robolectric unit tests: outbox enqueue, forbidden copy, i18n parity",
+        "docs/tests/android-talkback-script.md NOT_TESTED",
+        "docs/ux/android-sos Robolectric PNGs (NOT real device)"
+      ],
+      "blockers": [
+        "TalkBack fiziksel cihaz: NOT_TESTED",
+        "Gerçek GPS runtime: NOT_TESTED"
+      ],
       "last_checked_at": null,
       "goal": "Saniyeler içinde anlamlı yardım talebi girilebilsin.",
       "cursor_tasks": [
@@ -398,12 +405,17 @@
         "11",
         "12"
       ],
-      "deliverables": "apps/android/core-ble, docs/tests/android-radio.md",
+      "deliverables": "apps/android/core/ble, docs/tests/android-radio.md",
       "pass_criteria": "En az 2 Android cihaz birbirini keşfeder ve GATT oturumu kurar.",
-      "status": "NOT_STARTED",
-      "attempts": 0,
-      "commit": null,
-      "evidence": [],
+      "status": "PARTIAL",
+      "attempts": 1,
+      "commit": "622ed30",
+      "evidence": [
+        "JVM unit: GattClientSession, PeerRegistry, PermissionAndAdapterGuard, BleAdvertiser payload",
+        "docs/tests/android-radio.md prosedür + OEM şablon",
+        "Gerçek 2 cihaz keşif/GATT: NOT_TESTED"
+      ],
+      "notes": "Simülatör/Robolectric gerçek BLE kanıtı sayılmaz; PARTIAL beklenen durum.",
       "blockers": [],
       "last_checked_at": null,
       "goal": "İki gerçek Android’in internetsiz yakındaki cihazları keşfetmesini sağla.",
@@ -428,22 +440,38 @@
         "14"
       ],
       "deliverables": "apps/android/core-protocol, feature-relay; radio traces",
-      "pass_criteria": "A cihazında PEER_RECEIVED yalnızca B’nin doğrulanmış ack’ı üzerine görünür.",
-      "status": "NOT_STARTED",
-      "attempts": 0,
-      "commit": null,
-      "evidence": [],
+      "pass_criteria": "A cihazında PEER_RECEIVED yalnızca B'nin doğrulanmış ack'ı üzerine görünür.",
+      "status": "PARTIAL",
+      "attempts": 1,
+      "commit": "e97c3a7",
+      "evidence": [
+        "docs/protocol/ble-v1.md: TRANSFER_VERIFIED (0x21), PEER_RECEIVED yalnız doğrulanmış tamamlama",
+        "BleTransferReceiver: sha256 OK → TRANSFER_VERIFIED; digest hata → NACK DIGEST_INVALID",
+        "BleTransferSender: chunk ACK sonrası WAIT_PEER_VERIFIED; onCompleted yalnız TRANSFER_VERIFIED (transferId+digest)",
+        "BleTransferGateTest: CRC_MISMATCH NACK + chunk saklanmaz",
+        "BleTransferGateTest: digest uyuşmazlığı → receiver FAILED, sender onCompleted yok, PEER_RECEIVED yok",
+        "BleTransferGateTest: tüm ACK, VERIFIED yok → sender fail, PEER_RECEIVED yok",
+        "BleTransferSimulatedTest: senderCompleted_onlyAfterTransferVerified; paket kaybı/resume simülasyonu",
+        "SimulatedBleTransferClock: timer cancel (peer verify timeout yanlış tetiklenmesin)",
+        "BleTransferSender: tek parça payload+digest için chunkSize−32 yeniden bölme",
+        "SosPeerDeliveryTracker: PEER_RECEIVED yalnız sender onCompleted (verified gate)",
+        "feature-relay: RelayDedupKeyTest (sosId,digest anahtarı)",
+        "feature-relay: RelayRoomOutboxDedupTest (RoomOutboxQueueAdapter JVM)",
+        "AndroidGattClientPort/ServerPort: GATT write/notify (ADIM 14)",
+        "docs/tests/android-transfer.md JSONL trace şablonu",
+        "Gerçek 2 cihaz BLE transfer: NOT_TESTED"
+      ],
       "blockers": [],
-      "last_checked_at": null,
-      "goal": "A’dan B’ye şifreli SOS payload’ını eksiksiz taşı.",
+      "last_checked_at": "2026-10-31T22:50:00Z",
+      "goal": "A'dan B'ye şifreli SOS payload'ını eksiksiz taşı.",
       "cursor_tasks": [
-        "HELLO, chunk send/receive, CRC, SHA digest, ACK/timeout/backoff, resume akışını gerçek BLE’ye bağla.",
-        "Röle cihazına alınan envelope’u payload çözmeden outbox olarak kaydet.",
-        "Saat/tarih/sequence mismatch ve retry sırasında duplicate’leri silmeden dedup yap.",
-        "A ve B’de kabul ve radyo/izin hataları görünebilsin."
+        "HELLO, chunk send/receive, CRC, SHA digest, ACK/timeout/backoff, resume akışını gerçek BLE'ye bağla.",
+        "Röle cihazına alınan envelope'u payload çözmeden outbox olarak kaydet.",
+        "Saat/tarih/sequence mismatch ve retry sırasında duplicate'leri silmeden dedup yap.",
+        "A ve B'de kabul ve radyo/izin hataları görünebilsin."
       ],
       "verification_evidence": "2 Android arasında 20 test, Bluetooth kopunca yeniden, bozuk chunk ret; sha256 doğrulama.",
-      "risk_note": "",
+      "risk_note": "JVM/fake test gerçek BLE kanıtı değildir.",
       "gate_raw": "KAPI: HACKATHON / ÇEKİRDEK    •    BAĞIMLILIK: 9,10,13,14"
     },
     {

@@ -250,12 +250,30 @@ else
 fi
 
 # 21. OpenAPI spec freshness
-echo "21/21: node scripts/check-openapi.js"
+echo "21/23: node scripts/check-openapi.js"
 if node "$SCRIPT_DIR/check-openapi.js" > "$REPORTS_DIR/check-openapi.log" 2>&1; then
   check_exit "check-openapi" 0
 else
   EXIT_CODE=$?
   check_exit "check-openapi" $EXIT_CODE
+fi
+
+# 22. Android SOS privacy (no Log/Timber in SOS UI paths)
+echo "22/23: bash scripts/android-sos-privacy-log.sh"
+if bash "$SCRIPT_DIR/android-sos-privacy-log.sh" > "$REPORTS_DIR/android-sos-privacy.log" 2>&1; then
+  check_exit "android-sos-privacy-log" 0
+else
+  EXIT_CODE=$?
+  check_exit "android-sos-privacy-log" $EXIT_CODE
+fi
+
+# 23. Release build must not bundle dev-test SOS crypto
+echo "23/23: bash scripts/android-release-no-dev-crypto.sh"
+if bash "$SCRIPT_DIR/android-release-no-dev-crypto.sh" > "$REPORTS_DIR/android-release-no-dev-crypto.log" 2>&1; then
+  check_exit "android-release-no-dev-crypto" 0
+else
+  EXIT_CODE=$?
+  check_exit "android-release-no-dev-crypto" $EXIT_CODE
 fi
 
 # Summary

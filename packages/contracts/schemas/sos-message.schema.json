@@ -13,29 +13,38 @@
     },
     "envelope": {
       "type": "object",
-      "required": ["timestamp", "location", "priority", "ackLevel"],
+      "required": ["timestamp", "locationStatus", "priority", "ackLevel"],
       "properties": {
         "timestamp": {
           "$ref": "common.schema.json#/definitions/timestamp"
         },
+        "locationStatus": {
+          "$ref": "common.schema.json#/definitions/locationStatus"
+        },
         "location": {
-          "type": "object",
-          "required": ["latitude", "longitude"],
-          "properties": {
-            "latitude": {
-              "type": "number",
-              "minimum": -90,
-              "maximum": 90
-            },
-            "longitude": {
-              "type": "number",
-              "minimum": -180,
-              "maximum": 180
-            },
-            "accuracy": {
-              "$ref": "common.schema.json#/definitions/accuracy"
+          "oneOf": [
+            { "type": "null" },
+            {
+              "type": "object",
+              "required": ["latitude", "longitude"],
+              "properties": {
+                "latitude": {
+                  "type": "number",
+                  "minimum": -90,
+                  "maximum": 90
+                },
+                "longitude": {
+                  "type": "number",
+                  "minimum": -180,
+                  "maximum": 180
+                },
+                "accuracy": {
+                  "$ref": "common.schema.json#/definitions/accuracy"
+                }
+              },
+              "additionalProperties": false
             }
-          }
+          ]
         },
         "priority": {
           "type": "integer",
@@ -52,6 +61,35 @@
           "description": "Number of relay hops"
         }
       },
+      "allOf": [
+        {
+          "if": {
+            "properties": { "locationStatus": { "const": "UNKNOWN" } },
+            "required": ["locationStatus"]
+          },
+          "then": {
+            "properties": {
+              "location": { "type": "null" }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": { "locationStatus": { "enum": ["GPS", "MANUAL"] } },
+            "required": ["locationStatus"]
+          },
+          "then": {
+            "required": ["location"],
+            "properties": {
+              "location": {
+                "type": "object",
+                "not": { "type": "null" }
+              }
+            }
+          }
+        }
+      ],
+      "additionalProperties": false,
       "description": "Public envelope visible to relays"
     },
     "encryptedPayload": {

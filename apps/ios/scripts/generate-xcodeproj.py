@@ -132,8 +132,8 @@ lines.append(
 lines.append(
     f"\t\t{resources_phase} /* Resources */ = {{isa = PBXResourcesBuildPhase; buildActionMask = 2147483647; files = ({', '.join(f'{b} /* in Resources */' for b in res_build_files)}); runOnlyForDeploymentPostprocessing = 0; }};"
 )
-lines.append(f"\t\t{frameworks_phase} /* Frameworks */ = {{isa = PBXFrameworksBuildPhase; buildActionMask = 2147483647; files = (); runOnlyForDeploymentPostprocessing = 0; }};")
-lines.append(f"\t\t{test_frameworks_phase} /* Frameworks */ = {{isa = PBXFrameworksBuildPhase; buildActionMask = 2147483647; files = (); runOnlyForDeploymentPostprocessing = 0; }};")
+lines.append(f"\t\t{frameworks_phase} /* Frameworks */ = {{isa = PBXFrameworksBuildPhase; buildActionMask = 2147483647; files = ({fw_core_app} /* SOSMeshCore in Frameworks */, {fw_contracts_app} /* SOSMeshContracts in Frameworks */); runOnlyForDeploymentPostprocessing = 0; }};")
+lines.append(f"\t\t{test_frameworks_phase} /* Frameworks */ = {{isa = PBXFrameworksBuildPhase; buildActionMask = 2147483647; files = ({fw_core_test} /* SOSMeshCore in Frameworks */); runOnlyForDeploymentPostprocessing = 0; }};")
 
 # Local packages
 pkg_core = uid(5001)
@@ -145,6 +145,18 @@ lines.append(
 
 prod_dep_core = uid(5101)
 prod_dep_contracts = uid(5102)
+fw_core_app = uid(6701)
+fw_contracts_app = uid(6702)
+fw_core_test = uid(6703)
+lines.append(
+    f"\t\t{fw_core_app} /* SOSMeshCore in Frameworks */ = {{isa = PBXBuildFile; productRef = {prod_dep_core} /* SOSMeshCore */; }};"
+)
+lines.append(
+    f"\t\t{fw_contracts_app} /* SOSMeshContracts in Frameworks */ = {{isa = PBXBuildFile; productRef = {prod_dep_contracts} /* SOSMeshContracts */; }};"
+)
+lines.append(
+    f"\t\t{fw_core_test} /* SOSMeshCore in Frameworks */ = {{isa = PBXBuildFile; productRef = {prod_dep_core} /* SOSMeshCore */; }};"
+)
 lines.append(
     f"\t\t{prod_dep_core} /* SOSMeshCore */ = {{isa = XCSwiftPackageProductDependency; productName = SOSMeshCore; package = {pkg_core} /* SOSMeshCore */; }};"
 )

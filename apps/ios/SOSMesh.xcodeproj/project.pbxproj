@@ -40,11 +40,14 @@
 		A3160090000000000000001 /* BleBackgroundConfiguration.swift in Sources */ = {isa = PBXBuildFile; fileRef = A3100100000000000000001 /* BleBackgroundConfiguration.swift */; };
 		A3165000000000000000001 /* SOSMeshCoreLinkTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = A3100110000000000000001 /* SOSMeshCoreLinkTests.swift */; };
 		A3166000000000000000001 /* Assets in Resources */ = {isa = PBXBuildFile; fileRef = A3100150000000000000001 /* Assets.xcassets */; };
+		A3167010000000000000001 /* SOSMeshCore in Frameworks */ = {isa = PBXBuildFile; productRef = A3151010000000000000001 /* SOSMeshCore */; };
+		A3167020000000000000001 /* SOSMeshContracts in Frameworks */ = {isa = PBXBuildFile; productRef = A3151020000000000000001 /* SOSMeshContracts */; };
+		A3167030000000000000001 /* SOSMeshCore in Frameworks */ = {isa = PBXBuildFile; productRef = A3151010000000000000001 /* SOSMeshCore */; };
 		A3170010000000000000001 /* Sources */ = {isa = PBXSourcesBuildPhase; buildActionMask = 2147483647; files = (A3160000000000000000001 /* in Sources */, A3160010000000000000001 /* in Sources */, A3160020000000000000001 /* in Sources */, A3160030000000000000001 /* in Sources */, A3160040000000000000001 /* in Sources */, A3160050000000000000001 /* in Sources */, A3160060000000000000001 /* in Sources */, A3160070000000000000001 /* in Sources */, A3160080000000000000001 /* in Sources */, A3160090000000000000001 /* in Sources */); runOnlyForDeploymentPostprocessing = 0; };
 		A3170020000000000000001 /* Sources */ = {isa = PBXSourcesBuildPhase; buildActionMask = 2147483647; files = (A3165000000000000000001 /* in Sources */); runOnlyForDeploymentPostprocessing = 0; };
 		A3170030000000000000001 /* Resources */ = {isa = PBXResourcesBuildPhase; buildActionMask = 2147483647; files = (A3166000000000000000001 /* in Resources */); runOnlyForDeploymentPostprocessing = 0; };
-		A3170040000000000000001 /* Frameworks */ = {isa = PBXFrameworksBuildPhase; buildActionMask = 2147483647; files = (); runOnlyForDeploymentPostprocessing = 0; };
-		A3170050000000000000001 /* Frameworks */ = {isa = PBXFrameworksBuildPhase; buildActionMask = 2147483647; files = (); runOnlyForDeploymentPostprocessing = 0; };
+		A3170040000000000000001 /* Frameworks */ = {isa = PBXFrameworksBuildPhase; buildActionMask = 2147483647; files = (A3167010000000000000001 /* SOSMeshCore in Frameworks */, A3167020000000000000001 /* SOSMeshContracts in Frameworks */); runOnlyForDeploymentPostprocessing = 0; };
+		A3170050000000000000001 /* Frameworks */ = {isa = PBXFrameworksBuildPhase; buildActionMask = 2147483647; files = (A3167030000000000000001 /* SOSMeshCore in Frameworks */); runOnlyForDeploymentPostprocessing = 0; };
 		A3150010000000000000001 /* XCLocalSwiftPackageReference "SOSMeshCore" */ = {isa = XCLocalSwiftPackageReference; relativePath = SOSMeshCore; };
 		A3150020000000000000001 /* XCLocalSwiftPackageReference "contracts-swift" */ = {isa = XCLocalSwiftPackageReference; relativePath = ../../packages/contracts-swift; };
 		A3151010000000000000001 /* SOSMeshCore */ = {isa = XCSwiftPackageProductDependency; productName = SOSMeshCore; package = A3150010000000000000001 /* SOSMeshCore */; };

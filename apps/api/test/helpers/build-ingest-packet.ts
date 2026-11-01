@@ -8,6 +8,10 @@ const fixturePath = join(
   __dirname,
   '../../../../packages/fixtures/protocol-v1/valid-sos.json'
 );
+const unknownLocationFixturePath = join(
+  __dirname,
+  '../../../../packages/fixtures/protocol-v1/unknown-location-sos.json'
+);
 
 export type BuildIngestOptions = {
   messageId?: string;
@@ -22,13 +26,16 @@ function applyEnvelopeProfile(
   base: Record<string, unknown>,
   profile: BuildIngestOptions['envelopeProfile']
 ): void {
-  const envelope = base.envelope as Record<string, unknown>;
   if (profile === 'unknown') {
-    envelope.locationStatus = 'UNKNOWN';
-    envelope.location = null;
+    const unknownTemplate = JSON.parse(
+      readFileSync(unknownLocationFixturePath, 'utf8')
+    ) as Record<string, unknown>;
+    const unknownEnvelope = unknownTemplate.envelope as Record<string, unknown>;
+    base.envelope = { ...unknownEnvelope };
     return;
   }
   if (profile === 'manual') {
+    const envelope = base.envelope as Record<string, unknown>;
     envelope.locationStatus = 'MANUAL';
     envelope.location = {
       latitude: 41.015137,
@@ -45,9 +52,9 @@ export function buildValidIngestRequest(
   const messageId =
     options.messageId ?? (base.id as string) ?? '550e8400-e29b-41d4-a716-446655440000';
   base.id = messageId;
+  applyEnvelopeProfile(base, options.envelopeProfile);
   const envelope = base.envelope as Record<string, unknown>;
   envelope.timestamp = new Date(Date.now() - 30_000).toISOString();
-  applyEnvelopeProfile(base, options.envelopeProfile);
   if (options.mutate) {
     options.mutate(base);
   }

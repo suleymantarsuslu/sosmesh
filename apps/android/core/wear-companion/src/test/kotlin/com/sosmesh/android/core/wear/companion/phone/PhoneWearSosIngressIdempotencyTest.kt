@@ -8,9 +8,9 @@ import com.sosmesh.android.core.data.outbox.OutboxDatabase
 import com.sosmesh.android.core.data.outbox.RoomOutboxQueueAdapter
 import com.sosmesh.android.core.data.sos.SosMessageComposer
 import com.sosmesh.android.core.wear.companion.protocol.WearCompanionCodec
-import com.sosmesh.contracts.CryptoConfig
 import com.sosmesh.android.core.wear.companion.protocol.WearPhoneAckStatus
 import com.sosmesh.android.core.wear.companion.protocol.WearSosCreateWire
+import com.sosmesh.contracts.CryptoConfig
 import com.sosmesh.contracts.transport.OutboxQueueAdapter
 import org.junit.After
 import org.junit.Assert.assertEquals
@@ -62,7 +62,7 @@ class PhoneWearSosIngressIdempotencyTest {
     fun duplicateWatchMessage_singleOutboxRow() {
         val wire =
             WearSosCreateWire(
-                messageId = "watch-msg-1",
+                messageId = "550e8400-e29b-41d4-a716-446655440001",
                 nonce = "nonce-a",
                 sosType = "deprem",
                 personCount = 1,

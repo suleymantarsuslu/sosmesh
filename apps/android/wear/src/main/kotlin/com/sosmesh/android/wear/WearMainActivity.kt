@@ -3,8 +3,7 @@ package com.sosmesh.android.wear
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
-import com.sosmesh.android.wear.companion.GmsWearCompanionTransport
-import com.sosmesh.android.wear.companion.InMemoryWearQueueStoreHolder
+import com.sosmesh.android.wear.companion.WearAppCoordinatorHolder
 import com.sosmesh.android.wear.ui.WearRootScreen
 import com.sosmesh.android.wear.ui.WearSosViewModel
 

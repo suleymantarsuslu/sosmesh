@@ -22,13 +22,14 @@ class SosMessageComposerTest {
                     location = LocationSnapshot.unknown(),
                     languageTag = "tr",
                     nowMs = 1_700_000_000_000L,
-                    messageIdOverride = "watch-fixed-id",
+                    messageIdOverride = "550e8400-e29b-41d4-a716-446655440000",
                 ),
             )
-        assertEquals("watch-fixed-id", composed.message.id)
+        assertEquals("550e8400-e29b-41d4-a716-446655440000", composed.message.id)
     }
 
     @Test
+    fun compose_unknownLocation_envelopeMarksUnknownWithoutCoordinates() {
         val composed =
             composer.compose(
                 SosComposeRequest(

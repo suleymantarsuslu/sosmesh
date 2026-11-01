@@ -81,8 +81,7 @@ class PhoneWearSosIngress
             )
         }
 
-        fun buildAckBytes(result: PhoneWearIngressResult): ByteArray =
-            WearCompanionCodec.encodeAck(result.ack)
+        fun buildAckBytes(result: PhoneWearIngressResult): ByteArray = WearCompanionCodec.encodeAck(result.ack)
 
         private fun validate(wire: WearSosCreateWire) {
             require(wire.version == 1) { "unsupported version" }

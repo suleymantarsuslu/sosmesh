@@ -140,6 +140,5 @@ class WearOfflineQueue(
         return updated
     }
 
-    fun listDueForRetry(nowMs: Long): List<WearOutboundEntry> =
-        store.listAll().filter { WearRetryPolicy.shouldRetry(it, nowMs) }
+    fun listDueForRetry(nowMs: Long): List<WearOutboundEntry> = store.listAll().filter { WearRetryPolicy.shouldRetry(it, nowMs) }
 }

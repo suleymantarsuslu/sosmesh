@@ -3,8 +3,8 @@ package com.sosmesh.android.core.wear.companion.queue
 import com.sosmesh.android.core.wear.companion.protocol.WearOutboundWireStatus
 import com.sosmesh.android.core.wear.companion.protocol.WearPhoneAckStatus
 import com.sosmesh.android.core.wear.companion.protocol.WearSosCreateWire
-import com.sosmesh.android.core.wear.companion.sync.WearUserFacingPhase
 import com.sosmesh.android.core.wear.companion.sync.WearStateSyncEngine
+import com.sosmesh.android.core.wear.companion.sync.WearUserFacingPhase
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNotNull

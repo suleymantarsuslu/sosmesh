@@ -67,14 +67,23 @@ class CrossPlatformAckGateFixtureTest {
                         CrossPlatformAckDeliveryGate.evaluateDeliveryState(
                             input.getValue("deliveryState").jsonPrimitive.content,
                         )
-                    assertEquals(
-                        expect.getValue("mayEmitPeerReceived").jsonPrimitive.content.toBooleanStrict(),
-                        state.mayEmitPeerReceived,
-                    )
-                    assertEquals(
-                        expect.getValue("mayEmitServerAccepted").jsonPrimitive.content.toBooleanStrict(),
-                        state.mayEmitServerAccepted,
-                    )
+                    expect["mayEmitPeerReceived"]?.jsonPrimitive?.content?.let { expected ->
+                        assertEquals(expected.toBooleanStrict(), state.mayEmitPeerReceived)
+                    }
+                    expect["mayEmitServerAccepted"]?.jsonPrimitive?.content?.let { expected ->
+                        assertEquals(expected.toBooleanStrict(), state.mayEmitServerAccepted)
+                    }
+                    expect["allowedNextStates"]?.jsonArray?.let { expected ->
+                        assertEquals(
+                            expected.map { it.jsonPrimitive.content },
+                            state.allowedNextStates,
+                        )
+                    }
+                    expect["forbiddenNextStates"]?.jsonArray?.let { expected ->
+                        for (forbidden in expected) {
+                            assertTrue(state.forbiddenNextStates.contains(forbidden.jsonPrimitive.content))
+                        }
+                    }
                 }
             }
         }

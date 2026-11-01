@@ -5,11 +5,12 @@ import { fetchWithSession } from '../../../../../lib/session';
 export default async function OperatorCasesPage({
   searchParams,
 }: {
-  searchParams?: { seedCount?: string };
+  searchParams?: Promise<{ seedCount?: string }>;
 }) {
+  const resolvedSearchParams = searchParams ? await searchParams : undefined;
   const query = new URLSearchParams({ limit: '100' });
-  if (searchParams?.seedCount) {
-    query.set('seedCount', searchParams.seedCount);
+  if (resolvedSearchParams?.seedCount) {
+    query.set('seedCount', resolvedSearchParams.seedCount);
   }
   const res = await fetchWithSession(`/v1/operator/cases?${query.toString()}`);
   let items: OperatorCaseRow[] = [];

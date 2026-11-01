@@ -27,6 +27,8 @@
     <string name="settings_title">Settings</string>
     <string name="settings_data_control_intro">Data is kept in an encrypted on-device queue. Not an official emergency service.</string>
     <string name="settings_high_contrast">High contrast</string>
+    <string name="settings_high_power_radio_intro">More frequent scanning on weak mesh links uses more battery. Enable only with explicit opt-in.</string>
+    <string name="settings_high_power_radio_consent">Allow high-power radio profile</string>
     <string name="settings_local_data_note">To delete local data, clear storage from Android app info.</string>
     <string name="settings_back">Back</string>
     <string name="radio_debug_title">BLE radio status</string>

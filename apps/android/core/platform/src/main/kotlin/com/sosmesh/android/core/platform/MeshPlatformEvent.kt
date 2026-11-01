@@ -30,4 +30,17 @@ sealed class MeshPlatformEvent {
     data object RelayOptIn : MeshPlatformEvent()
 
     data object RelayOptOut : MeshPlatformEvent()
+
+    data object ThermalThrottled : MeshPlatformEvent()
+
+    data object ThermalNormal : MeshPlatformEvent()
+
+    data object HighPowerRadioConsentGranted : MeshPlatformEvent()
+
+    data object HighPowerRadioConsentRevoked : MeshPlatformEvent()
+
+    data class LinkMetricsUpdated(
+        val duplicateTrafficRatioBps: Int,
+        val linkQualityScoreBps: Int,
+    ) : MeshPlatformEvent()
 }

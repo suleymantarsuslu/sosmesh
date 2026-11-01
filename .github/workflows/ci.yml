@@ -389,6 +389,10 @@ jobs:
           echo "✅ Swift contracts golden matches master"
           cmp -s "$MASTER_GOLDEN" "$IOS_CORE_GOLDEN"
           echo "✅ SOSMeshCore bundled golden matches master"
+          MASTER_RADIO="packages/contracts/radio-planner/vectors/radio-planner-cases.json"
+          IOS_RADIO="apps/ios/SOSMeshCore/Tests/SOSMeshCoreTests/Resources/radio-planner-cases.json"
+          cmp -s "$MASTER_RADIO" "$IOS_RADIO"
+          echo "✅ SOSMeshCore bundled radio planner vectors match master"
 
   secret-scan:
     name: Secret Scan

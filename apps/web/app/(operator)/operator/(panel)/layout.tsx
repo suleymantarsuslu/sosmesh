@@ -6,8 +6,8 @@ import { OperatorShell } from '../../../../components/operator/OperatorShell';
 import { shouldShowDemoModeBanner } from '../../../../lib/demo-mode';
 import { readSession } from '../../../../lib/session';
 
-export default function OperatorPanelLayout({ children }: { children: ReactNode }) {
-  const session = readSession();
+export default async function OperatorPanelLayout({ children }: { children: ReactNode }) {
+  const session = await readSession();
   if (!session) {
     redirect('/operator/login');
   }

@@ -20,6 +20,7 @@ import { IngestModule } from './ingest/ingest.module';
 import { EventsModule } from './events/events.module';
 import { SyncModule } from './sync/sync.module';
 import { OperatorModule } from './operator/operator.module';
+import { OrganizationModule } from './organization/organization.module';
 import { PrismaModule } from './prisma/prisma.module';
 import { PublicModule } from './public/public.module';
 
@@ -71,6 +72,7 @@ import { PublicModule } from './public/public.module';
     SyncModule,
     EventsModule,
     OperatorModule,
+    OrganizationModule,
   ],
   providers: [
     {

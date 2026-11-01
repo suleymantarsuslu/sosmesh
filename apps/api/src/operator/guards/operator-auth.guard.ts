@@ -15,12 +15,14 @@ export type OperatorJwtPayload = {
   sub: string;
   role: UserRole | string;
   teamId?: string;
+  organizationId?: string;
 };
 
 export type OperatorRequestUser = {
   sub: string;
   role: UserRole;
   teamId?: string;
+  organizationId?: string;
 };
 
 export type OperatorRequest = Request & {
@@ -55,6 +57,7 @@ export class OperatorAuthGuard implements CanActivate {
         sub: payload.sub,
         role: payload.role as UserRole,
         teamId: payload.teamId,
+        organizationId: payload.organizationId,
       };
       return true;
     } catch {

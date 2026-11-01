@@ -11,6 +11,11 @@ struct SettingsView: View {
                     Text("settings.permissions.bluetooth")
                     Text("settings.permissions.location")
                 }
+                Section("settings.radio.title") {
+                    Text("settings.radio.high_power_intro")
+                        .font(.caption)
+                    Toggle("settings.radio.high_power_consent", isOn: $appModel.highPowerRadioConsent)
+                }
                 Section("ios.background.section") {
                     Text("ios.limitation.background")
                     Text("ios.limitation.force_quit")

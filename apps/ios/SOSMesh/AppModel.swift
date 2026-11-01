@@ -6,6 +6,7 @@ final class AppModel: ObservableObject {
     @Published var relayEnabled = false
     @Published var preferredRole: BlePeerRole = .sender
     @Published var acceptedDisclaimer = false
+    @Published var highPowerRadioConsent = false
     @Published var restorationPhase: BleRestorationPhase = .coldStart
     @Published var outboxCount = 0
     @Published var platformHint: CrossPlatformUserHint = .none

@@ -32,6 +32,8 @@
     <string name="settings_title">Ayarlar</string>
     <string name="settings_data_control_intro">Veriler cihazınızda şifreli kuyrukta tutulur. Resmî acil servis değildir.</string>
     <string name="settings_high_contrast">Yüksek kontrast</string>
+    <string name="settings_high_power_radio_intro">Zayıf mesh linkinde daha sık tarama daha fazla pil harcar. Yalnızca bilinçli opt-in ile etkinleştirin.</string>
+    <string name="settings_high_power_radio_consent">Yüksek güç radyo profiline izin ver</string>
     <string name="settings_local_data_note">Uygulama verilerini silmek için Android uygulama bilgilerinden depolamayı temizleyin.</string>
     <string name="settings_back">Geri</string>
     <string name="radio_debug_title">BLE radyo durumu</string>

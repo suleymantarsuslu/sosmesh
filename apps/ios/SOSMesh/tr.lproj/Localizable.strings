@@ -26,6 +26,9 @@
 "settings.permissions.title" = "İzinler";
 "settings.permissions.bluetooth" = "Bluetooth";
 "settings.permissions.location" = "Konum";
+"settings.radio.title" = "Radyo ve pil";
+"settings.radio.high_power_intro" = "Zayıf linkte daha sık tarama daha fazla pil harcar. Yalnızca bilinçli opt-in ile açın.";
+"settings.radio.high_power_consent" = "Yüksek güç radyo profiline izin ver";
 "ios.background.section" = "Arka plan ve sınırlar";
 "ios.limitation.background" = "iOS arka planda BLE çalışmasını kısıtlayabilir; garanti verilmez.";
 "ios.limitation.force_quit" = "Uygulamayı zorla kapattıktan sonra mesh relay devam etmeyebilir.";

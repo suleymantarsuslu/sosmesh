@@ -25,7 +25,10 @@
 "settings.title" = "Settings";
 "settings.permissions.title" = "Permissions";
 "settings.permissions.bluetooth" = "Bluetooth";
-"settings.permissions.location" = "Konum";
+"settings.permissions.location" = "Location";
+"settings.radio.title" = "Radio and battery";
+"settings.radio.high_power_intro" = "More frequent scanning on weak links uses more battery. Enable only with explicit opt-in.";
+"settings.radio.high_power_consent" = "Allow high-power radio profile";
 "ios.background.section" = "Background limits";
 "ios.limitation.background" = "iOS may limit BLE in background; no guarantee.";
 "ios.limitation.force_quit" = "After force quit, mesh relay may not continue.";

@@ -1,0 +1,285 @@
+{
+  "schemaVersion": 1,
+  "cases": [
+    {
+      "id": "sos-active-urgent",
+      "input": {
+        "bluetoothEnabled": true,
+        "blePermissionsGranted": true,
+        "sosTransferActive": true,
+        "relayOptIn": false,
+        "batteryLevelPercent": 80,
+        "batteryLowThresholdPercent": 15,
+        "powerSaveEnabled": false,
+        "deviceIdle": false,
+        "thermalThrottled": false,
+        "highPowerRadioConsent": false,
+        "duplicateTrafficRatioBps": 0,
+        "linkQualityScoreBps": 5000
+      },
+      "expect": {
+        "profileId": "SOS_URGENT",
+        "scanMode": 2,
+        "scanPeriodMs": 5000,
+        "scanPauseMs": 2000,
+        "scanningAllowed": true,
+        "advertiseIntervalMs": 160,
+        "advertiseAllowed": true,
+        "requiresHighPowerConsentPrompt": false,
+        "dutyCycleClass": "SOS_ACTIVE"
+      }
+    },
+    {
+      "id": "sos-active-constrained-thermal",
+      "input": {
+        "bluetoothEnabled": true,
+        "blePermissionsGranted": true,
+        "sosTransferActive": true,
+        "relayOptIn": false,
+        "batteryLevelPercent": 70,
+        "batteryLowThresholdPercent": 15,
+        "powerSaveEnabled": false,
+        "deviceIdle": false,
+        "thermalThrottled": true,
+        "highPowerRadioConsent": false,
+        "duplicateTrafficRatioBps": 0,
+        "linkQualityScoreBps": 5000
+      },
+      "expect": {
+        "profileId": "SOS_CONSTRAINED",
+        "scanMode": 1,
+        "scanPeriodMs": 8000,
+        "scanPauseMs": 4000,
+        "scanningAllowed": true,
+        "advertiseIntervalMs": 320,
+        "advertiseAllowed": true,
+        "requiresHighPowerConsentPrompt": false,
+        "dutyCycleClass": "SOS_ACTIVE"
+      }
+    },
+    {
+      "id": "relay-passive-default",
+      "input": {
+        "bluetoothEnabled": true,
+        "blePermissionsGranted": true,
+        "sosTransferActive": false,
+        "relayOptIn": true,
+        "batteryLevelPercent": 60,
+        "batteryLowThresholdPercent": 15,
+        "powerSaveEnabled": false,
+        "deviceIdle": false,
+        "thermalThrottled": false,
+        "highPowerRadioConsent": false,
+        "duplicateTrafficRatioBps": 1000,
+        "linkQualityScoreBps": 5000
+      },
+      "expect": {
+        "profileId": "RELAY_PASSIVE",
+        "scanMode": 0,
+        "scanPeriodMs": 10000,
+        "scanPauseMs": 5000,
+        "scanningAllowed": true,
+        "advertiseIntervalMs": 400,
+        "advertiseAllowed": true,
+        "requiresHighPowerConsentPrompt": false,
+        "dutyCycleClass": "RELAY_PASSIVE"
+      }
+    },
+    {
+      "id": "relay-constrained-power-save",
+      "input": {
+        "bluetoothEnabled": true,
+        "blePermissionsGranted": true,
+        "sosTransferActive": false,
+        "relayOptIn": true,
+        "batteryLevelPercent": 55,
+        "batteryLowThresholdPercent": 15,
+        "powerSaveEnabled": true,
+        "deviceIdle": false,
+        "thermalThrottled": false,
+        "highPowerRadioConsent": true,
+        "duplicateTrafficRatioBps": 0,
+        "linkQualityScoreBps": 5000
+      },
+      "expect": {
+        "profileId": "RELAY_CONSTRAINED",
+        "scanMode": 0,
+        "scanPeriodMs": 20000,
+        "scanPauseMs": 15000,
+        "scanningAllowed": true,
+        "advertiseIntervalMs": 800,
+        "advertiseAllowed": true,
+        "requiresHighPowerConsentPrompt": false,
+        "dutyCycleClass": "RELAY_PASSIVE"
+      }
+    },
+    {
+      "id": "relay-high-duplicate-slows-duty",
+      "input": {
+        "bluetoothEnabled": true,
+        "blePermissionsGranted": true,
+        "sosTransferActive": false,
+        "relayOptIn": true,
+        "batteryLevelPercent": 50,
+        "batteryLowThresholdPercent": 15,
+        "powerSaveEnabled": false,
+        "deviceIdle": false,
+        "thermalThrottled": false,
+        "highPowerRadioConsent": false,
+        "duplicateTrafficRatioBps": 3500,
+        "linkQualityScoreBps": 5000
+      },
+      "expect": {
+        "profileId": "RELAY_PASSIVE",
+        "scanMode": 0,
+        "scanPeriodMs": 10000,
+        "scanPauseMs": 7500,
+        "scanningAllowed": true,
+        "advertiseIntervalMs": 400,
+        "advertiseAllowed": true,
+        "requiresHighPowerConsentPrompt": false,
+        "dutyCycleClass": "RELAY_PASSIVE"
+      }
+    },
+    {
+      "id": "relay-boost-with-consent",
+      "input": {
+        "bluetoothEnabled": true,
+        "blePermissionsGranted": true,
+        "sosTransferActive": false,
+        "relayOptIn": true,
+        "batteryLevelPercent": 45,
+        "batteryLowThresholdPercent": 15,
+        "powerSaveEnabled": false,
+        "deviceIdle": false,
+        "thermalThrottled": false,
+        "highPowerRadioConsent": true,
+        "duplicateTrafficRatioBps": 500,
+        "linkQualityScoreBps": 1500
+      },
+      "expect": {
+        "profileId": "RELAY_HIGH_POWER",
+        "scanMode": 1,
+        "scanPeriodMs": 7000,
+        "scanPauseMs": 3000,
+        "scanningAllowed": true,
+        "advertiseIntervalMs": 200,
+        "advertiseAllowed": true,
+        "requiresHighPowerConsentPrompt": false,
+        "dutyCycleClass": "RELAY_PASSIVE"
+      }
+    },
+    {
+      "id": "relay-boost-needs-consent-prompt",
+      "input": {
+        "bluetoothEnabled": true,
+        "blePermissionsGranted": true,
+        "sosTransferActive": false,
+        "relayOptIn": true,
+        "batteryLevelPercent": 45,
+        "batteryLowThresholdPercent": 15,
+        "powerSaveEnabled": false,
+        "deviceIdle": false,
+        "thermalThrottled": false,
+        "highPowerRadioConsent": false,
+        "duplicateTrafficRatioBps": 500,
+        "linkQualityScoreBps": 1500
+      },
+      "expect": {
+        "profileId": "RELAY_PASSIVE",
+        "scanMode": 0,
+        "scanPeriodMs": 10000,
+        "scanPauseMs": 5000,
+        "scanningAllowed": true,
+        "advertiseIntervalMs": 400,
+        "advertiseAllowed": true,
+        "requiresHighPowerConsentPrompt": true,
+        "dutyCycleClass": "RELAY_PASSIVE"
+      }
+    },
+    {
+      "id": "blocked-permission-denied",
+      "input": {
+        "bluetoothEnabled": true,
+        "blePermissionsGranted": false,
+        "sosTransferActive": false,
+        "relayOptIn": true,
+        "batteryLevelPercent": 90,
+        "batteryLowThresholdPercent": 15,
+        "powerSaveEnabled": false,
+        "deviceIdle": false,
+        "thermalThrottled": false,
+        "highPowerRadioConsent": false,
+        "duplicateTrafficRatioBps": 0,
+        "linkQualityScoreBps": 5000
+      },
+      "expect": {
+        "profileId": "BLOCKED",
+        "scanMode": 0,
+        "scanPeriodMs": 0,
+        "scanPauseMs": 0,
+        "scanningAllowed": false,
+        "advertiseIntervalMs": 0,
+        "advertiseAllowed": false,
+        "requiresHighPowerConsentPrompt": false,
+        "dutyCycleClass": "BLOCKED"
+      }
+    },
+    {
+      "id": "sos-urgent-when-bluetooth-off",
+      "input": {
+        "bluetoothEnabled": false,
+        "blePermissionsGranted": true,
+        "sosTransferActive": true,
+        "relayOptIn": false,
+        "batteryLevelPercent": 90,
+        "batteryLowThresholdPercent": 15,
+        "powerSaveEnabled": false,
+        "deviceIdle": false,
+        "thermalThrottled": false,
+        "highPowerRadioConsent": false,
+        "duplicateTrafficRatioBps": 0,
+        "linkQualityScoreBps": 5000
+      },
+      "expect": {
+        "profileId": "SOS_URGENT",
+        "scanMode": 2,
+        "scanPeriodMs": 5000,
+        "scanPauseMs": 2000,
+        "scanningAllowed": true,
+        "advertiseIntervalMs": 160,
+        "advertiseAllowed": true,
+        "requiresHighPowerConsentPrompt": false,
+        "dutyCycleClass": "SOS_ACTIVE"
+      }
+    },
+    {
+      "id": "relay-blocked-low-battery",
+      "input": {
+        "bluetoothEnabled": true,
+        "blePermissionsGranted": true,
+        "sosTransferActive": false,
+        "relayOptIn": true,
+        "batteryLevelPercent": 10,
+        "batteryLowThresholdPercent": 15,
+        "powerSaveEnabled": false,
+        "deviceIdle": false,
+        "thermalThrottled": false,
+        "highPowerRadioConsent": true,
+        "duplicateTrafficRatioBps": 0,
+        "linkQualityScoreBps": 5000
+      },
+      "expect": {
+        "profileId": "BLOCKED",
+        "scanMode": 0,
+        "scanPeriodMs": 0,
+        "scanPauseMs": 0,
+        "scanningAllowed": false,
+        "advertiseIntervalMs": 0,
+        "advertiseAllowed": false,
+        "requiresHighPowerConsentPrompt": false,
+        "dutyCycleClass": "BLOCKED"
+      }
+    }
+  ]
+}

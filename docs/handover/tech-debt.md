@@ -129,6 +129,20 @@ TD-<ADIM>-<ID>: Kısa açıklama
 
 ---
 
+### TD-26-A3: Org geneli coordinator kapsamı (atama ekranı)
+
+**Durum:** OPEN  
+**Tanımlandığı ADIM:** 26  
+**Hedef Kapatma ADIM:** 27/28 (ekip/atama tasarım kararı)  
+**Etki:** MEDIUM  
+**Detay:**  
+- Org genelinde tüm ekiplerin vakalarını gören COORDINATOR kapsamı bilinçli olarak uygulanmadı; şu an COORDINATOR da OPERATOR ile aynı team+org scope kullanır.
+- Atama/koordinasyon ekranı için org-geneli görünürlük ADIM 27/28 ürün kararına ertelendi.
+
+**Kanıt:** `apps/api/src/organization/tenant-scope.service.ts`; `apps/api/test/organization-isolation.spec.ts` (COORDINATOR JWT testleri)
+
+---
+
 ## Kapalı Borçlar
 
 _(Şu anda kapalı borç yok)_
@@ -136,4 +150,4 @@ _(Şu anda kapalı borç yok)_
 ---
 
 **Son Güncelleme:** 2026-11-01  
-**Toplam Açık Borç:** 6 (ADIM 04 watch UI: 4; ADIM 26 tenant/admin: 2)
+**Toplam Açık Borç:** 7 (ADIM 04 watch UI: 4; ADIM 26 tenant/admin: 3)

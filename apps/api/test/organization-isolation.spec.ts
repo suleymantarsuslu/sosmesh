@@ -234,4 +234,35 @@ describe('Organization tenant isolation (ADIM 26)', () => {
       .set('Authorization', `Bearer ${token}`);
     expect(response.status).toBe(404);
   });
+
+  function coordinatorToken(): string {
+    return operatorBearerToken({
+      sub: operatorAlpha,
+      role: UserRole.COORDINATOR,
+      teamId: teamAlpha,
+      organizationId: orgAlpha,
+    });
+  }
+
+  it('COORDINATOR JWT does not list sibling team incidents in same org', async () => {
+    const token = coordinatorToken();
+    const response = await request(app.getHttpServer())
+      .get('/v1/operator/cases')
+      .set('Authorization', `Bearer ${token}`);
+    expect(response.status).toBe(200);
+    const incidentIds = (response.body.items as { incidentId: string }[]).map(
+      (row) => row.incidentId
+    );
+    expect(incidentIds).toContain(incidentAlpha);
+    expect(incidentIds).not.toContain(incidentAlphaSibling);
+    expect(incidentIds).not.toContain(incidentBeta);
+  });
+
+  it('COORDINATOR JWT returns 404 for sibling team case detail', async () => {
+    const token = coordinatorToken();
+    const response = await request(app.getHttpServer())
+      .get(`/v1/operator/cases/${incidentAlphaSibling}/detail`)
+      .set('Authorization', `Bearer ${token}`);
+    expect(response.status).toBe(404);
+  });
 });

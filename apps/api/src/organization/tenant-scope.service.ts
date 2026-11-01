@@ -14,21 +14,6 @@ export class TenantScopeService {
       return undefined;
     }
 
-    if (user.role === UserRole.COORDINATOR) {
-      if (!user.organizationId) {
-        return { id: { in: [] } };
-      }
-      return {
-        assignments: {
-          some: {
-            team: {
-              organizationId: user.organizationId,
-            },
-          },
-        },
-      };
-    }
-
     if (!user.teamId || !user.organizationId) {
       return { id: { in: [] } };
     }

@@ -1,13 +1,15 @@
-package com.sosmesh.android.core.wear.companion.phone
+package com.sosmesh.android.wear
 
 import com.google.android.gms.wearable.MessageEvent
 import com.google.android.gms.wearable.WearableListenerService
+import com.sosmesh.android.core.wear.companion.phone.PhoneWearAckSender
+import com.sosmesh.android.core.wear.companion.phone.PhoneWearSosIngress
 import com.sosmesh.android.core.wear.companion.protocol.WearCompanionPaths
 import dagger.hilt.android.AndroidEntryPoint
 import javax.inject.Inject
 
 @AndroidEntryPoint
-class WearCompanionListenerService : WearableListenerService() {
+class PhoneWearCompanionListenerService : WearableListenerService() {
     @Inject
     lateinit var ingress: PhoneWearSosIngress
 

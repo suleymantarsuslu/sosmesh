@@ -62,7 +62,7 @@
             android:foregroundServiceType="connectedDevice" />
 
         <service
-            android:name="com.sosmesh.android.core.wear.companion.phone.WearCompanionListenerService"
+            android:name=".wear.PhoneWearCompanionListenerService"
             android:exported="true">
             <intent-filter>
                 <action android:name="com.google.android.gms.wearable.MESSAGE_RECEIVED" />

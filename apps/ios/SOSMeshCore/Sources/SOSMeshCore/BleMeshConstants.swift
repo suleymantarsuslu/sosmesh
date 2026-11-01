@@ -1,4 +1,5 @@
 import Foundation
+import SOSMeshContracts
 
 /// BLE V1 GATT profile constants (cross-platform with Android `BleMeshConstants`).
 public enum BleMeshConstants {

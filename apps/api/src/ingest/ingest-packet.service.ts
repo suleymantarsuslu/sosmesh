@@ -66,7 +66,7 @@ export class IngestPacketService {
     }
 
     const envelope = sosMessage.envelope as Record<string, unknown> | undefined;
-    if (envelope && typeof envelope === 'object') {
+    if (envelope && typeof envelope === 'object' && !Array.isArray(envelope)) {
       const forbiddenKey = findForbiddenEnvelopeFieldKey(envelope);
       if (forbiddenKey) {
         throw new HttpException(

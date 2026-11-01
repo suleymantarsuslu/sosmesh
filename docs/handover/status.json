@@ -741,12 +741,22 @@
       ],
       "deliverables": "apps/web/features/cases; api operator-events",
       "pass_criteria": "Operatör görünce gerçek OPERATOR_SEEN olayı oluşur, AI otorite gibi sunulmaz.",
-      "status": "NOT_STARTED",
-      "attempts": 0,
-      "commit": null,
-      "evidence": [],
-      "blockers": [],
-      "last_checked_at": null,
+      "status": "PARTIAL",
+      "attempts": 1,
+      "commit": "48c91b8",
+      "evidence": [
+        "GET /v1/operator/cases/:id/detail → idempotent OPERATOR_SEEN (operator_view) + audit; operator-case-detail.spec.ts",
+        "PATCH review-status + POST corrections/ai-override (version 409); Incident.reviewStatus + optimistic version",
+        "apps/web/features/cases (CaseDetailView, AiSuggestionPanel); Playwright ADIM 23 5/5 + XSS/conflict",
+        "pnpm -r build EXIT=0; pnpm test EXIT=0; verify.sh EXIT=0; test:a11y:web 16/16",
+        "reports/operator-case-detail-1440.png"
+      ],
+      "blockers": [
+        "Self-hosted CI yeşil olana kadar PASS değil",
+        "Bu VM'de ANDROID_HOME yok — Gradle assembleDebug yerelde koşulamadı",
+        "PR base main; #34 ve #37 merge edildikten sonra merge edilecek"
+      ],
+      "last_checked_at": "2026-11-01T05:10:00+00:00",
       "goal": "Operatörün AI bulgusunu doğrulayıp güvenli işlem yapabilmesini sağla.",
       "cursor_tasks": [
         "Case detail: orijinal metin, doğrulanmış metadata, AI açıklaması, belirsizlik ve dayanak alıntısı.",

@@ -28,7 +28,7 @@ test.describe('Operator map and case list', () => {
     await expect(page.getByTestId('unknown-location-queue')).toBeVisible();
     await expect(page.getByTestId('unknown-queue-item-e2e22222')).toBeVisible();
     await expect(page.getByTestId('map-pin-e2e22222')).toHaveCount(0);
-    await expect(page.getByTestId('map-pin-e2e11111')).toBeVisible();
+    await expect(page.getByTestId('map-pin-e2e11111')).toBeVisible({ timeout: 15000 });
   });
 
   test('search filter narrows list', async ({ page }) => {

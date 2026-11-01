@@ -23,7 +23,26 @@ export type OperatorCaseRow = {
   source: string | null;
 };
 
+export type OperatorAiSuggestion = {
+  status: string;
+  modelVersion: string;
+  suggestion: Record<string, unknown> | null;
+  verified: false;
+  label: 'öneri/taslak, doğrulanmadı';
+};
+
 export type OperatorCaseDetail = OperatorCaseRow & {
+  version: number;
+  reviewStatus: string;
+  originalText: string | null;
+  verifiedMetadata: {
+    personCount: number | null;
+    locationStatus: string;
+    latitude: number | null;
+    longitude: number | null;
+    accuracyMeters: number | null;
+  };
+  ai: OperatorAiSuggestion | null;
   timeline: {
     id: string;
     deliveryState: string;
@@ -148,7 +167,9 @@ export class OperatorCasesService {
         longitude: true,
         accuracyMeters: true,
         receivedAt: true,
-        incident: { select: { state: true } },
+        personCount: true,
+        operatorDisplayText: true,
+        incident: { select: { state: true, version: true, reviewStatus: true } },
         messageEvents: {
           select: {
             id: true,
@@ -170,8 +191,40 @@ export class OperatorCasesService {
         ? [{ source: message.messageEvents[message.messageEvents.length - 1].source }]
         : [],
     });
+
+    const aiRow = await this.prisma.aiAnalysis.findFirst({
+      where: { incidentId },
+      orderBy: { createdAt: 'desc' },
+    });
+
+    const aiSuggestion: OperatorAiSuggestion | null = aiRow
+      ? {
+          status: aiRow.status,
+          modelVersion: aiRow.modelVersion,
+          suggestion:
+            aiRow.status === 'COMPLETED' ||
+            aiRow.status === 'OPERATOR_OVERRIDE' ||
+            (aiRow.resultJson as Record<string, unknown>).categories
+              ? (aiRow.resultJson as Record<string, unknown>)
+              : null,
+          verified: false,
+          label: 'öneri/taslak, doğrulanmadı',
+        }
+      : null;
+
     return {
       ...base,
+      version: message.incident.version,
+      reviewStatus: message.incident.reviewStatus,
+      originalText: message.operatorDisplayText,
+      verifiedMetadata: {
+        personCount: message.personCount,
+        locationStatus: message.locationStatus,
+        latitude: message.latitude ? message.latitude.toNumber() : null,
+        longitude: message.longitude ? message.longitude.toNumber() : null,
+        accuracyMeters: message.accuracyMeters,
+      },
+      ai: aiSuggestion,
       timeline: message.messageEvents.map((event) => ({
         id: event.id,
         deliveryState: event.deliveryState,

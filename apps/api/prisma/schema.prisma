@@ -49,9 +49,18 @@ enum UserRole {
   COORDINATOR
 }
 
+enum OperatorReviewStatus {
+  NEW
+  SEEN
+  UNDER_REVIEW
+  COORDINATING
+}
+
 model Incident {
-  id          String         @id @default(uuid()) @db.Uuid
-  state       IncidentState  @default(PENDING)
+  id            String               @id @default(uuid()) @db.Uuid
+  state         IncidentState        @default(PENDING)
+  reviewStatus  OperatorReviewStatus @default(NEW) @map("review_status")
+  version       Int                  @default(0)
   createdAt   DateTime       @default(now()) @map("created_at")
   updatedAt   DateTime       @updatedAt @map("updated_at")
   sosMessages SosMessage[]
@@ -77,6 +86,8 @@ model SosMessage {
   encryptedNoteBlob   String?        @map("encrypted_note_blob") @db.Text
   encryptedPayloadRef String?        @map("encrypted_payload_ref")
   personCount         Int?           @map("person_count")
+  /// Synthetic operator-visible SOS text (M0 fixtures); not raw PII from devices.
+  operatorDisplayText String?        @map("operator_display_text") @db.Text
   priority            Int            @default(3)
   receivedAt          DateTime       @default(now()) @map("received_at")
   serverReceiptAt     DateTime?      @map("server_receipt_at")

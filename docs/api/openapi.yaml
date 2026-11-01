@@ -247,6 +247,110 @@ paths:
         - operator
       security:
         - bearer: []
+  /v1/operator/cases/{incidentId}/detail:
+    get:
+      operationId: OperatorCaseEventsController_getDetail
+      parameters:
+        - name: incidentId
+          required: true
+          in: path
+          schema:
+            type: string
+      responses:
+        "200":
+          description: ""
+      tags: &a5
+        - operator
+      security: &a6
+        - bearer: []
+  /v1/operator/cases/{incidentId}/seen:
+    post:
+      operationId: OperatorCaseEventsController_postSeen
+      parameters:
+        - name: incidentId
+          required: true
+          in: path
+          schema:
+            type: string
+      responses:
+        "201":
+          description: ""
+      tags: *a5
+      security: *a6
+  /v1/operator/cases/{incidentId}/review-status:
+    patch:
+      operationId: OperatorCaseEventsController_patchReviewStatus
+      parameters:
+        - name: incidentId
+          required: true
+          in: path
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ReviewStatusDto"
+      responses:
+        "200":
+          description: ""
+      tags: *a5
+      security: *a6
+  /v1/operator/cases/{incidentId}/corrections:
+    post:
+      operationId: OperatorCaseEventsController_postCorrection
+      parameters:
+        - name: incidentId
+          required: true
+          in: path
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/MetadataCorrectionDto"
+      responses:
+        "201":
+          description: ""
+      tags: *a5
+      security: *a6
+  /v1/operator/cases/{incidentId}/ai-override:
+    post:
+      operationId: OperatorCaseEventsController_postAiOverride
+      parameters:
+        - name: incidentId
+          required: true
+          in: path
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/AiOverrideDto"
+      responses:
+        "201":
+          description: ""
+      tags: *a5
+      security: *a6
+  /v1/operator/cases/{incidentId}/audit:
+    get:
+      operationId: OperatorCaseEventsController_getAudit
+      parameters:
+        - name: incidentId
+          required: true
+          in: path
+          schema:
+            type: string
+      responses:
+        "200":
+          description: ""
+      tags: *a5
+      security: *a6
   /v1/ingest/batch:
     post:
       operationId: BatchIngestController_ingestBatch
@@ -284,6 +388,15 @@ components:
       type: object
       properties: {}
     IngestRequestDto:
+      type: object
+      properties: {}
+    ReviewStatusDto:
+      type: object
+      properties: {}
+    MetadataCorrectionDto:
+      type: object
+      properties: {}
+    AiOverrideDto:
       type: object
       properties: {}
     IngestBatchRequestDto:

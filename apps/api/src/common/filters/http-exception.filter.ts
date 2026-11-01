@@ -59,6 +59,10 @@ export class ValidationExceptionFilter implements ExceptionFilter {
     const response = ctx.getResponse<Response>();
     const status = exception.getStatus();
     const payload = exception.getResponse();
+    if (typeof payload === 'object' && payload !== null && 'code' in payload) {
+      response.status(status).json(payload);
+      return;
+    }
     if (typeof payload === 'object' && payload !== null && 'message' in payload) {
       const message = (payload as { message: string | string[] }).message;
       const messages = Array.isArray(message) ? message : [message];

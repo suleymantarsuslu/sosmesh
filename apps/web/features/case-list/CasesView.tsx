@@ -1,5 +1,6 @@
 'use client';
 
+import Link from 'next/link';
 import { useCallback, useMemo, useState } from 'react';
 
 import { CaseDrawer } from './CaseDrawer';
@@ -146,6 +147,12 @@ export function CasesView({ initialCases }: { initialCases: OperatorCaseRow[] })
       </div>
 
       <CasesAccessibleTable rows={filtered} />
+
+      {selectedId ? (
+        <p className="cases-view__detail-link">
+          <Link href={`/operator/cases/${selectedId}`}>Vaka ayrıntısını aç</Link>
+        </p>
+      ) : null}
 
       <CaseDrawer
         open={selectedId !== null}

@@ -2,7 +2,7 @@
 
 **Tarih (UTC):** 2026-11-01  
 **Dal:** `cursor/gate-h-closure-a47c`  
-**HEAD:** `94f4ebc5cbaaa01068ca658df5b6f2a5be7c8880` (denetim turu 1 düzeltmesi)  
+**HEAD:** `99acc8ac5f26319a321f5334647886bfb631f5a0` (denetim turu 1 düzeltmesi + rapor düzeltmeleri)  
 **PR:** #41 (Gate H kapanış); **PR #40** (ADIM 26 — Gate H dışı, açık paralel iş)  
 **Kaynak:** `docs/handover/status.json`, `docs/handover/tech-debt.md`, master plan (`docs/handover/step-index.md`)
 
@@ -32,7 +32,7 @@ Gate H özeti ayrıca `status.json` → `gates.H` alanında tutulur. **ADIM 58**
 
 `tools/mesh-simulator/src/relay-mesh.ts` — `reliableChannel` TTL testlerinde paket kaybını sıfırlar (kabul edildi).
 
-`reports/mutation-sentinel-ttl.log`: `mutation-sentinel.test.ts` **3/3 PASS**; `skipTtlDecrement: true` ile outcome **FAILED** (≠ DROPPED) — mutasyon sentinel yakalamayı sürdürür. `docs/handover/evidence/gate-h/mesh-sim-mutation.txt`: harness **2/2** guard kırılımı.
+`docs/handover/evidence/gate-h/mutation-sentinel-ttl.txt`: `mutation-sentinel.test.ts` **3/3 PASS**; `skipTtlDecrement: true` ile outcome **FAILED** (≠ DROPPED) — mutasyon sentinel yakalamayı sürdürür. `docs/handover/evidence/gate-h/mesh-sim-mutation.txt`: harness **2/2** guard kırılımı.
 
 ---
 
@@ -47,7 +47,7 @@ Gate H özeti ayrıca `status.json` → `gates.H` alanında tutulur. **ADIM 58**
 | Kotlin sözleşme | `packages/contracts-kotlin ./gradlew test` | **PASS** (OpenJDK 17) | `docs/handover/evidence/gate-h/contracts-kotlin-test.txt` |
 | Android Gradle | `assembleDebug` | **NOT_RUN (`ANDROID_HOME` yok)** | status.json ADIM 12–16 notları; CI doğrular |
 
-**CI run id:** PR açıldıktan sonra GitHub Actions koşusunun id’si PR checks üzerinden eklenmelidir (bu rapor commit/push ile birlikte güncellenir).
+**CI run id:** [41332782997](https://github.com/suleymantarsuslu/sosmesh/actions/runs/41332782997) (PR #41 checks; güncel push sonrası yeni koşu varsa PR checks sekmesi esas alınır).
 
 ---
 
@@ -139,7 +139,7 @@ Watch UI borçları (TD-04-W1…W4) **OPEN**; “ERTELENDİ” etiketi yok. Kapa
 ## Mutation / test sayıları (özet)
 
 - **API Jest:** 91 test, 18 suite — PASS  
-- **Chaos (`tests/chaos`):** 23 test — PASS (TTL senaryosu için `reliableChannel` eklendi; digest chaos testi `runSimulatedTransfer` + `injectCorruptLastChunk`)  
+- **Chaos (`tests/chaos`):** 23 test — PASS (TTL senaryosu için `reliableChannel`; mandatory digest `mandatory-digest-chaos.test.ts` — CRC geçerli, digest geçersiz payload asla COMPLETED olmaz)  
 - **Playwright web:** 22 test — PASS  
 - **Mesh mutasyon skoru:** Stryker yüzdesi yok; **2/2** kasıtlı mutasyon hedef testi fail → guard etkin (`mesh-sim-mutation.sh`)  
 - **Nest API mutasyon:** ölçülmedi  

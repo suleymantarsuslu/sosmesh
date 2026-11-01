@@ -15,6 +15,14 @@ import { validateSosAiOutput } from '../ai/schemas/sos-ai-output.schema';
 import { canTransitionDelivery } from './delivery-state.util';
 import { OperatorRequestUser } from './guards/operator-auth.guard';
 import { IncidentScopeService } from './incident-scope.service';
+import {
+  assertIncidentVersionAndIncrement,
+  lockIncidentTransaction,
+} from './incident-version.util';
+import {
+  buildMetadataCorrectionUpdate,
+  type MetadataCorrectionInput,
+} from './metadata-correction.util';
 import { canTransitionReview } from './review-status.util';
 
 export type OperatorCaseAuditEntry = {
@@ -46,82 +54,98 @@ export class OperatorCaseActionsService {
     const message = await this.prisma.sosMessage.findFirst({
       where: { incidentId },
       orderBy: { receivedAt: 'desc' },
-      select: { id: true, deliveryState: true, incidentId: true },
+      select: { id: true, deliveryState: true },
     });
     if (!message) {
       throw new NotFoundException({ code: 'NOT_FOUND', message: 'Case not found' });
     }
 
-    const existingSeen = await this.prisma.messageEvent.findFirst({
-      where: {
-        sosMessageId: message.id,
-        deliveryState: DeliveryState.OPERATOR_SEEN,
-        source: 'operator_view',
-      },
-      select: { id: true },
-    });
-    if (existingSeen) {
-      return { created: false, messageEventId: existingSeen.id };
-    }
+    try {
+      return await this.prisma.$transaction(async (tx) => {
+        await lockIncidentTransaction(tx, incidentId);
 
-    const result = await this.prisma.$transaction(async (tx) => {
-      const incident = await tx.incident.findUnique({
-        where: { id: incidentId },
-        select: { version: true, reviewStatus: true },
-      });
-      if (!incident) {
-        throw new NotFoundException({ code: 'NOT_FOUND', message: 'Case not found' });
-      }
-
-      const event = await tx.messageEvent.create({
-        data: {
-          sosMessageId: message.id,
-          deliveryState: DeliveryState.OPERATOR_SEEN,
-          source: 'operator_view',
-          metadataJson: {
-            actorId: user.sub,
-          },
-        },
-      });
-
-      const nextDelivery = canTransitionDelivery(message.deliveryState, DeliveryState.OPERATOR_SEEN)
-        ? DeliveryState.OPERATOR_SEEN
-        : message.deliveryState;
-
-      await tx.sosMessage.update({
-        where: { id: message.id },
-        data: { deliveryState: nextDelivery },
-      });
-
-      const nextReview =
-        incident.reviewStatus === OperatorReviewStatus.NEW
-          ? OperatorReviewStatus.SEEN
-          : incident.reviewStatus;
-
-      await tx.incident.update({
-        where: { id: incidentId },
-        data: {
-          reviewStatus: nextReview,
-          version: { increment: 1 },
-        },
-      });
-
-      await tx.auditLog.create({
-        data: {
-          actorId: user.sub,
-          incidentId,
-          action: 'OPERATOR_SEEN',
-          detailsJson: {
-            messageEventId: event.id,
+        const existingSeen = await tx.messageEvent.findFirst({
+          where: {
             sosMessageId: message.id,
+            deliveryState: DeliveryState.OPERATOR_SEEN,
+            source: 'operator_view',
           },
-        },
+          select: { id: true },
+        });
+        if (existingSeen) {
+          return { created: false, messageEventId: existingSeen.id };
+        }
+
+        const incident = await tx.incident.findUnique({
+          where: { id: incidentId },
+          select: { reviewStatus: true },
+        });
+        if (!incident) {
+          throw new NotFoundException({ code: 'NOT_FOUND', message: 'Case not found' });
+        }
+
+        const event = await tx.messageEvent.create({
+          data: {
+            sosMessageId: message.id,
+            deliveryState: DeliveryState.OPERATOR_SEEN,
+            source: 'operator_view',
+            metadataJson: { actorId: user.sub },
+          },
+        });
+
+        const nextDelivery = canTransitionDelivery(message.deliveryState, DeliveryState.OPERATOR_SEEN)
+          ? DeliveryState.OPERATOR_SEEN
+          : message.deliveryState;
+
+        await tx.sosMessage.update({
+          where: { id: message.id },
+          data: { deliveryState: nextDelivery },
+        });
+
+        const nextReview =
+          incident.reviewStatus === OperatorReviewStatus.NEW
+            ? OperatorReviewStatus.SEEN
+            : incident.reviewStatus;
+
+        await tx.incident.update({
+          where: { id: incidentId },
+          data: {
+            reviewStatus: nextReview,
+            version: { increment: 1 },
+          },
+        });
+
+        await tx.auditLog.create({
+          data: {
+            actorId: user.sub,
+            incidentId,
+            action: 'OPERATOR_SEEN',
+            detailsJson: {
+              messageEventId: event.id,
+              sosMessageId: message.id,
+            },
+          },
+        });
+
+        return { created: true, messageEventId: event.id };
       });
-
-      return event.id;
-    });
-
-    return { created: true, messageEventId: result };
+    } catch (error) {
+      if (
+        error instanceof Prisma.PrismaClientKnownRequestError &&
+        error.code === 'P2002'
+      ) {
+        const existing = await this.prisma.messageEvent.findFirst({
+          where: {
+            sosMessageId: message.id,
+            deliveryState: DeliveryState.OPERATOR_SEEN,
+            source: 'operator_view',
+          },
+          select: { id: true },
+        });
+        return { created: false, messageEventId: existing?.id ?? null };
+      }
+      throw error;
+    }
   }
 
   async transitionReviewStatus(
@@ -135,36 +159,44 @@ export class OperatorCaseActionsService {
       throw new NotFoundException({ code: 'NOT_FOUND', message: 'Case not found' });
     }
 
-    const incident = await this.prisma.incident.findUnique({
-      where: { id: incidentId },
-      select: { version: true, reviewStatus: true },
-    });
-    if (!incident) {
-      throw new NotFoundException({ code: 'NOT_FOUND', message: 'Case not found' });
-    }
-    if (incident.version !== expectedVersion) {
-      throw new ConflictException({
-        code: 'VERSION_CONFLICT',
-        message: 'Case was updated by another operator',
-        currentVersion: incident.version,
-      });
-    }
-    if (!canTransitionReview(incident.reviewStatus, target)) {
-      throw new BadRequestException({
-        code: 'INVALID_REVIEW_TRANSITION',
-        message: `Cannot transition review status from ${incident.reviewStatus} to ${target}`,
-      });
-    }
+    return this.prisma.$transaction(async (tx) => {
+      await lockIncidentTransaction(tx, incidentId);
 
-    const updated = await this.prisma.$transaction(async (tx) => {
-      const row = await tx.incident.update({
+      const incident = await tx.incident.findUnique({
+        where: { id: incidentId },
+        select: { version: true, reviewStatus: true },
+      });
+      if (!incident) {
+        throw new NotFoundException({ code: 'NOT_FOUND', message: 'Case not found' });
+      }
+      if (incident.version !== expectedVersion) {
+        throw new ConflictException({
+          code: 'VERSION_CONFLICT',
+          message: 'Case was updated by another operator',
+          currentVersion: incident.version,
+        });
+      }
+      if (!canTransitionReview(incident.reviewStatus, target)) {
+        throw new BadRequestException({
+          code: 'INVALID_REVIEW_TRANSITION',
+          message: `Cannot transition review status from ${incident.reviewStatus} to ${target}`,
+        });
+      }
+
+      const bumped = await tx.incident.updateMany({
         where: { id: incidentId, version: expectedVersion },
         data: {
           reviewStatus: target,
           version: { increment: 1 },
         },
-        select: { version: true, reviewStatus: true },
       });
+      if (bumped.count !== 1) {
+        throw new ConflictException({
+          code: 'VERSION_CONFLICT',
+          message: 'Case was updated by another operator',
+          currentVersion: incident.version,
+        });
+      }
 
       await tx.auditLog.create({
         data: {
@@ -203,41 +235,25 @@ export class OperatorCaseActionsService {
         });
       }
 
+      const row = await tx.incident.findUnique({
+        where: { id: incidentId },
+        select: { version: true, reviewStatus: true },
+      });
+      if (!row) {
+        throw new NotFoundException({ code: 'NOT_FOUND', message: 'Case not found' });
+      }
       return row;
     });
-
-    return updated;
   }
 
   async applyMetadataCorrection(
     user: OperatorRequestUser,
     incidentId: string,
-    body: {
-      expectedVersion: number;
-      personCount?: number | null;
-      locationStatus?: 'UNKNOWN' | 'GPS' | 'MANUAL';
-      latitude?: number | null;
-      longitude?: number | null;
-    }
+    body: MetadataCorrectionInput & { expectedVersion: number }
   ) {
     const allowed = await this.scope.canAccessIncident(user, incidentId, this.prisma);
     if (!allowed) {
       throw new NotFoundException({ code: 'NOT_FOUND', message: 'Case not found' });
-    }
-
-    const incident = await this.prisma.incident.findUnique({
-      where: { id: incidentId },
-      select: { version: true },
-    });
-    if (!incident) {
-      throw new NotFoundException({ code: 'NOT_FOUND', message: 'Case not found' });
-    }
-    if (incident.version !== body.expectedVersion) {
-      throw new ConflictException({
-        code: 'VERSION_CONFLICT',
-        message: 'Case was updated by another operator',
-        currentVersion: incident.version,
-      });
     }
 
     const message = await this.prisma.sosMessage.findFirst({
@@ -248,36 +264,21 @@ export class OperatorCaseActionsService {
       throw new NotFoundException({ code: 'NOT_FOUND', message: 'Case not found' });
     }
 
-    const before = {
+    const current = {
       personCount: message.personCount,
       locationStatus: message.locationStatus,
       latitude: message.latitude ? message.latitude.toNumber() : null,
       longitude: message.longitude ? message.longitude.toNumber() : null,
     };
-
-    const data: Prisma.SosMessageUpdateInput = {};
-    if (body.personCount !== undefined) {
-      data.personCount = body.personCount;
-    }
-    if (body.locationStatus !== undefined) {
-      data.locationStatus = body.locationStatus;
-    }
-    if (body.latitude !== undefined) {
-      data.latitude = body.latitude;
-    }
-    if (body.longitude !== undefined) {
-      data.longitude = body.longitude;
-    }
-
-    const after = {
-      personCount: body.personCount !== undefined ? body.personCount : before.personCount,
-      locationStatus:
-        body.locationStatus !== undefined ? body.locationStatus : before.locationStatus,
-      latitude: body.latitude !== undefined ? body.latitude : before.latitude,
-      longitude: body.longitude !== undefined ? body.longitude : before.longitude,
-    };
+    const { data, before, after } = buildMetadataCorrectionUpdate(current, body);
 
     const version = await this.prisma.$transaction(async (tx) => {
+      await lockIncidentTransaction(tx, incidentId);
+      const nextVersion = await assertIncidentVersionAndIncrement(
+        tx,
+        incidentId,
+        body.expectedVersion
+      );
       await tx.sosMessage.update({ where: { id: message.id }, data });
       await tx.auditLog.create({
         data: {
@@ -287,12 +288,7 @@ export class OperatorCaseActionsService {
           detailsJson: { before, after, expectedVersion: body.expectedVersion },
         },
       });
-      const row = await tx.incident.update({
-        where: { id: incidentId, version: body.expectedVersion },
-        data: { version: { increment: 1 } },
-        select: { version: true },
-      });
-      return row.version;
+      return nextVersion;
     });
 
     return { version, before, after };
@@ -319,29 +315,20 @@ export class OperatorCaseActionsService {
       });
     }
 
-    const incident = await this.prisma.incident.findUnique({
-      where: { id: incidentId },
-      select: { version: true },
-    });
-    if (!incident) {
-      throw new NotFoundException({ code: 'NOT_FOUND', message: 'Case not found' });
-    }
-    if (incident.version !== body.expectedVersion) {
-      throw new ConflictException({
-        code: 'VERSION_CONFLICT',
-        message: 'Case was updated by another operator',
-        currentVersion: incident.version,
-      });
-    }
-
     const latestAi = await this.prisma.aiAnalysis.findFirst({
       where: { incidentId },
       orderBy: { createdAt: 'desc' },
     });
-
     const before = latestAi?.resultJson ?? null;
 
     const version = await this.prisma.$transaction(async (tx) => {
+      await lockIncidentTransaction(tx, incidentId);
+      const nextVersion = await assertIncidentVersionAndIncrement(
+        tx,
+        incidentId,
+        body.expectedVersion
+      );
+
       if (latestAi) {
         await tx.aiAnalysis.update({
           where: { id: latestAi.id },
@@ -378,12 +365,7 @@ export class OperatorCaseActionsService {
         },
       });
 
-      const row = await tx.incident.update({
-        where: { id: incidentId, version: body.expectedVersion },
-        data: { version: { increment: 1 } },
-        select: { version: true },
-      });
-      return row.version;
+      return nextVersion;
     });
 
     return { version, suggestion: validated.value };

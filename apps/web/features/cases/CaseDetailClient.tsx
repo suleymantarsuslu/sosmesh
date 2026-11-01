@@ -1,6 +1,6 @@
 'use client';
 
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 
 import { CaseDetailView } from './CaseDetailView';
 import type { OperatorCaseDetail } from './types';
@@ -8,8 +8,9 @@ import type { OperatorCaseDetail } from './types';
 export function CaseDetailClient({ incidentId }: { incidentId: string }) {
   const [detail, setDetail] = useState<OperatorCaseDetail | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const seenSent = useRef(false);
 
-  const load = useCallback(async () => {
+  const loadDetail = useCallback(async () => {
     const res = await fetch(`/api/operator/cases/${incidentId}/detail`, { cache: 'no-store' });
     if (!res.ok) {
       setError('Vaka yüklenemedi');
@@ -21,9 +22,20 @@ export function CaseDetailClient({ incidentId }: { incidentId: string }) {
     setError(null);
   }, [incidentId]);
 
+  const recordSeen = useCallback(async () => {
+    await fetch(`/api/operator/cases/${incidentId}/seen`, { method: 'POST' });
+  }, [incidentId]);
+
   useEffect(() => {
-    void load();
-  }, [load]);
+    void (async () => {
+      await loadDetail();
+      if (!seenSent.current) {
+        seenSent.current = true;
+        await recordSeen();
+        await loadDetail();
+      }
+    })();
+  }, [loadDetail, recordSeen]);
 
   if (error) {
     return (
@@ -35,5 +47,5 @@ export function CaseDetailClient({ incidentId }: { incidentId: string }) {
   if (!detail) {
     return <p>Yükleniyor…</p>;
   }
-  return <CaseDetailView detail={detail} onRefresh={load} />;
+  return <CaseDetailView detail={detail} onRefresh={loadDetail} />;
 }

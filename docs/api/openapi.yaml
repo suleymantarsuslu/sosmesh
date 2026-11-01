@@ -263,6 +263,20 @@ paths:
         - operator
       security: &a6
         - bearer: []
+  /v1/operator/cases/{incidentId}/seen:
+    post:
+      operationId: OperatorCaseEventsController_postSeen
+      parameters:
+        - name: incidentId
+          required: true
+          in: path
+          schema:
+            type: string
+      responses:
+        "201":
+          description: ""
+      tags: *a5
+      security: *a6
   /v1/operator/cases/{incidentId}/review-status:
     patch:
       operationId: OperatorCaseEventsController_patchReviewStatus

@@ -71,13 +71,17 @@ export class OperatorCaseEventsController {
 
   @Get(':incidentId/detail')
   async getDetail(@Req() req: OperatorRequest, @Param('incidentId') incidentId: string) {
-    await this.actions.recordOperatorSeen(req.operatorUser, incidentId);
     const detail = await this.cases.getCaseDetail(req.operatorUser, incidentId);
     if (!detail) {
       throw new NotFoundException({ code: 'NOT_FOUND', message: 'Case not found' });
     }
     const audit = await this.actions.listAudit(req.operatorUser, incidentId);
     return { ...detail, audit };
+  }
+
+  @Post(':incidentId/seen')
+  async postSeen(@Req() req: OperatorRequest, @Param('incidentId') incidentId: string) {
+    return this.actions.recordOperatorSeen(req.operatorUser, incidentId);
   }
 
   @Patch(':incidentId/review-status')

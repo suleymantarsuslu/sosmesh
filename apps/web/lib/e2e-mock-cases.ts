@@ -142,15 +142,24 @@ export function mockCaseDetailFullResponse(incidentId: string) {
   if (!row) {
     return NextResponse.json({ code: 'NOT_FOUND' }, { status: 404 });
   }
-  if (!mockState.seenRecorded) {
-    mockState.seenRecorded = true;
-    mockState.audit.unshift({
-      id: 'e2e-audit-seen',
-      action: 'OPERATOR_SEEN',
-      createdAt: new Date().toISOString(),
-    });
-  }
   return NextResponse.json(baseDetail(row));
+}
+
+export function mockCaseSeenResponse(incidentId: string) {
+  const row = BASE_CASES.find((item) => item.incidentId === incidentId);
+  if (!row) {
+    return NextResponse.json({ code: 'NOT_FOUND' }, { status: 404 });
+  }
+  if (mockState.seenRecorded) {
+    return NextResponse.json({ created: false, messageEventId: 'e2e-seen-event' });
+  }
+  mockState.seenRecorded = true;
+  mockState.audit.unshift({
+    id: 'e2e-audit-seen',
+    action: 'OPERATOR_SEEN',
+    createdAt: new Date().toISOString(),
+  });
+  return NextResponse.json({ created: true, messageEventId: 'e2e-seen-event' });
 }
 
 export function mockCaseCorrectionResponse(incidentId: string, body: Record<string, unknown>) {

@@ -494,12 +494,24 @@
       ],
       "deliverables": "apps/api, prisma/schema.prisma, apps/api/test; infra/compose",
       "pass_criteria": "İlk kez boş DB ile API başlar, tablo ilişkileri ve indexler doğru.",
-      "status": "NOT_STARTED",
-      "attempts": 0,
-      "commit": null,
-      "evidence": [],
-      "blockers": [],
-      "last_checked_at": null,
+      "status": "PARTIAL",
+      "attempts": 1,
+      "commit": "1aa936a",
+      "evidence": [
+        "apps/api embedded-postgres integration tests (5 senaryo)",
+        "verify check-openapi",
+        "ADR-012"
+      ],
+      "notes": "ağır testler ertelendi",
+      "blockers": [
+        "infra/compose/docker-compose.yml NOT_TESTED (docker yok)",
+        "FK/index introspection test ertelendi",
+        "request-id/log redaction test ertelendi",
+        "env eksik boot test ertelendi",
+        "20-yarış insert test ertelendi",
+        "mutasyon testleri yapılmadı (scope)"
+      ],
+      "last_checked_at": "2026-10-31T18:58:00Z",
       "goal": "SOS durumlarının kalıcı ve denetlenebilir çekirdeğini kur.",
       "cursor_tasks": [
         "NestJS API, Prisma migrations, PostgreSQL, OpenAPI; auth ve validation interceptor kur.",

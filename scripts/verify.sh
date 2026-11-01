@@ -221,7 +221,7 @@ else
 fi
 
 # 18. Check for skipped tests
-echo "18/19: node scripts/check-no-skips.js"
+echo "18/21: node scripts/check-no-skips.js"
 if node "$SCRIPT_DIR/check-no-skips.js" > "$REPORTS_DIR/check-no-skips.log" 2>&1; then
   check_exit "check-no-skips" 0
 else
@@ -230,7 +230,7 @@ else
 fi
 
 # 19. Check golden vector byte-equality
-echo "19/20: Golden vector byte-equality"
+echo "19/21: Golden vector byte-equality"
 MASTER_GOLDEN="packages/contracts/crypto-test-vectors/golden-001.json"
 KOTLIN_GOLDEN="packages/contracts-kotlin/src/test/resources/golden-001.json"
 SWIFT_GOLDEN="packages/contracts-swift/Tests/SOSMeshContractsTests/Resources/golden-001.json"
@@ -249,8 +249,17 @@ else
   check_exit "mesh-sim-golden" $EXIT_CODE
 fi
 
-# 21. Android SOS privacy (no Log/Timber in SOS UI paths)
-echo "21/22: bash scripts/android-sos-privacy-log.sh"
+# 21. OpenAPI spec freshness
+echo "21/23: node scripts/check-openapi.js"
+if node "$SCRIPT_DIR/check-openapi.js" > "$REPORTS_DIR/check-openapi.log" 2>&1; then
+  check_exit "check-openapi" 0
+else
+  EXIT_CODE=$?
+  check_exit "check-openapi" $EXIT_CODE
+fi
+
+# 22. Android SOS privacy (no Log/Timber in SOS UI paths)
+echo "22/23: bash scripts/android-sos-privacy-log.sh"
 if bash "$SCRIPT_DIR/android-sos-privacy-log.sh" > "$REPORTS_DIR/android-sos-privacy.log" 2>&1; then
   check_exit "android-sos-privacy-log" 0
 else
@@ -258,8 +267,8 @@ else
   check_exit "android-sos-privacy-log" $EXIT_CODE
 fi
 
-# 22. Release build must not bundle dev-test SOS crypto
-echo "22/22: bash scripts/android-release-no-dev-crypto.sh"
+# 23. Release build must not bundle dev-test SOS crypto
+echo "23/23: bash scripts/android-release-no-dev-crypto.sh"
 if bash "$SCRIPT_DIR/android-release-no-dev-crypto.sh" > "$REPORTS_DIR/android-release-no-dev-crypto.log" 2>&1; then
   check_exit "android-release-no-dev-crypto" 0
 else

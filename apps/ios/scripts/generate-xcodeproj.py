@@ -278,7 +278,7 @@ lines.append(
     f"\t\t{watch_frameworks_phase} /* Frameworks */ = {{isa = PBXFrameworksBuildPhase; buildActionMask = 2147483647; files = ({fw_core_watch} /* SOSMeshCore in Frameworks */, {wc_watch_bf} /* WatchConnectivity in Frameworks */); runOnlyForDeploymentPostprocessing = 0; }};"
 )
 lines.append(
-    f"\t\t{watch_widget_frameworks_phase} /* Frameworks */ = {{isa = PBXFrameworksBuildPhase; buildActionMask = 2147483647; files = ({fw_core_watch_widget} /* SOSMeshCore in Frameworks */, {wk_bf} /* WidgetKit in Frameworks */); runOnlyForDeploymentPostprocessing = 0; }};"
+    f"\t\t{watch_widget_frameworks_phase} /* Frameworks */ = {{isa = PBXFrameworksBuildPhase; buildActionMask = 2147483647; files = ({wk_bf} /* WidgetKit in Frameworks */); runOnlyForDeploymentPostprocessing = 0; }};"
 )
 
 # Targets
@@ -353,7 +353,6 @@ lines.append(
 \t\t\tbuildRules = ();
 \t\t\tdependencies = ();
 \t\t\tname = "SOSMeshWatchWidgets";
-\t\t\tpackageProductDependencies = ({prod_dep_core_watch} /* SOSMeshCore */);
 \t\t\tproductName = SOSMeshWatchWidgets;
 \t\t\tproductReference = {watch_widget_prod_ref} /* SOSMeshWatchWidgets.appex */;
 \t\t\tproductType = "com.apple.product-type.app-extension";

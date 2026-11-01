@@ -1,6 +1,10 @@
-import SOSMeshCore
 import SwiftUI
 import WidgetKit
+
+/// Timeline copy must stay aligned with `WatchCapabilityMatrix.phoneNotReachableCopy(language: "tr")`.
+private enum WatchComplicationCopy {
+    static let unreachableHeadline = "Telefona ulaşılamıyor"
+}
 
 struct SOSMeshComplicationEntry: TimelineEntry {
     let date: Date
@@ -21,7 +25,7 @@ struct SOSMeshComplicationProvider: TimelineProvider {
         let entry = SOSMeshComplicationEntry(
             date: Date(),
             headline: "SOS",
-            detail: WatchCapabilityMatrix.phoneNotReachableCopy(language: "tr").headline
+            detail: WatchComplicationCopy.unreachableHeadline
         )
         completion(Timeline(entries: [entry], policy: .after(Date().addingTimeInterval(900))))
     }

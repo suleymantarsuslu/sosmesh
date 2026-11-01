@@ -88,7 +88,7 @@
 		A3170040000000000000001 /* Frameworks */ = {isa = PBXFrameworksBuildPhase; buildActionMask = 2147483647; files = (A3167010000000000000001 /* SOSMeshCore in Frameworks */, A3167020000000000000001 /* SOSMeshContracts in Frameworks */, A3767200000000000000001 /* WatchConnectivity in Frameworks */); runOnlyForDeploymentPostprocessing = 0; };
 		A3170050000000000000001 /* Frameworks */ = {isa = PBXFrameworksBuildPhase; buildActionMask = 2147483647; files = (A3167030000000000000001 /* SOSMeshCore in Frameworks */); runOnlyForDeploymentPostprocessing = 0; };
 		A3770030000000000000001 /* Frameworks */ = {isa = PBXFrameworksBuildPhase; buildActionMask = 2147483647; files = (A3767100000000000000001 /* SOSMeshCore in Frameworks */, A3767210000000000000001 /* WatchConnectivity in Frameworks */); runOnlyForDeploymentPostprocessing = 0; };
-		A3770050000000000000001 /* Frameworks */ = {isa = PBXFrameworksBuildPhase; buildActionMask = 2147483647; files = (A3767110000000000000001 /* SOSMeshCore in Frameworks */, A3767220000000000000001 /* WidgetKit in Frameworks */); runOnlyForDeploymentPostprocessing = 0; };
+		A3770050000000000000001 /* Frameworks */ = {isa = PBXFrameworksBuildPhase; buildActionMask = 2147483647; files = (A3767220000000000000001 /* WidgetKit in Frameworks */); runOnlyForDeploymentPostprocessing = 0; };
 A3130010000000000000001 /* SOSMesh-iOS */ = {
 	isa = PBXNativeTarget;
 	buildConfigurationList = A3140010000000000000001 /* Build configuration list for PBXNativeTarget "SOSMesh-iOS" */;
@@ -132,7 +132,6 @@ A3730020000000000000001 /* SOSMeshWatchWidgets */ = {
 	buildRules = ();
 	dependencies = ();
 	name = "SOSMeshWatchWidgets";
-	packageProductDependencies = (A3751030000000000000001 /* SOSMeshCore */);
 	productName = SOSMeshWatchWidgets;
 	productReference = A3790020000000000000001 /* SOSMeshWatchWidgets.appex */;
 	productType = "com.apple.product-type.app-extension";

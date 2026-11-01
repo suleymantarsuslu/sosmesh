@@ -21,7 +21,7 @@ private final class InMemoryWatchPhoneOutbox: WatchPhoneOutboxPort, @unchecked S
             digest: input.digest,
             origin: input.origin,
             encryptedBlobBase64: input.encryptedBlobBase64,
-            state: "LOCAL_ONLY",
+            state: "LOCAL_SAVED",
             retryAtMs: nowMs,
             expiresAtMs: nowMs + 86_400_000,
             lastError: nil,

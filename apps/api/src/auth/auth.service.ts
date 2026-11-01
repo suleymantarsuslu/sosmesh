@@ -15,6 +15,8 @@ export type AuthSessionUser = {
   displayName: string;
   role: UserRole;
   teamId: string | null;
+  organizationId: string | null;
+  organizationName: string | null;
 };
 
 export type LoginResult = {
@@ -32,7 +34,17 @@ export class AuthService {
 
   async login(dto: LoginDto, clientKey: string): Promise<LoginResult> {
     this.rateLimit.assertAllowed(clientKey);
-    const user = await this.prisma.user.findUnique({ where: { email: dto.email } });
+    const user = await this.prisma.user.findUnique({
+      where: { email: dto.email },
+      include: {
+        team: {
+          select: {
+            organizationId: true,
+            organization: { select: { name: true } },
+          },
+        },
+      },
+    });
     if (!user?.passwordHash) {
       throw new UnauthorizedException({
         code: 'INVALID_CREDENTIALS',
@@ -50,6 +62,7 @@ export class AuthService {
       sub: user.id,
       role: user.role,
       teamId: user.teamId ?? undefined,
+      organizationId: user.team?.organizationId ?? undefined,
     };
     const secret = this.config.get<string>('JWT_SECRET');
     if (!secret) {
@@ -67,12 +80,24 @@ export class AuthService {
         displayName: user.displayName,
         role: user.role,
         teamId: user.teamId,
+        organizationId: user.team?.organizationId ?? null,
+        organizationName: user.team?.organization?.name ?? null,
       },
     };
   }
 
   async getProfile(userId: string): Promise<AuthSessionUser | null> {
-    const user = await this.prisma.user.findUnique({ where: { id: userId } });
+    const user = await this.prisma.user.findUnique({
+      where: { id: userId },
+      include: {
+        team: {
+          select: {
+            organizationId: true,
+            organization: { select: { name: true } },
+          },
+        },
+      },
+    });
     if (!user) {
       return null;
     }
@@ -82,6 +107,8 @@ export class AuthService {
       displayName: user.displayName,
       role: user.role,
       teamId: user.teamId,
+      organizationId: user.team?.organizationId ?? null,
+      organizationName: user.team?.organization?.name ?? null,
     };
   }
 }

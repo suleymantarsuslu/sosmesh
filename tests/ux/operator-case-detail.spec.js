@@ -74,4 +74,20 @@ test.describe('Operator case detail ADIM 23', () => {
     await expect(page.getByTestId('operator-case-detail')).toBeVisible();
     await page.screenshot({ path: 'reports/operator-case-detail-1440.png', fullPage: true });
   });
+
+  test('case detail screenshot 390', async ({ page }) => {
+    await page.setViewportSize({ width: 390, height: 844 });
+    await login(page);
+    await page.goto(`/operator/cases/${E2E_CASE_GPS_ID}`);
+    await expect(page.getByTestId('operator-case-detail')).toBeVisible();
+    await page.screenshot({ path: 'reports/operator-case-detail-390.png', fullPage: true });
+  });
+
+  test('case detail screenshot 768', async ({ page }) => {
+    await page.setViewportSize({ width: 768, height: 1024 });
+    await login(page);
+    await page.goto(`/operator/cases/${E2E_CASE_GPS_ID}`);
+    await expect(page.getByTestId('operator-case-detail')).toBeVisible();
+    await page.screenshot({ path: 'reports/operator-case-detail-768.png', fullPage: true });
+  });
 });

@@ -1,0 +1,15 @@
+{
+  "description": "ADIM 43 crypto tamper / fake-signature adversarial vectors (dev-test keys only).",
+  "tamperCases": [
+    { "id": "adv_crypto_ciphertext_byte", "field": "ciphertext", "mode": "flip_first_byte" },
+    { "id": "adv_crypto_nonce_byte", "field": "nonce", "mode": "flip_first_byte" },
+    { "id": "adv_crypto_ephemeral_key", "field": "ephemeralPublicKey", "mode": "replace_with_zeros" },
+    { "id": "adv_crypto_wrong_key_id", "field": "keyId", "mode": "set_unknown_key" },
+    { "id": "adv_crypto_aad_timestamp", "field": "envelope.timestamp", "mode": "shift_time" },
+    { "id": "adv_crypto_aad_priority", "field": "envelope.priority", "mode": "increment" },
+    { "id": "adv_crypto_replay_nonce", "field": "nonce", "mode": "reuse_prior_nonce" },
+    { "id": "adv_crypto_truncated_ciphertext", "field": "ciphertext", "mode": "truncate_tail" },
+    { "id": "adv_crypto_swap_ciphertext_nonce", "field": "ciphertext", "mode": "swap_with_nonce" },
+    { "id": "adv_crypto_empty_ciphertext", "field": "ciphertext", "mode": "empty_string" }
+  ]
+}

@@ -2,25 +2,34 @@
 
 ## Genel
 
-Tüm Linux CI job’ları GitHub-hosted `ubuntu-latest` üzerinde koşar (private repo **Actions dakika kotası**). iOS job’u `macos-latest` üzerinde kalır. Self-hosted Zulal runner’ları yedek / geri dönüş içindir; workflow’da `runs-on: [self-hosted, …]` referansı yoktur.
+Linux CI job’ları varsayılan olarak GitHub-hosted `ubuntu-latest` üzerinde koşar (private repo **Actions dakika kotası**). iOS job’u `macos-latest` üzerinde kalır.
+
+## Geçici Zulal fallback (`vars.SOSMESH_CI_RUNNER`)
+
+GitHub Actions faturalama / kota sorunlarında koordinatör repo değişkenini `SOSMESH_CI_RUNNER=zulal` yapabilir. Bu durumda şu job’lar Zulal self-hosted runner’da koşar: `verify`, `contracts`, `detect-mobile`, `cross-language-contracts`, `secret-scan`.
+
+**Geri almak:** değişkeni silmek veya `zulal` dışı bir değere çevirmek yeterli; workflow tekrar `ubuntu-latest` kullanır.
+
+`android-gradle`, `ios-xcode` ve `swift-package-tests` job’ları **her zaman** GitHub-hosted runner’da kalır (`ubuntu-latest` / `macos-latest`).
 
 ## Verify Quality Gates (`verify` job)
 
-- **Runner:** `ubuntu-latest` (Zulal modunda `zulal-verify` etiketli tek runner; verify işleri port çakışması nedeniyle sırayla kuyruğa girer).
-- **PostgreSQL:** Job `services: postgres` (geçici `postgres:16`; yalnızca CI test parolası). Self-hosted `/etc/sosmesh-ci/pg.env` kullanılmaz.
-- **Geri dönüş (Zulal):** `verify` job’unda `runs-on: ubuntu-latest` → `runs-on: [self-hosted, linux, ARM64, zulal]`; `services` / job `env` PostgreSQL bloklarını kaldırıp `Load CI PostgreSQL credentials` adımını geri ekleyin.
+- **Runner:** `ubuntu-latest`, veya `SOSMESH_CI_RUNNER=zulal` iken `[self-hosted, linux, ARM64, zulal]`.
+- **PostgreSQL (hosted):** Job `services: postgres` (`postgres:16`; yalnızca CI test parolası). Job `env` ile `SOSMESH_CI_*_URL` tanımlıdır.
+- **PostgreSQL (Zulal):** Service container kullanılmaz; `Load CI PostgreSQL credentials` adımı `/etc/sosmesh-ci/pg.env` dosyasını yükler (`::add-mask::` ile).
+- **Playwright:** Hosted modda `npx playwright install --with-deps chromium`; Zulal modda `npx playwright install chromium` (sudo yok).
+- Zulal modunda `verify`, port 3000/3001 çakışmasını önlemek için `zulal-verify` etiketli tek runner'da sırayla koşar.
 
 ## Diğer job’lar
 
-| Job | Runner |
-|-----|--------|
-| Contracts Type Check | `ubuntu-latest` |
-| Detect Mobile Projects | `ubuntu-latest` |
-| Cross-Language Contract Tests | `ubuntu-latest` (+ `actions/setup-java` temurin 17) |
-| Secret Scan | `ubuntu-latest` |
-| Android Gradle Build | `ubuntu-latest` |
-| iOS Xcode Build | `macos-latest` |
+| Job | Runner (varsayılan) | Zulal modunda |
+|-----|---------------------|---------------|
+| Contracts Type Check | `ubuntu-latest` | self-hosted Zulal |
+| Detect Mobile Projects | `ubuntu-latest` | self-hosted Zulal |
+| Cross-Language Contract Tests | `ubuntu-latest` (+ Java 17) | self-hosted Zulal |
+| Secret Scan | `ubuntu-latest` | self-hosted Zulal |
+| Android Gradle Build | `ubuntu-latest` | `ubuntu-latest` (değişmez) |
+| iOS Xcode Build | `macos-latest` | `macos-latest` (değişmez) |
+| Swift Package Tests | `ubuntu-latest` | `ubuntu-latest` (değişmez) |
 
-**Geri dönüş (tüm Linux job’ları Zulal’a):** ilgili job’larda `runs-on: ubuntu-latest` satırlarını `runs-on: [self-hosted, linux, ARM64, zulal]` ile değiştirin; `verify` için yukarıdaki PostgreSQL adımını da geri alın.
-
-pnpm paralel job izolasyonu (`dest: ${{ runner.temp }}/pnpm-<job>`, `STORE_PATH` / `npm_config_store_dir` → `GITHUB_ENV`) hosted’da da geçerlidir.
+pnpm paralel job izolasyonu (`dest: ${{ runner.temp }}/pnpm-<job>`, `STORE_PATH` / `npm_config_store_dir` → `GITHUB_ENV`) hosted ve Zulal’da geçerlidir.

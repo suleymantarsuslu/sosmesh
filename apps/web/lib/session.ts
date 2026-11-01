@@ -17,12 +17,12 @@ export type SessionPayload = {
   teamId?: string;
 };
 
-export function getSessionToken(): string | undefined {
-  return cookies().get(SESSION_COOKIE)?.value;
+export async function getSessionToken(): Promise<string | undefined> {
+  return (await cookies()).get(SESSION_COOKIE)?.value;
 }
 
-export function readSession(): SessionUser | null {
-  const token = getSessionToken();
+export async function readSession(): Promise<SessionUser | null> {
+  const token = await getSessionToken();
   if (!token) {
     return null;
   }
@@ -63,7 +63,7 @@ export function readSession(): SessionUser | null {
 }
 
 export async function fetchWithSession(path: string, init?: RequestInit) {
-  const token = getSessionToken();
+  const token = await getSessionToken();
   const headers = new Headers(init?.headers);
   if (token) {
     headers.set('Authorization', `Bearer ${token}`);
@@ -115,7 +115,7 @@ async function mockFetch(path: string, init?: RequestInit): Promise<Response> {
     );
   }
   if (path === '/v1/auth/me' && (!init?.method || init.method === 'GET')) {
-    const session = readSession();
+    const session = await readSession();
     if (!session) {
       return new Response(JSON.stringify({ code: 'UNAUTHORIZED' }), { status: 401 });
     }

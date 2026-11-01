@@ -14,6 +14,11 @@ private val LightOnBackground = Color(0xFF1A1A1A)
 private val DarkBackground = Color(0xFF121212)
 private val DarkOnBackground = Color(0xFFF0F0F0)
 
+private val HighContrastLightBackground = Color(0xFFFFFFFF)
+private val HighContrastLightOnBackground = Color(0xFF000000)
+private val HighContrastDarkBackground = Color(0xFF000000)
+private val HighContrastDarkOnBackground = Color(0xFFFFFFFF)
+
 private val LightColors =
     lightColorScheme(
         primary = SosRed,
@@ -32,6 +37,24 @@ private val DarkColors =
         error = SosRed,
     )
 
+private val HighContrastLightColors =
+    lightColorScheme(
+        primary = Color(0xFF000000),
+        onPrimary = Color(0xFFFFFFFF),
+        background = HighContrastLightBackground,
+        onBackground = HighContrastLightOnBackground,
+        error = SosRed,
+    )
+
+private val HighContrastDarkColors =
+    darkColorScheme(
+        primary = Color(0xFFFFFFFF),
+        onPrimary = Color(0xFF000000),
+        background = HighContrastDarkBackground,
+        onBackground = HighContrastDarkOnBackground,
+        error = Color(0xFFFF6B6B),
+    )
+
 object SosContrastPairs {
     val lightTextOnBackground = LightOnBackground to LightBackground
     val lightTextOnPrimary = OnSosRed to SosRed
@@ -42,10 +65,18 @@ object SosContrastPairs {
 @Composable
 fun SosMeshTheme(
     darkTheme: Boolean = isSystemInDarkTheme(),
+    highContrast: Boolean = false,
     content: @Composable () -> Unit,
 ) {
+    val colors =
+        when {
+            highContrast && darkTheme -> HighContrastDarkColors
+            highContrast -> HighContrastLightColors
+            darkTheme -> DarkColors
+            else -> LightColors
+        }
     MaterialTheme(
-        colorScheme = if (darkTheme) DarkColors else LightColors,
+        colorScheme = colors,
         content = content,
     )
 }

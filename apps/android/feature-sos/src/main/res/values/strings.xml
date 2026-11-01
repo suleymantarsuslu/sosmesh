@@ -29,4 +29,8 @@
     <string name="sos_type_yaralanma">Yaralanma</string>
     <string name="sos_type_diger">Diğer</string>
     <string name="sos_offline_badge">Çevrimdışı</string>
+    <string name="sos_location_fresh">Konum güncel</string>
+    <string name="sos_location_aging">Konum eskiyor</string>
+    <string name="sos_location_stale">Konum eski — manuel seçin</string>
+    <string name="sos_secondary_continue_hint">Ayrıntıları doldurduktan sonra devam edin</string>
 </resources>

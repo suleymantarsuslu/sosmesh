@@ -47,6 +47,7 @@ dependencies {
     implementation(project(":core:protocol"))
     implementation(project(":core:data"))
     implementation(project(":core:ble"))
+    implementation(project(":core:platform"))
     implementation(project(":contracts-kotlin"))
     implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.6.2")
     implementation("com.google.dagger:hilt-android:2.50")

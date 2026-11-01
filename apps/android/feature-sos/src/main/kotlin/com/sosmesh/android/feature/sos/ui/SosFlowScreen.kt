@@ -6,7 +6,6 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.defaultMinSize
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.selection.selectableGroup
@@ -28,6 +27,8 @@ import androidx.compose.ui.semantics.role
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.dp
 import com.sosmesh.android.core.data.sos.DraftInvalidReason
+import com.sosmesh.android.core.data.sos.LocationFreshness
+import com.sosmesh.android.core.data.sos.LocationFreshnessTier
 import com.sosmesh.android.core.data.sos.LocationSnapshot
 import com.sosmesh.android.core.model.SosType
 import com.sosmesh.android.feature.sos.R
@@ -99,7 +100,7 @@ private fun SosFormScreen(
         OfflineBadge()
         Text(text = stringResource(R.string.sos_not112_disclaimer), style = MaterialTheme.typography.bodySmall)
         Text(text = stringResource(R.string.sos_flow_title), style = MaterialTheme.typography.headlineSmall)
-        SosPrimaryCta(onClick = onContinue, enabled = state.canContinue)
+        Text(text = stringResource(R.string.sos_secondary_continue_hint), style = MaterialTheme.typography.bodySmall)
         Text(text = stringResource(R.string.sos_type_label), style = MaterialTheme.typography.titleMedium)
         Row(
             modifier = Modifier.selectableGroup(),
@@ -227,26 +228,29 @@ private fun OfflineBadge() {
 }
 
 @Composable
-private fun SosPrimaryCta(
-    onClick: () -> Unit,
-    enabled: Boolean,
-) {
-    val label = stringResource(R.string.sos_cta_label)
-    val cd = stringResource(R.string.sos_cta_content_description)
-    Button(
-        onClick = onClick,
-        enabled = enabled,
-        modifier =
-            Modifier
-                .fillMaxWidth()
-                .height(72.dp)
-                .testTag("sos_primary_cta")
-                .semantics {
-                    contentDescription = cd
-                    role = Role.Button
-                },
+private fun LocationFreshnessBadge(location: LocationSnapshot) {
+    val tier =
+        LocationFreshness.tier(
+            capturedAtMs = location.capturedAtMs,
+            nowMs = System.currentTimeMillis(),
+        )
+    val label =
+        when (tier) {
+            LocationFreshnessTier.FRESH -> stringResource(R.string.sos_location_fresh)
+            LocationFreshnessTier.AGING -> stringResource(R.string.sos_location_aging)
+            LocationFreshnessTier.STALE -> stringResource(R.string.sos_location_stale)
+            LocationFreshnessTier.UNKNOWN -> stringResource(R.string.sos_location_unknown)
+        }
+    Surface(
+        color =
+            when (tier) {
+                LocationFreshnessTier.STALE -> MaterialTheme.colorScheme.errorContainer
+                LocationFreshnessTier.AGING -> MaterialTheme.colorScheme.secondaryContainer
+                else -> MaterialTheme.colorScheme.surfaceVariant
+            },
+        modifier = Modifier.testTag("sos_location_freshness"),
     ) {
-        Text(label, style = MaterialTheme.typography.headlineMedium)
+        Text(text = label, modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp))
     }
 }
 
@@ -261,6 +265,9 @@ private fun LocationSection(
     onManualLng: (String) -> Unit,
 ) {
     Text(stringResource(R.string.sos_location_label), style = MaterialTheme.typography.titleMedium)
+    if (!useManual && location.isKnown) {
+        LocationFreshnessBadge(location = location)
+    }
     if (!location.isKnown && !useManual) {
         Text(
             stringResource(R.string.sos_location_unknown),

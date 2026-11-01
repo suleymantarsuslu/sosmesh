@@ -107,14 +107,29 @@ else
   check_exit "smoke" $EXIT_CODE
 fi
 
+release_dev_ports() {
+  local port
+  for port in 3000 3001; do
+    if command -v fuser >/dev/null 2>&1; then
+      fuser -k "${port}/tcp" 2>/dev/null || true
+    fi
+    if lsof -ti:"$port" >/dev/null 2>&1; then
+      lsof -ti:"$port" | xargs -r kill -9 2>/dev/null || true
+    fi
+  done
+  sleep 2
+}
+
+# Smoke may leave next/node bound on shared self-hosted runners; free before Playwright webServer.
+release_dev_ports
+
 # 7. Web a11y test
 echo "7/18: pnpm test:a11y:web"
 # Ensure port 3000 is free before starting
 PORT_CHECK_FAILED=false
 if lsof -ti:3000 >/dev/null 2>&1; then
   echo -e "${YELLOW}Port 3000 is still in use before a11y-web test. Cleaning up...${NC}"
-  lsof -ti:3000 | xargs -r kill -9 2>/dev/null || true
-  sleep 2
+  release_dev_ports
   if lsof -ti:3000 >/dev/null 2>&1; then
     echo -e "${RED}❌ Failed to free port 3000${NC}" | tee "$REPORTS_DIR/a11y-web.log"
     PORT_CHECK_FAILED=true

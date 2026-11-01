@@ -62,6 +62,26 @@ internal data class MeshRelayEngineRuntimeConfig(
 
 private val DEVICE_HASH = Regex("^[a-f0-9]{64}$")
 
+/** Max decoded opaque ciphertext bytes (SEC-MESH-SIZE-001); keep in sync with packages/contracts mesh-payload-limits.ts */
+private const val MAX_MESH_OPAQUE_CIPHERTEXT_BYTES = 16_384
+
+private fun opaqueCiphertextBase64WithinLimit(base64: String): Boolean {
+    if (base64.length < 4) {
+        return false
+    }
+    val maxBase64Len = ((MAX_MESH_OPAQUE_CIPHERTEXT_BYTES + 2) / 3) * 4
+    if (base64.length > maxBase64Len) {
+        return false
+    }
+    val decoded =
+        try {
+            java.util.Base64.getDecoder().decode(base64)
+        } catch (_: IllegalArgumentException) {
+            return false
+        }
+    return decoded.size <= MAX_MESH_OPAQUE_CIPHERTEXT_BYTES
+}
+
 fun buildDedupKey(envelope: MeshRelayEnvelopeV2): String {
     val prefix = envelope.opaqueCiphertextBase64.take(8)
     return "${envelope.messageId}:${envelope.hopCount}:$prefix"
@@ -209,6 +229,6 @@ class MeshRelayEngine private constructor(
                 return false
             }
         }
-        return envelope.opaqueCiphertextBase64.length >= 4
+        return opaqueCiphertextBase64WithinLimit(envelope.opaqueCiphertextBase64)
     }
 }

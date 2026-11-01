@@ -262,6 +262,35 @@ jobs:
             -scheme SOSMesh-iOS \
             -resolvePackageDependencies
       
+      - name: Verify generated Xcode project matches golden
+        run: |
+          set -euo pipefail
+          bash apps/ios/scripts/check-xcodeproj-golden.sh
+
+      - name: Build watchOS app
+        run: |
+          set -euo pipefail
+          cd apps/ios
+          xcodebuild \
+            -project SOSMesh.xcodeproj \
+            -scheme SOSMesh-Watch \
+            -sdk watchsimulator \
+            -destination 'generic/platform=watchOS Simulator' \
+            CODE_SIGNING_ALLOWED=NO \
+            clean build
+
+      - name: Build watchOS widget extension
+        run: |
+          set -euo pipefail
+          cd apps/ios
+          xcodebuild \
+            -project SOSMesh.xcodeproj \
+            -sdk watchsimulator \
+            -destination 'generic/platform=watchOS Simulator' \
+            CODE_SIGNING_ALLOWED=NO \
+            build \
+            -target SOSMeshWatchWidgets
+
       - name: Build iOS app
         run: |
           set -euo pipefail
@@ -273,7 +302,7 @@ jobs:
             -destination 'generic/platform=iOS Simulator' \
             CODE_SIGNING_ALLOWED=NO \
             clean build
-      
+
       - name: Resolve iOS Simulator for tests
         id: sim
         run: |

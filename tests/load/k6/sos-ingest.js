@@ -1,6 +1,5 @@
-import http from 'k6/http';
 import { check } from 'k6';
-import { textSummary } from 'https://jslib.k6.io/k6-summary/0.0.4/index.js';
+import http from 'k6/http';
 
 const baseUrl = __ENV.BASE_URL || 'http://127.0.0.1:3001';
 const payloadFile = __ENV.PAYLOAD_FILE;
@@ -38,10 +37,21 @@ export default function ingestOnce() {
   });
 }
 
+function formatSummaryLine(data) {
+  const failed = data?.metrics?.http_req_failed?.values?.rate;
+  const p95 = data?.metrics?.http_req_duration?.values?.['p(95)'];
+  const count = data?.metrics?.iterations?.values?.count;
+  return [
+    `iterations=${count ?? 'n/a'}`,
+    `http_req_failed_rate=${failed ?? 'n/a'}`,
+    `http_req_duration_p95_ms=${p95 ?? 'n/a'}`,
+  ].join(' ');
+}
+
 export function handleSummary(data) {
   const outPath = __ENV.K6_SUMMARY_JSON || 'tests/load/.generated/k6-summary.json';
   return {
-    stdout: textSummary(data, { indent: ' ', enableColors: false }),
+    stdout: `${formatSummaryLine(data)}\n`,
     [outPath]: JSON.stringify(data, null, 2),
   };
 }

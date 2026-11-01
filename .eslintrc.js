@@ -51,6 +51,7 @@ module.exports = {
       typescript: true,
       node: true,
     },
+    'import/core-modules': ['k6', 'k6/http', 'k6/metrics'],
   },
   overrides: [
     {
@@ -68,6 +69,12 @@ module.exports = {
         'no-undef': 'off',
       },
     },
+    {
+      files: ['tests/load/k6/**/*.js'],
+      parserOptions: {
+        sourceType: 'module',
+      },
+    },
   ],
   ignorePatterns: [
     'node_modules',
@@ -83,6 +90,5 @@ module.exports = {
     'playwright.config.js',
     'prototypes/**/*.html',
     'apps/api/**',
-    'tests/load/k6/**',
   ],
 };

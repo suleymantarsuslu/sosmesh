@@ -1006,7 +1006,7 @@
       "pass_criteria": "iOS uygulaması derlenir; offline SOS kuyrukta kalıcıdır.",
       "status": "PARTIAL",
       "attempts": 1,
-      "commit": null,
+      "commit": "f88d87b",
       "evidence": [
         "apps/ios/SOSMesh.xcodeproj + SwiftUI tab iskelet (SOS/Status/Relay/Settings)",
         "apps/ios/SOSMeshCore DiskOutboxQueue reopen test (Linux swift test when toolchain OK)",
@@ -1041,7 +1041,7 @@
       "pass_criteria": "Foregound iPhone ↔ Android SOS aktarımları kayıpsız; arka plan ayrı matris.",
       "status": "PARTIAL",
       "attempts": 1,
-      "commit": null,
+      "commit": "f88d87b",
       "evidence": [
         "apps/ios/CoreBLE central/peripheral + GATT UUID parity",
         "docs/tests/cross-platform-ble.md",
@@ -1073,7 +1073,7 @@
       "pass_criteria": "Destek vaatleri yalnızca doğrulanmış OS/sürüm/cihaz kombinasyonlarıyla sınırlı.",
       "status": "PARTIAL",
       "attempts": 1,
-      "commit": null,
+      "commit": "f88d87b",
       "evidence": [
         "BleRestorationStateMachine unit tests (force-quit terminal)",
         "docs/compat/ios-background-matrix.csv (NOT_TESTED rows)",

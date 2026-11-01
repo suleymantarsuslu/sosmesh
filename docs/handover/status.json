@@ -1527,7 +1527,7 @@
         "docs/adr/ADR-013-retention-and-erasure.md (RETENTION_* onay gerektirir; varsayılan süre yok)",
         "docs/ux/content-tr.json + content-en.json privacy.*; Android feature-sos/feature-relay consent strings",
         "apps/api/src/privacy/* erase/export/retention + audit-redaction.util.ts",
-        "apps/api/test/privacy-adim44.spec.ts (RBAC, retention purge, seed sentetik guard)"
+        "apps/api/test/privacy-adim44.spec.ts (RBAC, IDOR, CSRF, export audit redaction, erase cascade, retention purge, seed sentetik guard)"
       ],
       "blockers": [
         "Hukuki onay NOT_TESTED — tam uyumlu denmez"

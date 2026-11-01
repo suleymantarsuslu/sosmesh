@@ -1372,12 +1372,21 @@
       ],
       "deliverables": "mobile power policy modules, docs/performance/radio.md",
       "pass_criteria": "Rapor gerçek ölçüm sunar; pil sürüklenmesi belirsizse “ölçülemedi”.",
-      "status": "NOT_STARTED",
-      "attempts": 0,
+      "status": "PARTIAL",
+      "attempts": 1,
       "commit": null,
-      "evidence": [],
-      "blockers": [],
-      "last_checked_at": null,
+      "evidence": [
+        "AdaptiveRadioPlanner (Kotlin + Swift) + packages/contracts/radio-planner/vectors/radio-planner-cases.json",
+        "MeshPlatformStateMachine ADIM 42 planlayıcı entegrasyonu; termal/rıza sinyalleri MeshPlatformSignalBridge",
+        "Yüksek güç rızası UI: Android SettingsRoute, iOS SettingsView",
+        "docs/performance/radio.md — fiziksel 1h radyo bütçesi ölçümü: ölçülemedi",
+        "AdaptiveRadioPlannerTest / AdaptiveRadioPlannerTests + mutation ignoreLowPowerConstraints"
+      ],
+      "blockers": [
+        "1 saat kontrollü radyo bütçesi fiziksel telefon ölçümü yok",
+        "ANDROID_HOME yok: apps/android Gradle unit testleri bu ortamda koşulmadı (CI doğrular)"
+      ],
+      "last_checked_at": "2026-11-01T19:15:00+00:00",
       "goal": "Enerji tüketimi ile SOS ulaşma olasılığı arasında ölçülebilir denge kur.",
       "cursor_tasks": [
         "SOS active urgency vs passive relay duty cycle profiles; adaptive scan/advertise scheduling.",

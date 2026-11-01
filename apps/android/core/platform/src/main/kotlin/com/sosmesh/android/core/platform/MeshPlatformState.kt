@@ -10,6 +10,12 @@ data class MeshPlatformState(
     val deviceIdle: Boolean = false,
     val relayOptIn: Boolean = false,
     val sosTransferActive: Boolean = false,
+    val thermalThrottled: Boolean = false,
+    val highPowerRadioConsent: Boolean = false,
+    /** Aggregate duplicate relay traffic (basis points); no peer location. */
+    val duplicateTrafficRatioBps: Int = 0,
+    /** Coarse link quality (basis points); not GPS-derived. */
+    val linkQualityScoreBps: Int = 5000,
 ) {
     val batteryCritical: Boolean
         get() = batteryLevelPercent < batteryLowThresholdPercent
@@ -50,4 +56,5 @@ data class MeshPlatformEvaluation(
     val relayMayRun: Boolean,
     val relayUploadMayRun: Boolean,
     val userHint: PlatformUserHint,
+    val requiresHighPowerRadioConsent: Boolean = false,
 )

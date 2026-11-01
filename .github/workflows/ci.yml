@@ -309,7 +309,8 @@ jobs:
           cd packages/contracts-swift
           export SOURCE_ROOT="${GITHUB_WORKSPACE}"
           swift test 2>&1 | tee "${GITHUB_WORKSPACE}/swift-contracts-test.log"
-          echo "Swift contracts test lines: $(grep -c 'Test Case.*passed' "${GITHUB_WORKSPACE}/swift-contracts-test.log" || true)"
+          passed_count=$(grep -c 'Test Case.*passed' "${GITHUB_WORKSPACE}/swift-contracts-test.log" 2>/dev/null)
+          echo "Swift contracts test lines: ${passed_count:-0}"
 
       - name: Run SOSMeshCore Swift tests
         run: |
@@ -317,7 +318,8 @@ jobs:
           cd apps/ios/SOSMeshCore
           export SOURCE_ROOT="${GITHUB_WORKSPACE}"
           swift test 2>&1 | tee "${GITHUB_WORKSPACE}/swift-sosmeshcore-test.log"
-          echo "SOSMeshCore test lines: $(grep -c 'Test Case.*passed' "${GITHUB_WORKSPACE}/swift-sosmeshcore-test.log" || true)"
+          passed_count=$(grep -c 'Test Case.*passed' "${GITHUB_WORKSPACE}/swift-sosmeshcore-test.log" 2>/dev/null)
+          echo "SOSMeshCore test lines: ${passed_count:-0}"
 
       - name: Compare Swift golden vector with master
         run: |

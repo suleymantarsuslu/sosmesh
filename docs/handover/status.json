@@ -1487,7 +1487,7 @@
       "pass_criteria": "Critical risk = 0; high risk için onaylı remediated status.",
       "status": "PARTIAL",
       "attempts": 2,
-      "commit": "PLACEHOLDER",
+      "commit": "7c218d6",
       "evidence": [
         "docs/security/threat-model.md (STRIDE/TARA; bağımsız denetim NOT_TESTED)",
         "docs/security/findings.csv (critical npm remediated; SEC-RADIO-SPOOF-001 açık)",

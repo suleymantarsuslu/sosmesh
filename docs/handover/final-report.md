@@ -2,8 +2,8 @@
 
 **Tarih (UTC):** 2026-11-01  
 **Dal:** `cursor/gate-h-closure-a47c`  
-**HEAD:** `49638f50fa542801c1e2effab2d25473a4bb5b36` (denetim turu 1 düzeltmeleri; kod: `94f4ebc`…)  
-**PR:** #41 (Gate H kapanış); **PR #40** (ADIM 26 — Gate H dışı, açık paralel iş)  
+**HEAD:** `5c8274939096a7c03d220e58641f8c321c5e1c3a` (`merge origin/main` + Gate H kapanış)  
+**PR:** #41 (Gate H kapanış); **PR #40** (ADIM 26) **main’e merge edildi** — Gate H kapsamı dışı  
 **Kaynak:** `docs/handover/status.json`, `docs/handover/tech-debt.md`, master plan (`docs/handover/step-index.md`)
 
 Bu rapor, ertelenmiş ağır testlerin bu cloud agent ortamında **gerçekten koşturulması** sonucunu özetler. Kanıtsız PASS yoktur; fiziksel cihaz gerektiren ADIM 24 **NOT_TESTED** olarak kalır.
@@ -47,7 +47,22 @@ Gate H özeti ayrıca `status.json` → `gates.H` alanında tutulur. **ADIM 58**
 | Kotlin sözleşme | `packages/contracts-kotlin ./gradlew test` | **PASS** (OpenJDK 17) | `docs/handover/evidence/gate-h/contracts-kotlin-test.txt` |
 | Android Gradle | `assembleDebug` | **NOT_RUN (`ANDROID_HOME` yok)** | status.json ADIM 12–16 notları; CI doğrular |
 
-**CI run id:** [41332886694](https://github.com/suleymantarsuslu/sosmesh/actions/runs/41332886694) (PR #41; koşu kuyrukta / self-hosted onay gerekebilir).
+**CI run id:** push sonrası PR #41 checks (aşağıdaki merge raporunda güncellenir).
+
+---
+
+## Main merge (2026-11-01, PR #41 çakışma giderimi)
+
+`git merge origin/main` — **rebase/amend/force yok.**
+
+| Çakışma / alan | Çözüm |
+|----------------|--------|
+| `reports/operator-case-detail-1440.png`, `reports/operator-map-cases-1440.png` | **origin/main (theirs)** — ADIM 26 tasarım sistemi güncel 1440 ekran görüntüleri |
+| `docs/handover/status.json` | Otomatik birleşim: **ADIM 26** main’deki `PARTIAL` + kanıt korundu; **`gates.H`** ve **ADIM 58 `NOT_STARTED`** Gate H dalından korundu |
+| `.github/workflows/ci.yml` | Main akışı + **job başına** `pnpm` `dest` / `store-dir` (`${{ runner.temp }}/pnpm-*-${{ github.job }}`); verify job’da main’de olmayan fazladan `pnpm install` adımı **eklenmedi** (`verify.sh` zaten kurar) |
+| Gate H kanıt | `docs/handover/evidence/gate-h/*`, `mandatory-digest-chaos.test.ts`, denetim raporu bölümleri **korundu** |
+
+**Merge sonrası yerel kapılar (18:39 UTC):** `pnpm -r build` (önce `prisma generate`), `pnpm test`, `verify.sh` **24/24**, `contracts-kotlin ./gradlew test` — EXIT 0.
 
 ---
 

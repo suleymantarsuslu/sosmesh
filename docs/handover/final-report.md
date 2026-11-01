@@ -2,7 +2,7 @@
 
 **Tarih (UTC):** 2026-11-01  
 **Dal:** `cursor/gate-h-closure-a47c`  
-**HEAD:** `50073a4110c732808b375391a8c5dffd586b3043` (denetim turu 1 düzeltmeleri)  
+**HEAD:** `49638f50fa542801c1e2effab2d25473a4bb5b36` (denetim turu 1 düzeltmeleri; kod: `94f4ebc`…)  
 **PR:** #41 (Gate H kapanış); **PR #40** (ADIM 26 — Gate H dışı, açık paralel iş)  
 **Kaynak:** `docs/handover/status.json`, `docs/handover/tech-debt.md`, master plan (`docs/handover/step-index.md`)
 
@@ -47,7 +47,7 @@ Gate H özeti ayrıca `status.json` → `gates.H` alanında tutulur. **ADIM 58**
 | Kotlin sözleşme | `packages/contracts-kotlin ./gradlew test` | **PASS** (OpenJDK 17) | `docs/handover/evidence/gate-h/contracts-kotlin-test.txt` |
 | Android Gradle | `assembleDebug` | **NOT_RUN (`ANDROID_HOME` yok)** | status.json ADIM 12–16 notları; CI doğrular |
 
-**CI run id:** [41332846780](https://github.com/suleymantarsuslu/sosmesh/actions/runs/41332846780) (PR #41, `HEAD` 50073a4).
+**CI run id:** [41332886694](https://github.com/suleymantarsuslu/sosmesh/actions/runs/41332886694) (PR #41; koşu kuyrukta / self-hosted onay gerekebilir).
 
 ---
 

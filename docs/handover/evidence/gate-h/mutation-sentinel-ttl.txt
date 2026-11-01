@@ -1,10 +1,10 @@
 
  RUN  v1.6.1 /workspace/tests/chaos
 
- ✓ mutation-sentinel.test.ts  (3 tests) 33ms
+ ✓ mutation-sentinel.test.ts > chaos_mutation_sentinel_digest_and_ttl > chaos_mutation_sentinel_ttl_drop_without_decrement_would_fail
 
  Test Files  1 passed (1)
-      Tests  3 passed (3)
-   Start at  17:36:58
-   Duration  300ms (transform 31ms, setup 0ms, collect 97ms, tests 33ms, environment 0ms, prepare 47ms)
+      Tests  1 passed | 2 skipped (3)
+   Start at  17:45:17
+   Duration  299ms (transform 38ms, setup 0ms, collect 96ms, tests 29ms, environment 0ms, prepare 41ms)
 

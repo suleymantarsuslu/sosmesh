@@ -28,6 +28,7 @@ dist/
 out/
 .next/
 target/
+*.tsbuildinfo
 next-env.d.ts
 *.apk
 *.aab

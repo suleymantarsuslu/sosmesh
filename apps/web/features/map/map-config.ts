@@ -13,6 +13,14 @@ export function mapTileUrl(): string {
 }
 
 export function isMapTestMode(): boolean {
+  if (process.env.NODE_ENV === 'production') {
+    if (process.env.NEXT_PUBLIC_MAP_TEST_MODE === '1') {
+      console.warn(
+        '[SOSMesh] NEXT_PUBLIC_MAP_TEST_MODE is set but ignored in production (external tiles enabled).'
+      );
+    }
+    return false;
+  }
   if (process.env.NEXT_PUBLIC_MAP_TEST_MODE === '1') {
     return true;
   }

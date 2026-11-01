@@ -316,6 +316,24 @@ describe('POST /v1/ingest envelope privacy', () => {
     const stored = await prisma.sosMessage.findUnique({ where: { messageId } });
     expect(stored).toBeNull();
   });
+
+  it('rejects array envelope so forbidden-field scan cannot be skipped', async () => {
+    const messageId = 'a2a2a2a2-a2a2-4a2a-8a2a-a2a2a2a2a2a2';
+    const beforeCount = await prisma.sosMessage.count();
+    const body = buildValidIngestRequest({
+      messageId,
+      mutate: (message) => {
+        message.envelope = [{ note: 'array envelope' }] as unknown as Record<string, unknown>;
+      },
+    });
+
+    const response = await request(app.getHttpServer()).post('/v1/ingest').send(body);
+    expect(response.status).toBe(400);
+    expect(response.body.code).toBe('INVALID_ENVELOPE');
+
+    const afterCount = await prisma.sosMessage.count();
+    expect(afterCount).toBe(beforeCount);
+  });
 });
 
 describe('POST /v1/ingest rate limit', () => {

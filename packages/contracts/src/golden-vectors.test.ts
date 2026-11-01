@@ -67,11 +67,14 @@ describe('Golden Test Vectors - Cross-Language Compatibility', () => {
 
     // Now tamper: flip last byte of tag (last byte of ciphertext+tag)
     const ciphertextBuffer = Buffer.from(goldenVector.expected.ciphertextWithTagBase64, 'base64');
+    expect(ciphertextBuffer.length).toBeGreaterThan(0);
     ciphertextBuffer[ciphertextBuffer.length - 1] ^= 0x01; // Flip 1 bit in tag
-    
+    const tamperedCiphertext = ciphertextBuffer.toString('base64');
+    expect(tamperedCiphertext).not.toBe(goldenVector.expected.ciphertextWithTagBase64);
+
     const tamperedEncrypted = {
       ...validEncrypted,
-      ciphertext: ciphertextBuffer.toString('base64'),
+      ciphertext: tamperedCiphertext,
     };
 
     // Should throw

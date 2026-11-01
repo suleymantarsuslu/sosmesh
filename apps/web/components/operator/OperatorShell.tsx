@@ -7,6 +7,7 @@ import { useEffect, useMemo, useState, type ReactNode } from 'react';
 import { Button } from '../ui/Button';
 
 import { CommandPalette } from './CommandPalette';
+import { DemoModeBanner } from './DemoModeBanner';
 
 type NavItem = { href: string; label: string; roles?: string[] };
 
@@ -19,9 +20,11 @@ const NAV: NavItem[] = [
 export function OperatorShell({
   children,
   user,
+  demoMode = false,
 }: {
   children: ReactNode;
   user: { displayName: string; role: string; email?: string };
+  demoMode?: boolean;
 }) {
   const pathname = usePathname();
   const router = useRouter();
@@ -80,6 +83,7 @@ export function OperatorShell({
         </div>
       </aside>
       <div className="operator-main-wrap">
+        <DemoModeBanner visible={demoMode} />
         <header className="operator-topbar">
           <Button variant="ghost" onClick={() => setPaletteOpen(true)}>
             Komut ara (Ctrl+K)

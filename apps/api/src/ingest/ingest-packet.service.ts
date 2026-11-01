@@ -65,8 +65,15 @@ export class IngestPacketService {
       );
     }
 
-    const envelope = sosMessage.envelope as Record<string, unknown> | undefined;
-    if (envelope && typeof envelope === 'object' && !Array.isArray(envelope)) {
+    const envelopeRaw = sosMessage.envelope;
+    if (envelopeRaw !== undefined && envelopeRaw !== null) {
+      if (typeof envelopeRaw !== 'object' || Array.isArray(envelopeRaw)) {
+        throw new HttpException(
+          { code: 'INVALID_ENVELOPE', message: 'Envelope must be a plain object' },
+          HttpStatus.BAD_REQUEST
+        );
+      }
+      const envelope = envelopeRaw as Record<string, unknown>;
       const forbiddenKey = findForbiddenEnvelopeFieldKey(envelope);
       if (forbiddenKey) {
         throw new HttpException(

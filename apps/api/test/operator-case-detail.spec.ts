@@ -18,6 +18,7 @@ describe('Operator case detail and actions (ADIM 23)', () => {
   const incidentCorrectionRace = '00000000-0000-4000-8000-000000000805';
   const incidentAiOverride = '00000000-0000-4000-8000-000000000806';
   const incidentAiOverrideRace = '00000000-0000-4000-8000-000000000807';
+  const incidentAiFailed = '00000000-0000-4000-8000-000000000808';
   const operatorA = '00000000-0000-4000-8000-000000000901';
   const password = 'test-password-16chars';
   const syntheticText = 'Sentetik SOS metni: yardım gerekli (fixture).';
@@ -68,6 +69,7 @@ describe('Operator case detail and actions (ADIM 23)', () => {
         { id: incidentCorrectionRace, state: 'PENDING', version: 0, reviewStatus: 'NEW' },
         { id: incidentAiOverride, state: 'PENDING', version: 0, reviewStatus: 'NEW' },
         { id: incidentAiOverrideRace, state: 'PENDING', version: 0, reviewStatus: 'NEW' },
+        { id: incidentAiFailed, state: 'PENDING', version: 0, reviewStatus: 'NEW' },
       ],
       skipDuplicates: true,
     });
@@ -80,6 +82,7 @@ describe('Operator case detail and actions (ADIM 23)', () => {
         { incidentId: incidentCorrectionRace, teamId: teamA, status: 'OPEN' },
         { incidentId: incidentAiOverride, teamId: teamA, status: 'OPEN' },
         { incidentId: incidentAiOverrideRace, teamId: teamA, status: 'OPEN' },
+        { incidentId: incidentAiFailed, teamId: teamA, status: 'OPEN' },
       ],
     });
     const messages = [
@@ -137,6 +140,14 @@ describe('Operator case detail and actions (ADIM 23)', () => {
         longitude: 32.7,
         deliveryState: 'SERVER_ACCEPTED' as const,
       },
+      {
+        messageId: 'detail-msg-ai-failed-001',
+        incidentId: incidentAiFailed,
+        locationStatus: 'UNKNOWN' as const,
+        latitude: null,
+        longitude: null,
+        deliveryState: 'SERVER_ACCEPTED' as const,
+      },
     ];
     for (const row of messages) {
       await prisma.sosMessage.create({ data: row });
@@ -158,6 +169,14 @@ describe('Operator case detail and actions (ADIM 23)', () => {
           language: 'tr',
           requires_human_review: true,
         },
+      },
+    });
+    await prisma.aiAnalysis.create({
+      data: {
+        incidentId: incidentAiFailed,
+        modelVersion: 'mock-meta',
+        status: 'FAILED',
+        resultJson: { error: 'provider_unavailable' },
       },
     });
   });
@@ -556,5 +575,16 @@ describe('Operator case detail and actions (ADIM 23)', () => {
         }),
     ]);
     expect([first.status, second.status].sort()).toEqual([201, 409]);
+  });
+
+  it('does not expose AI suggestion payload when analysis FAILED', async () => {
+    const token = await loginToken();
+    const detail = await request(app.getHttpServer())
+      .get(`/v1/operator/cases/${incidentAiFailed}/detail`)
+      .set('Authorization', `Bearer ${token}`);
+    expect(detail.status).toBe(200);
+    expect(detail.body.ai?.status).toBe('FAILED');
+    expect(detail.body.ai?.suggestion).toBeNull();
+    expect(detail.body.verifiedMetadata.locationStatus).toBe('UNKNOWN');
   });
 });

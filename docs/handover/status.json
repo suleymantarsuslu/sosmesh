@@ -1334,7 +1334,7 @@
       "pass_criteria": "Yeniden erişildiğinde kuyruk doğru eşitlenir; gecikme açıkça gösterilir.",
       "status": "PARTIAL",
       "attempts": 1,
-      "commit": null,
+      "commit": "414b53a",
       "evidence": [
         "apps/watchos/SOSMeshWatchWidgets WidgetKit complication + WatchRetryPolicy backoff",
         "WatchConnectivitySendPlanner sendMessage vs transferUserInfo",
@@ -1369,7 +1369,7 @@
       "pass_criteria": "Her saat özelliği “supported/tested/experimental” olarak sınıflandırılır.",
       "status": "PARTIAL",
       "attempts": 1,
-      "commit": null,
+      "commit": "414b53a",
       "evidence": [
         "docs/watches/capability-matrix.md + WatchCapabilityMatrix.swift",
         "WatchOfflineHelpView + phoneNotReachableCopy (TR/EN)",

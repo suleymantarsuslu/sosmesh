@@ -1486,26 +1486,25 @@
       "deliverables": "docs/security/threat-model.md, findings.csv, security tests",
       "pass_criteria": "Critical risk = 0; high risk için onaylı remediated status.",
       "status": "PARTIAL",
-      "attempts": 1,
-      "commit": "d7cdc6a",
+      "attempts": 2,
+      "commit": "PLACEHOLDER",
       "evidence": [
         "docs/security/threat-model.md (STRIDE/TARA; bağımsız denetim NOT_TESTED)",
-        "docs/security/findings.csv (açık critical npm + SEC-RADIO-SPOOF-001)",
-        "packages/contracts/src/security/adversarial-security.test.ts (49 test, ≥30 fixture id)",
-        "packages/contracts/fixtures/security/adversarial-{mesh-relay,crypto,schema}.json",
-        "apps/api/test/security-adim43.spec.ts (auth RL, CSRF, RBAC, HTTP başlıkları)",
-        "apps/api/src/common/middleware/security-headers.middleware.ts",
-        "apps/web/lib/security-headers.js + lib/security-headers.test.ts (CSP)",
-        "CI: secret-scan job + verify.sh 14–15; pnpm audit bulguları findings.csv",
-        "ADIM 34 / PR #48: protocol-v2 sözleşme düzeyi; merge sonrası git fetch && merge origin/main"
+        "docs/security/findings.csv (critical npm remediated; SEC-RADIO-SPOOF-001 açık)",
+        "packages/contracts/src/security/adversarial-security.test.ts (53 test, ≥30 fixture id, SEC-MESH-SIZE-001)",
+        "packages/contracts/src/protocol-v2/mesh-payload-limits.ts + schema maxLength 21848",
+        "packages/contracts-kotlin MeshRelayEngine.kt opaque size guard + production guard test",
+        "apps/api/test/security-adim43.spec.ts (CSRF, RBAC, rate limit 429, HTTP başlıkları)",
+        "pnpm audit critical=0 (next 15.5.28, vitest 3.2.6, maplibre-gl 6.4.1); high açık (nest transitive vb.)",
+        "merge origin/main (ADIM 42 radio planner); adversarial + verify.sh 24/24 yerel EXIT=0"
       ],
       "blockers": [
-        "Bağımsız insan güvenlik denetimi NOT_TESTED",
-        "pnpm audit critical/high açık (next, vitest, maplibre-gl transitive)",
+        "Bağımsız insan güvenlik denetimi NOT_TESTED (SEC-IND-AUDIT-001)",
+        "pnpm audit high açık (SEC-DEP-NEST-001 vb.)",
         "SEC-RADIO-SPOOF-001 fiziksel BLE lab yok",
-        "ADIM 34 main'de değil (#48 kısmi bağımlılık)"
+        "SEC-ADIM34-001 NOT_TESTED (çapraz cihaz)"
       ],
-      "last_checked_at": "2026-11-01T21:40:00+00:00",
+      "last_checked_at": "2026-11-01T22:10:00+00:00",
       "goal": "Kötü niyetli aktarıcı, sahte SOS ve PII ifşasını sistematik test et.",
       "cursor_tasks": [
         "STRIDE/TARA threat model; malicious peer, replay, duplicate floods, radio spoofing and server abuse.",
@@ -1516,7 +1515,7 @@
       "verification_evidence": "Security test receipts, 30+ adversarial fixtures, artifact scans.",
       "risk_note": "",
       "gate_raw": "KAPI: TAM ÜRÜN    •    BAĞIMLILIK: 9,18,34,40",
-      "notes": "GEÇTİ ölçütü critical=0 karşılanmadı → PARTIAL. #48 merge sonrası adversarial suite yeniden koşturulacak."
+      "notes": "critical=0 (npm) sağlandı; GEÇTİ ölçütü high risk + NOT_TESTED maddeler nedeniyle PARTIAL."
     },
     {
       "id": "44",

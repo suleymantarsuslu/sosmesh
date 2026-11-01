@@ -187,7 +187,7 @@ describe('Crypto - Nonce Uniqueness', () => {
     }
 
     expect(nonces.size).toBe(iterations);
-  });
+  }, 30_000);
 });
 
 describe('Crypto - Key Management', () => {

@@ -1519,8 +1519,9 @@
       "deliverables": "docs/legal/privacy-policy-draft.md, retention ADR, API deletions",
       "pass_criteria": "Her veri alanı için amaç, erişim, retention ve silme yolu belli.",
       "status": "PARTIAL",
-      "attempts": 1,
-      "commit": "01fe84f",
+      "attempts": 2,
+      "commit": "4cdb3be",
+      "last_checked_at": "2026-11-01T22:12:00+00:00",
       "evidence": [
         "docs/legal/privacy-policy-draft.md, docs/legal/kvkk-gdpr-legal-review-checklist.md (hukuki inceleme NOT_TESTED)",
         "docs/privacy/data-map.md, docs/privacy/lawful-emergency-access.md",
@@ -1532,7 +1533,6 @@
       "blockers": [
         "Hukuki onay NOT_TESTED — tam uyumlu denmez"
       ],
-      "last_checked_at": "2026-11-01T22:30:00+00:00",
       "goal": "Hassas konum/sağlık bildirimlerinin saklanmasını sınırlı ve denetlenebilir yap.",
       "cursor_tasks": [
         "KVKK/GDPR applicability için hukuki inceleme listesi; privacy-by-design ve role-based access.",

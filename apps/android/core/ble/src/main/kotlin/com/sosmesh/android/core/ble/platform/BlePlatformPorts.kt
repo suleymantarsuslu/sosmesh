@@ -54,6 +54,14 @@ enum class GattProperty {
     NOTIFY,
 }
 
+interface GattServerWriteListener {
+    fun onCharacteristicWrite(
+        uuid: String,
+        value: ByteArray,
+        deviceAddress: String,
+    )
+}
+
 interface GattServerPort {
     fun start(
         serviceUuid: String,
@@ -61,6 +69,14 @@ interface GattServerPort {
     ): Result<Unit>
 
     fun stop()
+
+    fun setWriteListener(listener: GattServerWriteListener?)
+
+    fun notifyCharacteristic(
+        uuid: String,
+        value: ByteArray,
+        deviceAddress: String?,
+    ): Result<Unit>
 }
 
 enum class GattConnectionState {
@@ -77,6 +93,13 @@ interface GattClientCallbackPort {
     fun onServicesDiscovered()
 
     fun onMtuChanged(mtu: Int)
+
+    fun onCharacteristicChanged(
+        uuid: String,
+        value: ByteArray,
+    ) {
+        // Optional until ADIM 15 transfer wiring.
+    }
 }
 
 interface GattClientPort {
@@ -91,4 +114,13 @@ interface GattClientPort {
     fun requestMtu(mtu: Int): Result<Unit>
 
     fun disconnect()
+
+    fun writeCharacteristic(
+        uuid: String,
+        value: ByteArray,
+    ): Result<Unit>
+
+    fun enableAckNotifications(): Result<Unit>
+
+    fun setClientDataListener(listener: GattClientCallbackPort?)
 }

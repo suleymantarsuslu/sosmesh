@@ -31,3 +31,15 @@ export interface SosStatusTimeline {
 
 export { encryptPayload, decryptPayload, type EncryptedPayload } from './crypto';
 export { validateSosMessage } from './validator';
+export {
+  MeshRelayEngine,
+  MeshRelayDedupStore,
+  buildDedupKey,
+  parseMeshRelayEnvelope,
+  relayLogSnapshot,
+  unwrapOpaqueCiphertext,
+  wrapOpaqueForBleTransfer,
+  type MeshRelayEnvelopeV2,
+  type MeshRelayEngineOutcome,
+  type MeshRelayDropReason,
+} from './protocol-v2/mesh-relay-engine';

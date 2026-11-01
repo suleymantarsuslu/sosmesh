@@ -1,0 +1,133 @@
+{
+  "description": "Cross-language mesh relay engine vectors (TS + Kotlin must match).",
+  "cases": [
+    {
+      "id": "forward_hop0_ttl2",
+      "relayDeviceIdHash": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+      "envelope": {
+        "protocolVersion": 2,
+        "messageId": "msg-forward-001",
+        "hopCount": 0,
+        "maxHops": 5,
+        "ttlHops": 2,
+        "copyCount": 1,
+        "maxCopyCount": 3,
+        "originCreatedAt": "2026-11-01T12:00:00Z",
+        "opaqueCiphertextBase64": "AQIDBAUGBwgJCgsMDQ4PEBESExQVFhcYGRobHB0eHyAhIiMkJSYnKCkqKywtLi8=",
+        "hopChainReceipt": { "relayDeviceIdHashes": [] },
+        "peerAckHint": "PEER_RECEIVED_ONLY"
+      },
+      "expect": {
+        "decision": "FORWARD",
+        "forwardHopCount": 1,
+        "forwardTtlHops": 1,
+        "forwardCopyCount": 2
+      }
+    },
+    {
+      "id": "drop_ttl_exhausted",
+      "relayDeviceIdHash": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+      "envelope": {
+        "protocolVersion": 2,
+        "messageId": "msg-ttl-001",
+        "hopCount": 2,
+        "maxHops": 5,
+        "ttlHops": 0,
+        "copyCount": 1,
+        "maxCopyCount": 3,
+        "originCreatedAt": "2026-11-01T12:00:00Z",
+        "opaqueCiphertextBase64": "c2FtcGxlLW9wYXF1ZS1ibG9i",
+        "hopChainReceipt": { "relayDeviceIdHashes": [] }
+      },
+      "expect": {
+        "decision": "DROP",
+        "dropReason": "TTL_EXCEEDED"
+      }
+    },
+    {
+      "id": "drop_loop_same_relay",
+      "relayDeviceIdHash": "cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc",
+      "envelope": {
+        "protocolVersion": 2,
+        "messageId": "msg-loop-001",
+        "hopCount": 1,
+        "maxHops": 5,
+        "ttlHops": 3,
+        "copyCount": 1,
+        "maxCopyCount": 3,
+        "originCreatedAt": "2026-11-01T12:00:00Z",
+        "opaqueCiphertextBase64": "bG9vcC1jaGVjaw==",
+        "hopChainReceipt": {
+          "relayDeviceIdHashes": [
+            "cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc"
+          ]
+        }
+      },
+      "expect": {
+        "decision": "DROP",
+        "dropReason": "LOOP_DETECTED"
+      }
+    },
+    {
+      "id": "drop_duplicate_lru",
+      "relayDeviceIdHash": "dddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddd",
+      "envelope": {
+        "protocolVersion": 2,
+        "messageId": "msg-dedup-001",
+        "hopCount": 0,
+        "maxHops": 5,
+        "ttlHops": 2,
+        "copyCount": 1,
+        "maxCopyCount": 3,
+        "originCreatedAt": "2026-11-01T12:00:00Z",
+        "opaqueCiphertextBase64": "ZHVwbGljYXRlLWJsb2I=",
+        "hopChainReceipt": { "relayDeviceIdHashes": [] }
+      },
+      "previouslySeenDedupKey": "msg-dedup-001:0:ZHVwbGlj",
+      "expect": {
+        "decision": "DROP",
+        "dropReason": "DUPLICATE"
+      }
+    },
+    {
+      "id": "drop_copy_cap",
+      "relayDeviceIdHash": "eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee",
+      "envelope": {
+        "protocolVersion": 2,
+        "messageId": "msg-copy-001",
+        "hopCount": 1,
+        "maxHops": 5,
+        "ttlHops": 2,
+        "copyCount": 3,
+        "maxCopyCount": 3,
+        "originCreatedAt": "2026-11-01T12:00:00Z",
+        "opaqueCiphertextBase64": "Y29weS1jYXA=",
+        "hopChainReceipt": { "relayDeviceIdHashes": [] }
+      },
+      "expect": {
+        "decision": "DROP",
+        "dropReason": "COPY_CAP"
+      }
+    },
+    {
+      "id": "drop_max_hops",
+      "relayDeviceIdHash": "ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff",
+      "envelope": {
+        "protocolVersion": 2,
+        "messageId": "msg-hops-001",
+        "hopCount": 5,
+        "maxHops": 5,
+        "ttlHops": 1,
+        "copyCount": 1,
+        "maxCopyCount": 3,
+        "originCreatedAt": "2026-11-01T12:00:00Z",
+        "opaqueCiphertextBase64": "aG9wLWNhcA==",
+        "hopChainReceipt": { "relayDeviceIdHashes": [] }
+      },
+      "expect": {
+        "decision": "DROP",
+        "dropReason": "MAX_HOPS"
+      }
+    }
+  ]
+}

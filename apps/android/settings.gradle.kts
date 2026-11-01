@@ -34,6 +34,7 @@ include(":core:wear-companion")
 include(":feature-sos")
 include(":feature-status")
 include(":feature-relay")
+include(":mesh-v2")
 include(":wear")
 
 include(":contracts-kotlin")

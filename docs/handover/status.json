@@ -743,7 +743,7 @@
       "pass_criteria": "Operatör görünce gerçek OPERATOR_SEEN olayı oluşur, AI otorite gibi sunulmaz.",
       "status": "PARTIAL",
       "attempts": 1,
-      "commit": null,
+      "commit": "48c91b8",
       "evidence": [
         "GET /v1/operator/cases/:id/detail → idempotent OPERATOR_SEEN (operator_view) + audit; operator-case-detail.spec.ts",
         "PATCH review-status + POST corrections/ai-override (version 409); Incident.reviewStatus + optimistic version",

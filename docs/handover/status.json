@@ -868,7 +868,7 @@
       "pass_criteria": "Profesyonel görünüm erişilebilirlikten ödün vermeden tutarlı.",
       "status": "PARTIAL",
       "attempts": 1,
-      "commit": null,
+      "commit": "2b30a29",
       "evidence": [
         "apps/web/design-system (ScreenState, BentoCard, skeleton) + vitest screen-state.test.ts",
         "apps/api/src/organization (TenantScopeService, OrganizationController, organization-isolation.spec.ts)",

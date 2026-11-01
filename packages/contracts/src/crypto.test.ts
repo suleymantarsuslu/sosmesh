@@ -32,6 +32,15 @@ describe('Crypto - Encryption and Decryption', () => {
     relayCount: 0,
   };
 
+  function tamperBase64FirstByte(base64: string): string {
+    const bytes = Buffer.from(base64, 'base64');
+    expect(bytes.length).toBeGreaterThan(0);
+    bytes[0] ^= 0x01;
+    const tampered = bytes.toString('base64');
+    expect(tampered).not.toBe(base64);
+    return tampered;
+  }
+
   it('should encrypt and decrypt payload successfully', () => {
     const encrypted = encryptPayload(payload, envelope, config);
 
@@ -77,7 +86,7 @@ describe('Crypto - Encryption and Decryption', () => {
     // Then test tampered ciphertext fails
     const tamperedEncrypted = {
       ...encrypted,
-      ciphertext: encrypted.ciphertext.replace(/A/g, 'B'),
+      ciphertext: tamperBase64FirstByte(encrypted.ciphertext),
     };
 
     expect(() => decryptPayload(tamperedEncrypted, envelope, config))
@@ -93,13 +102,14 @@ describe('Crypto - Encryption and Decryption', () => {
 
     // Then test tampered tag fails
     const ciphertextBytes = Buffer.from(encrypted.ciphertext, 'base64');
-    if (ciphertextBytes.length > 16) {
-      // Flip a bit in the tag (last 16 bytes)
-      ciphertextBytes[ciphertextBytes.length - 1] ^= 0x01;
-    }
+    expect(ciphertextBytes.length).toBeGreaterThan(16);
+    // Flip a bit in the tag (last 16 bytes)
+    ciphertextBytes[ciphertextBytes.length - 1] ^= 0x01;
+    const tamperedCiphertext = ciphertextBytes.toString('base64');
+    expect(tamperedCiphertext).not.toBe(encrypted.ciphertext);
     const tamperedEncrypted = {
       ...encrypted,
-      ciphertext: ciphertextBytes.toString('base64'),
+      ciphertext: tamperedCiphertext,
     };
 
     expect(() => decryptPayload(tamperedEncrypted, envelope, config))
@@ -132,11 +142,13 @@ describe('Crypto - Encryption and Decryption', () => {
 
     // Then test tampered nonce fails
     const nonceBytes = Buffer.from(encrypted.nonce, 'base64');
-    // Flip first byte
-    nonceBytes[0] ^= 0xFF;
+    expect(nonceBytes.length).toBeGreaterThan(0);
+    nonceBytes[0] ^= 0xff;
+    const tamperedNonce = nonceBytes.toString('base64');
+    expect(tamperedNonce).not.toBe(encrypted.nonce);
     const tamperedEncrypted = {
       ...encrypted,
-      nonce: nonceBytes.toString('base64'),
+      nonce: tamperedNonce,
     };
 
     expect(() => decryptPayload(tamperedEncrypted, envelope, config))

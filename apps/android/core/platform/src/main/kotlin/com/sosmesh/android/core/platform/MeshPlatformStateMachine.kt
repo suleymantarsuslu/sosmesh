@@ -1,7 +1,7 @@
 package com.sosmesh.android.core.platform
 
 /**
- * Reduces OS/network/BLE/battery signals into an operational mode and radio energy profile (ADIM 30).
+ * Reduces OS/network/BLE/battery signals into an operational mode and radio energy profile (ADIM 30/42).
  * Does not claim background execution guarantees — callers surface [PlatformUserHint] in UI instead.
  */
 class MeshPlatformStateMachine(
@@ -43,34 +43,42 @@ class MeshPlatformStateMachine(
             MeshPlatformEvent.SosTransferEnded -> state.copy(sosTransferActive = false)
             MeshPlatformEvent.RelayOptIn -> state.copy(relayOptIn = true)
             MeshPlatformEvent.RelayOptOut -> state.copy(relayOptIn = false)
+            MeshPlatformEvent.ThermalThrottled -> state.copy(thermalThrottled = true)
+            MeshPlatformEvent.ThermalNormal -> state.copy(thermalThrottled = false)
+            MeshPlatformEvent.HighPowerRadioConsentGranted -> state.copy(highPowerRadioConsent = true)
+            MeshPlatformEvent.HighPowerRadioConsentRevoked -> state.copy(highPowerRadioConsent = false)
+            is MeshPlatformEvent.LinkMetricsUpdated ->
+                state.copy(
+                    duplicateTrafficRatioBps = event.duplicateTrafficRatioBps.coerceIn(0, 10_000),
+                    linkQualityScoreBps = event.linkQualityScoreBps.coerceIn(0, 10_000),
+                )
         }
 
     private fun evaluate(state: MeshPlatformState): MeshPlatformEvaluation {
+        val radioDecision = AdaptiveRadioPlanner.plan(RadioPlannerInput.fromPlatformState(state))
+
         if (!state.bluetoothEnabled) {
-            return blocked(state, MeshBlockReason.BLUETOOTH_OFF, PlatformUserHint.FIX_BLUETOOTH)
+            return blockedEvaluation(state, MeshBlockReason.BLUETOOTH_OFF, PlatformUserHint.FIX_BLUETOOTH, radioDecision)
         }
         if (!state.blePermissionsGranted) {
-            return blocked(state, MeshBlockReason.PERMISSION_DENIED, PlatformUserHint.FIX_PERMISSIONS)
+            return blockedEvaluation(state, MeshBlockReason.PERMISSION_DENIED, PlatformUserHint.FIX_PERMISSIONS, radioDecision)
         }
         if (state.batteryCritical && state.relayOptIn && !state.sosTransferActive) {
-            return blocked(state, MeshBlockReason.BATTERY_CRITICAL, PlatformUserHint.LOW_BATTERY_RELAY_PAUSED)
+            return blockedEvaluation(
+                state,
+                MeshBlockReason.BATTERY_CRITICAL,
+                PlatformUserHint.LOW_BATTERY_RELAY_PAUSED,
+                radioDecision,
+            )
         }
 
-        val constrained = state.powerSaveEnabled || state.deviceIdle
+        val constrained = state.powerSaveEnabled || state.deviceIdle || state.thermalThrottled
         val mode =
             when {
                 state.sosTransferActive -> MeshOperationalMode.SOS_ACTIVE
                 state.relayOptIn && !state.batteryCritical -> MeshOperationalMode.RELAY_ACTIVE
                 constrained -> MeshOperationalMode.CONSTRAINED
                 else -> MeshOperationalMode.IDLE
-            }
-
-        val profile =
-            when {
-                state.sosTransferActive -> EnergyRadioProfile.SOS_URGENT
-                state.powerSaveEnabled || state.deviceIdle -> EnergyRadioProfile.CONSTRAINED
-                state.relayOptIn -> EnergyRadioProfile.RELAY_FOREGROUND_LOW_POWER
-                else -> EnergyRadioProfile.RELAY_FOREGROUND_LOW_POWER
             }
 
         val relayMayRun = state.relayOptIn && !state.batteryCritical && state.bluetoothEnabled && state.blePermissionsGranted
@@ -87,24 +95,26 @@ class MeshPlatformStateMachine(
             state = state,
             mode = mode,
             blockReason = null,
-            radioProfile = profile,
+            radioProfile = radioDecision.radioProfile,
             relayMayRun = relayMayRun,
             relayUploadMayRun = relayUploadMayRun,
             userHint = hint,
+            requiresHighPowerRadioConsent = radioDecision.requiresHighPowerConsentPrompt,
         )
     }
 
-    private fun blocked(
+    private fun blockedEvaluation(
         state: MeshPlatformState,
         reason: MeshBlockReason,
         hint: PlatformUserHint,
+        radioDecision: RadioPlannerDecision,
     ): MeshPlatformEvaluation {
         val sosStillScans = state.sosTransferActive && reason != MeshBlockReason.PERMISSION_DENIED
         val profile =
             if (sosStillScans) {
-                EnergyRadioProfile.SOS_URGENT
+                AdaptiveRadioPlanner.plan(RadioPlannerInput.fromPlatformState(state)).radioProfile
             } else {
-                EnergyRadioProfile.BLOCKED
+                radioDecision.radioProfile
             }
         return MeshPlatformEvaluation(
             state = state,
@@ -114,6 +124,7 @@ class MeshPlatformStateMachine(
             relayMayRun = false,
             relayUploadMayRun = false,
             userHint = hint,
+            requiresHighPowerRadioConsent = false,
         )
     }
 }

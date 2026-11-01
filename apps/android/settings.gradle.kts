@@ -33,6 +33,7 @@ include(":core:platform")
 include(":feature-sos")
 include(":feature-status")
 include(":feature-relay")
+include(":mesh-v2")
 
 include(":contracts-kotlin")
 project(":contracts-kotlin").projectDir = file("../../packages/contracts-kotlin")

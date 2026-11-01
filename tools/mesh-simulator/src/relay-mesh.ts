@@ -5,6 +5,14 @@ import {
   SimulatedClock,
   TransferState,
 } from '@sosmesh/ble-protocol';
+import {
+  MeshRelayEngine,
+  parseMeshRelayEnvelope,
+  relayLogSnapshot,
+  unwrapOpaqueCiphertext,
+  wrapOpaqueForBleTransfer,
+  type MeshRelayEnvelopeV2,
+} from '@sosmesh/contracts';
 
 import type { ChaosChannelConfig } from './chaos-channel';
 import { createChaosTransportPair } from './chaos-channel';
@@ -18,18 +26,18 @@ import {
   type MeshTraceReport,
 } from './trace-export';
 
+/** @deprecated Use MeshRelayEnvelopeV2 from @sosmesh/contracts */
 export interface RelayHopEnvelope {
   messageId: string;
   hopCount: number;
   ttl: number;
-  /** Opaque ciphertext blob — relay MUST NOT decrypt. */
   ciphertextBase64: string;
 }
 
 export interface RelayObservation {
   node: 'B';
   sawPlaintextMarkers: string[];
-  envelopeMeta: Pick<RelayHopEnvelope, 'messageId' | 'hopCount' | 'ttl'>;
+  envelopeMeta: Pick<MeshRelayEnvelopeV2, 'messageId' | 'hopCount' | 'ttlHops'>;
 }
 
 export interface MultiHopResult {
@@ -37,20 +45,6 @@ export interface MultiHopResult {
   delivered: boolean;
   relayObservation: RelayObservation;
   finalPayload: Buffer | null;
-}
-
-function wrapForRelay(ciphertext: Buffer, messageId: string, hopCount: number, ttl: number): Buffer {
-  const wrapped: RelayHopEnvelope = {
-    messageId,
-    hopCount,
-    ttl,
-    ciphertextBase64: ciphertext.toString('base64'),
-  };
-  return Buffer.from(JSON.stringify(wrapped), 'utf-8');
-}
-
-function parseRelayWrapper(buf: Buffer): RelayHopEnvelope {
-  return JSON.parse(buf.toString('utf-8')) as RelayHopEnvelope;
 }
 
 async function runSingleHop(
@@ -113,6 +107,8 @@ export interface MultiHopOptions {
 
 const PLAINText_MARKERS = ['مرحبا', 'İstanbul', '🚨', 'ÇŞĞÜÖİ', 'SENTETIK_YARDIM'];
 
+const RELAY_B_HASH = 'bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb';
+
 export async function runMultiHopRelay(options: MultiHopOptions): Promise<MultiHopResult> {
   const clock = new SimulatedClock();
   const timeline: MeshTraceTimelineEntry[] = [];
@@ -120,7 +116,7 @@ export async function runMultiHopRelay(options: MultiHopOptions): Promise<MultiH
   const innerCiphertext = buildBlePayloadFromFixture(fixture);
 
   const messageId = `mesh-${options.seed}`;
-  const hop0 = wrapForRelay(innerCiphertext, messageId, 0, options.initialTtl);
+  const hop0 = wrapOpaqueForBleTransfer(innerCiphertext, messageId, options.initialTtl);
 
   const lowLoss: ChaosChannelConfig = {
     packetLoss: 0.02,
@@ -144,7 +140,7 @@ export async function runMultiHopRelay(options: MultiHopOptions): Promise<MultiH
   const relayObservation: RelayObservation = {
     node: 'B',
     sawPlaintextMarkers: [],
-    envelopeMeta: { messageId, hopCount: 0, ttl: options.initialTtl },
+    envelopeMeta: { messageId, hopCount: 0, ttlHops: options.initialTtl },
   };
 
   if (!hopA.ok || hopA.output === null) {
@@ -169,24 +165,17 @@ export async function runMultiHopRelay(options: MultiHopOptions): Promise<MultiH
     return { report, delivered: false, relayObservation, finalPayload: null };
   }
 
-  const wrappedAtB = parseRelayWrapper(hopA.output);
-  const relayLogSnapshot = JSON.stringify({
-    meta: {
-      messageId: wrappedAtB.messageId,
-      hopCount: wrappedAtB.hopCount,
-      ttl: wrappedAtB.ttl,
-    },
-    ciphertextPrefix: wrappedAtB.ciphertextBase64.slice(0, 24),
-  });
+  const wrappedAtB = parseMeshRelayEnvelope(hopA.output);
+  const relayLogSnapshotStr = relayLogSnapshot(wrappedAtB);
   for (const marker of PLAINText_MARKERS) {
-    if (relayLogSnapshot.includes(marker)) {
+    if (relayLogSnapshotStr.includes(marker)) {
       relayObservation.sawPlaintextMarkers.push(marker);
     }
   }
   relayObservation.envelopeMeta = {
     messageId: wrappedAtB.messageId,
     hopCount: wrappedAtB.hopCount,
-    ttl: wrappedAtB.ttl,
+    ttlHops: wrappedAtB.ttlHops,
   };
 
   timeline.push({
@@ -196,18 +185,21 @@ export async function runMultiHopRelay(options: MultiHopOptions): Promise<MultiH
     errorClass: MeshTraceErrorClass.RELAY_OPAQUE_ONLY,
   });
 
-  let nextTtl = wrappedAtB.ttl - 1;
-  if (options.skipTtlDecrement) {
-    nextTtl = wrappedAtB.ttl;
-  }
-  const nextHop = wrappedAtB.hopCount + 1;
-
-  if (nextTtl < 0) {
+  const relayEngine = new MeshRelayEngine({
+    lruCapacity: 256,
+    skipTtlDecrement: options.skipTtlDecrement,
+  });
+  const forwardOutcome = relayEngine.evaluateForward(wrappedAtB, RELAY_B_HASH);
+  if (forwardOutcome.decision !== 'FORWARD' || !forwardOutcome.forward) {
+    const dropReason = forwardOutcome.dropReason ?? 'TTL_EXCEEDED';
     timeline.push({
       t: clock.now(),
       node: 'B-relay',
       kind: 'ttl_drop',
-      errorClass: MeshTraceErrorClass.TTL_EXCEEDED,
+      errorClass:
+        dropReason === 'TTL_EXCEEDED'
+          ? MeshTraceErrorClass.TTL_EXCEEDED
+          : MeshTraceErrorClass.RELAY_OPAQUE_ONLY,
     });
     const report = buildTraceReport({
       seed: options.seed,
@@ -230,12 +222,7 @@ export async function runMultiHopRelay(options: MultiHopOptions): Promise<MultiH
     return { report, delivered: false, relayObservation, finalPayload: null };
   }
 
-  const forwardPayload = wrapForRelay(
-    Buffer.from(wrappedAtB.ciphertextBase64, 'base64'),
-    wrappedAtB.messageId,
-    nextHop,
-    nextTtl
-  );
+  const forwardPayload = Buffer.from(JSON.stringify(forwardOutcome.forward), 'utf-8');
 
   const hopB = await runSingleHop(
     options.seed + 2,
@@ -250,9 +237,9 @@ export async function runMultiHopRelay(options: MultiHopOptions): Promise<MultiH
   let delivered = false;
   let finalPayload: Buffer | null = null;
   if (hopB.ok && hopB.output !== null) {
-    const atC = parseRelayWrapper(hopB.output);
-    if (atC.ttl >= 0 && atC.hopCount <= options.initialTtl) {
-      finalPayload = Buffer.from(atC.ciphertextBase64, 'base64');
+    const atC = parseMeshRelayEnvelope(hopB.output);
+    if (atC.ttlHops >= 0 && atC.hopCount <= atC.maxHops) {
+      finalPayload = unwrapOpaqueCiphertext(atC);
       delivered = finalPayload.equals(innerCiphertext);
     }
   }

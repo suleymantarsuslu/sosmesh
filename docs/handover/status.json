@@ -1281,12 +1281,27 @@
       ],
       "deliverables": "packages/contracts/protocol-v2; apps/android/mesh-v2",
       "pass_criteria": "3 telefonlu doğrulanmış gerçek transfer; no infinite flood.",
-      "status": "NOT_STARTED",
-      "attempts": 0,
+      "status": "PARTIAL",
+      "attempts": 1,
       "commit": null,
-      "evidence": [],
-      "blockers": [],
-      "last_checked_at": null,
+      "evidence": [
+        "packages/contracts/protocol-v2: mesh-relay-envelope-v2 schema + relay-engine cross-language vectors",
+        "packages/contracts-kotlin/meshv2: MeshRelayEngine JVM tests (vectors PASS)",
+        "apps/android/mesh-v2: MeshV2RelayCoordinator, MeshForwardQueue, MeshRouteSelector, MeshPeerAckSemantics",
+        "feature-relay: RelayTransferHandler + RelayEnvelopeRegistrar protocolVersion=2 (messageId)",
+        "tools/mesh-simulator/relay-mesh.ts: MeshRelayEngine (@sosmesh/contracts) ile A→B→C",
+        "tests/chaos: multi-hop privacy + TTL + mutation sentinel PASS (simulated)",
+        "pnpm -r build + pnpm test EXIT=0; contracts-kotlin ./gradlew test EXIT=0 (JDK 17)",
+        "scripts/mesh-sim-mutation.sh tam koşu: ERTELENDİ (sentinel test mevcut)",
+        "3 fiziksel Android zinciri / link drop / OEM: NOT_TESTED",
+        "ADIM 34 (iOS↔Android) yok: iOS uyumu yalnız protocol-v2 sözleşme+vektör seviyesinde; native iOS ADIM 34'e bırakıldı"
+      ],
+      "notes": "Bağımlılık ADIM 34 tamamlanmadan iOS mesh katılımı uygulanmadı; protocol-v2 README ve vectors iOS için sözleşme hazırlığı. Peer ACK PEER_RECEIVED_ONLY — operatör/kurtarma tamamlanması değil. Röle opaque ciphertext dışında SOS metni görmez.",
+      "blockers": [
+        "Fiziksel 3 telefon A→B→C doğrulaması yok",
+        "ANDROID_HOME yok: apps/android Gradle unit testleri bu ortamda koşulmadı (CI doğrular)"
+      ],
+      "last_checked_at": "2026-11-01T18:05:00+00:00",
       "goal": "Tek hop’tan çok hop’a güvenli store-carry-forward ile geç.",
       "cursor_tasks": [
         "Routing selection, relay handoff, hop_limit/TTL, Bloom/LRU dedup tradeoffs and anti-loop.",

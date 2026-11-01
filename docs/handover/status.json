@@ -340,7 +340,7 @@
       "pass_criteria": "Uygulama en az bir gerçek Android’de açılır ve izin akışı çalışır.",
       "status": "PARTIAL",
       "attempts": 1,
-      "commit": "5e64683",
+      "commit": "516329f",
       "evidence": [
         "PR #24",
         "CI run 41142459079",
@@ -372,11 +372,18 @@
       ],
       "deliverables": "apps/android/feature-sos, feature-status; UI screenshots",
       "pass_criteria": "Gerçek SOS offline queue’ya kaydolur; yanlış “ekibe ulaştı” mesajı yok.",
-      "status": "NOT_STARTED",
-      "attempts": 0,
-      "commit": null,
-      "evidence": [],
-      "blockers": [],
+      "status": "PARTIAL",
+      "attempts": 1,
+      "commit": "3149beb",
+      "evidence": [
+        "Compose/Robolectric unit tests: outbox enqueue, forbidden copy, i18n parity",
+        "docs/tests/android-talkback-script.md NOT_TESTED",
+        "docs/ux/android-sos Robolectric PNGs (NOT real device)"
+      ],
+      "blockers": [
+        "TalkBack fiziksel cihaz: NOT_TESTED",
+        "Gerçek GPS runtime: NOT_TESTED"
+      ],
       "last_checked_at": null,
       "goal": "Saniyeler içinde anlamlı yardım talebi girilebilsin.",
       "cursor_tasks": [
@@ -398,12 +405,17 @@
         "11",
         "12"
       ],
-      "deliverables": "apps/android/core-ble, docs/tests/android-radio.md",
+      "deliverables": "apps/android/core/ble, docs/tests/android-radio.md",
       "pass_criteria": "En az 2 Android cihaz birbirini keşfeder ve GATT oturumu kurar.",
-      "status": "NOT_STARTED",
-      "attempts": 0,
-      "commit": null,
-      "evidence": [],
+      "status": "PARTIAL",
+      "attempts": 1,
+      "commit": "622ed30",
+      "evidence": [
+        "JVM unit: GattClientSession, PeerRegistry, PermissionAndAdapterGuard, BleAdvertiser payload",
+        "docs/tests/android-radio.md prosedür + OEM şablon",
+        "Gerçek 2 cihaz keşif/GATT: NOT_TESTED"
+      ],
+      "notes": "Simülatör/Robolectric gerçek BLE kanıtı sayılmaz; PARTIAL beklenen durum.",
       "blockers": [],
       "last_checked_at": null,
       "goal": "İki gerçek Android’in internetsiz yakındaki cihazları keşfetmesini sağla.",

@@ -59,6 +59,8 @@ dependencies {
     implementation(project(":core:data"))
     implementation(project(":core:permissions"))
     implementation(project(":core:ble"))
+    implementation(project(":feature-sos"))
+    implementation(project(":feature-status"))
 
     implementation("androidx.core:core-ktx:1.12.0")
     implementation("androidx.lifecycle:lifecycle-runtime-ktx:2.7.0")
@@ -70,6 +72,7 @@ dependencies {
     implementation("androidx.navigation:navigation-compose:2.7.7")
     implementation("com.google.dagger:hilt-android:2.50")
     implementation("androidx.hilt:hilt-navigation-compose:1.1.0")
+    implementation("androidx.lifecycle:lifecycle-viewmodel-compose:2.7.0")
     kapt("com.google.dagger:hilt-compiler:2.50")
 
     debugImplementation("androidx.compose.ui:ui-tooling")

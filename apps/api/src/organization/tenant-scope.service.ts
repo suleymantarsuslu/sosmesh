@@ -1,11 +1,10 @@
 import { Injectable } from '@nestjs/common';
-import { UserRole } from '@prisma/client';
-import { Prisma } from '@prisma/client';
+import { Prisma, UserRole } from '@prisma/client';
 
-import { OperatorRequestUser } from './guards/operator-auth.guard';
+import { OperatorRequestUser } from '../operator/guards/operator-auth.guard';
 
 @Injectable()
-export class IncidentScopeService {
+export class TenantScopeService {
   isAdmin(user: OperatorRequestUser): boolean {
     return user.role === UserRole.ADMIN;
   }
@@ -14,12 +13,16 @@ export class IncidentScopeService {
     if (this.isAdmin(user)) {
       return undefined;
     }
-    if (!user.teamId) {
+    if (!user.organizationId) {
       return { id: { in: [] } };
     }
     return {
       assignments: {
-        some: { teamId: user.teamId },
+        some: {
+          team: {
+            organizationId: user.organizationId,
+          },
+        },
       },
     };
   }

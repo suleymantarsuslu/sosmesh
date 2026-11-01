@@ -2,20 +2,34 @@
 
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
-import { useEffect, useMemo, useState, type ReactNode } from 'react';
+import { Suspense, useEffect, useMemo, useState, type ReactNode } from 'react';
 
 import { Button } from '../ui/Button';
 
 import { CommandPalette } from './CommandPalette';
 import { DemoModeBanner } from './DemoModeBanner';
+import { IncidentSwitcher } from './IncidentSwitcher';
+import { MobileNavDrawer } from './MobileNavDrawer';
+import { useOperatorPreferences } from './OperatorPreferencesProvider';
+import { OrgHeader } from './OrgHeader';
+import { SavedViewsMenu } from './SavedViewsMenu';
+import { ThemeLocaleControls } from './ThemeLocaleControls';
+import { useOrganizationContext } from './useOrganizationContext';
 
-type NavItem = { href: string; label: string; roles?: string[] };
+type NavConfig = { href: string; labelKey: string; roles?: string[] };
 
-const NAV: NavItem[] = [
-  { href: '/operator/dashboard', label: 'Panel' },
-  { href: '/operator/cases', label: 'Harita / Vakalar' },
-  { href: '/operator/admin', label: 'Yönetim', roles: ['ADMIN'] },
+const NAV: NavConfig[] = [
+  { href: '/operator/dashboard', labelKey: 'web.shell.nav.dashboard' },
+  { href: '/operator/cases', labelKey: 'web.shell.nav.cases' },
+  { href: '/operator/admin', labelKey: 'web.shell.nav.admin', roles: ['ADMIN'] },
 ];
+
+function navItemsForRole(role: string, t: (key: string) => string) {
+  return NAV.filter((item) => !item.roles || item.roles.includes(role)).map((item) => ({
+    href: item.href,
+    label: t(item.labelKey),
+  }));
+}
 
 export function OperatorShell({
   children,
@@ -28,12 +42,14 @@ export function OperatorShell({
 }) {
   const pathname = usePathname();
   const router = useRouter();
+  const { t } = useOperatorPreferences();
+  const { context } = useOrganizationContext();
   const [paletteOpen, setPaletteOpen] = useState(false);
+  const [drawerOpen, setDrawerOpen] = useState(false);
 
   const items = useMemo(
-    () =>
-      NAV.filter((item) => !item.roles || item.roles.includes(user.role)),
-    [user.role]
+    () => navItemsForRole(user.role, t),
+    [user.role, t]
   );
 
   useEffect(() => {
@@ -56,10 +72,15 @@ export function OperatorShell({
   return (
     <div className="operator-layout">
       <a href="#operator-main" className="skip-link">
-        Ana içeriğe geç
+        {t('a11y.skipToMain')}
       </a>
-      <aside className="operator-sidebar" aria-label="Operatör menüsü">
-        <div className="operator-brand">SOSMesh</div>
+      <aside className="operator-sidebar" aria-label={t('a11y.menu')}>
+        <div className="operator-brand">{t('web.shell.brand')}</div>
+        <OrgHeader
+          organizationName={context?.organization?.name ?? null}
+          teamName={context?.team?.name ?? null}
+          role={user.role}
+        />
         <nav>
           <ul>
             {items.map((item) => (
@@ -74,19 +95,30 @@ export function OperatorShell({
             ))}
           </ul>
         </nav>
+        <ThemeLocaleControls />
         <div className="operator-user">
           <p>{user.displayName || user.email || 'Operatör'}</p>
-          <p className="operator-user__role">{user.role}</p>
           <Button variant="ghost" onClick={logout}>
-            Çıkış
+            {t('web.shell.logout')}
           </Button>
         </div>
       </aside>
       <div className="operator-main-wrap">
         <DemoModeBanner visible={demoMode} />
         <header className="operator-topbar">
+          <Button
+            variant="ghost"
+            className="operator-mobile-menu"
+            onClick={() => setDrawerOpen(true)}
+          >
+            {t('web.shell.mobileMenu')}
+          </Button>
+          <IncidentSwitcher incidents={context?.incidents ?? []} />
+          <Suspense fallback={null}>
+            <SavedViewsMenu />
+          </Suspense>
           <Button variant="ghost" onClick={() => setPaletteOpen(true)}>
-            Komut ara (Ctrl+K)
+            {t('web.shell.commandShortcut')}
           </Button>
         </header>
         <main id="operator-main" className="operator-main">
@@ -94,6 +126,7 @@ export function OperatorShell({
         </main>
       </div>
       <CommandPalette open={paletteOpen} onClose={() => setPaletteOpen(false)} items={items} />
+      <MobileNavDrawer open={drawerOpen} onClose={() => setDrawerOpen(false)} items={items} />
     </div>
   );
 }

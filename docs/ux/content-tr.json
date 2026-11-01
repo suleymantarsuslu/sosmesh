@@ -139,6 +139,27 @@
       "similarCases": "Benzer Vakalar",
       "notes": "Notlar",
       "addNote": "Not Ekle"
+    },
+    "shell": {
+      "brand": "SOSMesh",
+      "commandPalette": "Komut paleti",
+      "commandPlaceholder": "Sayfa ara…",
+      "commandShortcut": "Komut ara (Ctrl+K)",
+      "logout": "Çıkış",
+      "themeLight": "Açık tema",
+      "themeDark": "Koyu tema",
+      "language": "Dil",
+      "savedViews": "Kayıtlı görünümler",
+      "saveView": "Görünümü kaydet",
+      "incidentSwitcher": "Olay seçici",
+      "incidentAll": "Tüm olaylar",
+      "mobileMenu": "Menüyü aç",
+      "nav": {
+        "dashboard": "Panel",
+        "cases": "Harita / Vakalar",
+        "admin": "Yönetim"
+      },
+      "orgHeader": "Kuruluş"
     }
   },
   "watch": {

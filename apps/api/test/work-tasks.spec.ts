@@ -111,6 +111,62 @@ describe('Work tasks and coordination (ADIM 27)', () => {
     expect(response.status).toBe(403);
   });
 
+  it('forbids operator from assign, accept, withdraw, and close', async () => {
+    const created = await request(app.getHttpServer())
+      .post('/v1/operator/tasks')
+      .set('Authorization', `Bearer ${coordinatorToken()}`)
+      .set('Origin', allowedOrigin)
+      .send({ incidentId, teamId, title: 'Operator RBAC task', assigneeId });
+    expect(created.status).toBe(201);
+    const taskId = created.body.id as string;
+    const version = created.body.version as number;
+
+    const assign = await request(app.getHttpServer())
+      .patch(`/v1/operator/tasks/${taskId}/assign`)
+      .set('Authorization', `Bearer ${operatorToken()}`)
+      .set('Origin', allowedOrigin)
+      .send({ assigneeId, expectedVersion: version });
+    expect(assign.status).toBe(403);
+
+    const accept = await request(app.getHttpServer())
+      .patch(`/v1/operator/tasks/${taskId}/accept`)
+      .set('Authorization', `Bearer ${operatorToken()}`)
+      .set('Origin', allowedOrigin)
+      .send({ expectedVersion: version });
+    expect(accept.status).toBe(403);
+
+    const withdraw = await request(app.getHttpServer())
+      .patch(`/v1/operator/tasks/${taskId}/withdraw`)
+      .set('Authorization', `Bearer ${operatorToken()}`)
+      .set('Origin', allowedOrigin)
+      .send({ expectedVersion: version });
+    expect(withdraw.status).toBe(403);
+
+    const close = await request(app.getHttpServer())
+      .patch(`/v1/operator/tasks/${taskId}/close`)
+      .set('Authorization', `Bearer ${operatorToken()}`)
+      .set('Origin', allowedOrigin)
+      .send({ expectedVersion: version });
+    expect(close.status).toBe(403);
+  });
+
+  it('rejects AI draft assignment without assignee', async () => {
+    const draft = await request(app.getHttpServer())
+      .post('/v1/operator/tasks/ai-draft')
+      .set('Authorization', `Bearer ${coordinatorToken()}`)
+      .set('Origin', allowedOrigin)
+      .send({ incidentId, teamId, title: 'Assignee required' });
+    expect(draft.status).toBe(201);
+
+    const assigned = await request(app.getHttpServer())
+      .patch(`/v1/operator/tasks/${draft.body.id}/assign`)
+      .set('Authorization', `Bearer ${coordinatorToken()}`)
+      .set('Origin', allowedOrigin)
+      .send({ expectedVersion: draft.body.version });
+    expect(assigned.status).toBe(400);
+    expect(assigned.body.code).toBe('ASSIGNEE_REQUIRED');
+  });
+
   it('creates AI draft as PROPOSED only', async () => {
     const response = await request(app.getHttpServer())
       .post('/v1/operator/tasks/ai-draft')

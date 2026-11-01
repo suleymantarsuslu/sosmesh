@@ -28,6 +28,18 @@ export class ActivityTimelineService {
     query: { incidentId?: string; limit?: number }
   ): Promise<{ items: ActivityEntry[] }> {
     const limit = Math.min(query.limit ?? 50, 100);
+
+    if (query.incidentId) {
+      const allowed = await this.scope.canAccessIncident(
+        user,
+        query.incidentId,
+        this.prisma
+      );
+      if (!allowed) {
+        return { items: [] };
+      }
+    }
+
     const incidentWhere = this.scope.incidentWhere(user);
 
     const audits = await this.prisma.auditLog.findMany({

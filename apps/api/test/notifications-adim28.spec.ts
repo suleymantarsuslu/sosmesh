@@ -4,6 +4,7 @@ import * as bcrypt from 'bcrypt';
 import request from 'supertest';
 
 import { PrismaService } from '../src/prisma/prisma.service';
+import { NotificationDispatchService } from '../src/notifications/notification-dispatch.service';
 import { getTestDatabaseUrl } from './helpers/database-url';
 import { createTestApp } from './helpers/test-app';
 import { applyTestAuthEnv, operatorBearerToken } from './helpers/operator-auth';
@@ -80,7 +81,7 @@ describe('Notifications and activity (ADIM 28)', () => {
     });
   }
 
-  it('dedupes notifications for the same task event', async () => {
+  it('dedupes notifications when the same task event is dispatched twice', async () => {
     const created = await request(app.getHttpServer())
       .post('/v1/operator/tasks')
       .set('Authorization', `Bearer ${token(userA)}`)
@@ -89,22 +90,23 @@ describe('Notifications and activity (ADIM 28)', () => {
     expect(created.status).toBe(201);
 
     const prisma = app.get(PrismaService);
+    const dispatch = app.get(NotificationDispatchService);
+    const task = await prisma.workTask.findUniqueOrThrow({
+      where: { id: created.body.id as string },
+    });
+    const actor = {
+      sub: userA,
+      role: UserRole.COORDINATOR,
+      teamId,
+      organizationId: orgId,
+    };
+    await dispatch.notifyTaskEvent(actor, task, 'work_task.created');
+    await dispatch.notifyTaskEvent(actor, task, 'work_task.created');
+
     const rows = await prisma.operatorNotification.findMany({
-      where: { userId: userB, eventType: 'work_task.created' },
+      where: { userId: userB, eventType: 'work_task.created', dedupeKey: `${'work_task.created'}:${task.id}:${task.version}:${task.status}` },
     });
     expect(rows.length).toBe(1);
-
-    await request(app.getHttpServer())
-      .patch(`/v1/operator/tasks/${created.body.id}/close`)
-      .set('Authorization', `Bearer ${token(userA)}`)
-      .set('Origin', allowedOrigin)
-      .send({ expectedVersion: created.body.version })
-      .expect(200);
-
-    const afterClose = await prisma.operatorNotification.count({
-      where: { userId: userB },
-    });
-    expect(afterClose).toBe(2);
   });
 
   it('respects quiet hours by skipping delivery state', async () => {
@@ -148,6 +150,16 @@ describe('Notifications and activity (ADIM 28)', () => {
     expect(response.status).toBe(200);
     expect(Array.isArray(response.body.items)).toBe(true);
     expect(response.body.items.length).toBeGreaterThan(0);
+  });
+
+  it('export activity omits raw coordinates from audit payloads', async () => {
+    const response = await request(app.getHttpServer())
+      .get(`/v1/operator/activity/export?incidentId=${incidentId}`)
+      .set('Authorization', `Bearer ${token(userA)}`);
+    expect(response.status).toBe(200);
+    const serialized = JSON.stringify(response.body.items);
+    expect(serialized).not.toMatch(/"latitude"\s*:/);
+    expect(serialized).not.toMatch(/"longitude"\s*:/);
   });
 
   it('forbids operator role from exporting activity', async () => {

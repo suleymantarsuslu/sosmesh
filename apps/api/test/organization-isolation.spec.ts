@@ -277,4 +277,73 @@ describe('Organization tenant isolation (ADIM 26)', () => {
     expect(teamIds).toContain(teamAlphaSibling);
     expect(teamIds).not.toContain(teamBeta);
   });
+
+  it('returns 404 when coordinator creates task on cross-org team', async () => {
+    const token = coordinatorToken();
+    const response = await request(app.getHttpServer())
+      .post('/v1/operator/tasks')
+      .set('Authorization', `Bearer ${token}`)
+      .set('Origin', allowedOrigin)
+      .send({
+        incidentId: incidentBeta,
+        teamId: teamBeta,
+        title: 'Cross-org task',
+      });
+    expect(response.status).toBe(404);
+  });
+
+  it('returns empty activity for cross-org incidentId', async () => {
+    const prisma = app.get(PrismaService);
+    await prisma.auditLog.create({
+      data: {
+        incidentId: incidentBeta,
+        action: 'isolation.probe',
+        detailsJson: { probe: true },
+      },
+    });
+    const token = coordinatorToken();
+    const response = await request(app.getHttpServer())
+      .get(`/v1/operator/activity?incidentId=${incidentBeta}`)
+      .set('Authorization', `Bearer ${token}`);
+    expect(response.status).toBe(200);
+    expect(response.body.items).toEqual([]);
+  });
+
+  it('returns empty task list when JWT lacks organizationId', async () => {
+    const token = operatorBearerToken({
+      sub: operatorAlpha,
+      role: UserRole.OPERATOR,
+      teamId: teamAlpha,
+    });
+    const response = await request(app.getHttpServer())
+      .get('/v1/operator/tasks')
+      .set('Authorization', `Bearer ${token}`);
+    expect(response.status).toBe(200);
+    expect(response.body.items).toEqual([]);
+  });
+
+  it('returns 404 when coordinator upserts resource outside org scope', async () => {
+    const prisma = app.get(PrismaService);
+    const betaResource = await prisma.resource.create({
+      data: {
+        organizationId: orgBeta,
+        teamId: teamBeta,
+        kind: 'VEHICLE',
+        name: 'beta-only',
+        capacity: 1,
+      },
+    });
+    const token = coordinatorToken();
+    const response = await request(app.getHttpServer())
+      .post('/v1/operator/resources')
+      .set('Authorization', `Bearer ${token}`)
+      .set('Origin', allowedOrigin)
+      .send({
+        id: betaResource.id,
+        kind: 'VEHICLE',
+        name: 'tampered',
+        capacity: 2,
+      });
+    expect(response.status).toBe(404);
+  });
 });

@@ -151,19 +151,29 @@ export class TeamsResourcesService {
       availableUntil: input.availableUntil ? new Date(input.availableUntil) : undefined,
     };
 
-    const row = input.id
-      ? await this.prisma.resource.update({
-          where: { id: input.id },
-          data: {
-            kind: input.kind,
-            name: input.name,
-            capacity: input.capacity,
-            zoneCode: input.zoneCode,
-            availableFrom: input.availableFrom ? new Date(input.availableFrom) : null,
-            availableUntil: input.availableUntil ? new Date(input.availableUntil) : null,
-          },
-        })
-      : await this.prisma.resource.create({ data });
+    let row;
+    if (input.id) {
+      const scopeWhere = this.scope.resourceWhere(user);
+      const existing = await this.prisma.resource.findFirst({
+        where: { id: input.id, ...scopeWhere },
+      });
+      if (!existing) {
+        throw new NotFoundException({ code: 'NOT_FOUND', message: 'Resource not found' });
+      }
+      row = await this.prisma.resource.update({
+        where: { id: input.id },
+        data: {
+          kind: input.kind,
+          name: input.name,
+          capacity: input.capacity,
+          zoneCode: input.zoneCode,
+          availableFrom: input.availableFrom ? new Date(input.availableFrom) : null,
+          availableUntil: input.availableUntil ? new Date(input.availableUntil) : null,
+        },
+      });
+    } else {
+      row = await this.prisma.resource.create({ data });
+    }
 
     const list = await this.listResources(user, {});
     const found = list.items.find((item) => item.id === row.id);

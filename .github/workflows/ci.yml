@@ -278,6 +278,12 @@ jobs:
           cd packages/contracts-swift
           export SOURCE_ROOT="${GITHUB_WORKSPACE}"
           swift test
+
+      - name: Run SOSMeshCore Swift tests
+        run: |
+          cd apps/ios/SOSMeshCore
+          export SOURCE_ROOT="${GITHUB_WORKSPACE}"
+          swift test
       
       - name: Compare canonical JSON outputs (TypeScript vs Kotlin vs Swift)
         run: |

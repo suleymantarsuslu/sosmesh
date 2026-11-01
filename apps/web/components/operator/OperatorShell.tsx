@@ -124,7 +124,7 @@ export function OperatorShell({
             {t('web.shell.commandShortcut')}
           </Button>
         </header>
-        <main id="operator-main" className="operator-main">
+        <main id="operator-main" className="operator-main" tabIndex={-1}>
           {children}
         </main>
       </div>

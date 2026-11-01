@@ -92,11 +92,12 @@ export function CaseDetailView({ detail, onRefresh }: Props) {
         <h2 id="case-meta-title">Doğrulanmış metadata</h2>
         <dl>
           <div>
-            <dt>Kişi sayısı</dt>
+            <dt id="case-person-count-label">Kişi sayısı</dt>
             <dd>
               <input
                 type="number"
                 min={0}
+                aria-labelledby="case-person-count-label"
                 value={personCount}
                 onChange={(event) => setPersonCount(event.target.value)}
                 data-testid="case-person-count-input"

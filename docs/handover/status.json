@@ -1692,12 +1692,24 @@
       ],
       "deliverables": "apps/web e2e + screenshots, docs/ux/a11y-report.md",
       "pass_criteria": "Kritik akışlarda blocker düzeyi a11y defect = 0.",
-      "status": "NOT_STARTED",
-      "attempts": 0,
+      "status": "PARTIAL",
+      "attempts": 1,
       "commit": null,
-      "evidence": [],
-      "blockers": [],
-      "last_checked_at": null,
+      "evidence": [
+        "tests/ux/adim50-web-closure.spec.js (axe WCAG2.2 AA 7 akış, klavye, 320-1920, zoom 200%, hydration, slow 3G, offline banner, RBAC)",
+        "tests/ux/adim50-cross-browser.spec.js + firefox/webkit Playwright projeleri",
+        "tests/ux/helpers/web-e2e.js",
+        "docs/ux/a11y-report.md (manuel ekran okuyucu: NOT_TESTED)",
+        "CaseDetailView aria-labelledby; OperatorShell skip-target tabIndex; mobil overflow CSS",
+        "pnpm test:a11y:web 52/52 EXIT=0; verify.sh 24/24 EXIT=0 (yerel agent)",
+        "ERTELENDİ: geniş px görsel regresyon matrisi; Lighthouse CI NOT_TESTED"
+      ],
+      "blockers": [
+        "Manuel NVDA/JAWS/VoiceOver NOT_TESTED",
+        "Self-hosted CI yeşil olana kadar tam PASS yok",
+        "Yerel VM: JDK 17 / ANDROID_HOME yok — Gradle kapısı CI doğrular"
+      ],
+      "last_checked_at": "2026-11-01T22:10:00+00:00",
       "goal": "Paneli küçük ekrandan operatör ekranına kadar release kalitesinde kapat.",
       "cursor_tasks": [
         "Lighthouse/axe WCAG 2.2 AA oriented review, keyboard and screenreader full workflows.",
@@ -1707,7 +1719,8 @@
       ],
       "verification_evidence": "Automated accessibility + manual screen-reader reports.",
       "risk_note": "",
-      "gate_raw": "KAPI: TAM ÜRÜN    •    BAĞIMLILIK: 26–28,43"
+      "gate_raw": "KAPI: TAM ÜRÜN    •    BAĞIMLILIK: 26–28,43",
+      "notes": "PR #49 (ADIM 43) zinciri üzerinde; axe blocker düzeltmeleri apps/web CaseDetailView + operator.css"
     },
     {
       "id": "51",

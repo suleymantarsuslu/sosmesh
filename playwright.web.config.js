@@ -11,20 +11,27 @@ const e2ePassword =
 
 process.env[e2ePassKey] = e2ePassword;
 
+const operatorSpecs = [
+  '**/web-skeleton.spec.js',
+  '**/operator-panel.spec.js',
+  '**/operator-map.spec.js',
+  '**/operator-case-detail.spec.js',
+  '**/operator-tasks-teams.spec.js',
+  '**/adim50-web-closure.spec.js',
+];
+
 module.exports = defineConfig({
   testDir: './tests/ux',
-  testMatch: [
-    '**/web-skeleton.spec.js',
-    '**/operator-panel.spec.js',
-    '**/operator-map.spec.js',
-    '**/operator-case-detail.spec.js',
-    '**/operator-tasks-teams.spec.js',
-  ],
   fullyParallel: false,
   forbidOnly: !!process.env.CI,
   retries: process.env.CI ? 2 : 0,
   workers: 1,
   reporter: process.env.CI ? 'github' : 'list',
+  expect: {
+    toHaveScreenshot: {
+      maxDiffPixelRatio: 0.02,
+    },
+  },
   use: {
     baseURL: 'http://localhost:3000',
     trace: 'retain-on-failure',
@@ -45,7 +52,18 @@ module.exports = defineConfig({
   projects: [
     {
       name: 'chromium',
+      testMatch: operatorSpecs,
       use: { ...devices['Desktop Chrome'] },
+    },
+    {
+      name: 'firefox-adim50',
+      testMatch: '**/adim50-cross-browser.spec.js',
+      use: { ...devices['Desktop Firefox'] },
+    },
+    {
+      name: 'webkit-adim50',
+      testMatch: '**/adim50-cross-browser.spec.js',
+      use: { ...devices['Desktop Safari'] },
     },
   ],
 });

@@ -50,6 +50,15 @@ export function readSession(): SessionUser | null {
         teamId: null,
       };
     }
+    if (isE2eMock() && payload.sub === 'e2e-admin') {
+      return {
+        id: payload.sub,
+        email: 'e2e-admin@sosmesh.example',
+        displayName: 'E2E Admin',
+        role: 'ADMIN',
+        teamId: null,
+      };
+    }
     return {
       id: payload.sub,
       email: '',

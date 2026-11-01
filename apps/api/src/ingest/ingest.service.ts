@@ -172,9 +172,8 @@ export class IngestService {
         },
       });
 
-      return message;
-    }).then(async (message) => {
-      await this.operatorFeed.publishNewIncidentMessage(message);
+      await this.operatorFeed.insertFirstAcceptInTransaction(tx, message);
+
       return message;
     });
   }

@@ -185,6 +185,7 @@ model OperatorFeedEvent {
   occurredAt     DateTime       @map("occurred_at")
   createdAt      DateTime       @default(now()) @map("created_at")
 
+  @@unique([messageId])
   @@index([seq])
   @@map("operator_feed_events")
 }

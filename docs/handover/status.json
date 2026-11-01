@@ -1603,7 +1603,7 @@
       "pass_criteria": "Öneri güvenli şekilde reddedilebilir; otomatik fiziksel sevk yok.",
       "status": "PARTIAL",
       "attempts": 1,
-      "commit": null,
+      "commit": "4f4bc105e46a9aa46e73052157893503a071665a",
       "evidence": [
         "apps/api/src/recommendation (matching-engine, rationale guards, REST)",
         "apps/api/test/recommendation-adim46.spec.ts",

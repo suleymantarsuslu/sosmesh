@@ -2,10 +2,37 @@
 
 **Tarih (UTC):** 2026-11-01  
 **Dal:** `cursor/gate-h-closure-a47c`  
-**HEAD:** `5110279b666f79595c4af93a3ca02f9c3fd6d8cd` (Gate H kapanış)  
+**HEAD:** _(push sonrası güncellenir)_  
+**PR:** #41 (Gate H kapanış); **PR #40** (ADIM 26 — Gate H dışı, açık paralel iş)  
 **Kaynak:** `docs/handover/status.json`, `docs/handover/tech-debt.md`, master plan (`docs/handover/step-index.md`)
 
 Bu rapor, ertelenmiş ağır testlerin bu cloud agent ortamında **gerçekten koşturulması** sonucunu özetler. Kanıtsız PASS yoktur; fiziksel cihaz gerektiren ADIM 24 **NOT_TESTED** olarak kalır.
+
+Gate H özeti ayrıca `status.json` → `gates.H` alanında tutulur. **ADIM 58** (tam ürün handover) bu kapanış kapsamında değiştirilmedi (`NOT_STARTED`).
+
+---
+
+## Denetim turu 1 düzeltmeleri (2026-11-01)
+
+### Sahte yeşil: `injectCorruptLastChunk` geri alındı
+
+İlk PR #41 turunda `chaos_mandatory_digest_invalid_never_completed` testi, geçici olarak `runSimulatedTransfer({ injectCorruptLastChunk: true })` ile değiştirilmişti. Bu bayrak (`tools/mesh-simulator/src/run-transfer.ts` ~198) yalnızca rapor `outcome='FAILED'` atar; **Receiver `verifyDigest` yolunu sınamaz** — denetçi haklı olarak “sahte yeşil” saydı.
+
+**Geri getirilen test:** `tests/chaos/mandatory-digest-chaos.test.ts` — main’deki CRC-yeniden-hesaplanmış bozuk son chunk saldırısı (payload `ORIGINAL_DATA_CHAOS_LAB`).
+
+**Flaky kök neden ve düzeltme (test gücü korunarak):**
+
+1. `channel.setBlockDataToReceiver(true)` + `channel.clearQueue()` — sender’ın geçerli DATA chunk’larının receiver’ı erken `COMPLETED` yapması engellendi.  
+2. Integration testi ile aynı saat ilerletme: son `advanceAsync(100)` sonrası **ekstra `deliverPackets()` yok** (ikinci deliver kuyruktaki sender paketini sızdırıyordu).  
+3. `@sosmesh/ble-protocol` **dist** eski/uyumsuz kaldığında chaos paketi yanlış `Receiver` davranışı görüyordu; `pnpm -r build` sonrası test deterministik.
+
+**20 ardışık koşu:** `docs/handover/evidence/gate-h/digest-chaos-20runs.txt` → **20/20 PASS**.
+
+### TTL `reliableChannel` + mutation sentinel
+
+`tools/mesh-simulator/src/relay-mesh.ts` — `reliableChannel` TTL testlerinde paket kaybını sıfırlar (kabul edildi).
+
+`reports/mutation-sentinel-ttl.log`: `mutation-sentinel.test.ts` **3/3 PASS**; `skipTtlDecrement: true` ile outcome **FAILED** (≠ DROPPED) — mutasyon sentinel yakalamayı sürdürür. `docs/handover/evidence/gate-h/mesh-sim-mutation.txt`: harness **2/2** guard kırılımı.
 
 ---
 
@@ -13,11 +40,11 @@ Bu rapor, ertelenmiş ağır testlerin bu cloud agent ortamında **gerçekten ko
 
 | Kapı | Komut / artefakt | Sonuç | Kanıt |
 |------|------------------|-------|--------|
-| Build | `pnpm -r build` | PASS | `reports/build.log`, verify adım 2 |
-| Unit/integration | `pnpm test` | PASS | `reports/pnpm-test-full.log` |
-| Web E2E + ekran görüntüsü | `pnpm test:a11y:web` | **22/22 PASS** | `reports/playwright-web-gate-h.log`, `reports/operator-*-{390,768,1440}.png` |
-| Kalite | `bash scripts/verify.sh` | **24/24 PASS** | `reports/verify-gate-h-summary.log` (bitiş 2026-11-01T17:20:57Z) |
-| Kotlin sözleşme | `packages/contracts-kotlin ./gradlew test` | **NOT_RUN (JDK 17 toolchain yok)** | `reports/contracts-kotlin-test.log` — CI Android/Kotlin job doğrular |
+| Build | `pnpm -r build` | PASS | verify çıktısı: `docs/handover/evidence/gate-h/verify-gate-h-summary.txt` |
+| Unit/integration | `pnpm test` | PASS | `docs/handover/evidence/gate-h/pnpm-test-full.txt` |
+| Web E2E + ekran görüntüsü | `pnpm test:a11y:web` | **22/22 PASS** | `docs/handover/evidence/gate-h/playwright-web-gate-h.txt`, `reports/operator-*-{390,768,1440}.png` |
+| Kalite | `bash scripts/verify.sh` | **24/24 PASS** | `docs/handover/evidence/gate-h/verify-gate-h-summary.txt` |
+| Kotlin sözleşme | `packages/contracts-kotlin ./gradlew test` | **PASS** (OpenJDK 17) | `docs/handover/evidence/gate-h/contracts-kotlin-test.txt` |
 | Android Gradle | `assembleDebug` | **NOT_RUN (`ANDROID_HOME` yok)** | status.json ADIM 12–16 notları; CI doğrular |
 
 **CI run id:** PR açıldıktan sonra GitHub Actions koşusunun id’si PR checks üzerinden eklenmelidir (bu rapor commit/push ile birlikte güncellenir).
@@ -36,7 +63,8 @@ Bu rapor, ertelenmiş ağır testlerin bu cloud agent ortamında **gerçekten ko
 | 20 yarış ingest | `apps/api/test/ingest.spec.ts` | PASS |
 | 20 concurrent feed | `apps/api/test/operator-feed-transaction.spec.ts` | PASS |
 | API Jest toplam | `cd apps/api && pnpm test` | **91/91 PASS** |
-| Mutasyon (BLE) | `bash scripts/mesh-sim-mutation.sh` | PASS — digest ve TTL guard’ları kasıtlı kırıldı; hedef chaos testleri fail, kaynak geri yüklendi (`reports/mesh-sim-mutation.log`) |
+| Mutasyon (BLE) | `bash scripts/mesh-sim-mutation.sh` | PASS | `docs/handover/evidence/gate-h/mesh-sim-mutation.txt` |
+| Mandatory digest chaos | `tests/chaos/mandatory-digest-chaos.test.ts` | PASS (20/20) | `docs/handover/evidence/gate-h/digest-chaos-20runs.txt` |
 | Mutasyon (Nest Stryker) | — | **YAPILMADI** — repoda Stryker yok; ADIM 17 PARTIAL gerekçesi |
 
 **Hâlâ NOT_TESTED:** `docker compose up` (daemon yok).
@@ -46,7 +74,7 @@ Bu rapor, ertelenmiş ağır testlerin bu cloud agent ortamında **gerçekten ko
 | Test | Sonuç |
 |------|--------|
 | `scripts/mesh-sim-mutation.sh` | PASS (2/2) |
-| `tests/chaos/mutation-sentinel.test.ts` | PASS (TTL `reliableChannel` düzeltmesi ile deterministik) |
+| `tests/chaos/mutation-sentinel.test.ts` | PASS | `docs/handover/evidence/gate-h/mutation-sentinel-ttl.txt` |
 
 ### ADIM 21–22 — Playwright 390 / 768 ekran görüntüleri
 

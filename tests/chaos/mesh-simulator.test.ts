@@ -143,24 +143,3 @@ describe('chaos_mesh_simulator_negative_corrupt_packet', () => {
     expect(result.report.environment).toBe('simulated');
   });
 });
-
-describe('chaos_mesh_simulator_mandatory_digest_reject', () => {
-  it('chaos_mandatory_digest_invalid_never_completed', async () => {
-    const result = await runSimulatedTransfer({
-      seed: 9999,
-      scenario: 'mandatory-digest-chaos',
-      channel: {
-        packetLoss: 0,
-        duplicateRate: 0,
-        reorderRate: 0,
-        minLatency: 2,
-        maxLatency: 4,
-        partialWriteRate: 0,
-      },
-      injectCorruptLastChunk: true,
-    });
-    expect(result.report.outcome).not.toBe('COMPLETED');
-    expect(result.received).toBeNull();
-    expect(result.report.environment).toBe('simulated');
-  });
-});

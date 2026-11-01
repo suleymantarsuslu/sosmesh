@@ -1,0 +1,10 @@
+
+ RUN  v1.6.1 /workspace/tests/chaos
+
+ ✓ mutation-sentinel.test.ts  (3 tests) 33ms
+
+ Test Files  1 passed (1)
+      Tests  3 passed (3)
+   Start at  17:36:58
+   Duration  300ms (transform 31ms, setup 0ms, collect 97ms, tests 33ms, environment 0ms, prepare 47ms)
+

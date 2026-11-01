@@ -963,7 +963,7 @@
       "pass_criteria": "Kullanıcı yanlış teslim algısına düşmeden iki dakikadan kısa temel akışı tamamlar.",
       "status": "PARTIAL",
       "attempts": 2,
-      "commit": "61a0d7c",
+      "commit": "ff07ca5",
       "evidence": [
         "HomeRoute: express SOS (ExpressSosSaver) + rehberli sihirbaz (OutlinedButton); PlatformSelfRepairCard; RelayEducationCard",
         "SosFlowScreen: konum tazelik rozeti (LocationFreshness); birincil/ikincil CTA ayrımı (continue pill, express ana ekranda)",
@@ -1002,7 +1002,7 @@
       "pass_criteria": "Desteklenen senaryolar belgeli; yanlış sürekli arka plan garantisi yok.",
       "status": "PARTIAL",
       "attempts": 2,
-      "commit": "61a0d7c",
+      "commit": "ff07ca5",
       "evidence": [
         "apps/android/core/platform: MeshPlatformStateMachine + EnergyRadioProfile (SOS_URGENT vs CONSTRAINED vs relay)",
         "MeshPlatformSignalBridge: ağ/BT/izin/pil/güç tasarrufu/doze sinyalleri",

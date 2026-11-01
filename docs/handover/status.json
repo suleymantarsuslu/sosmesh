@@ -1298,7 +1298,7 @@
       "pass_criteria": "Saatten SOS iPhone outbox’a girer; saat sadece doğrulanmış alım teyidi gösterir.",
       "status": "PARTIAL",
       "attempts": 1,
-      "commit": null,
+      "commit": "414b53a",
       "evidence": [
         "apps/watchos/SOSMeshWatch SwiftUI iki adımlı SOS + WatchSessionBridge (WCSession)",
         "apps/ios/SOSMesh/Companion PhoneWatchSessionManager + PhoneWatchSosIngress → outbox origin=watch_os",

@@ -1113,12 +1113,21 @@
       ],
       "deliverables": "apps/wearos, wear screenshots, phone companion module",
       "pass_criteria": "Saatten basılan SOS Android outbox’ta tek kez görülür.",
-      "status": "NOT_STARTED",
-      "attempts": 0,
+      "status": "PARTIAL",
+      "attempts": 1,
       "commit": null,
-      "evidence": [],
-      "blockers": [],
-      "last_checked_at": null,
+      "evidence": [
+        "apps/android/wear Wear Compose iki adımlı SOS (bas-bırak + onay diyaloğu)",
+        "apps/android/core/wear-companion Data Layer yolları /sosmesh/v1/sos/create + phone_ack",
+        "PhoneWearSosIngress + WearCompanionListenerService → Room outbox origin=wear_os",
+        "apps/wearos/README.md → :wear modülü",
+        "JVM: PhoneWearSosIngressIdempotencyTest, WearOfflineQueueTest (idempotency)",
+        "Wear emulator / gerçek saat: NOT_TESTED (B-04)"
+      ],
+      "blockers": [
+        "B-04"
+      ],
+      "last_checked_at": "2026-11-01T17:45:00Z",
       "goal": "Android saatten güvenli ve okunabilir bir SOS başlatma deneyimi oluştur.",
       "cursor_tasks": [
         "Kotlin Wear Compose, round/rect layouts, haptic confirmation, 2-stage accidental tap protection.",

@@ -68,6 +68,7 @@ dependencies {
     implementation(project(":feature-relay"))
     implementation(project(":feature-sos"))
     implementation(project(":feature-status"))
+    implementation(project(":core:wear-companion"))
 
     implementation("androidx.core:core-ktx:1.12.0")
     implementation("androidx.lifecycle:lifecycle-runtime-ktx:2.7.0")

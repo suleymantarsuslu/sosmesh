@@ -45,11 +45,20 @@ data class MeshRelayEngineOutcome(
 
 data class MeshRelayEngineConfig(
     val lruCapacity: Int,
+)
+
+internal data class MeshRelayEngineRuntimeConfig(
+    val lruCapacity: Int,
     val skipTtlDecrement: Boolean = false,
     val skipDedupCheck: Boolean = false,
     val skipLoopGuard: Boolean = false,
     val skipMaxHopsCheck: Boolean = false,
-)
+) {
+    companion object {
+        fun fromPublic(config: MeshRelayEngineConfig): MeshRelayEngineRuntimeConfig =
+            MeshRelayEngineRuntimeConfig(lruCapacity = config.lruCapacity)
+    }
+}
 
 private val DEVICE_HASH = Regex("^[a-f0-9]{64}$")
 
@@ -85,10 +94,17 @@ class MeshRelayDedupStore(
     }
 }
 
-class MeshRelayEngine(
-    private val config: MeshRelayEngineConfig,
+class MeshRelayEngine private constructor(
+    private val config: MeshRelayEngineRuntimeConfig,
 ) {
     private val dedup = MeshRelayDedupStore(config.lruCapacity)
+
+    constructor(publicConfig: MeshRelayEngineConfig) : this(MeshRelayEngineRuntimeConfig.fromPublic(publicConfig))
+
+    internal companion object {
+        fun fromTestingRuntime(runtime: MeshRelayEngineRuntimeConfig): MeshRelayEngine =
+            MeshRelayEngine(runtime)
+    }
 
     fun seedDedupKey(key: String) {
         dedup.remember(key)

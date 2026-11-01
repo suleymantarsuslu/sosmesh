@@ -35,14 +35,35 @@ export interface MeshRelayEngineOutcome {
 
 export interface MeshRelayEngineConfig {
   lruCapacity: number;
-  /** When true, skip TTL decrement (mutation testing only). */
-  skipTtlDecrement?: boolean;
-  /** When true, skip dedup drop (mutation testing only). */
-  skipDedupCheck?: boolean;
-  /** When true, skip loop detection (mutation testing only). */
-  skipLoopGuard?: boolean;
-  /** When true, skip max-hop drop (mutation testing only). */
-  skipMaxHopsCheck?: boolean;
+}
+
+/** @internal Runtime flags; production ctor always disables mutation skips. */
+export interface MeshRelayEngineInternalRuntime {
+  lruCapacity: number;
+  skipTtlDecrement: boolean;
+  skipDedupCheck: boolean;
+  skipLoopGuard: boolean;
+  skipMaxHopsCheck: boolean;
+}
+
+function productionRuntime(config: MeshRelayEngineConfig): MeshRelayEngineInternalRuntime {
+  return {
+    lruCapacity: config.lruCapacity,
+    skipTtlDecrement: false,
+    skipDedupCheck: false,
+    skipLoopGuard: false,
+    skipMaxHopsCheck: false,
+  };
+}
+
+/** @internal Used by mesh-relay-engine.testing.ts only. */
+export function meshRelayEngineFromInternalRuntime(
+  runtime: MeshRelayEngineInternalRuntime
+): MeshRelayEngine {
+  const engine = Object.create(MeshRelayEngine.prototype) as MeshRelayEngine;
+  Object.defineProperty(engine, 'config', { value: runtime });
+  Object.defineProperty(engine, 'dedup', { value: new MeshRelayDedupStore(runtime.lruCapacity) });
+  return engine;
 }
 
 const DEVICE_HASH = /^[a-f0-9]{64}$/;
@@ -107,10 +128,15 @@ function validateEnvelope(envelope: MeshRelayEnvelopeV2): boolean {
   return envelope.opaqueCiphertextBase64.length >= 4;
 }
 
+const MESH_RELAY_ENGINE_TESTING_BRAND = Symbol('meshRelayEngineTesting');
+void MESH_RELAY_ENGINE_TESTING_BRAND;
+
 export class MeshRelayEngine {
+  private readonly config: MeshRelayEngineInternalRuntime;
   private readonly dedup: MeshRelayDedupStore;
 
-  constructor(private readonly config: MeshRelayEngineConfig) {
+  constructor(config: MeshRelayEngineConfig) {
+    this.config = productionRuntime(config);
     this.dedup = new MeshRelayDedupStore(config.lruCapacity);
   }
 

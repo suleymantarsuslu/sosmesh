@@ -3,6 +3,7 @@ import * as path from 'path';
 
 import { describe, expect, it } from 'vitest';
 
+import { createMeshRelayEngineForTesting } from './mesh-relay-engine.testing';
 import {
   MeshRelayEngine,
   type MeshRelayEnvelopeV2,
@@ -98,6 +99,51 @@ describe('protocol_v2_relay_log_snapshot_opaque', () => {
   });
 });
 
+describe('protocol_v2_production_relay_guards', () => {
+  const relayHash = 'aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa';
+
+  const baseEnvelope = (): MeshRelayEnvelopeV2 => ({
+    protocolVersion: 2,
+    messageId: 'prod-guard',
+    hopCount: 0,
+    maxHops: 5,
+    ttlHops: 2,
+    copyCount: 1,
+    maxCopyCount: 3,
+    originCreatedAt: '2026-11-01T12:00:00Z',
+    opaqueCiphertextBase64: 'dGVzdA==',
+    hopChainReceipt: { relayDeviceIdHashes: [] },
+  });
+
+  it('public_mesh_relay_engine_enforces_ttl_dedup_loop_and_max_hops', () => {
+    const engine = new MeshRelayEngine({ lruCapacity: 16 });
+
+    const ttlZero = { ...baseEnvelope(), messageId: 'ttl0', ttlHops: 0 };
+    expect(engine.evaluateForward(ttlZero, relayHash).dropReason).toBe('TTL_EXCEEDED');
+
+    const dupEnvelope = { ...baseEnvelope(), messageId: 'dup' };
+    const dupKey = buildDedupKey(dupEnvelope);
+    engine.seedDedupKey(dupKey);
+    expect(engine.evaluateForward(dupEnvelope, relayHash).dropReason).toBe('DUPLICATE');
+
+    const loopEnvelope = {
+      ...baseEnvelope(),
+      messageId: 'loop',
+      hopCount: 1,
+      hopChainReceipt: { relayDeviceIdHashes: [relayHash] },
+    };
+    expect(engine.evaluateForward(loopEnvelope, relayHash).dropReason).toBe('LOOP_DETECTED');
+
+    const maxHopsEnvelope = {
+      ...baseEnvelope(),
+      messageId: 'maxhop',
+      hopCount: 5,
+      maxHops: 5,
+    };
+    expect(engine.evaluateForward(maxHopsEnvelope, relayHash).dropReason).toBe('MAX_HOPS');
+  });
+});
+
 describe('protocol_v2_mutation_ttl_decrement', () => {
   it('skip_ttl_decrement_changes_drop_vs_baseline', () => {
     const envelope: MeshRelayEnvelopeV2 = {
@@ -117,7 +163,7 @@ describe('protocol_v2_mutation_ttl_decrement', () => {
     expect(baseline.decision).toBe('DROP');
     expect(baseline.dropReason).toBe('TTL_EXCEEDED');
 
-    const mutated = new MeshRelayEngine({ lruCapacity: 8, skipTtlDecrement: true }).evaluateForward(
+    const mutated = createMeshRelayEngineForTesting({ lruCapacity: 8, skipTtlDecrement: true }).evaluateForward(
       envelope,
       relayHash
     );
@@ -146,7 +192,7 @@ describe('protocol_v2_mutation_dedup_loop_and_hops', () => {
     baseline.seedDedupKey(key);
     expect(baseline.evaluateForward(envelope, relayHash).dropReason).toBe('DUPLICATE');
 
-    const mutated = new MeshRelayEngine({ lruCapacity: 8, skipDedupCheck: true });
+    const mutated = createMeshRelayEngineForTesting({ lruCapacity: 8, skipDedupCheck: true });
     mutated.seedDedupKey(key);
     expect(mutated.evaluateForward(envelope, relayHash).decision).toBe('FORWARD');
   });
@@ -167,7 +213,7 @@ describe('protocol_v2_mutation_dedup_loop_and_hops', () => {
     const baseline = new MeshRelayEngine({ lruCapacity: 8 }).evaluateForward(envelope, relayHash);
     expect(baseline.dropReason).toBe('LOOP_DETECTED');
 
-    const mutated = new MeshRelayEngine({ lruCapacity: 8, skipLoopGuard: true }).evaluateForward(
+    const mutated = createMeshRelayEngineForTesting({ lruCapacity: 8, skipLoopGuard: true }).evaluateForward(
       envelope,
       relayHash
     );
@@ -190,7 +236,7 @@ describe('protocol_v2_mutation_dedup_loop_and_hops', () => {
     const baseline = new MeshRelayEngine({ lruCapacity: 8 }).evaluateForward(envelope, relayHash);
     expect(baseline.dropReason).toBe('MAX_HOPS');
 
-    const mutated = new MeshRelayEngine({ lruCapacity: 8, skipMaxHopsCheck: true }).evaluateForward(
+    const mutated = createMeshRelayEngineForTesting({ lruCapacity: 8, skipMaxHopsCheck: true }).evaluateForward(
       envelope,
       relayHash
     );

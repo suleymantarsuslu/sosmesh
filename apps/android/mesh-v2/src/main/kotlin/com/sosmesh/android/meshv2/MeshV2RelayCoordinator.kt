@@ -2,8 +2,7 @@ package com.sosmesh.android.meshv2
 
 import com.sosmesh.contracts.meshv2.MeshRelayDecision
 import com.sosmesh.contracts.meshv2.MeshRelayDropReason
-import com.sosmesh.contracts.meshv2.MeshRelayEngine
-import com.sosmesh.contracts.meshv2.MeshRelayEngineConfig
+import com.sosmesh.contracts.meshv2.MeshRelayEngineFactory
 import com.sosmesh.contracts.meshv2.MeshRelayEnvelopeV2
 import com.sosmesh.contracts.meshv2.relayLogSnapshot
 import kotlinx.serialization.json.Json
@@ -33,7 +32,7 @@ class MeshV2RelayCoordinator
         private val forwardQueue: MeshForwardQueue,
         private val routeSelector: MeshRouteSelector,
     ) {
-        private val engine = MeshRelayEngine(MeshRelayEngineConfig(lruCapacity = 512))
+        private val engine = MeshRelayEngineFactory.createRelayEngine(lruCapacity = 512)
 
         private val json = Json { ignoreUnknownKeys = true }
 

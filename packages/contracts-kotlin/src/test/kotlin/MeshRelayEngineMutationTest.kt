@@ -21,13 +21,14 @@ class MeshRelayEngineMutationTest {
                 opaqueCiphertextBase64 = "dGVzdA==",
                 hopChainReceipt = HopChainReceiptV2(),
             )
-        val baseline = MeshRelayEngine(MeshRelayEngineConfig(lruCapacity = 8)).evaluateForward(envelope, relayHash)
+        val baseline = MeshRelayEngineFactory.createRelayEngine(lruCapacity = 8).evaluateForward(envelope, relayHash)
         assertEquals(MeshRelayDecision.DROP, baseline.decision)
         assertEquals(MeshRelayDropReason.TTL_EXCEEDED, baseline.dropReason)
 
         val mutated =
-            MeshRelayEngine(MeshRelayEngineConfig(lruCapacity = 8, skipTtlDecrement = true))
-                .evaluateForward(envelope, relayHash)
+            MeshRelayEngineTesting.create(
+                MeshRelayEngineTestingConfig(lruCapacity = 8, skipTtlDecrement = true),
+            ).evaluateForward(envelope, relayHash)
         assertEquals(MeshRelayDecision.FORWARD, mutated.decision)
     }
 
@@ -47,14 +48,17 @@ class MeshRelayEngineMutationTest {
                 hopChainReceipt = HopChainReceiptV2(),
             )
         val key = buildDedupKey(envelope)
-        val baselineEngine = MeshRelayEngine(MeshRelayEngineConfig(lruCapacity = 8))
+        val baselineEngine = MeshRelayEngineFactory.createRelayEngine(lruCapacity = 8)
         baselineEngine.seedDedupKey(key)
         assertEquals(
             MeshRelayDropReason.DUPLICATE,
             baselineEngine.evaluateForward(envelope, relayHash).dropReason,
         )
 
-        val mutatedEngine = MeshRelayEngine(MeshRelayEngineConfig(lruCapacity = 8, skipDedupCheck = true))
+        val mutatedEngine =
+            MeshRelayEngineTesting.create(
+                MeshRelayEngineTestingConfig(lruCapacity = 8, skipDedupCheck = true),
+            )
         mutatedEngine.seedDedupKey(key)
         assertEquals(MeshRelayDecision.FORWARD, mutatedEngine.evaluateForward(envelope, relayHash).decision)
     }
@@ -74,12 +78,13 @@ class MeshRelayEngineMutationTest {
                 opaqueCiphertextBase64 = "dGVzdA==",
                 hopChainReceipt = HopChainReceiptV2(relayDeviceIdHashes = listOf(relayHash)),
             )
-        val baseline = MeshRelayEngine(MeshRelayEngineConfig(lruCapacity = 8)).evaluateForward(envelope, relayHash)
+        val baseline = MeshRelayEngineFactory.createRelayEngine(lruCapacity = 8).evaluateForward(envelope, relayHash)
         assertEquals(MeshRelayDropReason.LOOP_DETECTED, baseline.dropReason)
 
         val mutated =
-            MeshRelayEngine(MeshRelayEngineConfig(lruCapacity = 8, skipLoopGuard = true))
-                .evaluateForward(envelope, relayHash)
+            MeshRelayEngineTesting.create(
+                MeshRelayEngineTestingConfig(lruCapacity = 8, skipLoopGuard = true),
+            ).evaluateForward(envelope, relayHash)
         assertEquals(MeshRelayDecision.FORWARD, mutated.decision)
     }
 
@@ -98,12 +103,13 @@ class MeshRelayEngineMutationTest {
                 opaqueCiphertextBase64 = "dGVzdA==",
                 hopChainReceipt = HopChainReceiptV2(),
             )
-        val baseline = MeshRelayEngine(MeshRelayEngineConfig(lruCapacity = 8)).evaluateForward(envelope, relayHash)
+        val baseline = MeshRelayEngineFactory.createRelayEngine(lruCapacity = 8).evaluateForward(envelope, relayHash)
         assertEquals(MeshRelayDropReason.MAX_HOPS, baseline.dropReason)
 
         val mutated =
-            MeshRelayEngine(MeshRelayEngineConfig(lruCapacity = 8, skipMaxHopsCheck = true))
-                .evaluateForward(envelope, relayHash)
+            MeshRelayEngineTesting.create(
+                MeshRelayEngineTestingConfig(lruCapacity = 8, skipMaxHopsCheck = true),
+            ).evaluateForward(envelope, relayHash)
         assertEquals(MeshRelayDecision.FORWARD, mutated.decision)
     }
 

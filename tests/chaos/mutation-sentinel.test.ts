@@ -1,4 +1,6 @@
 
+import { MeshRelayEngine, type MeshRelayEnvelopeV2 } from '@sosmesh/contracts';
+import { createMeshRelayEngineForTesting } from '@sosmesh/contracts/dist/protocol-v2/mesh-relay-engine.testing';
 import { calculateDigest, verifyDigest } from '@sosmesh/ble-protocol';
 import { runSimulatedTransfer, runTtlExceededScenario } from '@sosmesh/mesh-simulator';
 import { describe, expect, it } from 'vitest';
@@ -19,13 +21,27 @@ describe('chaos_mutation_sentinel_digest_and_ttl', () => {
     const baseline = await runTtlExceededScenario(501);
     expect(baseline.report.outcome).toBe('DROPPED');
 
-    const { runMultiHopRelay } = await import('@sosmesh/mesh-simulator');
-    const skipDecrement = await runMultiHopRelay({
-      seed: 501,
-      initialTtl: 0,
+    const relayHash = 'aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa';
+    const envelope: MeshRelayEnvelopeV2 = {
+      protocolVersion: 2,
+      messageId: 'chaos-mut-ttl',
+      hopCount: 0,
+      maxHops: 5,
+      ttlHops: 0,
+      copyCount: 1,
+      maxCopyCount: 3,
+      originCreatedAt: '2026-11-01T12:00:00Z',
+      opaqueCiphertextBase64: 'dGVzdA==',
+      hopChainReceipt: { relayDeviceIdHashes: [] },
+    };
+    const production = new MeshRelayEngine({ lruCapacity: 256 }).evaluateForward(envelope, relayHash);
+    expect(production.dropReason).toBe('TTL_EXCEEDED');
+
+    const mutated = createMeshRelayEngineForTesting({
+      lruCapacity: 256,
       skipTtlDecrement: true,
-    });
-    expect(skipDecrement.report.outcome).not.toBe('DROPPED');
+    }).evaluateForward(envelope, relayHash);
+    expect(mutated.decision).toBe('FORWARD');
   });
 });
 

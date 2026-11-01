@@ -101,8 +101,6 @@ export interface MultiHopOptions {
   seed: number;
   initialTtl: number;
   fixture?: LabFixtureCase;
-  /** When true, skip TTL decrement (mutation testing hook). */
-  skipTtlDecrement?: boolean;
 }
 
 const PLAINText_MARKERS = ['مرحبا', 'İstanbul', '🚨', 'ÇŞĞÜÖİ', 'SENTETIK_YARDIM'];
@@ -187,7 +185,6 @@ export async function runMultiHopRelay(options: MultiHopOptions): Promise<MultiH
 
   const relayEngine = new MeshRelayEngine({
     lruCapacity: 256,
-    skipTtlDecrement: options.skipTtlDecrement,
   });
   const forwardOutcome = relayEngine.evaluateForward(wrappedAtB, RELAY_B_HASH);
   if (forwardOutcome.decision !== 'FORWARD' || !forwardOutcome.forward) {

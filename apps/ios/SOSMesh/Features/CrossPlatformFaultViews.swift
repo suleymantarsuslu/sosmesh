@@ -1,4 +1,5 @@
 import SwiftUI
+import SOSMeshCore
 
 struct CrossPlatformFaultBanner: View {
     let hint: CrossPlatformUserHint

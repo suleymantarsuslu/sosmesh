@@ -33,6 +33,7 @@ class MeshPlatformSignalBridge
         private val bluetoothEnabled: () -> Boolean,
     ) {
         private val machine = MeshPlatformStateMachine()
+
         @Volatile private var lastTransferCorrupt: Boolean = false
         @Volatile private var lastApiUploadFailed: Boolean = false
 

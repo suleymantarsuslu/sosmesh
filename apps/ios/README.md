@@ -1,33 +1,31 @@
-# SOSMesh iOS/watchOS App
+# SOSMesh iOS / watchOS
 
-**Status:** Skeleton - Implementation pending
+**Status:** ADIM 31–33 — SwiftUI iskelet, CoreBLE, SOSMeshCore paketi
 
 ## Overview
 
-Native iOS and watchOS application for SOSMesh emergency mesh network.
+Native iOS client for the SOSMesh emergency mesh network.
 
-**Tech Stack:**
-- Swift
-- SwiftUI (UI)
-- Core Data / SwiftData (local database)
-- Core Bluetooth (BLE)
-- Async/Await concurrency
+**Tech stack:** Swift, SwiftUI, Core Bluetooth, local package `SOSMeshCore`, shared `packages/contracts-swift`.
 
-**Target:**
-- iOS 17.0+
-- watchOS 10.0+
+**Target:** iOS 17.0+ (watchOS later)
 
 ## Setup
 
-1. Install CocoaPods: `sudo gem install cocoapods`
-2. Install dependencies: `pod install`
-3. Open `SOSMesh.xcworkspace` in Xcode
-4. Build and run
+See [docs/ios/setup.md](../../docs/ios/setup.md).
 
-## Build
+```bash
+cd apps/ios
+pod install
+open SOSMesh.xcworkspace
+```
 
-- Xcode: Cmd+B
-- Command line: `xcodebuild -workspace SOSMesh.xcworkspace -scheme SOSMesh-iOS build`
+## Linux core tests
+
+```bash
+export SOURCE_ROOT="$(git rev-parse --show-toplevel)"
+cd apps/ios/SOSMeshCore && swift test
+```
 
 ## Lint
 
@@ -37,8 +35,8 @@ swiftlint lint --strict
 
 ## Architecture
 
-_(To be documented in implementation phase)_
+- `SOSMesh/` — SwiftUI shell (SOS, Status, Relay, Settings)
+- `SOSMeshCore/` — Testable core (outbox, envelope, BLE role/restoration state machines)
+- `CoreBLE/` — CBCentralManager / CBPeripheralManager adapters
 
----
-
-**Implementation:** ADIM 06 (Native Mobile)
+Physical BLE and background behavior: **NOT_TESTED** on this repo snapshot; see `docs/compat/ios-background-matrix.csv`.

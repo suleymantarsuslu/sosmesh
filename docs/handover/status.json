@@ -1038,12 +1038,20 @@
       ],
       "deliverables": "apps/ios/SOSMesh.xcodeproj; Swift packages; docs/ios/setup.md",
       "pass_criteria": "iOS uygulaması derlenir; offline SOS kuyrukta kalıcıdır.",
-      "status": "NOT_STARTED",
-      "attempts": 0,
-      "commit": null,
-      "evidence": [],
-      "blockers": [],
-      "last_checked_at": null,
+      "status": "PARTIAL",
+      "attempts": 1,
+      "commit": "f88d87b",
+      "evidence": [
+        "apps/ios/SOSMesh.xcodeproj + SwiftUI tab iskelet (SOS/Status/Relay/Settings)",
+        "apps/ios/SOSMeshCore DiskOutboxQueue reopen test (Linux swift test when toolchain OK)",
+        "docs/ios/setup.md",
+        "Fiziksel imzalama/simulator UI NOT_TESTED"
+      ],
+      "blockers": [
+        "Fiziksel iPhone/Mac imzalama (B-13)",
+        "Simulator erişimi cloud agent'ta yok"
+      ],
+      "last_checked_at": "2026-11-01T17:45:00+00:00",
       "goal": "iPhone için Apple HIG uyumlu native ve erişilebilir istemci kur.",
       "cursor_tasks": [
         "SwiftUI navigation/tab, persistence, keychain, async/await networking, localization.",
@@ -1065,12 +1073,18 @@
       ],
       "deliverables": "apps/ios/CoreBLE; docs/tests/cross-platform-ble.md",
       "pass_criteria": "Foregound iPhone ↔ Android SOS aktarımları kayıpsız; arka plan ayrı matris.",
-      "status": "NOT_STARTED",
-      "attempts": 0,
-      "commit": null,
-      "evidence": [],
-      "blockers": [],
-      "last_checked_at": null,
+      "status": "PARTIAL",
+      "attempts": 1,
+      "commit": "f88d87b",
+      "evidence": [
+        "apps/ios/CoreBLE central/peripheral + GATT UUID parity",
+        "docs/tests/cross-platform-ble.md",
+        "iPhone↔Android 20 test NOT_TESTED"
+      ],
+      "blockers": [
+        "Fiziksel BLE lab (ADIM 34)"
+      ],
+      "last_checked_at": "2026-11-01T17:45:00+00:00",
       "goal": "iPhone ile Android arasında protokol uyumlu BLE bağlantı kur.",
       "cursor_tasks": [
         "CBCentralManager, CBPeripheralManager, GATT service/characteristic matching ve state handling.",
@@ -1091,12 +1105,19 @@
       ],
       "deliverables": "docs/compat/ios-background-matrix.csv; core lifecycle tests",
       "pass_criteria": "Destek vaatleri yalnızca doğrulanmış OS/sürüm/cihaz kombinasyonlarıyla sınırlı.",
-      "status": "NOT_STARTED",
-      "attempts": 0,
-      "commit": null,
-      "evidence": [],
-      "blockers": [],
-      "last_checked_at": null,
+      "status": "PARTIAL",
+      "attempts": 1,
+      "commit": "f88d87b",
+      "evidence": [
+        "BleRestorationStateMachine unit tests (force-quit terminal)",
+        "docs/compat/ios-background-matrix.csv (NOT_TESTED rows)",
+        "UIBackgroundModes bluetooth-central/peripheral in Info.plist",
+        "Fiziksel video/trace NOT_TESTED"
+      ],
+      "blockers": [
+        "Apple background/force-quit cihaz kanıtı yok — garanti verilmez"
+      ],
+      "last_checked_at": "2026-11-01T17:45:00+00:00",
       "goal": "Apple’ın sınırlarını şeffaf biçimde ölç ve kullanıcıyı doğru yönlendir.",
       "cursor_tasks": [
         "Core Bluetooth state restoration + etkinlik koşulları Apple güncel docs’a göre uygula.",

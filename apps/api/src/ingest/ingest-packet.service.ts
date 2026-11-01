@@ -65,14 +65,6 @@ export class IngestPacketService {
       );
     }
 
-    const schemaResult = validateSosMessage(sosMessage);
-    if (!schemaResult.valid) {
-      throw new HttpException(
-        { code: 'INVALID_SOS_SCHEMA', message: 'SOS message failed schema validation' },
-        HttpStatus.BAD_REQUEST
-      );
-    }
-
     const envelope = sosMessage.envelope as Record<string, unknown> | undefined;
     if (envelope && typeof envelope === 'object') {
       const forbiddenKey = findForbiddenEnvelopeFieldKey(envelope);
@@ -85,6 +77,14 @@ export class IngestPacketService {
           HttpStatus.BAD_REQUEST
         );
       }
+    }
+
+    const schemaResult = validateSosMessage(sosMessage);
+    if (!schemaResult.valid) {
+      throw new HttpException(
+        { code: 'INVALID_SOS_SCHEMA', message: 'SOS message failed schema validation' },
+        HttpStatus.BAD_REQUEST
+      );
     }
 
     const messageId = sosMessage.id;

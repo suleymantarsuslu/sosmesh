@@ -157,9 +157,36 @@
       "nav": {
         "dashboard": "Panel",
         "cases": "Harita / Vakalar",
+        "teams": "Ekipler",
+        "tasks": "Görevler",
+        "activity": "İşlem geçmişi",
         "admin": "Yönetim"
       },
       "orgHeader": "Kuruluş"
+    },
+    "teams": {
+      "title": "Ekipler ve kaynaklar",
+      "zone": "Bölge",
+      "resources": "Kaynak",
+      "openTasks": "Açık görev",
+      "availability": "Uygunluk",
+      "available": "Uygun",
+      "unavailable": "Uygun değil"
+    },
+    "tasks": {
+      "title": "Görev yönetimi",
+      "status": "Durum",
+      "assignee": "Sorumlu",
+      "source": "Kaynak",
+      "aiDraft": "AI taslağı",
+      "manual": "Manuel",
+      "mapHint": "Konum paylaşımı süre sınırlıdır; harita rengi tek başına durum göstermez."
+    },
+    "activity": {
+      "title": "Bildirimler ve işlem geçmişi",
+      "notifications": "Bildirimler",
+      "timeline": "Zaman çizelgesi",
+      "unread": "Okunmamış"
     }
   },
   "watch": {

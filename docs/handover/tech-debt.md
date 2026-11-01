@@ -131,15 +131,15 @@ TD-<ADIM>-<ID>: Kısa açıklama
 
 ### TD-26-A3: Org geneli coordinator kapsamı (atama ekranı)
 
-**Durum:** OPEN  
+**Durum:** CLOSED  
 **Tanımlandığı ADIM:** 26  
-**Hedef Kapatma ADIM:** 27/28 (ekip/atama tasarım kararı)  
+**Hedef Kapatma ADIM:** 27  
 **Etki:** MEDIUM  
 **Detay:**  
-- Org genelinde tüm ekiplerin vakalarını gören COORDINATOR kapsamı bilinçli olarak uygulanmadı; şu an COORDINATOR da OPERATOR ile aynı team+org scope kullanır.
-- Atama/koordinasyon ekranı için org-geneli görünürlük ADIM 27/28 ürün kararına ertelendi.
+- ADIM 27 ile COORDINATOR rolü aynı `organizationId` içindeki tüm ekiplerin vakalarını, ekip listesini ve görevlerini görebilir; cross-org erişim yok.
+- OPERATOR hâlâ yalnızca kendi `teamId` kapsamında kalır (fail-closed).
 
-**Kanıt:** `apps/api/src/organization/tenant-scope.service.ts`; `apps/api/test/organization-isolation.spec.ts` (COORDINATOR JWT testleri)
+**Kanıt:** `apps/api/src/organization/tenant-scope.service.ts`; `apps/api/test/organization-isolation.spec.ts` (COORDINATOR org-geneli testleri)
 
 ---
 

@@ -652,3 +652,51 @@
     display: inline-flex;
   }
 }
+
+.tasks-view__list,
+.teams-view__resource-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: grid;
+  gap: var(--space-3, 0.75rem);
+}
+
+.tasks-view__hint {
+  color: var(--color-text-secondary);
+  font-size: var(--type-fontSize-sm, 0.875rem);
+}
+
+.teams-view__resource-list li {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2, 0.5rem);
+  align-items: center;
+}
+
+.teams-view__badge[data-available='true'] {
+  color: var(--color-status-success, #0a7);
+}
+
+.teams-view__badge[data-available='false'] {
+  color: var(--color-text-secondary);
+}
+
+.teams-view__zone-tag {
+  font-size: var(--type-fontSize-xs, 0.75rem);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm, 4px);
+  padding: 0 var(--space-1, 0.25rem);
+}
+
+.activity-view ul {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: grid;
+  gap: var(--space-2, 0.5rem);
+}
+
+.activity-view li[data-unread='true'] {
+  font-weight: 600;
+}

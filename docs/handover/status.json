@@ -197,7 +197,9 @@
         "PR #18: https://github.com/suleymantarsuslu/sosmesh/pull/18",
         "Cross-language CI job"
       ],
-      "blockers": ["docs/api/openapi.yaml not in repo"],
+      "blockers": [
+        "docs/api/openapi.yaml not in repo"
+      ],
       "last_checked_at": null,
       "goal": "Android, iOS, saat, web ve API için tek payload kaynağı oluştur.",
       "cursor_tasks": [
@@ -222,7 +224,10 @@
       "status": "PASS",
       "attempts": 2,
       "commit": "74f4b4c",
-      "evidence": ["CI run 41120079781", "Merged PR #21 D-08 resume to main 74f4b4c"],
+      "evidence": [
+        "CI run 41120079781",
+        "Merged PR #21 D-08 resume to main 74f4b4c"
+      ],
       "note": "D-08 RESUME_REQUEST merge 74f4b4c",
       "blockers": [],
       "last_checked_at": "2026-10-29T16:00:00Z",
@@ -284,7 +289,10 @@
       "status": "PASS",
       "attempts": 1,
       "commit": "e2c18af",
-      "evidence": ["CI run 41128740240", "PR #22"],
+      "evidence": [
+        "CI run 41128740240",
+        "PR #22"
+      ],
       "notes": "Room/Android Room ve iOS cihaz NOT_TESTED; TS/JVM/Swift SQLite CI PASS",
       "blockers": [],
       "last_checked_at": null,
@@ -313,7 +321,12 @@
       "status": "PASS",
       "attempts": 1,
       "commit": "2162113",
-      "evidence": ["PR #23", "CI run 41132795663", "verify 20/20", "100-transfer 36 success / 64 failed"],
+      "evidence": [
+        "PR #23",
+        "CI run 41132795663",
+        "verify 20/20",
+        "100-transfer 36 success / 64 failed"
+      ],
       "blockers": [],
       "last_checked_at": null,
       "goal": "Gerçek cihazdan önce protokolün hata toleransını tekrarlanabilir test et.",
@@ -901,12 +914,22 @@
       ],
       "deliverables": "api teams/assignments; web tasks/teams",
       "pass_criteria": "Her görev için açık sorumlu ve izlenebilir değişiklik geçmişi var.",
-      "status": "NOT_STARTED",
-      "attempts": 0,
-      "commit": null,
-      "evidence": [],
-      "blockers": [],
-      "last_checked_at": null,
+      "status": "PARTIAL",
+      "attempts": 1,
+      "commit": "70b2fe42c8768657da9e6059d34435785496a074",
+      "evidence": [
+        "Prisma migration 20261101193000_adim27_28 (resources, work_tasks, location_share_grants)",
+        "apps/api/src/coordination (teams/resources/tasks, optimistic version 409, audit_logs)",
+        "apps/api/test/work-tasks.spec.ts (RBAC, assignee org scope, resourceWhere fail-closed, lifecycle)",
+        "apps/web features/tasks + /operator/tasks,/teams (ScreenState, icon+label status)",
+        "reports/operator-tasks-1440.png (Playwright)",
+        "pnpm -r build EXIT=0; pnpm test EXIT=0; verify.sh 24/24 EXIT=0",
+        "ERTELENDI: mutation/geniş ekran görüntüleri PASS sayılmadı"
+      ],
+      "blockers": [
+        "Self-hosted CI yeşil olana kadar PASS değil (pnpm ENOTEMPTY — PR #41)"
+      ],
+      "last_checked_at": "2026-11-01T18:49:00+00:00",
       "goal": "Operatör önerisini onaylı operasyonel iş akışına dönüştür.",
       "cursor_tasks": [
         "Teams, resource types, capacity, zone, assignment statuses ve availability model.",
@@ -927,12 +950,21 @@
       ],
       "deliverables": "api notification worker, web activity center",
       "pass_criteria": "Aynı olaydan notification fırtınası yok; zaman çizelgesi doğru.",
-      "status": "NOT_STARTED",
-      "attempts": 0,
-      "commit": null,
-      "evidence": [],
-      "blockers": [],
-      "last_checked_at": null,
+      "status": "PARTIAL",
+      "attempts": 1,
+      "commit": "70b2fe42c8768657da9e6059d34435785496a074",
+      "evidence": [
+        "apps/api/src/notifications (dedupe upsert, quiet hours, preferences/subscriptions)",
+        "GET /v1/operator/notifications, /activity, /activity/export (role guard)",
+        "apps/api/test/notifications-adim28.spec.ts",
+        "apps/web /operator/activity (ActivityView)",
+        "pnpm test + verify.sh EXIT=0",
+        "Push/email gerçek sağlayıcı: in-app worker only (NOT_TESTED prod delivery)"
+      ],
+      "blockers": [
+        "Self-hosted CI yeşil olana kadar PASS değil (pnpm ENOTEMPTY — PR #41)"
+      ],
+      "last_checked_at": "2026-11-01T18:49:00+00:00",
       "goal": "Güvenilir kullanıcı bilgilendirmesi ile operasyonel gürültüyü dengede tut.",
       "cursor_tasks": [
         "Operator notification rules; urgency suggestions never silently escalate life-critical decisions.",

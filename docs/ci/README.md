@@ -6,7 +6,7 @@ Tüm Linux CI job’ları GitHub-hosted `ubuntu-latest` üzerinde koşar (privat
 
 ## Verify Quality Gates (`verify` job)
 
-- **Runner:** `ubuntu-latest`.
+- **Runner:** `ubuntu-latest` (Zulal modunda `zulal-verify` etiketli tek runner; verify işleri port çakışması nedeniyle sırayla kuyruğa girer).
 - **PostgreSQL:** Job `services: postgres` (geçici `postgres:16`; yalnızca CI test parolası). Self-hosted `/etc/sosmesh-ci/pg.env` kullanılmaz.
 - **Geri dönüş (Zulal):** `verify` job’unda `runs-on: ubuntu-latest` → `runs-on: [self-hosted, linux, ARM64, zulal]`; `services` / job `env` PostgreSQL bloklarını kaldırıp `Load CI PostgreSQL credentials` adımını geri ekleyin.
 

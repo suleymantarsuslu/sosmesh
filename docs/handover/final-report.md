@@ -2,7 +2,7 @@
 
 **Tarih (UTC):** 2026-11-01  
 **Dal:** `cursor/gate-h-closure-a47c`  
-**HEAD:** `ef9cfae` (Gate H kapanış commit)  
+**HEAD:** `5110279b666f79595c4af93a3ca02f9c3fd6d8cd` (Gate H kapanış)  
 **Kaynak:** `docs/handover/status.json`, `docs/handover/tech-debt.md`, master plan (`docs/handover/step-index.md`)
 
 Bu rapor, ertelenmiş ağır testlerin bu cloud agent ortamında **gerçekten koşturulması** sonucunu özetler. Kanıtsız PASS yoktur; fiziksel cihaz gerektiren ADIM 24 **NOT_TESTED** olarak kalır.

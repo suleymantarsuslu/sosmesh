@@ -2,6 +2,7 @@
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
+import { useEffect, useId } from 'react';
 
 import { Button } from '../ui/Button';
 
@@ -10,16 +11,37 @@ import { useOperatorPreferences } from './OperatorPreferencesProvider';
 type NavItem = { href: string; label: string };
 
 export function MobileNavDrawer({
+  id,
   open,
   onClose,
   items,
 }: {
+  id?: string;
   open: boolean;
   onClose: () => void;
   items: NavItem[];
 }) {
   const pathname = usePathname();
   const { t } = useOperatorPreferences();
+  const titleId = useId();
+
+  useEffect(() => {
+    if (!open) {
+      return undefined;
+    }
+    const closeButton = document.querySelector<HTMLButtonElement>(
+      '[data-testid="mobile-nav-close"]'
+    );
+    closeButton?.focus();
+    const onKeyDown = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') {
+        event.preventDefault();
+        onClose();
+      }
+    };
+    window.addEventListener('keydown', onKeyDown);
+    return () => window.removeEventListener('keydown', onKeyDown);
+  }, [open, onClose]);
 
   if (!open) {
     return null;
@@ -28,13 +50,20 @@ export function MobileNavDrawer({
   return (
     <div className="operator-drawer-backdrop" role="presentation" onClick={onClose}>
       <aside
+        id={id}
         className="operator-drawer"
-        aria-label={t('a11y.menu')}
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby={titleId}
         onClick={(event) => event.stopPropagation()}
       >
         <div className="operator-drawer__header">
-          <strong>{t('web.shell.brand')}</strong>
-          <Button variant="ghost" onClick={onClose}>
+          <strong id={titleId}>{t('web.shell.brand')}</strong>
+          <Button
+            variant="ghost"
+            data-testid="mobile-nav-close"
+            onClick={onClose}
+          >
             {t('a11y.closeMenu')}
           </Button>
         </div>

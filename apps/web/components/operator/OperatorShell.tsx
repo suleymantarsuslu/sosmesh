@@ -112,6 +112,8 @@ export function OperatorShell({
           <Button
             variant="ghost"
             className="operator-mobile-menu"
+            aria-expanded={drawerOpen}
+            aria-controls="operator-mobile-nav"
             onClick={() => setDrawerOpen(true)}
           >
             {t('web.shell.mobileMenu')}
@@ -129,7 +131,12 @@ export function OperatorShell({
         </main>
       </div>
       <CommandPalette open={paletteOpen} onClose={() => setPaletteOpen(false)} items={items} />
-      <MobileNavDrawer open={drawerOpen} onClose={() => setDrawerOpen(false)} items={items} />
+      <MobileNavDrawer
+        id="operator-mobile-nav"
+        open={drawerOpen}
+        onClose={() => setDrawerOpen(false)}
+        items={items}
+      />
     </div>
   );
 }

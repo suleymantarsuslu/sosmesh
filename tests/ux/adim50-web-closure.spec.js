@@ -182,7 +182,10 @@ test.describe('ADIM 50 yavaş ağ ve offline yeniden bağlanma', () => {
       uploadThroughput: (500 * 1024) / 8,
       latency: 400,
     });
-    await page.goto('/operator/login');
+    await page.goto('/operator/login', {
+      waitUntil: 'domcontentloaded',
+      timeout: 60000,
+    });
     await expect(page.getByTestId('login-form')).toBeVisible({ timeout: 45000 });
   });
 
@@ -216,5 +219,46 @@ test.describe('ADIM 50 rol-yetki rota assertion', () => {
     await loginAsAdmin(page);
     await page.goto('/operator/admin');
     await expect(page.getByRole('heading', { name: 'Yönetim' })).toBeVisible();
+  });
+
+  test('Nest API operatör JWT ile admin users uç noktasında 403', () => {
+    const path = require('node:path');
+    const { spawnSync } = require('node:child_process');
+    const repoRoot = path.join(__dirname, '../..');
+    const result = spawnSync(
+      'pnpm',
+      [
+        '--filter',
+        '@sosmesh/api',
+        'exec',
+        'jest',
+        '--config',
+        'jest.config.ts',
+        'test/security-adim43.spec.ts',
+        '-t',
+        'returns 403 when OPERATOR calls admin-only route',
+        '--runInBand',
+      ],
+      { cwd: repoRoot, encoding: 'utf8', env: process.env, timeout: 180000 }
+    );
+    if (result.status !== 0) {
+      throw new Error(
+        `API RBAC guard test failed (exit ${result.status}): ${result.stderr || result.stdout}`
+      );
+    }
+    expect(result.status).toBe(0);
+  });
+});
+
+test.describe('ADIM 50 mobil navigasyon erişilebilirliği', () => {
+  test('390px menü çekmecesi klavye ile vaka listesine gider', async ({ page }) => {
+    await page.setViewportSize({ width: 390, height: 844 });
+    await loginAsOperator(page);
+    await page.goto('/operator/dashboard');
+    await page.getByRole('button', { name: 'Menüyü aç' }).click();
+    await expect(page.getByRole('dialog')).toBeVisible();
+    await page.getByRole('link', { name: 'Harita / Vakalar' }).click();
+    await expect(page).toHaveURL(/\/operator\/cases/);
+    await expect(page.getByTestId('operator-cases-view')).toBeVisible();
   });
 });

@@ -70,8 +70,7 @@ object AdaptiveRadioPlanner {
     private const val DUPLICATE_LOW_FOR_BOOST_BPS = 2000
     private const val RELAY_BATTERY_SOFT_CONSTRAINED_PERCENT = 25
 
-    fun plan(input: RadioPlannerInput): RadioPlannerDecision =
-        planInternal(input, RadioPlannerTestingHooks.NONE)
+    fun plan(input: RadioPlannerInput): RadioPlannerDecision = planInternal(input, RadioPlannerTestingHooks.NONE)
 
     internal fun planInternal(
         input: RadioPlannerInput,
@@ -129,8 +128,10 @@ object AdaptiveRadioPlanner {
     ): RadioPlannerDecision {
         val constrained =
             !testingHooks.ignoreLowPowerConstraints &&
-                (input.powerSaveEnabled || input.deviceIdle || input.thermalThrottled ||
-                    input.batteryLevelPercent < RELAY_BATTERY_SOFT_CONSTRAINED_PERCENT)
+                (
+                    input.powerSaveEnabled || input.deviceIdle || input.thermalThrottled ||
+                        input.batteryLevelPercent < RELAY_BATTERY_SOFT_CONSTRAINED_PERCENT
+                )
         if (constrained) {
             return RadioPlannerDecision(
                 profileId = RadioProfileId.RELAY_CONSTRAINED,

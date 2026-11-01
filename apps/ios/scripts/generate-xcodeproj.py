@@ -226,6 +226,8 @@ lines.append(
 def build_settings(target_name: str, bundle_id: str, info_plist: str | None = None, test: bool = False) -> str:
     settings = [
         "SWIFT_VERSION = 5.0;",
+        "SDKROOT = iphoneos;",
+        'SUPPORTED_PLATFORMS = "iphoneos iphonesimulator";',
         "IPHONEOS_DEPLOYMENT_TARGET = 17.0;",
         "TARGETED_DEVICE_FAMILY = 1;",
         "PRODUCT_BUNDLE_IDENTIFIER = " + bundle_id + ";",
@@ -256,8 +258,14 @@ def config_list(list_id, name, target_debug, target_release):
 
 proj_debug = uid(4200)
 proj_release = uid(4201)
+proj_settings = (
+    "SDKROOT = iphoneos;",
+    'SUPPORTED_PLATFORMS = "iphoneos iphonesimulator";',
+)
 for cfg_id, cfg_name in [(proj_debug, "Debug"), (proj_release, "Release")]:
-    lines.append(f"\t\t{cfg_id} /* {cfg_name} */ = {{isa = XCBuildConfiguration; buildSettings = {{}}; name = {cfg_name}; }};")
+    lines.append(
+        f"\t\t{cfg_id} /* {cfg_name} */ = {{isa = XCBuildConfiguration; buildSettings = {{\n\t\t\t\t{proj_settings[0]}\n\t\t\t\t{proj_settings[1]}\n\t\t\t}}; name = {cfg_name}; }};"
+    )
 config_list(uid(4000), 'PBXProject "SOSMesh"', proj_debug, proj_release)
 
 app_debug = uid(4210)

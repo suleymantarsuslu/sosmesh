@@ -211,6 +211,13 @@ jobs:
       - name: Install CocoaPods
         run: cd apps/ios && pod install
       
+      - name: Prepare iOS Simulator platform
+        run: |
+          set -euo pipefail
+          if ! xcrun simctl list devices available 2>/dev/null | grep -q "iPhone"; then
+            xcodebuild -downloadPlatform iOS
+          fi
+      
       - name: Lint Swift
         run: |
           if command -v swiftlint &> /dev/null; then

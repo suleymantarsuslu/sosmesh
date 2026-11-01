@@ -90,8 +90,14 @@ A3120010000000000000001 /* Project object */ = {
 };
 		A3131010000000000000001 /* PBXTargetDependency */ = {isa = PBXTargetDependency; target = A3130010000000000000001 /* SOSMesh-iOS */; targetProxy = A3131020000000000000001 /* PBXContainerItemProxy */; };
 		A3131020000000000000001 /* PBXContainerItemProxy */ = {isa = PBXContainerItemProxy; containerPortal = A3120010000000000000001 /* Project */; proxyType = 1; remoteGlobalIDString = A3130010000000000000001; remoteInfo = "SOSMesh-iOS"; };
-		A3142000000000000000001 /* Debug */ = {isa = XCBuildConfiguration; buildSettings = {}; name = Debug; };
-		A3142010000000000000001 /* Release */ = {isa = XCBuildConfiguration; buildSettings = {}; name = Release; };
+		A3142000000000000000001 /* Debug */ = {isa = XCBuildConfiguration; buildSettings = {
+				SDKROOT = iphoneos;
+				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator";
+			}; name = Debug; };
+		A3142010000000000000001 /* Release */ = {isa = XCBuildConfiguration; buildSettings = {
+				SDKROOT = iphoneos;
+				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator";
+			}; name = Release; };
 		A3140000000000000000001 /* Build configuration list for PBXProject "SOSMesh" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
@@ -103,6 +109,8 @@ A3120010000000000000001 /* Project object */ = {
 		};
 		A3142100000000000000001 /* Debug */ = {isa = XCBuildConfiguration; buildSettings = {
 				SWIFT_VERSION = 5.0;
+				SDKROOT = iphoneos;
+				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator";
 				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
 				TARGETED_DEVICE_FAMILY = 1;
 				PRODUCT_BUNDLE_IDENTIFIER = com.sosmesh.ios;
@@ -114,6 +122,8 @@ A3120010000000000000001 /* Project object */ = {
 			}; name = Debug; };
 		A3142110000000000000001 /* Release */ = {isa = XCBuildConfiguration; buildSettings = {
 				SWIFT_VERSION = 5.0;
+				SDKROOT = iphoneos;
+				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator";
 				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
 				TARGETED_DEVICE_FAMILY = 1;
 				PRODUCT_BUNDLE_IDENTIFIER = com.sosmesh.ios;

@@ -1115,7 +1115,7 @@
       "pass_criteria": "Saatten basılan SOS Android outbox’ta tek kez görülür.",
       "status": "PARTIAL",
       "attempts": 1,
-      "commit": null,
+      "commit": "7470ffc",
       "evidence": [
         "apps/android/wear Wear Compose iki adımlı SOS (bas-bırak + onay diyaloğu)",
         "apps/android/core/wear-companion Data Layer yolları /sosmesh/v1/sos/create + phone_ack",

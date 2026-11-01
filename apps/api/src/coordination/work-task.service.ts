@@ -85,6 +85,57 @@ export class WorkTaskService {
     }
   }
 
+  private assertAssigneeOrCoordinator(
+    user: OperatorRequestUser,
+    task: { assigneeId: string | null },
+    nextStatus: WorkTaskStatus
+  ): void {
+    if (
+      nextStatus !== WorkTaskStatus.ACCEPTED &&
+      nextStatus !== WorkTaskStatus.WITHDRAWN &&
+      nextStatus !== WorkTaskStatus.CLOSED
+    ) {
+      this.assertCoordinator(user);
+      return;
+    }
+    const isCoordinator =
+      user.role === UserRole.COORDINATOR || user.role === UserRole.ADMIN;
+    const isAssignee = task.assigneeId !== null && user.sub === task.assigneeId;
+    if (!isCoordinator && !isAssignee) {
+      throw new ForbiddenException({
+        code: 'FORBIDDEN',
+        message: 'Only the assignee or a coordinator can update this task',
+      });
+    }
+  }
+
+  private async assertAssigneeForTeam(
+    user: OperatorRequestUser,
+    teamId: string,
+    assigneeId: string,
+    db: PrismaService | Parameters<Parameters<PrismaService['$transaction']>[0]>[0]
+  ): Promise<void> {
+    const teamScope = this.scope.teamWhere(user);
+    const team = await db.team.findFirst({
+      where: { id: teamId, ...teamScope },
+      select: { id: true, organizationId: true },
+    });
+    if (!team) {
+      throw new NotFoundException({ code: 'NOT_FOUND', message: 'Team not found' });
+    }
+    const assignee = await db.user.findFirst({
+      where: {
+        id: assigneeId,
+        teamId: team.id,
+        team: { organizationId: team.organizationId },
+      },
+      select: { id: true },
+    });
+    if (!assignee) {
+      throw new NotFoundException({ code: 'NOT_FOUND', message: 'Assignee not found' });
+    }
+  }
+
   async listTasks(
     user: OperatorRequestUser,
     query: { incidentId?: string; status?: WorkTaskStatus }
@@ -137,17 +188,23 @@ export class WorkTaskService {
       throw new NotFoundException({ code: 'NOT_FOUND', message: 'Team not found' });
     }
 
+    if (input.assigneeId) {
+      await this.assertAssigneeForTeam(user, input.teamId, input.assigneeId, this.prisma);
+    }
+
     let status: WorkTaskStatus = WorkTaskStatus.PROPOSED;
     if (input.assigneeId) {
       status = WorkTaskStatus.ASSIGNED;
     }
+
+    const resourceScope = this.scope.resourceWhere(user);
 
     const task = await this.prisma.$transaction(async (tx) => {
       if (input.resourceId) {
         const resource = await tx.resource.findFirst({
           where: {
             id: input.resourceId,
-            organizationId: user.organizationId ?? undefined,
+            ...resourceScope,
           },
         });
         if (!resource) {
@@ -213,6 +270,19 @@ export class WorkTaskService {
     if (!allowedIncident) {
       throw new NotFoundException({ code: 'NOT_FOUND', message: 'Case not found' });
     }
+    const teamOk = await this.scope.canAccessTeam(user, input.teamId, this.prisma);
+    if (!teamOk) {
+      throw new NotFoundException({ code: 'NOT_FOUND', message: 'Team not found' });
+    }
+    if (input.resourceId) {
+      const resourceScope = this.scope.resourceWhere(user);
+      const resource = await this.prisma.resource.findFirst({
+        where: { id: input.resourceId, ...resourceScope },
+      });
+      if (!resource) {
+        throw new NotFoundException({ code: 'NOT_FOUND', message: 'Resource not found' });
+      }
+    }
 
     const task = await this.prisma.$transaction(async (tx) => {
       const created = await tx.workTask.create({
@@ -266,7 +336,6 @@ export class WorkTaskService {
     taskId: string,
     input: { expectedVersion: number }
   ): Promise<WorkTaskDto> {
-    this.assertCoordinator(user);
     return this.transitionTask(user, taskId, {
       expectedVersion: input.expectedVersion,
       nextStatus: WorkTaskStatus.WITHDRAWN,
@@ -279,7 +348,6 @@ export class WorkTaskService {
     taskId: string,
     input: { expectedVersion: number }
   ): Promise<WorkTaskDto> {
-    this.assertCoordinator(user);
     return this.transitionTask(user, taskId, {
       expectedVersion: input.expectedVersion,
       nextStatus: WorkTaskStatus.CLOSED,
@@ -292,7 +360,6 @@ export class WorkTaskService {
     taskId: string,
     input: { expectedVersion: number }
   ): Promise<WorkTaskDto> {
-    this.assertCoordinator(user);
     return this.transitionTask(user, taskId, {
       expectedVersion: input.expectedVersion,
       nextStatus: WorkTaskStatus.ACCEPTED,
@@ -317,6 +384,12 @@ export class WorkTaskService {
     });
     if (!existing) {
       throw new NotFoundException({ code: 'NOT_FOUND', message: 'Task not found' });
+    }
+
+    this.assertAssigneeOrCoordinator(user, existing, params.nextStatus);
+
+    if (params.nextStatus === WorkTaskStatus.ASSIGNED && params.assigneeId) {
+      await this.assertAssigneeForTeam(user, existing.teamId, params.assigneeId, this.prisma);
     }
 
     if (existing.source === WorkTaskSource.AI && params.nextStatus === WorkTaskStatus.ASSIGNED) {

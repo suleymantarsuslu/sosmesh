@@ -17,6 +17,9 @@ describe('Work tasks and coordination (ADIM 27)', () => {
   const operatorId = '00000000-0000-4000-8000-000000000c31';
   const coordinatorId = '00000000-0000-4000-8000-000000000c32';
   const assigneeId = '00000000-0000-4000-8000-000000000c33';
+  const otherOrgId = '00000000-0000-4000-8000-000000000c02';
+  const otherTeamId = '00000000-0000-4000-8000-000000000c12';
+  const otherOrgAssigneeId = '00000000-0000-4000-8000-000000000c34';
   const allowedOrigin = 'http://localhost:3000';
 
   beforeAll(async () => {
@@ -28,8 +31,16 @@ describe('Work tasks and coordination (ADIM 27)', () => {
       name: 'Coord Org',
       slug: 'coord-org',
     });
-    await prisma.team.create({
-      data: { id: teamId, name: 'coord-team', organizationId: orgId, zoneCode: 'Z-C1' },
+    await createTestOrganization(prisma, {
+      id: otherOrgId,
+      name: 'Other Org',
+      slug: 'other-org-tasks',
+    });
+    await prisma.team.createMany({
+      data: [
+        { id: teamId, name: 'coord-team', organizationId: orgId, zoneCode: 'Z-C1' },
+        { id: otherTeamId, name: 'other-team', organizationId: otherOrgId },
+      ],
     });
     const hash = await bcrypt.hash('test-password-16chars', 10);
     await prisma.user.createMany({
@@ -56,6 +67,14 @@ describe('Work tasks and coordination (ADIM 27)', () => {
           displayName: 'Assignee',
           role: UserRole.OPERATOR,
           teamId,
+          passwordHash: hash,
+        },
+        {
+          id: otherOrgAssigneeId,
+          email: 'other-org-assignee@sosmesh.example',
+          displayName: 'Other Org Assignee',
+          role: UserRole.OPERATOR,
+          teamId: otherTeamId,
           passwordHash: hash,
         },
       ],
@@ -98,6 +117,15 @@ describe('Work tasks and coordination (ADIM 27)', () => {
     });
   }
 
+  function assigneeToken(): string {
+    return operatorBearerToken({
+      sub: assigneeId,
+      role: UserRole.OPERATOR,
+      teamId,
+      organizationId: orgId,
+    });
+  }
+
   it('forbids operator from creating tasks', async () => {
     const response = await request(app.getHttpServer())
       .post('/v1/operator/tasks')
@@ -111,7 +139,7 @@ describe('Work tasks and coordination (ADIM 27)', () => {
     expect(response.status).toBe(403);
   });
 
-  it('forbids operator from assign, accept, withdraw, and close', async () => {
+  it('forbids non-assignee operator from assign and lifecycle mutations', async () => {
     const created = await request(app.getHttpServer())
       .post('/v1/operator/tasks')
       .set('Authorization', `Bearer ${coordinatorToken()}`)
@@ -148,6 +176,110 @@ describe('Work tasks and coordination (ADIM 27)', () => {
       .set('Origin', allowedOrigin)
       .send({ expectedVersion: version });
     expect(close.status).toBe(403);
+  });
+
+  it('allows assignee to accept assigned task', async () => {
+    const created = await request(app.getHttpServer())
+      .post('/v1/operator/tasks')
+      .set('Authorization', `Bearer ${coordinatorToken()}`)
+      .set('Origin', allowedOrigin)
+      .send({ incidentId, teamId, title: 'Assignee accept task', assigneeId });
+    expect(created.status).toBe(201);
+
+    const accepted = await request(app.getHttpServer())
+      .patch(`/v1/operator/tasks/${created.body.id}/accept`)
+      .set('Authorization', `Bearer ${assigneeToken()}`)
+      .set('Origin', allowedOrigin)
+      .send({ expectedVersion: created.body.version });
+    expect(accepted.status).toBe(200);
+    expect(accepted.body.status).toBe('ACCEPTED');
+  });
+
+  it('rejects cross-org assignee on create and assign', async () => {
+    const onCreate = await request(app.getHttpServer())
+      .post('/v1/operator/tasks')
+      .set('Authorization', `Bearer ${coordinatorToken()}`)
+      .set('Origin', allowedOrigin)
+      .send({
+        incidentId,
+        teamId,
+        title: 'Cross-org create',
+        assigneeId: otherOrgAssigneeId,
+      });
+    expect(onCreate.status).toBe(404);
+
+    const draft = await request(app.getHttpServer())
+      .post('/v1/operator/tasks')
+      .set('Authorization', `Bearer ${coordinatorToken()}`)
+      .set('Origin', allowedOrigin)
+      .send({ incidentId, teamId, title: 'Cross-org assign' });
+    expect(draft.status).toBe(201);
+
+    const onAssign = await request(app.getHttpServer())
+      .patch(`/v1/operator/tasks/${draft.body.id}/assign`)
+      .set('Authorization', `Bearer ${coordinatorToken()}`)
+      .set('Origin', allowedOrigin)
+      .send({ assigneeId: otherOrgAssigneeId, expectedVersion: draft.body.version });
+    expect(onAssign.status).toBe(404);
+  });
+
+  it('accepts in-org assignee on create and assign', async () => {
+    const onCreate = await request(app.getHttpServer())
+      .post('/v1/operator/tasks')
+      .set('Authorization', `Bearer ${coordinatorToken()}`)
+      .set('Origin', allowedOrigin)
+      .send({
+        incidentId,
+        teamId,
+        title: 'In-org create assignee',
+        assigneeId,
+      });
+    expect(onCreate.status).toBe(201);
+    expect(onCreate.body.assigneeId).toBe(assigneeId);
+
+    const draft = await request(app.getHttpServer())
+      .post('/v1/operator/tasks')
+      .set('Authorization', `Bearer ${coordinatorToken()}`)
+      .set('Origin', allowedOrigin)
+      .send({ incidentId, teamId, title: 'In-org assign path' });
+    expect(draft.status).toBe(201);
+
+    const onAssign = await request(app.getHttpServer())
+      .patch(`/v1/operator/tasks/${draft.body.id}/assign`)
+      .set('Authorization', `Bearer ${coordinatorToken()}`)
+      .set('Origin', allowedOrigin)
+      .send({ assigneeId, expectedVersion: draft.body.version });
+    expect(onAssign.status).toBe(200);
+    expect(onAssign.body.assigneeId).toBe(assigneeId);
+  });
+
+  it('returns 404 for resource when coordinator JWT lacks organizationId', async () => {
+    const prisma = app.get(PrismaService);
+    const resource = await prisma.resource.create({
+      data: {
+        organizationId: orgId,
+        teamId,
+        kind: 'VEHICLE',
+        name: 'scoped-vehicle',
+        capacity: 1,
+      },
+    });
+    const token = operatorBearerToken({
+      sub: coordinatorId,
+      role: UserRole.COORDINATOR,
+      teamId,
+    });
+    const response = await request(app.getHttpServer())
+      .post('/v1/operator/tasks')
+      .set('Authorization', `Bearer ${token}`)
+      .set('Origin', allowedOrigin)
+      .send({
+        incidentId,
+        teamId,
+        resourceId: resource.id,
+        title: 'Resource scope task',
+      });
+    expect(response.status).toBe(404);
   });
 
   it('rejects AI draft assignment without assignee', async () => {

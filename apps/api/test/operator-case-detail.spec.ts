@@ -15,11 +15,27 @@ describe('Operator case detail and actions (ADIM 23)', () => {
   const incidentOther = '00000000-0000-4000-8000-000000000802';
   const incidentConcurrent = '00000000-0000-4000-8000-000000000803';
   const incidentVersionRace = '00000000-0000-4000-8000-000000000804';
+  const incidentCorrectionRace = '00000000-0000-4000-8000-000000000805';
+  const incidentAiOverride = '00000000-0000-4000-8000-000000000806';
+  const incidentAiOverrideRace = '00000000-0000-4000-8000-000000000807';
   const operatorA = '00000000-0000-4000-8000-000000000901';
   const password = 'test-password-16chars';
   const syntheticText = 'Sentetik SOS metni: yardım gerekli (fixture).';
   const allowedOrigin = 'http://localhost:3000';
   let cachedToken: string | null = null;
+
+  const validAiOverride = {
+    categories: ['medical'],
+    persons_estimate: 1,
+    injuries_reported: [],
+    needs: ['değerlendirme'],
+    urgency_suggestion: 'medium',
+    uncertainty: false,
+    quoted_evidence: ['sentetik'],
+    location_unknown: false,
+    language: 'tr',
+    requires_human_review: true,
+  };
 
   beforeAll(async () => {
     applyTestAuthEnv();
@@ -49,6 +65,9 @@ describe('Operator case detail and actions (ADIM 23)', () => {
         { id: incidentOther, state: 'PENDING', version: 0, reviewStatus: 'NEW' },
         { id: incidentConcurrent, state: 'PENDING', version: 0, reviewStatus: 'NEW' },
         { id: incidentVersionRace, state: 'PENDING', version: 0, reviewStatus: 'SEEN' },
+        { id: incidentCorrectionRace, state: 'PENDING', version: 0, reviewStatus: 'NEW' },
+        { id: incidentAiOverride, state: 'PENDING', version: 0, reviewStatus: 'NEW' },
+        { id: incidentAiOverrideRace, state: 'PENDING', version: 0, reviewStatus: 'NEW' },
       ],
       skipDuplicates: true,
     });
@@ -58,6 +77,9 @@ describe('Operator case detail and actions (ADIM 23)', () => {
         { incidentId: incidentOther, teamId: teamB, status: 'OPEN' },
         { incidentId: incidentConcurrent, teamId: teamA, status: 'OPEN' },
         { incidentId: incidentVersionRace, teamId: teamA, status: 'OPEN' },
+        { incidentId: incidentCorrectionRace, teamId: teamA, status: 'OPEN' },
+        { incidentId: incidentAiOverride, teamId: teamA, status: 'OPEN' },
+        { incidentId: incidentAiOverrideRace, teamId: teamA, status: 'OPEN' },
       ],
     });
     const messages = [
@@ -88,6 +110,31 @@ describe('Operator case detail and actions (ADIM 23)', () => {
         locationStatus: 'GPS' as const,
         latitude: 41.0,
         longitude: 34.0,
+        deliveryState: 'SERVER_ACCEPTED' as const,
+      },
+      {
+        messageId: 'detail-msg-correction-race-001',
+        incidentId: incidentCorrectionRace,
+        locationStatus: 'GPS' as const,
+        latitude: 39.5,
+        longitude: 32.5,
+        deliveryState: 'SERVER_ACCEPTED' as const,
+        personCount: 1,
+      },
+      {
+        messageId: 'detail-msg-ai-override-001',
+        incidentId: incidentAiOverride,
+        locationStatus: 'GPS' as const,
+        latitude: 39.6,
+        longitude: 32.6,
+        deliveryState: 'SERVER_ACCEPTED' as const,
+      },
+      {
+        messageId: 'detail-msg-ai-override-race-001',
+        incidentId: incidentAiOverrideRace,
+        locationStatus: 'GPS' as const,
+        latitude: 39.7,
+        longitude: 32.7,
         deliveryState: 'SERVER_ACCEPTED' as const,
       },
     ];
@@ -157,9 +204,21 @@ describe('Operator case detail and actions (ADIM 23)', () => {
     expect(detail.status).toBe(200);
     expect(detail.body.originalText).toBe(syntheticText);
     const seenCount = await prisma.messageEvent.count({
-      where: { deliveryState: 'OPERATOR_SEEN', source: 'operator_view' },
+      where: {
+        deliveryState: 'OPERATOR_SEEN',
+        source: 'operator_view',
+        sosMessage: { incidentId: incidentScoped },
+      },
     });
     expect(seenCount).toBe(0);
+  });
+
+  it('returns 404 for POST seen on out-of-scope incident', async () => {
+    const token = await loginToken();
+    const response = await request(app.getHttpServer())
+      .post(`/v1/operator/cases/${incidentOther}/seen`)
+      .set('Authorization', `Bearer ${token}`);
+    expect(response.status).toBe(404);
   });
 
   it('POST seen creates idempotent OPERATOR_SEEN and audit', async () => {
@@ -172,7 +231,11 @@ describe('Operator case detail and actions (ADIM 23)', () => {
     expect(first.body.created).toBe(true);
 
     const seenCountAfterFirst = await prisma.messageEvent.count({
-      where: { deliveryState: 'OPERATOR_SEEN', source: 'operator_view' },
+      where: {
+        deliveryState: 'OPERATOR_SEEN',
+        source: 'operator_view',
+        sosMessage: { incidentId: incidentScoped },
+      },
     });
     expect(seenCountAfterFirst).toBe(1);
     const auditCount = await prisma.auditLog.count({
@@ -187,7 +250,11 @@ describe('Operator case detail and actions (ADIM 23)', () => {
     expect(second.body.created).toBe(false);
 
     const seenCountAfterSecond = await prisma.messageEvent.count({
-      where: { deliveryState: 'OPERATOR_SEEN', source: 'operator_view' },
+      where: {
+        deliveryState: 'OPERATOR_SEEN',
+        source: 'operator_view',
+        sosMessage: { incidentId: incidentScoped },
+      },
     });
     expect(seenCountAfterSecond).toBe(1);
     const auditAfterSecond = await prisma.auditLog.count({
@@ -338,5 +405,156 @@ describe('Operator case detail and actions (ADIM 23)', () => {
       .set('Authorization', `Bearer ${token}`)
       .send({ expectedVersion: detail.body.version, reviewStatus: 'NEW' });
     expect(bad.status).toBe(400);
+  });
+
+  it('rejects latitude out of range', async () => {
+    const token = await loginToken();
+    const detail = await request(app.getHttpServer())
+      .get(`/v1/operator/cases/${incidentScoped}/detail`)
+      .set('Authorization', `Bearer ${token}`);
+    const response = await request(app.getHttpServer())
+      .post(`/v1/operator/cases/${incidentScoped}/corrections`)
+      .set('Authorization', `Bearer ${token}`)
+      .send({ expectedVersion: detail.body.version, latitude: 91, longitude: 10 });
+    expect(response.status).toBe(400);
+    expect(response.body.code).toBe('INVALID_LATITUDE');
+  });
+
+  it('rejects longitude out of range', async () => {
+    const token = await loginToken();
+    const detail = await request(app.getHttpServer())
+      .get(`/v1/operator/cases/${incidentScoped}/detail`)
+      .set('Authorization', `Bearer ${token}`);
+    const response = await request(app.getHttpServer())
+      .post(`/v1/operator/cases/${incidentScoped}/corrections`)
+      .set('Authorization', `Bearer ${token}`)
+      .send({ expectedVersion: detail.body.version, latitude: 10, longitude: 181 });
+    expect(response.status).toBe(400);
+    expect(response.body.code).toBe('INVALID_LONGITUDE');
+  });
+
+  it('rejects MANUAL location without coordinates', async () => {
+    const token = await loginToken();
+    const detail = await request(app.getHttpServer())
+      .get(`/v1/operator/cases/${incidentScoped}/detail`)
+      .set('Authorization', `Bearer ${token}`);
+    const response = await request(app.getHttpServer())
+      .post(`/v1/operator/cases/${incidentScoped}/corrections`)
+      .set('Authorization', `Bearer ${token}`)
+      .send({
+        expectedVersion: detail.body.version,
+        locationStatus: 'MANUAL',
+        latitude: null,
+        longitude: null,
+      });
+    expect(response.status).toBe(400);
+    expect(response.body.code).toBe('LOCATION_COORDINATES_REQUIRED');
+  });
+
+  it('accepts MANUAL location with valid coordinates', async () => {
+    const token = await loginToken();
+    const detail = await request(app.getHttpServer())
+      .get(`/v1/operator/cases/${incidentScoped}/detail`)
+      .set('Authorization', `Bearer ${token}`);
+    const response = await request(app.getHttpServer())
+      .post(`/v1/operator/cases/${incidentScoped}/corrections`)
+      .set('Authorization', `Bearer ${token}`)
+      .send({
+        expectedVersion: detail.body.version,
+        locationStatus: 'MANUAL',
+        latitude: 39.91,
+        longitude: 32.81,
+      });
+    expect(response.status).toBe(201);
+  });
+
+  it('rejects negative personCount in DTO', async () => {
+    const token = await loginToken();
+    const detail = await request(app.getHttpServer())
+      .get(`/v1/operator/cases/${incidentScoped}/detail`)
+      .set('Authorization', `Bearer ${token}`);
+    const response = await request(app.getHttpServer())
+      .post(`/v1/operator/cases/${incidentScoped}/corrections`)
+      .set('Authorization', `Bearer ${token}`)
+      .send({ expectedVersion: detail.body.version, personCount: -1 });
+    expect(response.status).toBe(400);
+  });
+
+  it('parallel corrections with same version yield 201 and 409', async () => {
+    const token = await loginToken();
+    const detail = await request(app.getHttpServer())
+      .get(`/v1/operator/cases/${incidentCorrectionRace}/detail`)
+      .set('Authorization', `Bearer ${token}`);
+    const version = detail.body.version as number;
+    const [first, second] = await Promise.all([
+      request(app.getHttpServer())
+        .post(`/v1/operator/cases/${incidentCorrectionRace}/corrections`)
+        .set('Authorization', `Bearer ${token}`)
+        .send({ expectedVersion: version, personCount: 2 }),
+      request(app.getHttpServer())
+        .post(`/v1/operator/cases/${incidentCorrectionRace}/corrections`)
+        .set('Authorization', `Bearer ${token}`)
+        .send({ expectedVersion: version, personCount: 3 }),
+    ]);
+    expect([first.status, second.status].sort()).toEqual([201, 409]);
+  });
+
+  it('accepts valid ai-override', async () => {
+    const token = await loginToken();
+    const detail = await request(app.getHttpServer())
+      .get(`/v1/operator/cases/${incidentAiOverride}/detail`)
+      .set('Authorization', `Bearer ${token}`);
+    const response = await request(app.getHttpServer())
+      .post(`/v1/operator/cases/${incidentAiOverride}/ai-override`)
+      .set('Authorization', `Bearer ${token}`)
+      .send({ expectedVersion: detail.body.version, override: validAiOverride });
+    expect(response.status).toBe(201);
+  });
+
+  it('rejects invalid ai-override schema', async () => {
+    const token = await loginToken();
+    const detail = await request(app.getHttpServer())
+      .get(`/v1/operator/cases/${incidentAiOverride}/detail`)
+      .set('Authorization', `Bearer ${token}`);
+    const response = await request(app.getHttpServer())
+      .post(`/v1/operator/cases/${incidentAiOverride}/ai-override`)
+      .set('Authorization', `Bearer ${token}`)
+      .send({
+        expectedVersion: detail.body.version,
+        override: { ...validAiOverride, urgency_suggestion: 'not-valid' },
+      });
+    expect(response.status).toBe(400);
+    expect(response.body.code).toBe('INVALID_AI_OVERRIDE');
+  });
+
+  it('returns 404 for ai-override on out-of-scope incident', async () => {
+    const token = await loginToken();
+    const response = await request(app.getHttpServer())
+      .post(`/v1/operator/cases/${incidentOther}/ai-override`)
+      .set('Authorization', `Bearer ${token}`)
+      .send({ expectedVersion: 0, override: validAiOverride });
+    expect(response.status).toBe(404);
+  });
+
+  it('parallel ai-override with same version yields 201 and 409', async () => {
+    const token = await loginToken();
+    const detail = await request(app.getHttpServer())
+      .get(`/v1/operator/cases/${incidentAiOverrideRace}/detail`)
+      .set('Authorization', `Bearer ${token}`);
+    const version = detail.body.version as number;
+    const [first, second] = await Promise.all([
+      request(app.getHttpServer())
+        .post(`/v1/operator/cases/${incidentAiOverrideRace}/ai-override`)
+        .set('Authorization', `Bearer ${token}`)
+        .send({ expectedVersion: version, override: validAiOverride }),
+      request(app.getHttpServer())
+        .post(`/v1/operator/cases/${incidentAiOverrideRace}/ai-override`)
+        .set('Authorization', `Bearer ${token}`)
+        .send({
+          expectedVersion: version,
+          override: { ...validAiOverride, urgency_suggestion: 'high' },
+        }),
+    ]);
+    expect([first.status, second.status].sort()).toEqual([201, 409]);
   });
 });

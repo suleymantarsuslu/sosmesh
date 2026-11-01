@@ -10,6 +10,7 @@ import {
   SUPPORTED_PROTOCOL_VERSION,
 } from './ingest.constants';
 import type { IngestRequestDto } from './dto/ingest-request.dto';
+import { findForbiddenEnvelopeFieldKey } from './envelope-sensitive-fields';
 
 function stableStringify(value: unknown): string {
   if (value === null || typeof value !== 'object') {
@@ -62,6 +63,20 @@ export class IngestPacketService {
         },
         HttpStatus.BAD_REQUEST
       );
+    }
+
+    const envelope = sosMessage.envelope;
+    if (envelope && typeof envelope === 'object' && !Array.isArray(envelope)) {
+      const forbiddenKey = findForbiddenEnvelopeFieldKey(envelope as Record<string, unknown>);
+      if (forbiddenKey) {
+        throw new HttpException(
+          {
+            code: 'ENVELOPE_SENSITIVE_FIELD',
+            message: 'Envelope must not contain plaintext or message-like fields visible to relays',
+          },
+          HttpStatus.BAD_REQUEST
+        );
+      }
     }
 
     const schemaResult = validateSosMessage(sosMessage);

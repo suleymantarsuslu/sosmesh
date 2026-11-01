@@ -11,7 +11,7 @@ import {
 } from '@nestjs/common';
 import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
 import { OperatorReviewStatus } from '@prisma/client';
-import { IsEnum, IsInt, IsNumber, IsObject, IsOptional, Min } from 'class-validator';
+import { IsEnum, IsInt, IsNumber, IsObject, IsOptional, Min, ValidateIf } from 'class-validator';
 
 import { OperatorAuthGuard, OperatorRequest } from '../operator/guards/operator-auth.guard';
 import { OperatorCsrfGuard } from '../operator/guards/operator-csrf.guard';
@@ -34,7 +34,9 @@ class MetadataCorrectionDto {
   expectedVersion!: number;
 
   @IsOptional()
+  @ValidateIf((_, value) => value !== null && value !== undefined)
   @IsInt()
+  @Min(0)
   personCount?: number | null;
 
   @IsOptional()

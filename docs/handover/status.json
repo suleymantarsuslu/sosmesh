@@ -903,7 +903,7 @@
       "pass_criteria": "Her görev için açık sorumlu ve izlenebilir değişiklik geçmişi var.",
       "status": "PARTIAL",
       "attempts": 1,
-      "commit": null,
+      "commit": "a29c6ec",
       "evidence": [
         "Prisma migration 20261101193000_adim27_28 (resources, work_tasks, location_share_grants)",
         "apps/api/src/coordination (teams/resources/tasks, optimistic version 409, audit_logs)",
@@ -940,7 +940,7 @@
       "pass_criteria": "Aynı olaydan notification fırtınası yok; zaman çizelgesi doğru.",
       "status": "PARTIAL",
       "attempts": 1,
-      "commit": null,
+      "commit": "a29c6ec",
       "evidence": [
         "apps/api/src/notifications (dedupe upsert, quiet hours, preferences/subscriptions)",
         "GET /v1/operator/notifications, /activity, /activity/export (role guard)",

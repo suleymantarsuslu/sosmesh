@@ -2,6 +2,20 @@ import XCTest
 @testable import SOSMeshCore
 
 final class WatchConnectivitySendPlannerTests: XCTestCase {
+    func testSessionInactiveBlocksImmediateSend() {
+        let snap = WatchConnectivitySendPlanner.snapshot(
+            isPaired: true,
+            sessionActivated: false,
+            isReachable: true,
+            isCompanionAppInstalled: true,
+            watchLocked: false,
+            lowPowerMode: false
+        )
+        XCTAssertEqual(snap.phase, .sessionInactive)
+        XCTAssertEqual(snap.sendMode, .none)
+        XCTAssertFalse(WatchConnectivitySendPlanner.isPhoneReachableForQueue(snapshot: snap))
+    }
+
     func testNotPairedBlocksSendAndShowsMeshDisclaimer() {
         let snap = WatchConnectivitySendPlanner.snapshot(
             isPaired: false,

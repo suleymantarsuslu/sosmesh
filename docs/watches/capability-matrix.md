@@ -26,3 +26,4 @@ Kaynak kod: `apps/ios/SOSMeshCore/Sources/SOSMeshCore/WatchCompanion/WatchCapabi
 - 112 yerine geçmez.
 - Saat bağımsız mesh rölesi değildir.
 - Peer ACK ≠ operatör okundu.
+- Apple, force-quit ve arka plan WC iletimi için garanti vermez; UI ve kopya «garanti» dili kullanmaz.

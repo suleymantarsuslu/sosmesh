@@ -22,6 +22,15 @@ final class WatchOfflineQueueTests: XCTestCase {
         let second = queue.markSendAttemptFailed(messageId: "m2", nowMs: 10_000, error: "timeout")
         XCTAssertEqual(second?.attemptCount, 2)
         XCTAssertEqual(second?.nextRetryAtMs, 10_000 + 15_000)
+        let third = queue.markSendAttemptFailed(messageId: "m2", nowMs: 20_000, error: "timeout")
+        XCTAssertEqual(third?.attemptCount, 3)
+        XCTAssertEqual(third?.nextRetryAtMs, 20_000 + 60_000)
+    }
+
+    func testRetryPolicyNextRetryUsesAttemptIndex() {
+        XCTAssertEqual(WatchRetryPolicy.nextRetryAtMs(attemptCount: 1, nowMs: 0), 5_000)
+        XCTAssertEqual(WatchRetryPolicy.nextRetryAtMs(attemptCount: 2, nowMs: 0), 15_000)
+        XCTAssertEqual(WatchRetryPolicy.nextRetryAtMs(attemptCount: 99, nowMs: 1_000), 1_000 + 300_000)
     }
 
     func testApplyPhoneAckQueued() {

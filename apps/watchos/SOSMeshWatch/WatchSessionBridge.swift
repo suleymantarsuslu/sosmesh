@@ -22,7 +22,7 @@ final class WatchSessionBridge: NSObject, WatchCompanionTransport, WCSessionDele
     func currentSnapshot() -> WatchConnectivitySnapshot {
         let session = WCSession.default
         return WatchConnectivitySendPlanner.snapshot(
-            isPaired: session.isCompanionAppInstalled || session.activationState == .activated,
+            isPaired: session.activationState == .activated,
             sessionActivated: session.activationState == .activated,
             isReachable: session.isReachable,
             isCompanionAppInstalled: session.isCompanionAppInstalled,

@@ -1305,11 +1305,10 @@
         "SOSMeshCore/WatchCompanion wire, offline queue, ingress idempotency",
         "docs/watchos/setup.md",
         "Swift: WatchOfflineQueueTests, WatchConnectivitySendPlannerTests, PhoneWatchSosIngressTests",
-        "Gerçek Apple Watch + eşleşmiş iPhone: NOT_TESTED (B-04); ADIM 34 (#48) main dışı"
+        "Gerçek Apple Watch + eşleşmiş iPhone: NOT_TESTED (B-04)"
       ],
       "blockers": [
-        "B-04",
-        "ADIM-34-PR-48"
+        "B-04"
       ],
       "last_checked_at": "2026-11-01T22:00:00Z",
       "goal": "Apple Watch’tan iPhone companion’a tek tuşla güvenilir SOS ilet.",

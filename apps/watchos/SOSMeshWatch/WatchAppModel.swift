@@ -68,6 +68,9 @@ final class WatchAppModel: ObservableObject {
     func refreshConnectivityCopy() {
         let snap = sessionBridge.currentSnapshot()
         connectivityHeadline = snap.userHeadlineTr
+        if confirmStep == .idle && activeMessageId == nil {
+            detail = snap.userDetailTr
+        }
     }
 
     func applyPhoneAck(_ ack: WatchPhoneAckWire) {

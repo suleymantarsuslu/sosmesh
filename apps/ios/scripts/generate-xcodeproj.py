@@ -75,9 +75,23 @@ for i, path in enumerate(all_source_paths + RESOURCES + WATCH_RESOURCES, start=1
     isa = "PBXFileReference"
     last = path.split("/")[-1]
     if path.endswith(".swift"):
-        lines.append(f"\t\t{ref} /* {last} */ = {{isa = {isa}; lastKnownFileType = sourcecode.swift; path = {last}; sourceTree = \"<group>\"; }};")
+        if path.startswith("../"):
+            lines.append(
+                f"\t\t{ref} /* {last} */ = {{isa = {isa}; lastKnownFileType = sourcecode.swift; path = {path}; sourceTree = SOURCE_ROOT; }};"
+            )
+        else:
+            lines.append(
+                f"\t\t{ref} /* {last} */ = {{isa = {isa}; lastKnownFileType = sourcecode.swift; path = {last}; sourceTree = \"<group>\"; }};"
+            )
     elif path.endswith(".plist"):
-        lines.append(f"\t\t{ref} /* {last} */ = {{isa = {isa}; lastKnownFileType = text.plist.xml; path = {last}; sourceTree = \"<group>\"; }};")
+        if path.startswith("../"):
+            lines.append(
+                f"\t\t{ref} /* {last} */ = {{isa = {isa}; lastKnownFileType = text.plist.xml; path = {path}; sourceTree = SOURCE_ROOT; }};"
+            )
+        else:
+            lines.append(
+                f"\t\t{ref} /* {last} */ = {{isa = {isa}; lastKnownFileType = text.plist.xml; path = {last}; sourceTree = \"<group>\"; }};"
+            )
     elif path.endswith(".strings"):
         lines.append(f"\t\t{ref} /* {last} */ = {{isa = {isa}; lastKnownFileType = text.plist.strings; path = {last}; sourceTree = \"<group>\"; }};")
     elif path.endswith(".xcassets"):
@@ -482,7 +496,7 @@ watch_widget_debug = uid37(4220)
 watch_widget_release = uid37(4221)
 for cfg_id, cfg_name in [(watch_widget_debug, "Debug"), (watch_widget_release, "Release")]:
     lines.append(
-        f"\t\t{cfg_id} /* {cfg_name} */ = {{isa = XCBuildConfiguration; buildSettings = {{{watch_build_settings('com.sosmesh.ios.watch.widgets', '../watchos/SOSMeshWatch/Info.plist', 'SOSMeshWatchWidgets', extension=True)}\n\t\t\t}}; name = {cfg_name}; }};"
+        f"\t\t{cfg_id} /* {cfg_name} */ = {{isa = XCBuildConfiguration; buildSettings = {{{watch_build_settings('com.sosmesh.ios.watch.widgets', '../watchos/SOSMeshWatchWidgets/Info.plist', 'SOSMeshWatchWidgets', extension=True)}\n\t\t\t}}; name = {cfg_name}; }};"
     )
 config_list(uid37(4002), 'PBXNativeTarget "SOSMeshWatchWidgets"', watch_widget_debug, watch_widget_release)
 

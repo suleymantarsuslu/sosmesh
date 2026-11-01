@@ -34,6 +34,12 @@ bash apps/ios/scripts/check-xcodeproj-golden.sh
 - SOS metni ve gerçek konum loglanmaz.
 - Saat yalnızca telefon outbox ACK (`PHONE_OUTBOX_QUEUED`) ile «Telefona kaydedildi» gösterir; operatör/sunucu ACK gösterilmez.
 
+## Apple platform sınırları (taahhüt yok)
+
+- watchOS, uygulama arka planda veya **force-quit** edildikten sonra Watch Connectivity iletimini garanti etmez.
+- Saat tek başına BLE mesh rölesi sunmaz; eşleşmiş iPhone companion kanalı esas yoldur.
+- Düşük güç modu ve kilit ekranı gecikmeyi artırır; «gönderildi» yalnızca telefon outbox ACK ile gösterilir.
+
 ## Bağımlılık
 
-ADIM 34 (iPhone outbox / çapraz entegrasyon) PR [#48](https://github.com/suleymantarsuslu/sosmesh/pull/48) main’e girince `git fetch origin && git merge origin/main` ile alın.
+ADIM 34 (iPhone outbox) main’de; dal güncellemesi için `git fetch origin && git merge origin/main`.

@@ -5,11 +5,13 @@ import { Logger } from 'nestjs-pino';
 import cookieParser from 'cookie-parser';
 
 import { AppModule } from './app.module';
+import { securityHeadersMiddleware } from './common/middleware/security-headers.middleware';
 
 export async function createApp() {
   const app = await NestFactory.create(AppModule, { bufferLogs: true });
   app.useLogger(app.get(Logger));
   app.use(cookieParser());
+  app.use(securityHeadersMiddleware);
 
   const configService = app.get(ConfigService);
   const corsOrigins = configService.get<string>('CORS_ORIGINS');

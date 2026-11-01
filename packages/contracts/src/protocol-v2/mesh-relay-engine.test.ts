@@ -10,6 +10,7 @@ import {
   buildDedupKey,
   relayLogSnapshot,
 } from './mesh-relay-engine';
+import { MAX_MESH_OPAQUE_CIPHERTEXT_BYTES } from './mesh-payload-limits';
 
 interface VectorCase {
   id: string;
@@ -241,5 +242,47 @@ describe('protocol_v2_mutation_dedup_loop_and_hops', () => {
       relayHash
     );
     expect(mutated.decision).toBe('FORWARD');
+  });
+});
+
+describe('mesh payload size limits (SEC-MESH-SIZE-001)', () => {
+  const relayHash = 'b'.repeat(64);
+
+  it('drops when decoded opaque ciphertext exceeds byte cap', () => {
+    const engine = new MeshRelayEngine({ lruCapacity: 8 });
+    const raw = Buffer.alloc(MAX_MESH_OPAQUE_CIPHERTEXT_BYTES + 1, 0x01);
+    const envelope: MeshRelayEnvelopeV2 = {
+      protocolVersion: 2,
+      messageId: 'mesh-size-over',
+      hopCount: 0,
+      maxHops: 5,
+      ttlHops: 2,
+      copyCount: 1,
+      maxCopyCount: 3,
+      originCreatedAt: '2026-11-01T12:00:00Z',
+      opaqueCiphertextBase64: raw.toString('base64'),
+      hopChainReceipt: { relayDeviceIdHashes: [] },
+    };
+    const outcome = engine.evaluateForward(envelope, relayHash);
+    expect(outcome.decision).toBe('DROP');
+    expect(outcome.dropReason).toBe('INVALID_ENVELOPE');
+  });
+
+  it('forwards when decoded opaque ciphertext is exactly at byte cap', () => {
+    const engine = new MeshRelayEngine({ lruCapacity: 8 });
+    const raw = Buffer.alloc(MAX_MESH_OPAQUE_CIPHERTEXT_BYTES, 0xcd);
+    const envelope: MeshRelayEnvelopeV2 = {
+      protocolVersion: 2,
+      messageId: 'mesh-size-at-max',
+      hopCount: 0,
+      maxHops: 5,
+      ttlHops: 2,
+      copyCount: 1,
+      maxCopyCount: 3,
+      originCreatedAt: '2026-11-01T12:00:00Z',
+      opaqueCiphertextBase64: raw.toString('base64'),
+      hopChainReceipt: { relayDeviceIdHashes: [] },
+    };
+    expect(engine.evaluateForward(envelope, relayHash).decision).toBe('FORWARD');
   });
 });

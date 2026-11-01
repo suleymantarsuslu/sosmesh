@@ -11,7 +11,6 @@ import { createTestOrganization, ensureDefaultOrganization } from './helpers/tes
 describe('Operator case detail and actions (ADIM 23)', () => {
   let app: INestApplication;
   const orgA = '00000000-0000-4000-8000-000000000311';
-  const orgB = '00000000-0000-4000-8000-000000000312';
   const teamA = '00000000-0000-4000-8000-000000000701';
   const teamB = '00000000-0000-4000-8000-000000000702';
   const incidentScoped = '00000000-0000-4000-8000-000000000801';
@@ -48,11 +47,10 @@ describe('Operator case detail and actions (ADIM 23)', () => {
     const hash = await bcrypt.hash(password, 10);
     await ensureDefaultOrganization(prisma);
     await createTestOrganization(prisma, { id: orgA, name: 'detail-org-a', slug: 'detail-org-a' });
-    await createTestOrganization(prisma, { id: orgB, name: 'detail-org-b', slug: 'detail-org-b' });
     await prisma.team.createMany({
       data: [
         { id: teamA, name: 'detail-team-a', organizationId: orgA },
-        { id: teamB, name: 'detail-team-b', organizationId: orgB },
+        { id: teamB, name: 'detail-team-b', organizationId: orgA },
       ],
       skipDuplicates: true,
     });

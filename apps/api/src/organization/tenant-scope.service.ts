@@ -13,12 +13,30 @@ export class TenantScopeService {
     if (this.isAdmin(user)) {
       return undefined;
     }
-    if (!user.organizationId) {
+
+    if (user.role === UserRole.COORDINATOR) {
+      if (!user.organizationId) {
+        return { id: { in: [] } };
+      }
+      return {
+        assignments: {
+          some: {
+            team: {
+              organizationId: user.organizationId,
+            },
+          },
+        },
+      };
+    }
+
+    if (!user.teamId || !user.organizationId) {
       return { id: { in: [] } };
     }
+
     return {
       assignments: {
         some: {
+          teamId: user.teamId,
           team: {
             organizationId: user.organizationId,
           },

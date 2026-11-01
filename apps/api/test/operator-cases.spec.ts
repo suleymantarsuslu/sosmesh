@@ -11,7 +11,6 @@ import { createTestOrganization, ensureDefaultOrganization } from './helpers/tes
 describe('Operator cases map/list API', () => {
   let app: INestApplication;
   const orgA = '00000000-0000-4000-8000-000000000211';
-  const orgB = '00000000-0000-4000-8000-000000000212';
   const teamA = '00000000-0000-4000-8000-000000000401';
   const teamB = '00000000-0000-4000-8000-000000000402';
   const incidentScoped = '00000000-0000-4000-8000-000000000501';
@@ -26,11 +25,10 @@ describe('Operator cases map/list API', () => {
     const hash = await bcrypt.hash(password, 10);
     await ensureDefaultOrganization(prisma);
     await createTestOrganization(prisma, { id: orgA, name: 'cases-org-a', slug: 'cases-org-a' });
-    await createTestOrganization(prisma, { id: orgB, name: 'cases-org-b', slug: 'cases-org-b' });
     await prisma.team.createMany({
       data: [
         { id: teamA, name: 'cases-team-a', organizationId: orgA },
-        { id: teamB, name: 'cases-team-b', organizationId: orgB },
+        { id: teamB, name: 'cases-team-b', organizationId: orgA },
       ],
       skipDuplicates: true,
     });

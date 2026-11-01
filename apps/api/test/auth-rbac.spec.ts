@@ -12,7 +12,6 @@ import { createTestOrganization, ensureDefaultOrganization } from './helpers/tes
 describe('Auth and operator RBAC', () => {
   let app: INestApplication;
   const orgA = '00000000-0000-4000-8000-000000000111';
-  const orgB = '00000000-0000-4000-8000-000000000112';
   const teamA = '00000000-0000-4000-8000-000000000101';
   const teamB = '00000000-0000-4000-8000-000000000102';
   const incidentScoped = '00000000-0000-4000-8000-000000000201';
@@ -28,11 +27,10 @@ describe('Auth and operator RBAC', () => {
     const hash = await bcrypt.hash(password, 10);
     await ensureDefaultOrganization(prisma);
     await createTestOrganization(prisma, { id: orgA, name: 'org-a', slug: 'org-a-rbac' });
-    await createTestOrganization(prisma, { id: orgB, name: 'org-b', slug: 'org-b-rbac' });
     await prisma.team.createMany({
       data: [
         { id: teamA, name: 'team-a', organizationId: orgA },
-        { id: teamB, name: 'team-b', organizationId: orgB },
+        { id: teamB, name: 'team-b', organizationId: orgA },
       ],
       skipDuplicates: true,
     });

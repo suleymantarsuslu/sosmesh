@@ -243,6 +243,8 @@ def build_settings(target_name: str, bundle_id: str, info_plist: str | None = No
         "TARGETED_DEVICE_FAMILY = 1;",
         "SUPPORTED_PLATFORMS = \"iphoneos iphonesimulator\";",
         "SUPPORTS_MACCATALYST = NO;",
+        '"EXCLUDED_ARCHS[sdk=iphonesimulator*]" = x86_64;',
+        "ONLY_ACTIVE_ARCH = YES;",
         "PRODUCT_NAME = " + ("SOSMeshTests" if test else "SOSMesh") + ";",
         "PRODUCT_BUNDLE_IDENTIFIER = " + bundle_id + ";",
         "CODE_SIGNING_ALLOWED = NO;",
@@ -282,6 +284,8 @@ for cfg_id, cfg_name in [(proj_debug, "Debug"), (proj_release, "Release")]:
         f"\n\t\t\t\tIPHONEOS_DEPLOYMENT_TARGET = 17.0;"
         f"\n\t\t\t\tSUPPORTED_PLATFORMS = \"iphoneos iphonesimulator\";"
         f"\n\t\t\t\tSUPPORTS_MACCATALYST = NO;"
+        f"\n\t\t\t\t\"EXCLUDED_ARCHS[sdk=iphonesimulator*]\" = x86_64;"
+        f"\n\t\t\t\tONLY_ACTIVE_ARCH = YES;"
         f"\n\t\t\t}}; name = {cfg_name}; }};"
     )
 config_list(uid(4000), 'PBXProject "SOSMesh"', proj_debug, proj_release)

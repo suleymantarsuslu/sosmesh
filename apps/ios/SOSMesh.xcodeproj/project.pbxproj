@@ -98,12 +98,15 @@ A3120010000000000000001 /* Project object */ = {
 				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
 				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator";
 				SUPPORTS_MACCATALYST = NO;
+				"EXCLUDED_ARCHS[sdk=iphonesimulator*]" = x86_64;
+				ONLY_ACTIVE_ARCH = YES;
 			}; name = Debug; };
 		A3142010000000000000001 /* Release */ = {isa = XCBuildConfiguration; buildSettings = {
 				SDKROOT = iphoneos;
 				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
 				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator";
 				SUPPORTS_MACCATALYST = NO;
+				"EXCLUDED_ARCHS[sdk=iphonesimulator*]" = x86_64;
 			}; name = Release; };
 		A3140000000000000000001 /* Build configuration list for PBXProject "SOSMesh" */ = {
 			isa = XCConfigurationList;

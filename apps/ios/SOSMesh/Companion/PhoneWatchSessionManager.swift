@@ -3,7 +3,7 @@ import SOSMeshCore
 import WatchConnectivity
 
 @MainActor
-final class PhoneWatchSessionManager: NSObject, ObservableObject, WCSessionDelegate {
+final class PhoneWatchSessionManager: NSObject, WCSessionDelegate {
     private let ingress: PhoneWatchSosIngress
     private var session: WCSession?
 

@@ -76,7 +76,7 @@ public enum WatchRetryPolicy {
     private static let backoffMs: [Int64] = [5_000, 15_000, 60_000, 300_000]
 
     public static func nextRetryAtMs(attemptCount: Int, nowMs: Int64) -> Int64 {
-        let index = min(attemptCount, backoffMs.count - 1)
+        let index = min(max(attemptCount - 1, 0), backoffMs.count - 1)
         return nowMs + backoffMs[index]
     }
 

@@ -3,6 +3,7 @@ import { Test, TestingModule } from '@nestjs/testing';
 import cookieParser from 'cookie-parser';
 
 import { AppModule } from '../../src/app.module';
+import { securityHeadersMiddleware } from '../../src/common/middleware/security-headers.middleware';
 import { applyTestAuthEnv } from './operator-auth';
 import { applyTestIngestEnv } from './ingest-test-env';
 
@@ -19,6 +20,7 @@ export async function createTestApp(databaseUrl: string): Promise<INestApplicati
 
   const app = moduleFixture.createNestApplication({ bufferLogs: true });
   app.use(cookieParser());
+  app.use(securityHeadersMiddleware);
   await app.init();
   return app;
 }

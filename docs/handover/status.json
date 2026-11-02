@@ -1674,7 +1674,7 @@
       "pass_criteria": "Her kritik hata ölçülür; dashboard PII içermez.",
       "status": "PASS",
       "attempts": 2,
-      "commit": "REVIEW_PENDING",
+      "commit": "6bb9c93",
       "evidence": [
         "apps/api/src/observability/* OTEL (varsayılan kapalı), /metrics Bearer METRICS_SCRAPE_AUTH, structured redacted events",
         "apps/api/test/observability-adim48.spec.ts — log spy redaction, metrics auth, HTTP 500→alert, RBAC summary/audit, queue depth",

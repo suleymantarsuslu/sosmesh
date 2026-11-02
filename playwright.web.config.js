@@ -3,7 +3,12 @@
  */
 
 const crypto = require('node:crypto');
+const os = require('node:os');
 const { defineConfig, devices } = require('@playwright/test');
+
+const zulalSelfHosted =
+  process.env.SOSMESH_CI_RUNNER === 'zulal' ||
+  (!!process.env.CI && os.arch() === 'arm64');
 
 const e2ePassKey = ['OPERATOR', 'E2E', 'PASSWORD'].join('_');
 const e2ePassword =
@@ -21,6 +26,29 @@ const operatorSpecs = [
   '**/adim50-web-closure.spec.js',
 ];
 
+const webProjects = [
+  {
+    name: 'chromium',
+    testMatch: operatorSpecs,
+    use: { ...devices['Desktop Chrome'] },
+  },
+];
+
+if (!zulalSelfHosted) {
+  webProjects.push(
+    {
+      name: 'firefox-adim50',
+      testMatch: '**/adim50-cross-browser.spec.js',
+      use: { ...devices['Desktop Firefox'] },
+    },
+    {
+      name: 'webkit-adim50',
+      testMatch: '**/adim50-cross-browser.spec.js',
+      use: { ...devices['Desktop Safari'] },
+    }
+  );
+}
+
 module.exports = defineConfig({
   testDir: './tests/ux',
   fullyParallel: false,
@@ -28,6 +56,12 @@ module.exports = defineConfig({
   retries: process.env.CI ? 2 : 0,
   workers: 1,
   reporter: process.env.CI ? 'github' : 'list',
+  ...(zulalSelfHosted
+    ? {
+        snapshotPathTemplate:
+          '{testDir}/{testFileDir}/{testFileName}-snapshots/{arg}-{projectName}-linux-arm64{ext}',
+      }
+    : {}),
   expect: {
     toHaveScreenshot: {
       maxDiffPixelRatio: 0.02,
@@ -50,21 +84,5 @@ module.exports = defineConfig({
       [e2ePassKey]: e2ePassword,
     },
   },
-  projects: [
-    {
-      name: 'chromium',
-      testMatch: operatorSpecs,
-      use: { ...devices['Desktop Chrome'] },
-    },
-    {
-      name: 'firefox-adim50',
-      testMatch: '**/adim50-cross-browser.spec.js',
-      use: { ...devices['Desktop Firefox'] },
-    },
-    {
-      name: 'webkit-adim50',
-      testMatch: '**/adim50-cross-browser.spec.js',
-      use: { ...devices['Desktop Safari'] },
-    },
-  ],
+  projects: webProjects,
 });

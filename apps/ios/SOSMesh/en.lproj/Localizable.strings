@@ -48,3 +48,16 @@
 "settings.multihop.title" = "Experimental multi-hop (foreground)";
 "settings.multihop.footer" = "Off by default. iPhone is not a 24/7 repeater; background and force-quit limits apply.";
 "settings.multihop.toggle" = "Enable research multi-hop relay";
+"help.title" = "Help";
+"help.not112" = "SOSMesh does not replace 112. Call 112 in an emergency.";
+"help.offline.title" = "Offline use";
+"help.offline.body" = "SOS stays encrypted on device; nearby BLE transfer runs without AI.";
+"help.ackLevels.title" = "Status steps";
+"help.ackLevels.body" = "Peer ACK is not operator read or a help guarantee.";
+"help.relay.title" = "Volunteer relay";
+"help.relay.body" = "Opt-in; you carry encrypted packets and cannot read SOS plaintext.";
+"help.watch.title" = "Watch and paired phone";
+"help.watch.body" = "No standalone watch mesh guarantee.";
+"help.failed.title" = "Failed delivery";
+"help.failed.body" = "Call 112 first; check Bluetooth and permissions.";
+"help.support.body" = "Support: TODO_APPROVAL (prod email pending approval).";

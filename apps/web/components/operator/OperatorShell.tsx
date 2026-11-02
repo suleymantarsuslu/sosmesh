@@ -24,6 +24,7 @@ const NAV: NavConfig[] = [
   { href: '/operator/tasks', labelKey: 'web.shell.nav.tasks' },
   { href: '/operator/teams', labelKey: 'web.shell.nav.teams' },
   { href: '/operator/activity', labelKey: 'web.shell.nav.activity' },
+  { href: '/operator/help', labelKey: 'web.shell.nav.help' },
   { href: '/operator/admin', labelKey: 'web.shell.nav.admin', roles: ['ADMIN'] },
 ];
 

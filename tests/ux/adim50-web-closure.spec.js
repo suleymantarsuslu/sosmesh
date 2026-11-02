@@ -142,23 +142,34 @@ test.describe('ADIM 50 %200 zoom reflow', () => {
 });
 
 test.describe('ADIM 50 prefers-reduced-motion görsel regresyon', () => {
+  const snapshotViewport = { width: 1280, height: 720 };
+
   test('giriş ekranı reduced-motion', async ({ page }) => {
+    await page.setViewportSize(snapshotViewport);
     await page.emulateMedia({ reducedMotion: 'reduce' });
     await page.goto('/operator/login');
     await expect(page.getByTestId('login-form')).toBeVisible();
-    // Tam sayfa yüksekliği CI font/render farkında değiştiği için kararlı login bloğu.
     await expect(page.locator('main.login-page')).toHaveScreenshot(
       'adim50-login-reduced-motion.png'
     );
   });
 
   test('dashboard reduced-motion', async ({ page }) => {
+    await page.setViewportSize(snapshotViewport);
+    await page.route('**/api/operator/events**', async (route) => {
+      await route.fulfill({
+        status: 200,
+        contentType: 'application/json',
+        body: JSON.stringify({ events: [] }),
+      });
+    });
     await page.emulateMedia({ reducedMotion: 'reduce' });
     await loginAsOperator(page);
-    await expect(page.getByTestId('operator-dashboard')).toBeVisible();
-    await expect(page.getByTestId('operator-dashboard')).toHaveScreenshot(
-      'adim50-dashboard-reduced-motion.png'
-    );
+    await page.goto('/operator/dashboard');
+    await expect(page.getByTestId('dashboard-no-data')).toBeVisible();
+    await expect(page.getByTestId('connection-disconnected')).toHaveCount(0);
+    const core = page.getByTestId('dashboard-visual-core');
+    await expect(core).toHaveScreenshot('adim50-dashboard-reduced-motion.png');
   });
 });
 

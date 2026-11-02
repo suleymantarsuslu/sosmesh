@@ -37,7 +37,7 @@ services:
   api:
     build:
       context: .
-      dockerfile: apps/api/Dockerfile
+      dockerfile: infra/deploy/docker/Dockerfile.api
     container_name: sosmesh-api
     environment:
       NODE_ENV: development
@@ -67,7 +67,7 @@ services:
   web:
     build:
       context: .
-      dockerfile: apps/web/Dockerfile
+      dockerfile: infra/deploy/docker/Dockerfile.web
     container_name: sosmesh-web
     environment:
       NODE_ENV: development

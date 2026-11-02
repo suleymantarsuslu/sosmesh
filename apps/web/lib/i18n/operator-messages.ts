@@ -27,5 +27,6 @@ export function operatorNavLabels(locale: OperatorLocale) {
     dashboard: translate(locale, 'web.shell.nav.dashboard'),
     cases: translate(locale, 'web.shell.nav.cases'),
     admin: translate(locale, 'web.shell.nav.admin'),
+    help: translate(locale, 'web.shell.nav.help'),
   };
 }

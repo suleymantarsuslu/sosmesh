@@ -48,33 +48,35 @@ export function DashboardView({
   return (
     <div className="dashboard" data-testid="operator-dashboard">
       <ConnectionBanner onReconnect={onReconnect} />
-      <header className="dashboard__header">
-        <h1>{t('web.dashboard.title')}</h1>
-        <input
-          className="dashboard__search"
-          type="search"
-          placeholder={t('web.shell.commandShortcut')}
-          value={query}
-          onChange={(e) => setQuery(e.target.value)}
-          aria-label={t('web.dashboard.recentCases')}
-        />
-      </header>
-      <BentoGrid>
-        <BentoCard title={t('web.dashboard.widgets.totalCases')} testId="bento-new-sos">
-          <StatCard label="Yeni SOS (24s)" value={stats.newSos} emptyLabel={emptyLabel} />
-        </BentoCard>
-        <BentoCard title={t('web.dashboard.widgets.activeCases')} testId="bento-open">
-          <StatCard label="Panelde açık" value={stats.openOnPanel} emptyLabel={emptyLabel} />
-        </BentoCard>
-        <BentoCard title={t('web.dashboard.widgets.avgResponseTime')} span={2} testId="bento-pending">
-          <StatCard label="Beklemede" value={stats.pending} emptyLabel={emptyLabel} />
-          <StatCard
-            label="Ort. ulaşım (sn)"
-            value={stats.avgReachSeconds}
-            emptyLabel={emptyLabel}
+      <div className="dashboard__visual-core" data-testid="dashboard-visual-core">
+        <header className="dashboard__header">
+          <h1>{t('web.dashboard.title')}</h1>
+          <input
+            className="dashboard__search"
+            type="search"
+            placeholder={t('web.shell.commandShortcut')}
+            value={query}
+            onChange={(e) => setQuery(e.target.value)}
+            aria-label={t('web.dashboard.recentCases')}
           />
-        </BentoCard>
-      </BentoGrid>
+        </header>
+        <BentoGrid>
+          <BentoCard title={t('web.dashboard.widgets.totalCases')} testId="bento-new-sos">
+            <StatCard label="Yeni SOS (24s)" value={stats.newSos} emptyLabel={emptyLabel} />
+          </BentoCard>
+          <BentoCard title={t('web.dashboard.widgets.activeCases')} testId="bento-open">
+            <StatCard label="Panelde açık" value={stats.openOnPanel} emptyLabel={emptyLabel} />
+          </BentoCard>
+          <BentoCard title={t('web.dashboard.widgets.avgResponseTime')} span={2} testId="bento-pending">
+            <StatCard label="Beklemede" value={stats.pending} emptyLabel={emptyLabel} />
+            <StatCard
+              label="Ort. ulaşım (sn)"
+              value={stats.avgReachSeconds}
+              emptyLabel={emptyLabel}
+            />
+          </BentoCard>
+        </BentoGrid>
+      </div>
       <ScreenState
         state={screenState}
         emptyLabel={emptyLabel}

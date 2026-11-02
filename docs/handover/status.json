@@ -1788,12 +1788,24 @@
       ],
       "deliverables": "apps/web e2e + screenshots, docs/ux/a11y-report.md",
       "pass_criteria": "Kritik akışlarda blocker düzeyi a11y defect = 0.",
-      "status": "NOT_STARTED",
-      "attempts": 0,
-      "commit": null,
-      "evidence": [],
-      "blockers": [],
-      "last_checked_at": null,
+      "status": "PARTIAL",
+      "attempts": 2,
+      "commit": "0cfd3ca3bd28d3bc79bd3f82064a71c3c0b521c4",
+      "evidence": [
+        "tests/ux/adim50-web-closure.spec.js (axe WCAG2.2 AA 7 akış, klavye, 320-1920, zoom 200%, hydration, slow 3G, offline banner, RBAC UI + Nest 403 guard)",
+        "tests/ux/adim50-cross-browser.spec.js + firefox/webkit Playwright projeleri",
+        "tests/ux/helpers/web-e2e.js",
+        "apps/web/lib/login-route-production-guard.test.ts (production mock kapalı)",
+        "MobileNavDrawer dialog/aria-modal; mobil menü E2E 390px",
+        "docs/ux/a11y-report.md (manuel ekran okuyucu: NOT_TESTED)",
+        "CaseDetailView aria-labelledby; OperatorShell skip-target tabIndex; mobil overflow CSS",
+        "Bağımsız denetim: merge origin/main 97d0eee; ADIM 43 zinciri main'de"
+      ],
+      "blockers": [
+        "Manuel NVDA/JAWS/VoiceOver NOT_TESTED",
+        "Yerel VM: JDK 17 yok — contracts-kotlin Gradle CI doğrular"
+      ],
+      "last_checked_at": "2026-11-01T22:35:00+00:00",
       "goal": "Paneli küçük ekrandan operatör ekranına kadar release kalitesinde kapat.",
       "cursor_tasks": [
         "Lighthouse/axe WCAG 2.2 AA oriented review, keyboard and screenreader full workflows.",
@@ -1803,7 +1815,8 @@
       ],
       "verification_evidence": "Automated accessibility + manual screen-reader reports.",
       "risk_note": "",
-      "gate_raw": "KAPI: TAM ÜRÜN    •    BAĞIMLILIK: 26–28,43"
+      "gate_raw": "KAPI: TAM ÜRÜN    •    BAĞIMLILIK: 26–28,43",
+      "notes": "PR #49 (ADIM 43) zinciri üzerinde; axe blocker düzeltmeleri apps/web CaseDetailView + operator.css"
     },
     {
       "id": "51",

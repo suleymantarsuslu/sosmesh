@@ -22,6 +22,8 @@ export async function POST(request: NextRequest) {
     let payload: { sub: string; role: 'OPERATOR' | 'ADMIN' };
     if (email === 'e2e-operator@sosmesh.example' && password === expectedPass) {
       payload = { sub: 'e2e-operator', role: 'OPERATOR' };
+    } else if (email === 'e2e-admin@sosmesh.example' && password === expectedPass) {
+      payload = { sub: 'e2e-admin', role: 'ADMIN' };
     } else if (email === 'e2e-viewer@sosmesh.example' && password === expectedPass) {
       payload = { sub: 'e2e-viewer', role: 'OPERATOR' };
     } else {

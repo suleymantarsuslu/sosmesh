@@ -64,11 +64,11 @@ jobs:
       
       - name: Install Playwright browsers (GitHub-hosted)
         if: vars.SOSMESH_CI_RUNNER != 'zulal'
-        run: npx playwright install --with-deps chromium
+        run: npx playwright install --with-deps chromium firefox webkit
 
       - name: Install Playwright browsers (Zulal self-hosted)
         if: vars.SOSMESH_CI_RUNNER == 'zulal'
-        run: npx playwright install chromium
+        run: npx playwright install chromium firefox webkit
 
       - name: Load CI PostgreSQL credentials
         if: vars.SOSMESH_CI_RUNNER == 'zulal'

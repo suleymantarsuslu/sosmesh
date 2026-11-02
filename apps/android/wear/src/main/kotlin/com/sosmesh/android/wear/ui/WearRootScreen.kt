@@ -13,6 +13,9 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.platform.testTag
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.wear.compose.material.Button
@@ -32,12 +35,15 @@ fun WearRootScreen(viewModel: WearSosViewModel) {
     when (viewModel.confirmStep) {
         WearConfirmStep.CONFIRM_DIALOG -> ConfirmDialog(viewModel)
         WearConfirmStep.CANCELLED -> StatusPanel(viewModel, accent = Color.DarkGray)
-        else -> SosHome(viewModel)
+        else -> SosHome(viewModel, viewModel.isAmbientMode)
     }
 }
 
 @Composable
-private fun SosHome(viewModel: WearSosViewModel) {
+private fun SosHome(
+    viewModel: WearSosViewModel,
+    isAmbient: Boolean,
+) {
     Column(
         modifier =
             Modifier
@@ -51,39 +57,56 @@ private fun SosHome(viewModel: WearSosViewModel) {
                 Modifier
                     .weight(1f)
                     .fillMaxSize()
-                    .background(Color(0xFFB71C1C))
-                    .pointerInput(Unit) {
-                        detectTapGestures(
-                            onPress = {
-                                viewModel.onSosPressStart()
-                                tryAwaitRelease()
-                                viewModel.onSosPressRelease()
-                            },
-                        )
-                    },
+                    .background(WearAmbientUiPolicy.sosBackground(isAmbient))
+                    .then(
+                        if (isAmbient) {
+                            Modifier
+                        } else {
+                            Modifier.pointerInput(Unit) {
+                                detectTapGestures(
+                                    onPress = {
+                                        viewModel.onSosPressStart()
+                                        tryAwaitRelease()
+                                        viewModel.onSosPressRelease()
+                                    },
+                                )
+                            }
+                        },
+                    )
+                    .semantics { contentDescription = "SOS acil gönderim alanı" }
+                    .testTag("wear_sos_touch_target"),
             contentAlignment = Alignment.Center,
         ) {
             Text(
                 text = "SOS",
-                color = Color.White,
+                color = WearAmbientUiPolicy.primaryText(isAmbient),
                 style = MaterialTheme.typography.title1,
             )
         }
         Text(
             text = viewModel.statusHeadline,
             textAlign = TextAlign.Center,
-            modifier = Modifier.padding(top = 8.dp),
+            modifier =
+                Modifier
+                    .padding(top = 8.dp)
+                    .testTag("wear_status_headline"),
         )
-        Text(
-            text = viewModel.statusDetail,
-            textAlign = TextAlign.Center,
-            style = MaterialTheme.typography.caption1,
-        )
+        if (!WearAmbientUiPolicy.hideSecondaryDetailInAmbient(isAmbient)) {
+            Text(
+                text = viewModel.statusDetail,
+                textAlign = TextAlign.Center,
+                style = MaterialTheme.typography.caption1,
+                modifier = Modifier.testTag("wear_status_detail"),
+            )
+        }
         Text(
             text = "112 yerine geçmez",
             textAlign = TextAlign.Center,
             style = MaterialTheme.typography.caption2,
-            modifier = Modifier.padding(top = 4.dp),
+            modifier =
+                Modifier
+                    .padding(top = 4.dp)
+                    .testTag("wear_not112_disclaimer"),
         )
     }
 }

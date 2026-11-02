@@ -1,0 +1,85 @@
+{
+  "description": "Cross-language PEER_RECEIVED vs SERVER_ACCEPTED and SHA/digest gate (TS/Kotlin/Swift).",
+  "mutationNote": "Production must require transferVerified; chunk ACK alone must never emit PEER_RECEIVED or SERVER_ACCEPTED.",
+  "cases": [
+    {
+      "id": "verified_digest_emits_peer_only",
+      "input": {
+        "crcValid": true,
+        "digestValid": true,
+        "chunkAcksComplete": true,
+        "transferVerified": true
+      },
+      "expect": {
+        "mayEmitPeerReceived": true,
+        "mayEmitServerAccepted": false,
+        "rejectReason": null
+      }
+    },
+    {
+      "id": "chunk_ack_without_verified_no_peer",
+      "input": {
+        "crcValid": true,
+        "digestValid": true,
+        "chunkAcksComplete": true,
+        "transferVerified": false
+      },
+      "expect": {
+        "mayEmitPeerReceived": false,
+        "mayEmitServerAccepted": false,
+        "rejectReason": "AWAITING_TRANSFER_VERIFIED"
+      }
+    },
+    {
+      "id": "digest_invalid_no_peer",
+      "input": {
+        "crcValid": true,
+        "digestValid": false,
+        "chunkAcksComplete": true,
+        "transferVerified": false
+      },
+      "expect": {
+        "mayEmitPeerReceived": false,
+        "mayEmitServerAccepted": false,
+        "rejectReason": "DIGEST_INVALID"
+      }
+    },
+    {
+      "id": "crc_invalid_no_peer",
+      "input": {
+        "crcValid": false,
+        "digestValid": true,
+        "chunkAcksComplete": false,
+        "transferVerified": false
+      },
+      "expect": {
+        "mayEmitPeerReceived": false,
+        "mayEmitServerAccepted": false,
+        "rejectReason": "CRC_MISMATCH"
+      }
+    },
+    {
+      "id": "peer_received_not_server_accepted",
+      "input": {
+        "deliveryState": "PEER_RECEIVED"
+      },
+      "expect": {
+        "mayEmitPeerReceived": true,
+        "mayEmitServerAccepted": false,
+        "allowedNextStates": ["SERVER_ACCEPTED", "FAILED", "EXPIRED"],
+        "forbiddenNextStates": ["OPERATOR_SEEN", "CASE_IN_PROGRESS"]
+      }
+    },
+    {
+      "id": "server_accepted_requires_prior_peer",
+      "input": {
+        "deliveryState": "LOCAL_SAVED"
+      },
+      "expect": {
+        "mayEmitServerAccepted": false,
+        "allowedNextStates": ["PEER_RECEIVED", "FAILED", "EXPIRED"],
+        "forbiddenNextStates": ["SERVER_ACCEPTED"]
+      }
+    }
+  ]
+}

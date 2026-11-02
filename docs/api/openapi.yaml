@@ -656,9 +656,9 @@ paths:
       responses:
         "200":
           description: ""
-      tags: &a13
+      tags:
         - operator
-      security: &a14
+      security:
         - bearer: []
   /v1/operator/observability/audit:
     get:
@@ -666,6 +666,85 @@ paths:
       parameters: []
       responses:
         "200":
+          description: ""
+      tags:
+        - operator
+      security:
+        - bearer: []
+  /v1/operator/incidents/{incidentId}/recommendations/plan:
+    post:
+      operationId: RecommendationController_plan
+      parameters:
+        - name: incidentId
+          required: true
+          in: path
+          schema:
+            type: string
+        - name: includeAiRationale
+          required: true
+          in: query
+          schema:
+            type: string
+      responses:
+        "201":
+          description: ""
+      tags: &a13
+        - operator-recommendations
+      security: &a14
+        - bearer: []
+  /v1/operator/incidents/{incidentId}/recommendations:
+    get:
+      operationId: RecommendationController_list
+      parameters:
+        - name: incidentId
+          required: true
+          in: path
+          schema:
+            type: string
+      responses:
+        "200":
+          description: ""
+      tags: *a13
+      security: *a14
+  /v1/operator/recommendations/{recommendationId}/reject:
+    patch:
+      operationId: RecommendationController_reject
+      parameters:
+        - name: recommendationId
+          required: true
+          in: path
+          schema:
+            type: string
+      responses:
+        "200":
+          description: ""
+      tags: *a13
+      security: *a14
+  /v1/operator/recommendations/{recommendationId}/confirm:
+    post:
+      operationId: RecommendationController_confirm
+      parameters:
+        - name: recommendationId
+          required: true
+          in: path
+          schema:
+            type: string
+      responses:
+        "201":
+          description: ""
+      tags: *a13
+      security: *a14
+  /v1/operator/recommendations/{recommendationId}/feedback:
+    post:
+      operationId: RecommendationController_feedback
+      parameters:
+        - name: recommendationId
+          required: true
+          in: path
+          schema:
+            type: string
+      responses:
+        "201":
           description: ""
       tags: *a13
       security: *a14

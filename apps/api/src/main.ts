@@ -40,11 +40,15 @@ async function bootstrap() {
   const { app } = await createApp();
   const config = app.get(ConfigService);
   const port = config.get<number>('PORT', 3001);
-  await app.listen(port);
+  await app.listen(port, '0.0.0.0');
   const logger = app.get(Logger);
   logger.log(`SOSMesh API listening on port ${port}`);
 }
 
 if (require.main === module) {
-  bootstrap();
+  bootstrap().catch((error: unknown) => {
+    const message = error instanceof Error ? error.message : String(error);
+    console.error(message);
+    process.exit(1);
+  });
 }

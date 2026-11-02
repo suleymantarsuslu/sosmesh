@@ -1,0 +1,37 @@
+# One-shot Prisma migration job (run before API/worker rollouts).
+# Build: docker build -f infra/deploy/docker/Dockerfile.migrate -t sosmesh-migrate:local .
+
+FROM node:20-bookworm-slim AS build
+WORKDIR /app
+RUN apt-get update \
+  && apt-get install -y --no-install-recommends openssl ca-certificates \
+  && rm -rf /var/lib/apt/lists/*
+RUN corepack enable && corepack prepare pnpm@9.0.0 --activate
+COPY package.json pnpm-lock.yaml pnpm-workspace.yaml ./
+COPY packages/contracts/package.json packages/contracts/
+COPY apps/api/package.json apps/api/
+COPY apps/api/prisma apps/api/prisma
+RUN pnpm install --frozen-lockfile --filter @sosmesh/api...
+COPY packages/contracts packages/contracts
+COPY apps/api apps/api
+RUN pnpm --filter @sosmesh/contracts build
+RUN pnpm --filter @sosmesh/api exec prisma generate
+
+FROM node:20-bookworm-slim AS runtime
+RUN apt-get update \
+  && apt-get install -y --no-install-recommends openssl ca-certificates tini \
+  && rm -rf /var/lib/apt/lists/* \
+  && groupadd -r sosmesh -g 10001 \
+  && useradd -r -g sosmesh -u 10001 -d /app -s /usr/sbin/nologin sosmesh
+WORKDIR /app
+COPY --from=build /app/node_modules ./node_modules
+COPY --from=build /app/apps/api/node_modules ./apps/api/node_modules
+COPY --from=build /app/apps/api/prisma ./apps/api/prisma
+COPY --from=build /app/apps/api/package.json ./apps/api/package.json
+COPY --from=build /app/package.json ./package.json
+COPY --from=build /app/pnpm-workspace.yaml ./pnpm-workspace.yaml
+USER sosmesh
+WORKDIR /app/apps/api
+ENV NODE_ENV=production
+ENTRYPOINT ["/usr/bin/tini", "--"]
+CMD ["npx", "prisma", "migrate", "deploy"]

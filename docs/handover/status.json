@@ -1199,12 +1199,24 @@
       ],
       "deliverables": "cross-platform test report + compatibility grid",
       "pass_criteria": "Temel çapraz SOS PEER_RECEIVED/SERVER_ACCEPTED ayrımını korur.",
-      "status": "NOT_STARTED",
-      "attempts": 0,
-      "commit": null,
-      "evidence": [],
-      "blockers": [],
-      "last_checked_at": null,
+      "status": "PARTIAL",
+      "attempts": 1,
+      "commit": "74dda9e",
+      "evidence": [
+        "packages/fixtures/cross-platform: transfer-ack-gate.json, relay-scenarios.json, encrypted-payload-fixtures.json",
+        "packages/contracts + contracts-kotlin + SOSMeshCore: aynı transfer-ack-gate fixture testleri",
+        "mutation: peerReceivedIfIgnoringVerified ≠ production evaluateTransferAckGate (TS/Kotlin/Swift/chaos)",
+        "docs/tests/cross-platform-integration-report.md",
+        "docs/compat/cross-platform-matrix.csv (fiziksel satırlar NOT_TESTED)",
+        "Android Compose: CrossPlatformFaultCard + PlatformSelfRepairCard; iOS SwiftUI CrossPlatformFaultBanner",
+        "VoiceOver/Dynamic Type fiziksel: NOT_TESTED",
+        "iPhone↔Android 30 senaryo fiziksel lab: NOT_TESTED"
+      ],
+      "blockers": [
+        "Fiziksel iPhone + Android lab kanıtı yok",
+        "Bu VM'de ANDROID_HOME yok — Gradle unit CI doğrular"
+      ],
+      "last_checked_at": "2026-11-01T19:30:00+00:00",
       "goal": "Platformlar arası SOS durumlarını tek sözleşmeye bağla.",
       "cursor_tasks": [
         "iPhone A→Android B (online), Android A→iPhone B (online), offline cross relay iki yönlü cases.",
@@ -1296,12 +1308,21 @@
       ],
       "deliverables": "apps/watchos and iOS companion target; watch setup docs",
       "pass_criteria": "Saatten SOS iPhone outbox’a girer; saat sadece doğrulanmış alım teyidi gösterir.",
-      "status": "NOT_STARTED",
-      "attempts": 0,
-      "commit": null,
-      "evidence": [],
-      "blockers": [],
-      "last_checked_at": null,
+      "status": "PARTIAL",
+      "attempts": 1,
+      "commit": "414b53a",
+      "evidence": [
+        "apps/watchos/SOSMeshWatch SwiftUI iki adımlı SOS + WatchSessionBridge (WCSession)",
+        "apps/ios/SOSMesh/Companion PhoneWatchSessionManager + PhoneWatchSosIngress → outbox origin=watch_os",
+        "SOSMeshCore/WatchCompanion wire, offline queue, ingress idempotency",
+        "docs/watchos/setup.md",
+        "Swift: WatchOfflineQueueTests, WatchConnectivitySendPlannerTests, PhoneWatchSosIngressTests",
+        "Gerçek Apple Watch + eşleşmiş iPhone: NOT_TESTED (B-04)"
+      ],
+      "blockers": [
+        "B-04"
+      ],
+      "last_checked_at": "2026-11-01T22:00:00Z",
       "goal": "Apple Watch’tan iPhone companion’a tek tuşla güvenilir SOS ilet.",
       "cursor_tasks": [
         "WatchKit/watchOS SwiftUI screens, accidental triggers guard, haptics + visually accessible result.",
@@ -1322,12 +1343,20 @@
       ],
       "deliverables": "apps/watchos/complications; docs/tests/watchos-matrix.md",
       "pass_criteria": "Yeniden erişildiğinde kuyruk doğru eşitlenir; gecikme açıkça gösterilir.",
-      "status": "NOT_STARTED",
-      "attempts": 0,
-      "commit": null,
-      "evidence": [],
-      "blockers": [],
-      "last_checked_at": null,
+      "status": "PARTIAL",
+      "attempts": 1,
+      "commit": "414b53a",
+      "evidence": [
+        "apps/watchos/SOSMeshWatchWidgets WidgetKit complication + WatchRetryPolicy backoff",
+        "WatchConnectivitySendPlanner sendMessage vs transferUserInfo",
+        "docs/tests/watchos-matrix.md",
+        "Swift: WatchOfflineQueueTests, WatchConnectivitySendPlannerTests",
+        "Gerçek saat komplikasyon tap / phone off: NOT_TESTED (B-04)"
+      ],
+      "blockers": [
+        "B-04"
+      ],
+      "last_checked_at": "2026-11-01T22:00:00Z",
       "goal": "Zor koşulda saat yüzeyinden erişilebilir kısa yol ve güvenli durum sağlayın.",
       "cursor_tasks": [
         "Complication/widget supported surfaces; quick action, reachability status and localized copy.",
@@ -1349,12 +1378,20 @@
       ],
       "deliverables": "docs/watches/capability-matrix.md; companion fallback flows",
       "pass_criteria": "Her saat özelliği “supported/tested/experimental” olarak sınıflandırılır.",
-      "status": "NOT_STARTED",
-      "attempts": 0,
-      "commit": null,
-      "evidence": [],
-      "blockers": [],
-      "last_checked_at": null,
+      "status": "PARTIAL",
+      "attempts": 1,
+      "commit": "414b53a",
+      "evidence": [
+        "docs/watches/capability-matrix.md + WatchCapabilityMatrix.swift",
+        "WatchOfflineHelpView + phoneNotReachableCopy (TR/EN)",
+        "Mesh relay iddiası unsupported; direct HTTPS experimental",
+        "Wear OS ile ortak offline kopya (wear-policy referans)",
+        "6 senaryo matrisi dokümante; fiziksel doğrulama NOT_TESTED"
+      ],
+      "blockers": [
+        "B-04"
+      ],
+      "last_checked_at": "2026-11-01T22:00:00Z",
       "goal": "Saatlerin gerçek yeteneklerine göre net fallback ve taahhüt ver.",
       "cursor_tasks": [
         "Wear OS / watchOS “phone not reachable” tasarımını ortak kopya diliyle eşle.",
@@ -1419,12 +1456,22 @@
       ],
       "deliverables": "docs/research/ios-multihop.md; experimental branch gated",
       "pass_criteria": "Yalnız test edilen kombinasyonlar destek listesine girer.",
-      "status": "NOT_STARTED",
-      "attempts": 0,
-      "commit": null,
-      "evidence": [],
-      "blockers": [],
-      "last_checked_at": null,
+      "status": "PARTIAL",
+      "attempts": 1,
+      "commit": "74dda9e",
+      "evidence": [
+        "docs/research/ios-multihop.md",
+        "SOSMeshCore/MeshRelayEngine.swift + MeshMultihopRelayCoordinator + MeshRelayFeatureFlags (default off)",
+        "MeshRelayEngineCrossLanguageTests: relay-engine-cases.json PASS (Swift PM / CI)",
+        "DEBUG MeshRelayEngineMutationTests: skip guard sentinel",
+        "apps/ios/README.md: arka plan/force-quit/7-24 repeater yok",
+        "Settings multihop toggle (experimental only)",
+        "3 cihaz foreground/locked/force-quit fiziksel: NOT_TESTED"
+      ],
+      "blockers": [
+        "Fiziksel multi-hop zincir kanıtı yok"
+      ],
+      "last_checked_at": "2026-11-01T19:30:00+00:00",
       "goal": "iPhone’un doğrulanmış çalışma aralığı içinde sınırlı mesh relay katılımını ölç.",
       "cursor_tasks": [
         "iOS foreground multi-hop sender/receiver behavior within CoreBluetooth permissions.",
@@ -1486,26 +1533,25 @@
       "deliverables": "docs/security/threat-model.md, findings.csv, security tests",
       "pass_criteria": "Critical risk = 0; high risk için onaylı remediated status.",
       "status": "PARTIAL",
-      "attempts": 1,
-      "commit": "d7cdc6a",
+      "attempts": 2,
+      "commit": "7c218d6",
       "evidence": [
         "docs/security/threat-model.md (STRIDE/TARA; bağımsız denetim NOT_TESTED)",
-        "docs/security/findings.csv (açık critical npm + SEC-RADIO-SPOOF-001)",
-        "packages/contracts/src/security/adversarial-security.test.ts (49 test, ≥30 fixture id)",
-        "packages/contracts/fixtures/security/adversarial-{mesh-relay,crypto,schema}.json",
-        "apps/api/test/security-adim43.spec.ts (auth RL, CSRF, RBAC, HTTP başlıkları)",
-        "apps/api/src/common/middleware/security-headers.middleware.ts",
-        "apps/web/lib/security-headers.js + lib/security-headers.test.ts (CSP)",
-        "CI: secret-scan job + verify.sh 14–15; pnpm audit bulguları findings.csv",
-        "ADIM 34 / PR #48: protocol-v2 sözleşme düzeyi; merge sonrası git fetch && merge origin/main"
+        "docs/security/findings.csv (critical npm remediated; SEC-RADIO-SPOOF-001 açık)",
+        "packages/contracts/src/security/adversarial-security.test.ts (53 test, ≥30 fixture id, SEC-MESH-SIZE-001)",
+        "packages/contracts/src/protocol-v2/mesh-payload-limits.ts + schema maxLength 21848",
+        "packages/contracts-kotlin MeshRelayEngine.kt opaque size guard + production guard test",
+        "apps/api/test/security-adim43.spec.ts (CSRF, RBAC, rate limit 429, HTTP başlıkları)",
+        "pnpm audit critical=0 (next 15.5.28, vitest 3.2.6, maplibre-gl 6.4.1); high açık (nest transitive vb.)",
+        "merge origin/main (ADIM 42 radio planner); adversarial + verify.sh 24/24 yerel EXIT=0"
       ],
       "blockers": [
-        "Bağımsız insan güvenlik denetimi NOT_TESTED",
-        "pnpm audit critical/high açık (next, vitest, maplibre-gl transitive)",
+        "Bağımsız insan güvenlik denetimi NOT_TESTED (SEC-IND-AUDIT-001)",
+        "pnpm audit high açık (SEC-DEP-NEST-001 vb.)",
         "SEC-RADIO-SPOOF-001 fiziksel BLE lab yok",
-        "ADIM 34 main'de değil (#48 kısmi bağımlılık)"
+        "SEC-ADIM34-001 NOT_TESTED (çapraz cihaz)"
       ],
-      "last_checked_at": "2026-11-01T21:40:00+00:00",
+      "last_checked_at": "2026-11-01T22:10:00+00:00",
       "goal": "Kötü niyetli aktarıcı, sahte SOS ve PII ifşasını sistematik test et.",
       "cursor_tasks": [
         "STRIDE/TARA threat model; malicious peer, replay, duplicate floods, radio spoofing and server abuse.",
@@ -1516,7 +1562,7 @@
       "verification_evidence": "Security test receipts, 30+ adversarial fixtures, artifact scans.",
       "risk_note": "",
       "gate_raw": "KAPI: TAM ÜRÜN    •    BAĞIMLILIK: 9,18,34,40",
-      "notes": "GEÇTİ ölçütü critical=0 karşılanmadı → PARTIAL. #48 merge sonrası adversarial suite yeniden koşturulacak."
+      "notes": "critical=0 (npm) sağlandı; GEÇTİ ölçütü high risk + NOT_TESTED maddeler nedeniyle PARTIAL."
     },
     {
       "id": "44",
@@ -1601,12 +1647,20 @@
       ],
       "deliverables": "api recommendation module, web assignment preview",
       "pass_criteria": "Öneri güvenli şekilde reddedilebilir; otomatik fiziksel sevk yok.",
-      "status": "NOT_STARTED",
-      "attempts": 0,
-      "commit": null,
-      "evidence": [],
+      "status": "PARTIAL",
+      "attempts": 1,
+      "commit": "4f4bc105e46a9aa46e73052157893503a071665a",
+      "evidence": [
+        "apps/api/src/recommendation (matching-engine, rationale guards, REST)",
+        "apps/api/test/recommendation-adim46.spec.ts",
+        "apps/web/features/assignment/AssignmentPreviewPanel.tsx",
+        "apps/web/features/case-list/CasesView.tsx harita önizleme",
+        "pnpm -r build EXIT=0; apps/api jest recommendation + matching-engine PASS",
+        "gerçek model / AI gerekçe canlı doğrulama: NOT_TESTED (varsayılan kapalı)",
+        "Android SDK Gradle yerel: NOT_RUN (CI doğrular)"
+      ],
       "blockers": [],
-      "last_checked_at": null,
+      "last_checked_at": "2026-11-01T22:25:00+00:00",
       "goal": "Koordinatöre açıklanabilir öneriler sun, yetkili kararını koru.",
       "cursor_tasks": [
         "Approved resource catalog and simple deterministic distance/availability engine; opt-in AI rationale.",
@@ -1794,12 +1848,27 @@
       ],
       "deliverables": "iOS/watchOS archives, test report, app listing metadata",
       "pass_criteria": "iOS ve watchOS gerçek cihaz iş akışı kanıtlı; mağaza yayınına otomatik geçilmez.",
-      "status": "NOT_STARTED",
-      "attempts": 0,
-      "commit": null,
-      "evidence": [],
-      "blockers": [],
-      "last_checked_at": null,
+      "status": "PARTIAL",
+      "attempts": 1,
+      "commit": "49a43f9",
+      "evidence": [
+        "docs/release/ios.md (test plan, BLOCKED_APPROVAL TestFlight, TR/EN metadata)",
+        "docs/release/evidence/ios-field-test-record-template.csv (result=NOT_TESTED)",
+        "apps/ios/Config/Release-{Demo,Staging,Prod}.xcconfig",
+        "apps/ios/scripts/archive-export.sh + ExportOptions.template.plist (env-only signing)",
+        "apps/ios/SOSMesh/PrivacyInfo.xcprivacy + watchOS PrivacyInfo manifests",
+        "apps/ios/SOSMesh/tr|en.lproj/InfoPlist.strings",
+        "apps/ios/scripts/check-xcodeproj-golden.sh PASS (regenerated golden)",
+        "apps/ios/scripts/check-release-adim52.sh + scripts/test-check-ios-release-adim52.sh (verify 26–27/27)",
+        "Fiziksel iPhone/Watch + TestFlight kurulum: NOT_TESTED",
+        "xcodebuild archive: BLOCKED macOS/Linux agent (script hazır)"
+      ],
+      "blockers": [
+        "TestFlight upload BLOCKED_APPROVAL",
+        "Apple Developer imzalama kullanıcı Mac/cihaz aşaması",
+        "Fiziksel BLE/Watch/VoiceOver kanıtı yok"
+      ],
+      "last_checked_at": "2026-11-02T05:30:00+00:00",
       "goal": "Apple ekosistemini sadece simülatör değil gerçek cihaz üzerinde doğrula.",
       "cursor_tasks": [
         "Signing, capabilities, privacy manifests, Xcode archive, ipa/TestFlight eligibility.",
@@ -1822,12 +1891,28 @@
       ],
       "deliverables": "Wear OS signed artifact, docs/release/wearos.md",
       "pass_criteria": "En az bir gerçek saatle fiziksel uçtan uca kanıt var.",
-      "status": "NOT_STARTED",
-      "attempts": 0,
-      "commit": null,
-      "evidence": [],
-      "blockers": [],
-      "last_checked_at": null,
+      "status": "PARTIAL",
+      "attempts": 1,
+      "commit": "93d8b01",
+      "evidence": [
+        "docs/release/wearos.md (Play metadata/gizlilik/kademeli yayın BLOCKED_APPROVAL)",
+        "apps/android/wear/build.gradle.kts — release AAB, imza env: SOSMESH_WEAR_RELEASE_*",
+        "scripts/wear-release-bundle.sh, scripts/wear-unit-tests.sh",
+        "WearManifestReleaseGateTest — standalone=false, minimal izinler",
+        "WearAmbientUiPolicy + AmbientModeSupport; WearPowerRetryPolicy (pil tasarrufu)",
+        "WearRootScreen Robolectric: round, fontScale 2, ambient",
+        "WearSosViewModelPhoneUnreachableTest — «Telefona ulaşılamıyor», sahte gönderildi yok",
+        "docs/handover/evidence/adim53/trace-evidence-template.md (NOT_TESTED)",
+        "Tile/complication: yok (bilinçli; wearos.md)",
+        "Gerçek saat click→phone outbox→gateway: NOT_TESTED (B-04, GEÇTİ ölçütü)",
+        "Play upload / imzalı artifact: BLOCKED_APPROVAL (B-06)"
+      ],
+      "blockers": [
+        "B-04",
+        "B-06",
+        "Fiziksel Wear uçtan uca kanıt yok — şablon doldurulmadı"
+      ],
+      "last_checked_at": "2026-11-02T05:30:00+00:00",
       "goal": "Android saat uygulamasını store ve kullanıcı beklentisine hazırlamak.",
       "cursor_tasks": [
         "Wear OS manifest/permissions, watch face surfaces, AAB packaging and feature listing.",
@@ -1851,12 +1936,26 @@
       ],
       "deliverables": "infra/deploy, docs/runbooks/deploy.md, .env.example",
       "pass_criteria": "Staging çalışır; production yalnızca kullanıcı onayıyla.",
-      "status": "NOT_STARTED",
-      "attempts": 0,
-      "commit": null,
-      "evidence": [],
-      "blockers": [],
-      "last_checked_at": null,
+      "status": "PARTIAL",
+      "attempts": 1,
+      "commit": "4a3fe13",
+      "evidence": [
+        "infra/deploy/docker (api, web, worker, migrate multi-stage non-root)",
+        "infra/deploy/compose/docker-compose.staging.yml",
+        "infra/deploy/nginx + ingress + k8s migration templates (BLOCKED_APPROVAL)",
+        "docs/runbooks/deploy.md + deploy-workflow-draft.md",
+        ".env.example secret names only",
+        "apps/api/src/worker-main.ts + apps/web/app/health/route.ts",
+        ".github/workflows/deploy-container-smoke.yml (ubuntu-latest, fork guard)",
+        "docs/handover/evidence/adim54/*.template.txt",
+        "Staging deploy/smoke/rollback/TLS: NOT_TESTED",
+        "Prod deploy/DNS/cert/public push: BLOCKED_APPROVAL"
+      ],
+      "blockers": [
+        "Gerçek staging ortamı ve secret manager wiring yok",
+        "Production environment protection + kullanıcı onayı bekleniyor"
+      ],
+      "last_checked_at": "2026-11-02T05:30:00+00:00",
       "goal": "Staging/production ayrımını güvenli kur.",
       "cursor_tasks": [
         "Docker multi-stage, health/readiness, nginx/ingress TLS, migrations job, secret manager.",
@@ -1946,12 +2045,27 @@
       ],
       "deliverables": "docs/user/*.md, web help, mobile help screens",
       "pass_criteria": "Kullanıcı bağlantı düzeyini ve başarısız iletimi anlıyor.",
-      "status": "NOT_STARTED",
-      "attempts": 0,
-      "commit": null,
-      "evidence": [],
-      "blockers": [],
-      "last_checked_at": null,
+      "status": "PARTIAL",
+      "attempts": 1,
+      "commit": "1a8a52f7f991d54cbf474f0e60f7f39de938429d",
+      "evidence": [
+        "docs/user/kullanici-rehberi-tr.md",
+        "docs/user/user-guide-en.md",
+        "docs/user/platform-destek-matrisi.md",
+        "apps/web/app/(operator)/operator/(panel)/help/page.tsx",
+        "apps/web/features/help/ios-localizable-parity.test.ts",
+        "scripts/check-ios-localizable-parity.js",
+        "tests/ux/operator-help.spec.js",
+        "SECURITY.md",
+        "docs/tests/first-time-user-guided-tr.md",
+        "docs/legal/kvkk-gdpr-legal-review-checklist.md (hukuki inceleme NOT_TESTED)"
+      ],
+      "blockers": [
+        "First-time user fiziksel senaryo NOT_TESTED",
+        "Destek formu prod e-posta TODO_APPROVAL / BLOCKED_APPROVAL",
+        "Mağaza/prod deploy BLOCKED_APPROVAL"
+      ],
+      "last_checked_at": "2026-11-02T05:36:30+00:00",
       "goal": "Gerçek kullanıcıya güvenilir rehberlik ve denetim kabiliyeti ver.",
       "cursor_tasks": [
         "TR/EN offline usage, permissions, relay opt-in, watch paired phone guide, troubleshooting.",

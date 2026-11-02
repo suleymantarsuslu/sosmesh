@@ -2,7 +2,7 @@
 
 import { useMemo } from 'react';
 import Map, { Marker } from 'react-map-gl/maplibre';
-import maplibregl from 'maplibre-gl';
+import * as maplibregl from 'maplibre-gl';
 import Supercluster from 'supercluster';
 import 'maplibre-gl/dist/maplibre-gl.css';
 
@@ -12,6 +12,7 @@ import {
   hasPlottableCoordinates,
   SYNTHETIC_MAP_CENTER,
 } from '../case-list/geo';
+import type { AssignmentPreviewRoute } from '../assignment/types';
 import type { OperatorCaseRow } from '../case-list/types';
 import { isMapTestMode, osmAttribution, resolveMapStyle } from './map-config';
 
@@ -21,6 +22,7 @@ type Props = {
   onSelect: (incidentId: string) => void;
   zoom: number;
   onZoomChange: (zoom: number) => void;
+  assignmentPreview?: AssignmentPreviewRoute | null;
 };
 
 type ClusterProps = {
@@ -37,7 +39,14 @@ function metersToPixels(lat: number, meters: number, zoomLevel: number): number 
   return meters / metersPerPixel;
 }
 
-export function OperatorMap({ rows, selectedId, onSelect, zoom, onZoomChange }: Props) {
+export function OperatorMap({
+  rows,
+  selectedId,
+  onSelect,
+  zoom,
+  onZoomChange,
+  assignmentPreview,
+}: Props) {
   const testMode = isMapTestMode();
   const plottable = useMemo(
     () => rows.filter((row) => hasPlottableCoordinates(row)),
@@ -107,6 +116,12 @@ export function OperatorMap({ rows, selectedId, onSelect, zoom, onZoomChange }: 
           ))}
         </ul>
         <p className="operator-map__attribution">{osmAttribution()} (test modu)</p>
+        {assignmentPreview ? (
+          <p className="operator-map__preview" data-testid="assignment-map-preview">
+            Görev önizleme: {assignmentPreview.teamLabel} → vaka (
+            {assignmentPreview.to ? 'rota çizildi' : 'hedef koordinat yok'})
+          </p>
+        ) : null}
       </div>
     );
   }
@@ -191,6 +206,11 @@ export function OperatorMap({ rows, selectedId, onSelect, zoom, onZoomChange }: 
         })}
       </Map>
       <p className="operator-map__attribution">{osmAttribution()}</p>
+      {assignmentPreview ? (
+        <p className="operator-map__preview" data-testid="assignment-map-preview">
+          Görev önizleme: {assignmentPreview.teamLabel}
+        </p>
+      ) : null}
     </div>
   );
 }

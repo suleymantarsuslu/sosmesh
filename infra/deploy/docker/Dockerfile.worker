@@ -1,0 +1,46 @@
+# SOSMesh background worker (retention + health) — same image layers as API, different entrypoint.
+# Build: docker build -f infra/deploy/docker/Dockerfile.worker -t sosmesh-worker:local .
+
+FROM node:20-bookworm-slim AS build
+WORKDIR /app
+RUN apt-get update \
+  && apt-get install -y --no-install-recommends openssl ca-certificates \
+  && rm -rf /var/lib/apt/lists/*
+RUN corepack enable && corepack prepare pnpm@9.0.0 --activate
+COPY package.json pnpm-lock.yaml pnpm-workspace.yaml ./
+COPY packages/contracts/package.json packages/contracts/
+COPY apps/api/package.json apps/api/
+COPY apps/api/prisma apps/api/prisma
+RUN pnpm install --frozen-lockfile --filter @sosmesh/api...
+COPY packages/contracts packages/contracts
+COPY apps/api apps/api
+RUN pnpm --filter @sosmesh/contracts build
+RUN pnpm --filter @sosmesh/api build
+RUN pnpm --filter @sosmesh/api exec prisma generate
+
+FROM node:20-bookworm-slim AS runtime
+RUN apt-get update \
+  && apt-get install -y --no-install-recommends openssl ca-certificates tini wget \
+  && rm -rf /var/lib/apt/lists/* \
+  && groupadd -r sosmesh -g 10001 \
+  && useradd -r -g sosmesh -u 10001 -d /app -s /usr/sbin/nologin sosmesh
+WORKDIR /app
+COPY --from=build /app/node_modules ./node_modules
+COPY --from=build /app/apps/api/node_modules ./apps/api/node_modules
+COPY --from=build /app/apps/api/dist ./apps/api/dist
+COPY --from=build /app/apps/api/prisma ./apps/api/prisma
+COPY --from=build /app/packages/contracts/dist ./packages/contracts/dist
+COPY --from=build /app/packages/contracts/schemas ./packages/contracts/schemas
+COPY --from=build /app/packages/contracts/package.json ./packages/contracts/package.json
+COPY --from=build /app/packages/contracts/node_modules ./packages/contracts/node_modules
+COPY --from=build /app/apps/api/package.json ./apps/api/package.json
+COPY --from=build /app/package.json ./package.json
+COPY --from=build /app/pnpm-workspace.yaml ./pnpm-workspace.yaml
+USER sosmesh
+WORKDIR /app/apps/api
+ENV NODE_ENV=production
+EXPOSE 3002
+HEALTHCHECK --interval=30s --timeout=5s --start-period=30s --retries=3 \
+  CMD wget -q -O- "http://127.0.0.1:${WORKER_HEALTH_PORT:-3002}/health/ready" >/dev/null || exit 1
+ENTRYPOINT ["/usr/bin/tini", "--"]
+CMD ["node", "dist/worker-main.js"]

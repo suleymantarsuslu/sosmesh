@@ -1,0 +1,69 @@
+name: Deploy Container Smoke
+
+on:
+  push:
+    branches: [main, dev]
+  pull_request:
+    branches: [main, dev]
+
+permissions:
+  contents: read
+
+jobs:
+  container-smoke:
+    name: Build images and staging compose smoke
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    if: github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Generate ephemeral smoke secrets
+        shell: bash
+        run: |
+          set -euo pipefail
+          JWT_SECRET=$(openssl rand -base64 32)
+          POSTGRES_PASSWORD=$(openssl rand -hex 16)
+          SIGN_KEY=$(node - <<'NODE'
+          const { generateKeyPairSync } = require('node:crypto');
+          const { privateKey } = generateKeyPairSync('ed25519');
+          process.stdout.write(
+            privateKey.export({ format: 'der', type: 'pkcs8' }).toString('base64')
+          );
+          NODE
+          )
+          DATABASE_URL="postgresql://sosmesh:${POSTGRES_PASSWORD}@postgres:5432/sosmesh_staging"
+          echo "::add-mask::${JWT_SECRET}"
+          echo "::add-mask::${POSTGRES_PASSWORD}"
+          echo "::add-mask::${SIGN_KEY}"
+          echo "::add-mask::${DATABASE_URL}"
+          {
+            echo "JWT_SECRET=${JWT_SECRET}"
+            echo "POSTGRES_PASSWORD=${POSTGRES_PASSWORD}"
+            echo "POSTGRES_USER=sosmesh"
+            echo "POSTGRES_DB=sosmesh_staging"
+            echo "DATABASE_URL=${DATABASE_URL}"
+            echo "INGEST_RECEIPT_SIGNING_PRIVATE_KEY=${SIGN_KEY}"
+            echo "AI_ENABLED=false"
+            echo "NEXT_PUBLIC_MAP_TEST_MODE=1"
+          } >> "$GITHUB_ENV"
+
+      - name: Build and start staging stack
+        shell: bash
+        run: |
+          set -euo pipefail
+          docker compose -f infra/deploy/compose/docker-compose.staging.yml up -d --build
+
+      - name: Diagnose api and migrate logs
+        if: failure()
+        shell: bash
+        run: bash infra/deploy/scripts/compose-diagnose-logs.sh infra/deploy/compose/docker-compose.staging.yml
+
+      - name: Run container smoke script
+        run: bash infra/deploy/scripts/container-smoke.sh
+
+      - name: Tear down stack
+        if: always()
+        run: docker compose -f infra/deploy/compose/docker-compose.staging.yml down -v

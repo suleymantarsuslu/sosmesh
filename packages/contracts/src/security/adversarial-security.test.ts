@@ -17,6 +17,10 @@ import {
   relayLogSnapshot,
   type MeshRelayEnvelopeV2,
 } from '../protocol-v2/mesh-relay-engine';
+import {
+  MAX_MESH_OPAQUE_CIPHERTEXT_BASE64_LENGTH,
+  MAX_MESH_OPAQUE_CIPHERTEXT_BYTES,
+} from '../protocol-v2/mesh-payload-limits';
 
 const fixturesDir = path.join(__dirname, '../../fixtures/security');
 
@@ -106,6 +110,30 @@ describe('adim43_mesh_relay_adversarial_fixtures', () => {
     }
     expect(forwards).toBe(meshFixtures.duplicateFlood.expectForwards);
     expect(drops).toBe(meshFixtures.duplicateFlood.expectDrops);
+  });
+
+  it('adv_mesh_oversized_ciphertext rejects SEC-MESH-SIZE-001 limit', () => {
+    const engine = new MeshRelayEngine({ lruCapacity: 64 });
+    const tooLongBase64 = 'A'.repeat(MAX_MESH_OPAQUE_CIPHERTEXT_BASE64_LENGTH + 1);
+    const envelope = mergeEnvelope(meshFixtures.validBase, {
+      messageId: 'adv-oversized-base64-len',
+      opaqueCiphertextBase64: tooLongBase64,
+    });
+    const outcome = engine.evaluateForward(envelope, meshFixtures.relayDeviceIdHash);
+    expect(outcome.decision).toBe('DROP');
+    expect(outcome.dropReason).toBe('INVALID_ENVELOPE');
+  });
+
+  it('adv_mesh_oversized_decoded_bytes rejects over byte cap', () => {
+    const engine = new MeshRelayEngine({ lruCapacity: 64 });
+    const raw = Buffer.alloc(MAX_MESH_OPAQUE_CIPHERTEXT_BYTES + 1, 0xab);
+    const envelope = mergeEnvelope(meshFixtures.validBase, {
+      messageId: 'adv-oversized-decoded',
+      opaqueCiphertextBase64: raw.toString('base64'),
+    });
+    const outcome = engine.evaluateForward(envelope, meshFixtures.relayDeviceIdHash);
+    expect(outcome.decision).toBe('DROP');
+    expect(outcome.dropReason).toBe('INVALID_ENVELOPE');
   });
 
   it('mesh_relay_log_never_contains_embedded_sos_plaintext', () => {
@@ -251,6 +279,14 @@ describe('adim43_schema_adversarial_fixtures', () => {
       expect(validate.errors?.length ?? 0).toBeGreaterThan(0);
     }
   );
+
+  it('adv_schema_ciphertext_over_maxLength fails JSON Schema', () => {
+    const doc: Record<string, unknown> = { ...meshFixtures.validBase };
+    doc.opaqueCiphertextBase64 = 'A'.repeat(MAX_MESH_OPAQUE_CIPHERTEXT_BASE64_LENGTH + 1);
+    const ok = validate(doc);
+    expect(ok).toBe(false);
+    expect(validate.errors?.length ?? 0).toBeGreaterThan(0);
+  });
 });
 
 describe('adim43_adversarial_fixture_count', () => {

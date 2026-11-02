@@ -1,0 +1,25 @@
+# Staging Meta AI / cost guard — map to API env vars (values from secret manager only).
+# Apply with your orchestrator or `envsubst`; do not commit MODEL_API_KEY.
+
+environment: staging
+meta:
+  env:
+    META_BASE_URL: META_BASE_URL
+    META_MODEL: META_MODEL
+    META_MAX_TOKENS: META_MAX_TOKENS
+    META_MAX_RETRIES: META_MAX_RETRIES
+    META_TIMEOUT_MS: META_TIMEOUT_MS
+  recommended_limits:
+    META_MAX_TOKENS: '2048'
+    AI_DAILY_COST_CAP_USD: '1'
+    AI_TENANT_RATE_LIMIT_MAX: '10'
+    AI_TENANT_RATE_LIMIT_WINDOW_MS: '60000'
+    AI_ESTIMATED_COST_USD: '0.002'
+  notes: >
+    Staging uses synthetic incidents only. Live Meta calls require MODEL_API_KEY
+    in secret manager and explicit user approval (BLOCKED_APPROVAL).
+
+database:
+  env:
+    DATABASE_URL: DATABASE_URL
+  isolation: Separate staging cluster/instance — never share prod connection string.

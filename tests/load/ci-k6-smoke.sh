@@ -20,8 +20,22 @@ ensure_pnpm() {
 }
 
 ensure_pnpm
+mkdir -p "$ROOT/tests/load/.generated"
+BUILD_LOG="$ROOT/tests/load/.generated/api-build.log"
+
+echo "== load-smoke: pnpm install =="
 pnpm install --frozen-lockfile
-pnpm --filter @sosmesh/api build
+export NODE_OPTIONS="${NODE_OPTIONS:-} --max-old-space-size=6144"
+export PRISMA_HIDE_UPDATE_MESSAGE=1
+
+echo "== load-smoke: prisma generate =="
+pnpm --filter @sosmesh/api exec prisma generate
+
+echo "== load-smoke: build contracts + api =="
+if ! pnpm --filter '@sosmesh/api...' run build 2>&1 | tee "$BUILD_LOG"; then
+  echo "@sosmesh/api dependency build failed; see $BUILD_LOG" >&2
+  exit 1
+fi
 
 export DATABASE_URL="$DB_URL"
 eval "$(node <<'NODE'
@@ -48,50 +62,96 @@ export INGEST_RECEIPT_SIGNING_PRIVATE_KEY="$SIGNING_KEY"
 
 release_port() {
   if command -v lsof >/dev/null 2>&1; then
-    lsof -ti:"${PORT}" | xargs -r kill -9 2>/dev/null
+    local pids=""
+    if lsof -ti:"${PORT}" >/dev/null 2>&1; then
+      pids=$(lsof -ti:"${PORT}")
+    fi
+    if [[ -n "$pids" ]]; then
+      # shellcheck disable=SC2086
+      kill -9 $pids 2>/dev/null
+    fi
   elif command -v fuser >/dev/null 2>&1; then
-    fuser -k "${PORT}/tcp" 2>/dev/null
+    if fuser "${PORT}/tcp" >/dev/null 2>&1; then
+      fuser -k "${PORT}/tcp" 2>/dev/null
+    fi
   fi
   sleep 1
 }
 release_port
 
+echo "== load-smoke: prisma migrate + seed =="
 pnpm --filter @sosmesh/api exec prisma migrate deploy
 pnpm --filter @sosmesh/api exec prisma db seed
 
 API_LOG="$ROOT/tests/load/.generated/api-smoke.log"
-mkdir -p "$ROOT/tests/load/.generated"
 : >"$API_LOG"
 release_port
+API_PID=""
+SMOKE_FINAL_EXIT=""
+
+stop_api_only() {
+  if [[ -z "$API_PID" ]]; then
+    return 0
+  fi
+  local pid="$API_PID"
+  if kill -0 "$pid" 2>/dev/null; then
+    if command -v pgrep >/dev/null 2>&1; then
+      local child
+      while read -r child; do
+        if [[ -n "$child" && "$child" != "$$" ]]; then
+          kill -TERM "$child" 2>/dev/null
+        fi
+      done < <(pgrep -P "$pid" 2>/dev/null)
+    fi
+    kill -TERM "$pid" 2>/dev/null
+    local waited=0
+    while kill -0 "$pid" 2>/dev/null && [[ "$waited" -lt 15 ]]; do
+      sleep 1
+      waited=$((waited + 1))
+    done
+    if kill -0 "$pid" 2>/dev/null; then
+      kill -KILL "$pid" 2>/dev/null
+    fi
+  fi
+  set +e
+  wait "$pid" 2>/dev/null
+  set -e
+  API_PID=""
+}
+
+on_smoke_exit() {
+  local trap_ec=$?
+  stop_api_only
+  if [[ -n "$SMOKE_FINAL_EXIT" ]]; then
+    exit "$SMOKE_FINAL_EXIT"
+  fi
+  exit "$trap_ec"
+}
+
 DATABASE_URL="$DB_URL" PORT="$PORT" NODE_ENV="$NODE_ENV" \
   AI_ENABLED="$AI_ENABLED" INGEST_RATE_LIMIT_MAX="$INGEST_RATE_LIMIT_MAX" \
   INGEST_RATE_LIMIT_WINDOW_MS="$INGEST_RATE_LIMIT_WINDOW_MS" \
   INGEST_RECEIPT_SIGNING_PRIVATE_KEY="$INGEST_RECEIPT_SIGNING_PRIVATE_KEY" \
   pnpm --filter @sosmesh/api start >>"$API_LOG" 2>&1 &
 API_PID=$!
+trap on_smoke_exit EXIT
 
-cleanup() {
-  if kill -0 "$API_PID" 2>/dev/null; then
-    kill "$API_PID"
-    wait "$API_PID" 2>/dev/null
-  fi
-}
-trap cleanup EXIT
-
+echo "== load-smoke: wait for /health/ready =="
 ready=0
-for _ in $(seq 1 60); do
-  if curl -fsS "http://127.0.0.1:${PORT}/health" >/dev/null 2>&1; then
+for _ in $(seq 1 90); do
+  if curl -fsS "http://127.0.0.1:${PORT}/health/ready" >/dev/null 2>&1; then
     ready=1
     break
   fi
   sleep 2
 done
 if [[ "$ready" -ne 1 ]]; then
-  echo "API failed to become healthy; log:" >&2
+  echo "API failed /health/ready within timeout; log:" >&2
   tail -80 "$API_LOG" >&2
   exit 1
 fi
 
+export INGEST_RECEIPT_SIGNING_PRIVATE_KEY="$SIGNING_KEY"
 bash "$ROOT/tests/load/scripts/generate-ingest-payloads.sh" 100 \
   "$ROOT/tests/load/.generated/payloads-100.json"
 PREFLIGHT_BODY=$(node -e "console.log(JSON.stringify(require('$ROOT/tests/load/.generated/payloads-100.json')[0]))")
@@ -126,4 +186,11 @@ if ! command -v k6 >/dev/null 2>&1; then
 fi
 
 export K6_VUS=1
+echo "== load-smoke: k6 profile 100 =="
+set +e
 BASE_URL="http://127.0.0.1:${PORT}" bash "$ROOT/tests/load/run-profile.sh" 100
+SMOKE_FINAL_EXIT=$?
+set -e
+trap - EXIT
+stop_api_only
+exit "$SMOKE_FINAL_EXIT"

@@ -70,6 +70,30 @@ public struct OutboxEntryMeta: Equatable, Codable {
     public let lastError: String?
     public let createdAtMs: Int64
     public let updatedAtMs: Int64
+
+    public init(
+        sosId: String,
+        digest: String,
+        origin: String,
+        encryptedBlobBase64: String,
+        state: String,
+        retryAtMs: Int64,
+        expiresAtMs: Int64,
+        lastError: String?,
+        createdAtMs: Int64,
+        updatedAtMs: Int64
+    ) {
+        self.sosId = sosId
+        self.digest = digest
+        self.origin = origin
+        self.encryptedBlobBase64 = encryptedBlobBase64
+        self.state = state
+        self.retryAtMs = retryAtMs
+        self.expiresAtMs = expiresAtMs
+        self.lastError = lastError
+        self.createdAtMs = createdAtMs
+        self.updatedAtMs = updatedAtMs
+    }
 }
 
 public struct EnqueueInput {

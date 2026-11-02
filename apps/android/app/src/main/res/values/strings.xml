@@ -21,6 +21,11 @@
     <string name="platform_hint_low_battery">Pil düşük; gönüllü röle duraklatıldı. SOS kaydı cihazda korunur.</string>
     <string name="platform_hint_network">İnternet yok; röle yüklemesi bekliyor. Paketler cihazda saklanır.</string>
     <string name="platform_hint_power_save">Güç tasarrufu etkin; tarama aralığı kısıtlanır. Arka plan garantisi yoktur.</string>
+    <string name="cross_platform_fault_title">Aktarım veya bağlantı uyarısı</string>
+    <string name="cross_platform_fault_aria">Çapraz platform hata durumu bildirimi</string>
+    <string name="cross_platform_hint_location">Konum servisi kapalı veya GPS yok. SOS akışı devam eder; konum bilinmiyor olarak işaretlenir.</string>
+    <string name="cross_platform_hint_corrupt">Paket bozuk veya doğrulanamadı. Yakın cihaza aktarıldı sayılmaz.</string>
+    <string name="cross_platform_hint_api">Sunucu yüklemesi başarısız. Mesaj cihazda bekler; operatör okundu anlamına gelmez.</string>
     <string name="relay_education_title">Gönüllü röle (isteğe bağlı)</string>
     <string name="relay_education_body">Yakındaki SOS mesajlarını internete taşımak için gönüllü olabilirsiniz. İçerik okunmaz; pil ve veri limitleri uygulanır.</string>
     <string name="relay_education_cta">Röle ayarlarını aç</string>
@@ -52,4 +57,23 @@
     <string name="notification_mesh_title">Yakın cihaz bağlantısı</string>
     <string name="notification_mesh_body">SOSMesh yakın cihazlarla iletişim kuruyor. Arka planda sürekli bağlantı garantisi yoktur.</string>
     <string name="notification_mesh_body_pending">%1$d paket yüklemeyi bekliyor. Arka planda sürekli bağlantı garantisi yoktur.</string>
+    <string name="home_help_cta">Yardım ve sınırlar</string>
+    <string name="help_screen_title">Yardım</string>
+    <string name="help_not112_banner">SOSMesh 112\'nin yerine geçmez. Acil durumda 112\'yi arayın.</string>
+    <string name="help_offline_title">Çevrimdışı kullanım</string>
+    <string name="help_offline_body">SOS cihazda şifreli kuyrukta kalır; yakın cihazlara BLE ile aktarım AI olmadan denenir. İnternet yokken sunucu yolu yoktur.</string>
+    <string name="help_ack_levels_title">Durum adımları (5 ACK)</string>
+    <string name="help_ack_levels_body">Zaman çizelgesi teknik iletim basamaklarını gösterir. Peer ACK operatör okundu veya yardım garantisi değildir.</string>
+    <string name="help_relay_title">Gönüllü röle</string>
+    <string name="help_relay_body">Varsayılan kapalıdır. Açarsanız yalnızca şifreli paket taşırsınız; SOS düz metnini okumazsınız.</string>
+    <string name="help_watch_title">Saat ve eşli telefon</string>
+    <string name="help_watch_body">Wear OS saat SOS\'u eşli telefona iletir. Saat bağımsız mesh garantisi yoktur.</string>
+    <string name="help_failed_delivery_title">Başarısız iletim</string>
+    <string name="help_failed_delivery_body">Önce 112\'yi arayın. Bluetooth ve izinleri kontrol edin; gereksiz tekrarlı SOS göndermeyin.</string>
+    <string name="help_troubleshooting_title">Sorun giderme</string>
+    <string name="help_troubleshooting_body">Bluetooth kapalıysa veya izin reddedildiyse yakın aktarım durur. iOS\'ta force-quit mesh\'i durdurabilir.</string>
+    <string name="help_limitations_title">Bilinen sınırlamalar</string>
+    <string name="help_limitations_body">Apple arka plan kısıtları; fiziksel cihaz testleri NOT_TESTED; mağaza dağıtımı BLOCKED_APPROVAL.</string>
+    <string name="help_support_title">Destek</string>
+    <string name="help_support_body">İletişim: TODO_APPROVAL — prod destek e-postası onaylanmadı.</string>
 </resources>

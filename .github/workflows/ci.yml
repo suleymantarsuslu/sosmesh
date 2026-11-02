@@ -95,48 +95,17 @@ jobs:
             echo "SOSMESH_CI_DATABASE_URL=${SOSMESH_CI_DATABASE_URL}"
           } >> "$GITHUB_ENV"
 
-      - name: Ensure Zulal ARM64 reduced-motion snapshot baselines
-        if: vars.SOSMESH_CI_RUNNER == 'zulal'
-        shell: bash
-        env:
-          SOSMESH_CI_RUNNER: zulal
-        run: |
-          set -euo pipefail
-          snap_dir=tests/ux/adim50-web-closure.spec.js-snapshots
-          login="${snap_dir}/adim50-login-reduced-motion-chromium-linux-arm64.png"
-          dash="${snap_dir}/adim50-dashboard-reduced-motion-chromium-linux-arm64.png"
-          if [ -f "$login" ] && [ -f "$dash" ]; then
-            echo "ARM64 reduced-motion snapshots already present"
-            exit 0
-          fi
-          echo "Generating ARM64 reduced-motion snapshots on Zulal runner (commit to repo after review)"
-          pnpm install --frozen-lockfile
-          pnpm exec playwright test \
-            --config=playwright.web.config.js \
-            --project=chromium \
-            --grep "prefers-reduced-motion" \
-            --update-snapshots
-          test -f "$login"
-          test -f "$dash"
-
-      - name: Upload ARM64 reduced-motion snapshot baselines
-        if: vars.SOSMESH_CI_RUNNER == 'zulal'
-        uses: actions/upload-artifact@v4
-        with:
-          name: zulal-arm64-reduced-motion-snapshots
-          path: tests/ux/adim50-web-closure.spec.js-snapshots/*-linux-arm64.png
-          if-no-files-found: ignore
-          retention-days: 14
-
       - name: Run verification script
         run: bash scripts/verify.sh
 
-      - name: Upload Zulal snapshot actuals (bootstrap ARM64 baselines)
+      - name: Upload Playwright snapshot actuals on failure
         if: failure() && vars.SOSMESH_CI_RUNNER == 'zulal'
         uses: actions/upload-artifact@v4
         with:
-          name: zulal-playwright-snapshot-actuals
-          path: test-results/**/*-actual.png
+          name: zulal-playwright-snapshot-debug
+          path: |
+            test-results/**/*-actual.png
+            test-results/**/*-diff.png
           if-no-files-found: ignore
           retention-days: 7
       

@@ -222,11 +222,19 @@ jobs:
           cd apps/android
           ./gradlew assembleProdDebug \
             testProdDebugUnitTest testDemoDebugUnitTest testStagingDebugUnitTest \
-            :core:ble:testDebugUnitTest :core:data:testDebugUnitTest :core:model:testDebugUnitTest \
-            :core:permissions:testDebugUnitTest :core:platform:testDebugUnitTest :core:protocol:testDebugUnitTest \
+            :core:model:testDebugUnitTest \
+            :core:data:testDebugUnitTest \
+            :core:permissions:testDebugUnitTest \
+            :core:ble:testDebugUnitTest \
+            :core:protocol:testDebugUnitTest \
+            :core:platform:testDebugUnitTest \
             :core:wear-companion:testDebugUnitTest \
-            :feature-relay:testDebugUnitTest :feature-sos:testDebugUnitTest :feature-status:testDebugUnitTest \
+            :feature-sos:testDebugUnitTest \
+            :feature-status:testDebugUnitTest \
+            :feature-relay:testDebugUnitTest \
+            :mesh-v2:testDebugUnitTest \
             :wear:testDebugUnitTest \
+            :contracts-kotlin:test \
             lintProdDebug assembleProdRelease bundleProdRelease ktlintCheck --no-daemon
       
       - name: Upload APK

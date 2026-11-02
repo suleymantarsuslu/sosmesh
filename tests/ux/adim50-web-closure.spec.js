@@ -5,6 +5,11 @@
 const { test, expect } = require('@playwright/test');
 
 const {
+  applyCiSnapshotFontLock,
+  lockDashboardVisualCoreForSnapshot,
+  lockLoginFormForSnapshot,
+} = require('./helpers/snapshot-determinism');
+const {
   E2E_CASE_GPS_ID,
   attachHydrationListeners,
   expectNoBlockerAxeViolations,
@@ -149,7 +154,10 @@ test.describe('ADIM 50 prefers-reduced-motion görsel regresyon', () => {
     await page.emulateMedia({ reducedMotion: 'reduce' });
     await page.goto('/operator/login');
     await expect(page.getByTestId('login-form')).toBeVisible();
-    await expect(page.locator('main.login-page')).toHaveScreenshot(
+    await page.waitForLoadState('networkidle');
+    await applyCiSnapshotFontLock(page);
+    await lockLoginFormForSnapshot(page);
+    await expect(page.getByTestId('login-form')).toHaveScreenshot(
       'adim50-login-reduced-motion.png'
     );
   });
@@ -174,14 +182,8 @@ test.describe('ADIM 50 prefers-reduced-motion görsel regresyon', () => {
     await expect(page.getByTestId('bento-pending')).toBeVisible();
     await page.waitForLoadState('networkidle');
     await expect(page.getByTestId('connection-disconnected')).toHaveCount(0);
-    // Header flex-wrap + font metrikleri ortamda yüksekliği değiştiriyor; yalnız E2E snapshot kilidi.
-    await page.addStyleTag({
-      content: `[data-testid="dashboard-visual-core"]{
-        height:420px!important;min-height:420px!important;max-height:420px!important;
-        overflow:hidden!important;box-sizing:border-box;
-      }
-      [data-testid="dashboard-visual-core"] .dashboard__header{flex-wrap:nowrap!important}`,
-    });
+    await applyCiSnapshotFontLock(page);
+    await lockDashboardVisualCoreForSnapshot(page);
     const core = page.getByTestId('dashboard-visual-core');
     await expect(core).toHaveScreenshot('adim50-dashboard-reduced-motion.png');
   });

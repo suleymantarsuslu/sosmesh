@@ -1,0 +1,56 @@
+groups:
+  - name: sosmesh-adim48
+    rules:
+      - alert: SosmeshApiDown
+        expr: sosmesh_health_database_up == 0
+        for: 1m
+        labels:
+          severity: critical
+        annotations:
+          summary: SOSMesh API database probe failing
+          runbook_url: docs/runbooks/api-down.md
+
+      - alert: SosmeshHighHttpErrorRate
+        expr: increase(sosmesh_http_errors_total[5m]) >= 3
+        for: 2m
+        labels:
+          severity: warning
+        annotations:
+          summary: Elevated HTTP 5xx on SOSMesh API
+          runbook_url: docs/runbooks/high-error-rate.md
+
+      - alert: SosmeshAiWorkerStuck
+        expr: sosmesh_ai_job_queue_depth > 0 and sosmesh_ai_worker_stuck_seconds >= 120
+        for: 2m
+        labels:
+          severity: warning
+        annotations:
+          summary: AI async queue not draining
+          runbook_url: docs/runbooks/stuck-worker.md
+
+      - alert: SosmeshIngestQueueBallooning
+        expr: sosmesh_ai_job_queue_depth >= 50
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: AI queue depth ballooning
+          runbook_url: docs/runbooks/queue-ballooning.md
+
+      - alert: SosmeshAiFailuresElevated
+        expr: increase(sosmesh_ai_failures_total[5m]) >= 5
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: AI classification failures elevated
+          runbook_url: docs/runbooks/stuck-worker.md
+
+      - alert: SosmeshGpsAnomalyBurst
+        expr: increase(sosmesh_gps_anomaly_total[5m]) >= 10
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: Relay/GPS anomaly burst
+          runbook_url: docs/runbooks/gps-anomaly.md

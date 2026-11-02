@@ -1,0 +1,53 @@
+{
+  "description": "ADIM 48 — observability dashboard template (config only). No external telemetry export from repo.",
+  "editable": true,
+  "panels": [
+    {
+      "title": "Ingest valid vs dedup",
+      "type": "timeseries",
+      "targets": [
+        { "expr": "sum(rate(sosmesh_ingest_valid_total[5m]))", "legendFormat": "valid" },
+        { "expr": "sum(rate(sosmesh_ingest_dedup_total[5m]))", "legendFormat": "dedup" }
+      ]
+    },
+    {
+      "title": "Radio vs server ACK",
+      "type": "timeseries",
+      "targets": [
+        { "expr": "sum(rate(sosmesh_radio_ack_total[5m]))", "legendFormat": "radio_ack" },
+        { "expr": "sum(rate(sosmesh_server_ack_total[5m]))", "legendFormat": "server_ack" }
+      ]
+    },
+    {
+      "title": "User-visible lag (seconds)",
+      "type": "timeseries",
+      "targets": [
+        { "expr": "histogram_quantile(0.95, sum(rate(sosmesh_user_visible_lag_peer_seconds_count[5m])))", "legendFormat": "peer_p95" },
+        { "expr": "histogram_quantile(0.95, sum(rate(sosmesh_user_visible_lag_server_seconds_count[5m])))", "legendFormat": "server_p95" }
+      ]
+    },
+    {
+      "title": "AI failures & queue",
+      "type": "timeseries",
+      "targets": [
+        { "expr": "increase(sosmesh_ai_failures_total[5m])", "legendFormat": "ai_failures" },
+        { "expr": "sosmesh_ai_job_queue_depth", "legendFormat": "queue_depth" }
+      ]
+    },
+    {
+      "title": "HTTP 5xx",
+      "type": "timeseries",
+      "targets": [
+        { "expr": "increase(sosmesh_http_errors_total[5m])", "legendFormat": "5xx" }
+      ]
+    },
+    {
+      "title": "DB probe",
+      "type": "stat",
+      "targets": [{ "expr": "sosmesh_health_database_up", "legendFormat": "up" }]
+    }
+  ],
+  "tags": ["sosmesh", "adim48", "observability"],
+  "title": "SOSMesh Observability (ADIM 48 template)",
+  "uid": "sosmesh-adim48-obs"
+}

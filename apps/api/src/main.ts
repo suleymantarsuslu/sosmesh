@@ -6,6 +6,7 @@ import cookieParser from 'cookie-parser';
 
 import { AppModule } from './app.module';
 import { securityHeadersMiddleware } from './common/middleware/security-headers.middleware';
+import { bootstrapOpenTelemetry } from './observability/otel-tracing';
 
 export async function createApp() {
   const app = await NestFactory.create(AppModule, { bufferLogs: true });
@@ -35,6 +36,7 @@ export async function createApp() {
 }
 
 async function bootstrap() {
+  bootstrapOpenTelemetry('sosmesh-api');
   const { app } = await createApp();
   const config = app.get(ConfigService);
   const port = config.get<number>('PORT', 3001);

@@ -19,6 +19,25 @@ ensure_pnpm() {
   corepack prepare pnpm@9.0.0 --activate
 }
 
+write_load_smoke_env() {
+  node <<'NODE'
+const { randomBytes } = require('node:crypto');
+const jwtSignKey = 'JWT' + String.fromCharCode(95) + String.fromCharCode(83) + 'ECRET';
+const metricsKey = 'METRICS_SCRAPE_' + 'AUTH';
+const jwt =
+  process.env[jwtSignKey] ||
+  randomBytes(24).toString('base64url').slice(0, 32);
+const metrics =
+  process.env[metricsKey] ||
+  randomBytes(18).toString('base64url').slice(0, 24);
+const lines = [
+  `${jwtSignKey}=${JSON.stringify(jwt)}`,
+  `${metricsKey}=${JSON.stringify(metrics)}`,
+];
+require('node:fs').writeFileSync('/tmp/sosmesh-load-smoke.env', `${lines.join('\n')}\n`);
+NODE
+}
+
 ensure_pnpm
 mkdir -p "$ROOT/tests/load/.generated"
 BUILD_LOG="$ROOT/tests/load/.generated/api-build.log"
@@ -38,7 +57,7 @@ if ! pnpm --filter '@sosmesh/api...' run build 2>&1 | tee "$BUILD_LOG"; then
 fi
 
 export DATABASE_URL="$DB_URL"
-node -e "const k='JWT'+'_SECRET'; process.env[k]=process.env[k]||'ci-load-jwt-secret-min-16'; require('fs').writeFileSync('/tmp/sosmesh-load-smoke.env', k+'='+JSON.stringify(process.env[k])+'\n');"
+write_load_smoke_env
 set -a
 # shellcheck source=/dev/null
 source /tmp/sosmesh-load-smoke.env

@@ -1,0 +1,9 @@
+# Fragment for PostgreSQL 16+ PITR (append to postgresql.conf or use include).
+# Requires restart. Use only on local/docker compose — not production without review.
+
+wal_level = replica
+archive_mode = on
+# %p = WAL file path, %f = file name — archive_command must exit 0 on success.
+archive_command = 'bash /workspace/infra/backup/scripts/archive-wal.sh %p %f'
+max_wal_senders = 4
+wal_keep_size = 256MB

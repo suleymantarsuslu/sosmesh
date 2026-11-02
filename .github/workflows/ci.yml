@@ -95,19 +95,44 @@ jobs:
             echo "SOSMESH_CI_DATABASE_URL=${SOSMESH_CI_DATABASE_URL}"
           } >> "$GITHUB_ENV"
 
+      - name: Install workspace dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Bootstrap PostgreSQL client (no sudo, server-major aware)
+        shell: bash
+        env:
+          RUNNER_TEMP: ${{ runner.temp }}
+        run: bash scripts/ci/bootstrap-pgclient.sh
+
       - name: Run verification script
         run: bash scripts/verify.sh
 
-      - name: Upload Playwright snapshot actuals on failure
+      - name: Upload Playwright snapshot debug on failure (Zulal)
         if: failure() && vars.SOSMESH_CI_RUNNER == 'zulal'
         uses: actions/upload-artifact@v4
         with:
           name: zulal-playwright-snapshot-debug
           path: |
+            reports/playwright-snapshot-debug/**/*-actual.png
+            reports/playwright-snapshot-debug/**/*-diff.png
+            reports/playwright-snapshot-debug/**/*-expected.png
             test-results/**/*-actual.png
             test-results/**/*-diff.png
+            test-results/**/*-expected.png
           if-no-files-found: ignore
           retention-days: 7
+
+      - name: Upload Playwright snapshot debug on failure (GitHub-hosted)
+        if: failure() && vars.SOSMESH_CI_RUNNER != 'zulal'
+        uses: actions/upload-artifact@v4
+        with:
+          name: github-playwright-snapshot-debug
+          path: |
+            reports/playwright-snapshot-debug/**/*-actual.png
+            reports/playwright-snapshot-debug/**/*-diff.png
+            reports/playwright-snapshot-debug/**/*-expected.png
+          if-no-files-found: ignore
+          retention-days: 3
       
       - name: Upload test reports
         if: always()

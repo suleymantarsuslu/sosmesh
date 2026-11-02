@@ -163,6 +163,18 @@ else
   check_exit "a11y-web" $EXIT_CODE
 fi
 
+# Step 8 UX Playwright resets test-results; keep a11y/visual snapshot PNGs for CI debug artifacts.
+if [ -d test-results ]; then
+  SNAPSHOT_DEBUG="$REPORTS_DIR/playwright-snapshot-debug"
+  mkdir -p "$SNAPSHOT_DEBUG"
+  find test-results \( -name '*-actual.png' -o -name '*-diff.png' -o -name '*-expected.png' \) -print0 |
+    while IFS= read -r -d '' snap; do
+      rel="${snap#test-results/}"
+      mkdir -p "$SNAPSHOT_DEBUG/$(dirname "$rel")"
+      cp -f "$snap" "$SNAPSHOT_DEBUG/$rel"
+    done
+fi
+
 # 8. UX Playwright suite
 echo "8/18: npx playwright test"
 if npx playwright test > "$REPORTS_DIR/playwright-ux.log" 2>&1; then
@@ -319,7 +331,7 @@ else
 fi
 
 # 25. iOS Xcode project golden (generate-xcodeproj.py)
-echo "25/28: bash apps/ios/scripts/check-xcodeproj-golden.sh"
+echo "25/30: bash apps/ios/scripts/check-xcodeproj-golden.sh"
 if bash apps/ios/scripts/check-xcodeproj-golden.sh > "$REPORTS_DIR/ios-xcodeproj-golden.log" 2>&1; then
   check_exit "ios-xcodeproj-golden" 0
 else
@@ -328,7 +340,7 @@ else
 fi
 
 # 26. Android release BuildConfig must not embed secrets
-echo "26/29: bash scripts/android-release-buildconfig-scan.sh"
+echo "26/30: bash scripts/android-release-buildconfig-scan.sh"
 if bash "$SCRIPT_DIR/android-release-buildconfig-scan.sh" > "$REPORTS_DIR/android-release-buildconfig-scan.log" 2>&1; then
   check_exit "android-release-buildconfig-scan" 0
 else
@@ -337,7 +349,7 @@ else
 fi
 
 # 27. iOS ADIM 52 release config (privacy, export template, lproj paths)
-echo "27/29: bash apps/ios/scripts/check-release-adim52.sh"
+echo "27/30: bash apps/ios/scripts/check-release-adim52.sh"
 if bash apps/ios/scripts/check-release-adim52.sh > "$REPORTS_DIR/ios-release-adim52.log" 2>&1; then
   check_exit "ios-release-adim52" 0
 else
@@ -346,7 +358,7 @@ else
 fi
 
 # 28. Mutation tests for iOS release checker
-echo "28/29: bash scripts/test-check-ios-release-adim52.sh"
+echo "28/30: bash scripts/test-check-ios-release-adim52.sh"
 if bash "$SCRIPT_DIR/test-check-ios-release-adim52.sh" > "$REPORTS_DIR/test-check-ios-release-adim52.log" 2>&1; then
   check_exit "test-check-ios-release-adim52" 0
 else
@@ -355,7 +367,7 @@ else
 fi
 
 # 29. iOS Localizable.strings TR/EN key parity (ADIM 57 help keys)
-echo "29/33: node scripts/check-ios-localizable-parity.js"
+echo "29/35: node scripts/check-ios-localizable-parity.js"
 if node "$SCRIPT_DIR/check-ios-localizable-parity.js" > "$REPORTS_DIR/ios-localizable-parity.log" 2>&1; then
   check_exit "ios-localizable-parity" 0
 else
@@ -363,8 +375,29 @@ else
   check_exit "ios-localizable-parity" $EXIT_CODE
 fi
 
-# 30. Release traceability + QA summary freshness (ADIM 56)
-echo "30/33: node scripts/release/generate-traceability.mjs --check"
+# 30. Backup restore drill log (ADIM 49; CI postgres — Jest covers embedded)
+echo "30/35: bash scripts/backup-restore-drill.sh"
+if [ -n "${SOSMESH_CI_DATABASE_URL:-}" ]; then
+  export DATABASE_URL="$SOSMESH_CI_DATABASE_URL"
+  mkdir -p "$REPORTS_DIR"
+  if ! command -v pg_dump >/dev/null 2>&1 || ! command -v pg_restore >/dev/null 2>&1; then
+    {
+      echo "FAIL: SOSMESH_CI_DATABASE_URL is set but pg_dump/pg_restore are not on PATH"
+      echo "Hint: run scripts/ci/bootstrap-pgclient.sh (uses server major from SOSMESH_CI_DATABASE_URL)"
+    } >> "$REPORTS_DIR/backup-restore-drill.log"
+    check_exit "backup-restore-drill" 1 "backup-restore-drill.log"
+  elif bash "$SCRIPT_DIR/backup-restore-drill.sh" >> "$REPORTS_DIR/backup-restore-drill.log" 2>&1; then
+    check_exit "backup-restore-drill" 0 "backup-restore-drill.log"
+  else
+    EXIT_CODE=$?
+    check_exit "backup-restore-drill" $EXIT_CODE "backup-restore-drill.log"
+  fi
+else
+  echo -e "${YELLOW}backup-restore-drill: NOT_TESTED (SOSMESH_CI_DATABASE_URL unset; CI verify job runs pg_dump drill)${NC}"
+fi
+
+# 31. Release traceability + QA summary freshness (ADIM 56)
+echo "31/35: node scripts/release/generate-traceability.mjs --check"
 if node "$SCRIPT_DIR/release/generate-traceability.mjs" --check > "$REPORTS_DIR/release-traceability-check.log" 2>&1; then
   check_exit "release-traceability-check" 0
 else
@@ -372,7 +405,7 @@ else
   check_exit "release-traceability-check" $EXIT_CODE
 fi
 
-echo "31/33: node scripts/release/generate-qa-summary.mjs --check"
+echo "32/35: node scripts/release/generate-qa-summary.mjs --check"
 if node "$SCRIPT_DIR/release/generate-qa-summary.mjs" --check > "$REPORTS_DIR/release-qa-summary-check.log" 2>&1; then
   check_exit "release-qa-summary-check" 0
 else
@@ -380,8 +413,8 @@ else
   check_exit "release-qa-summary-check" $EXIT_CODE
 fi
 
-# 32. CycloneDX SBOM (no signing, no secrets)
-echo "32/34: node scripts/release/build-sbom.test.mjs"
+# 33. CycloneDX SBOM (no signing, no secrets)
+echo "33/35: node scripts/release/build-sbom.test.mjs"
 if node "$SCRIPT_DIR/release/build-sbom.test.mjs" > "$REPORTS_DIR/release-sbom-test.log" 2>&1; then
   check_exit "release-sbom-test" 0
 else
@@ -389,7 +422,7 @@ else
   check_exit "release-sbom-test" $EXIT_CODE
 fi
 
-echo "33/34: bash scripts/release/sbom.sh"
+echo "34/35: bash scripts/release/sbom.sh"
 if bash "$SCRIPT_DIR/release/sbom.sh" > "$REPORTS_DIR/release-sbom.log" 2>&1; then
   check_exit "release-sbom" 0
 else
@@ -397,8 +430,8 @@ else
   check_exit "release-sbom" $EXIT_CODE
 fi
 
-# 33. SHA256 checksums of build artifacts
-echo "34/34: bash scripts/release/checksums.sh"
+# 35. SHA256 checksums of build artifacts
+echo "35/35: bash scripts/release/checksums.sh"
 if bash "$SCRIPT_DIR/release/checksums.sh" > "$REPORTS_DIR/release-checksums.log" 2>&1; then
   check_exit "release-checksums" 0
 else

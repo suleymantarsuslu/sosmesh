@@ -1759,12 +1759,21 @@
       ],
       "deliverables": "infra/backup scripts, docs/runbooks/restore.md",
       "pass_criteria": "Yedekten geri dönüş en az bir defa başarıyla kanıtlı.",
-      "status": "NOT_STARTED",
-      "attempts": 0,
-      "commit": null,
-      "evidence": [],
-      "blockers": [],
-      "last_checked_at": null,
+      "status": "PARTIAL",
+      "attempts": 2,
+      "commit": "8aa55ae",
+      "evidence": [
+        "infra/backup/* WAL archive + base-backup + rotation (AES-256; key via SOSMESH_BACKUP_ENCRYPTION_KEY only)",
+        "scripts/backup-restore-drill.sh + apps/api/test/helpers/backup-restore-drill.ts — pg_dump -Fc → AES encrypt → DROP source schema → pg_restore + row/checksum verify",
+        "scripts/ci/bootstrap-pgclient.sh — sudo-less pg_dump/pg_restore (Ubuntu 16 / PGDG 17+ by server major)",
+        "apps/api/test/backup-adim49.spec.ts — Jest pg_dump/pg_restore on embedded PG16; CI drill log (reports/backup-restore-drill.log artifact) pending on green verify",
+        "apps/api/src/disaster/disaster-readonly.middleware.ts (default off unless SOSMESH_DISASTER_READ_ONLY_MODE=true)",
+        "docs/runbooks/restore.md — RPO/RTO from measured drill log only"
+      ],
+      "blockers": [
+        "ADIM 49 PASS blocked until CI verify produces backup-restore-drill.log with PASS and measured RPO/RTO (pg_dump major must be >= server major)"
+      ],
+      "last_checked_at": "2026-11-02T05:25:00+00:00",
       "goal": "Sistem arızasında veriyi korumak ve geri dönebilmek.",
       "cursor_tasks": [
         "Database PITR/backups, encryption, restricted storage and rotation.",

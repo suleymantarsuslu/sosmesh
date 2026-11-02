@@ -1,6 +1,6 @@
 {
   "schema_version": "1.0.0",
-  "generated_at": "2026-11-02T15:21:12.388Z",
+  "generated_at": "2026-11-02T18:39:47.663Z",
   "source_of_truth": "docs/handover/status.json",
   "item_count": 88,
   "items": [
@@ -1428,9 +1428,19 @@
       "kind": "master_plan_step",
       "title": "Yedekleme, veri kurtarma ve güvenli güncelleme",
       "pass_criteria": "Yedekten geri dönüş en az bir defa başarıyla kanıtlı.",
-      "verification_status": "NOT_STARTED",
+      "verification_status": "PARTIAL",
       "tier": "P",
-      "tests": [],
+      "tests": [
+        "apps/api/src/disaster/disaster-readonly.middleware.ts (default off unless SOSMESH_DISASTER_READ_ONLY_MODE=true)",
+        "apps/api/test/backup-adim49.spec.ts",
+        "apps/api/test/backup-adim49.spec.ts — Jest pg_dump/pg_restore on embedded PG16; CI drill log (reports/backup-restore-drill.log artifact) pending on green verify",
+        "docs/runbooks/restore.md — RPO/RTO from measured drill log only",
+        "infra/backup/* WAL archive + base-backup + rotation (AES-256; key via SOSMESH_BACKUP_ENCRYPTION_KEY only)",
+        "scripts/backup-restore-drill.sh",
+        "scripts/backup-restore-drill.sh + apps/api/test/helpers/backup-restore-drill.ts — pg_dump -Fc → AES encrypt → DROP source schema → pg_restore + row/checksum verify",
+        "scripts/ci/bootstrap-pgclient.sh",
+        "scripts/ci/bootstrap-pgclient.sh — sudo-less pg_dump/pg_restore (Ubuntu 16 / PGDG 17+ by server major)"
+      ],
       "evidence": {
         "ci_jobs": [
           "Verify Quality Gates"
@@ -1440,7 +1450,9 @@
           "reports/*.log"
         ],
         "document_paths": [],
-        "status_json_blockers": []
+        "status_json_blockers": [
+          "ADIM 49 PASS blocked until CI verify produces backup-restore-drill.log with PASS and measured RPO/RTO (pg_dump major must be >= server major)"
+        ]
       }
     },
     {

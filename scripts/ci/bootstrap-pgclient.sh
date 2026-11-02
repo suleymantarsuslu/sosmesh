@@ -88,7 +88,9 @@ publish_github_env() {
     echo "$PG_BIN_DIR" >> "$GITHUB_PATH"
   fi
   if [ -n "${GITHUB_ENV:-}" ]; then
-    echo "LD_LIBRARY_PATH=${LD_LIBRARY_PATH}" >> "$GITHUB_ENV"
+    if [ -n "${LD_LIBRARY_PATH:-}" ]; then
+      echo "LD_LIBRARY_PATH=${LD_LIBRARY_PATH}" >> "$GITHUB_ENV"
+    fi
     echo "SOSMESH_PGCLIENT_ROOT=${ROOT}" >> "$GITHUB_ENV"
     echo "SOSMESH_PG_SERVER_MAJOR=${major}" >> "$GITHUB_ENV"
     echo "SOSMESH_PG_DUMP_PATH=${PG_DUMP_BIN}" >> "$GITHUB_ENV"

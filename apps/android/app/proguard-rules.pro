@@ -47,3 +47,6 @@
 }
 -keep,includedescriptorclasses class *$$serializer { *; }
 -keep @kotlinx.serialization.Serializable class * { *; }
+
+# BouncyCastle LDAP cert store references javax.naming.* (desktop JDK); Android runtime does not ship JNDI.
+-dontwarn javax.naming.**

@@ -17,6 +17,7 @@ object CrashLogRedactor {
             """[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}""",
             RegexOption.IGNORE_CASE,
         )
+
     /** User SOS free-text must not persist in local crash files. */
     private val sosFreeTextPattern =
         Regex("""(?i)\bsos\b[^\n]{0,240}""")

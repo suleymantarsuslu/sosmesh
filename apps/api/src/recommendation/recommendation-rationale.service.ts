@@ -32,7 +32,7 @@ export class RecommendationRationaleService {
       Number(process.env.AI_TENANT_RATE_LIMIT_MAX ?? 30),
       Number(process.env.AI_TENANT_RATE_LIMIT_WINDOW_MS ?? 60_000)
     );
-    this.costGuard = new AiCostGuard(Number(process.env.AI_DAILY_COST_CAP_USD ?? 5));
+    this.costGuard = new AiCostGuard(() => Number(process.env.AI_DAILY_COST_CAP_USD ?? 5));
     this.incidentTokenBudget = new IncidentTokenBudgetGuard(
       Number(process.env.AI_INCIDENT_TOKEN_BUDGET ?? DEFAULT_INCIDENT_TOKEN_BUDGET)
     );

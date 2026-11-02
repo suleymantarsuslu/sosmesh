@@ -3,10 +3,14 @@
 
 FROM node:20-bookworm-slim AS build
 WORKDIR /app
+RUN apt-get update \
+  && apt-get install -y --no-install-recommends openssl ca-certificates \
+  && rm -rf /var/lib/apt/lists/*
 RUN corepack enable && corepack prepare pnpm@9.0.0 --activate
 COPY package.json pnpm-lock.yaml pnpm-workspace.yaml ./
 COPY packages/contracts/package.json packages/contracts/
 COPY apps/api/package.json apps/api/
+COPY apps/api/prisma apps/api/prisma
 RUN pnpm install --frozen-lockfile --filter @sosmesh/api...
 COPY packages/contracts packages/contracts
 COPY apps/api apps/api

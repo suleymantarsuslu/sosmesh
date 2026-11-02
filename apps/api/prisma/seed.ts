@@ -65,6 +65,30 @@ async function main() {
     },
   });
 
+  await prisma.resource.createMany({
+    data: [
+      {
+        id: '00000000-0000-4000-8000-000000000060',
+        organizationId: organization.id,
+        teamId: team.id,
+        kind: 'FIELD_TEAM',
+        name: 'demo-field-unit',
+        capacity: 2,
+        zoneCode: 'SYNTH-Z1',
+      },
+      {
+        id: '00000000-0000-4000-8000-000000000061',
+        organizationId: organization.id,
+        teamId: team.id,
+        kind: 'VEHICLE',
+        name: 'demo-vehicle',
+        capacity: 1,
+        zoneCode: 'SYNTH-RESCUE-A',
+      },
+    ],
+    skipDuplicates: true,
+  });
+
   const messageId = '00000000-0000-4000-8000-000000000020';
   // Synthetic demo coordinates (Ankara-ish grid); not real incident locations.
   await prisma.sosMessage.upsert({

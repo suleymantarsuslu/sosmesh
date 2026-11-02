@@ -34,3 +34,17 @@
 "ios.limitation.force_quit" = "Uygulamayı zorla kapattıktan sonra mesh relay devam etmeyebilir.";
 "ios.limitation.relay_without_internet" = "İnternetsiz telefon relay görevini sürdüremeyebilir.";
 "ios.restoration.phase" = "BLE yaşam döngüsü aşaması";
+"cross_platform.fault.title" = "Aktarım veya bağlantı uyarısı";
+"cross_platform.hint.bluetooth" = "Bluetooth kapalı. Yakın cihaz aktarımı için açın.";
+"cross_platform.hint.permissions" = "Gerekli izinler eksik. Ayarlardan düzeltin.";
+"cross_platform.hint.location" = "Konum yok. SOS devam eder; konum bilinmiyor olarak işaretlenir.";
+"cross_platform.hint.corrupt" = "Bozuk veya doğrulanamayan paket. Yakın cihaza aktarıldı sayılmaz.";
+"cross_platform.hint.api" = "Sunucu yüklemesi başarısız. Mesaj cihazda bekler; operatör okundu değildir.";
+"cross_platform.hint.network" = "İnternet yok; röle yüklemesi bekliyor.";
+"cross_platform.hint.low_battery" = "Pil düşük; gönüllü röle duraklatıldı.";
+"cross_platform.action.fix" = "Düzelt";
+"cross_platform.action.fix.hint" = "İzin veya Bluetooth için ayarları açar";
+"status.peer_not_server" = "Yakın cihaza aktarım, sunucu kabulü anlamına gelmez.";
+"settings.multihop.title" = "Deneysel çok atlama (ön plan)";
+"settings.multihop.footer" = "Varsayılan kapalı. iPhone 7/24 tekrarlayıcı değildir; arka plan ve force-quit sınırları geçerlidir.";
+"settings.multihop.toggle" = "Araştırma çok atlama rölesini etkinleştir";

@@ -21,15 +21,16 @@ SOS mesajları hassas konum ve sağlık bağlamı taşıyabilir. Saklama süresi
 
 ### Silme (erase)
 
-- Yetki: `ADMIN`, `COORDINATOR` (tenant scope).
+- Yetki: `ADMIN` (platform süper kullanıcı — tenant sınırı yok), `COORDINATOR` (yalnızca kendi organizasyonu).
 - Uç: `POST /v1/operator/privacy/incidents/:incidentId/erase`
-- Incident cascade ile ilişkili kayıtlar silinir; öncesinde `PRIVACY_ERASE_REQUEST` audit (redakte).
+- Incident cascade ile ilişkili kayıtlar silinir; öncesinde `PRIVACY_ERASE_REQUEST` audit (redakte, `actorId` zorunlu).
 
 ### Export
 
-- Yetki: `ADMIN`, `COORDINATOR`.
+- Yetki: `ADMIN` (platform süper kullanıcı — çapraz tenant), `COORDINATOR` (tenant scope).
 - Uç: `GET /v1/operator/privacy/incidents/:incidentId/export`
 - Şifreli blob içeriği export edilmez; yalnızca `hasEncryptedPayload` bayrağı.
+- Her başarılı export `PRIVACY_EXPORT` audit kaydı oluşturur (`actorId` ile).
 
 ### Retention job
 
@@ -38,7 +39,7 @@ SOS mesajları hassas konum ve sağlık bağlamı taşıyabilir. Saklama süresi
 
 ### Audit redaksiyonu
 
-Privacy ve metadata düzeltme audit kayıtları `redactAuditDetails` ile yazılır/okunur.
+Privacy ve metadata düzeltme audit kayıtları `redactAuditDetails` ile yazılır/okunur. Bilinen anahtarların yanı sıra bilinmeyen alanlardaki ondalıklı/enlem-boylam benzeri sayılar ve `[lat, lon]` dizileri redakte edilir.
 
 ## Consequences
 

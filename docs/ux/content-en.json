@@ -212,6 +212,20 @@
       "cancelled": "SOS not sent"
     }
   },
+  "privacy": {
+    "accountlessSos": {
+      "title": "Sending SOS and data use",
+      "body": "You can send SOS without an account. Location and message are encrypted in transit; only authorized operators can decrypt on the server. SOSMesh does not replace 112.",
+      "accept": "I have read this and want to send SOS",
+      "decline": "Cancel"
+    },
+    "relayOptIn": {
+      "title": "Volunteer relay",
+      "body": "Relay mode is off by default. If you enable it, you only carry encrypted packets and cannot read their contents. You can turn it off at any time.",
+      "enable": "Enable relay",
+      "disable": "Turn relay off"
+    }
+  },
   "a11y": {
     "skipToMain": "Skip to main content",
     "menu": "Menu",

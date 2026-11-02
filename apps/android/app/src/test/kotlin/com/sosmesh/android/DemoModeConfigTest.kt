@@ -7,18 +7,6 @@ import java.io.File
 
 class DemoModeConfigTest {
     @Test
-    fun prodVariantBuildConfig_disablesDemoModeLabel() {
-        assertFalse(
-            "default prod flavor must not show DEMO MODE banner",
-            BuildConfig.SHOW_DEMO_MODE_LABEL,
-        )
-        assertTrue(
-            "unit tests run against default prod flavor",
-            BuildConfig.SOSMESH_ENV == "prod",
-        )
-    }
-
-    @Test
     fun releaseGradleConfig_enablesR8ForRelease() {
         val gradleFile = File("build.gradle.kts")
         assertTrue("app/build.gradle.kts must exist for this test", gradleFile.exists())

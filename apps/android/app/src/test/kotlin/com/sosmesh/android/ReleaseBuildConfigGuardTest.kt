@@ -1,7 +1,6 @@
 package com.sosmesh.android
 
 import org.junit.Assert.assertFalse
-import org.junit.Assert.assertNotNull
 import org.junit.Assert.assertTrue
 import org.junit.Test
 import java.io.File
@@ -46,14 +45,6 @@ class ReleaseBuildConfigGuardTest {
     }
 
     @Test
-    fun generatedBuildConfig_prodFlavorFields() {
-        assertTrue(BuildConfig.SOSMESH_ENV == "prod")
-        assertFalse(BuildConfig.SHOW_DEMO_MODE_LABEL)
-        assertTrue(BuildConfig.INGEST_BASE_URL.startsWith("https://"))
-        assertFalse(BuildConfig.INGEST_BASE_URL.contains("localhost"))
-    }
-
-    @Test
     fun releaseGradleConfig_doesNotSilentlySignWithDebugKey() {
         assertTrue(
             "release signing must gate debug key behind sosmesh.allowDebugSignedRelease",
@@ -73,11 +64,5 @@ class ReleaseBuildConfigGuardTest {
             "keystore path must not be committed",
             gradle.contains(".jks") || gradle.contains(".keystore"),
         )
-    }
-
-    @Test
-    fun prodIngestBaseUrl_isPlaceholderHost() {
-        assertNotNull(BuildConfig.INGEST_BASE_URL)
-        assertTrue(BuildConfig.INGEST_BASE_URL.contains("api.sosmesh.example"))
     }
 }

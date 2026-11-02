@@ -140,7 +140,7 @@ function buildItems() {
   }
 
   for (const g of map.geci_criteria ?? []) {
-    items.push({
+    const item = {
       id: g.id,
       kind: 'geci_criterion',
       title: g.criterion,
@@ -149,7 +149,14 @@ function buildItems() {
       verification_status: g.verification_status,
       tests: g.tests ?? [],
       evidence: g.evidence,
-    });
+    };
+    if (g.platform_verification) {
+      item.platform_verification = g.platform_verification;
+    }
+    if (g.notes) {
+      item.notes = g.notes;
+    }
+    items.push(item);
   }
 
   return {
@@ -203,7 +210,11 @@ function renderMarkdown(doc) {
 
   lines.push('', '## GEÇTİ ölçütleri', '');
   for (const item of doc.items.filter((i) => i.kind === 'geci_criterion')) {
-    lines.push(`- **${item.id}** (${item.verification_status}): ${item.title} — \`${item.source}\``);
+    let line = `- **${item.id}** (${item.verification_status}): ${item.title} — \`${item.source}\``;
+    if (item.platform_verification) {
+      line += ` — platform: ${JSON.stringify(item.platform_verification)}`;
+    }
+    lines.push(line);
   }
 
   lines.push('', '## CI iş adları (Linux doğrulama)', '');

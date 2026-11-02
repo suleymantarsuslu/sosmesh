@@ -57,9 +57,10 @@ Production must not enable operator E2E mock or Android demo banners on store-bo
 
 | Surface | Guard |
 | --- | --- |
-| Web | `apps/web/lib/config.ts` + `config.test.ts`, `demo-mode.test.ts` |
-| Android prod | `ProdFlavorBuildConfigTest.kt`, `DemoModeConfigTest.kt` |
-| Repo gate | `tests/chaos/demo-mode-production-separation.test.ts` |
+| Web (behavioral) | `apps/web/lib/config.test.ts` — `isE2eMock()` with `vi.stubEnv` (production/test/unset) |
+| Web (banner) | `apps/web/lib/demo-mode.test.ts` |
+| Android (behavioral) | `ProdFlavorBuildConfigTest.kt` — **NOT_TESTED** until MacBook/Gradle prod flavor phase |
+| Android (Gradle evidence) | `tests/chaos/demo-mode-production-separation.test.ts` — supplementary config declarations only |
 
 ## Open blockers snapshot (honest)
 

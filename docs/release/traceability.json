@@ -1,6 +1,6 @@
 {
   "schema_version": "1.0.0",
-  "generated_at": "2026-11-02T13:36:32.603Z",
+  "generated_at": "2026-11-02T13:46:53.766Z",
   "source_of_truth": "docs/handover/status.json",
   "item_count": 88,
   "items": [
@@ -2514,23 +2514,26 @@
       "title": "Mock/demo production yapılandırmasında kapalı",
       "source": "docs/architecture/requirements-map.md",
       "pass_criteria": "Mock/demo production yapılandırmasında kapalı",
-      "verification_status": "PASS",
+      "verification_status": "PARTIAL",
       "tests": [
         "apps/web/lib/config.test.ts",
         "apps/web/lib/demo-mode.test.ts",
-        "apps/android/app/src/test/kotlin/com/sosmesh/android/DemoModeConfigTest.kt",
-        "apps/android/app/src/testProd/kotlin/com/sosmesh/android/ProdFlavorBuildConfigTest.kt",
-        "tests/chaos/demo-mode-production-separation.test.ts"
+        "tests/chaos/demo-mode-production-separation.test.ts",
+        "apps/android/app/src/testProd/kotlin/com/sosmesh/android/ProdFlavorBuildConfigTest.kt"
       ],
       "evidence": {
         "ci_jobs": [
-          "Verify Quality Gates",
-          "Android Gradle Build"
+          "Verify Quality Gates"
         ],
         "report_paths": [
           "reports/test.log"
         ]
-      }
+      },
+      "platform_verification": {
+        "web_isE2eMock_behavioral": "PASS",
+        "android_prod_buildconfig_behavioral": "NOT_TESTED"
+      },
+      "notes": "Web PASS via apps/web/lib/config.test.ts (isE2eMock env stubs). Android ProdFlavorBuildConfigTest is NOT_TESTED until MacBook/Gradle prod flavor phase; chaos test is Gradle config evidence only."
     }
   ]
 }

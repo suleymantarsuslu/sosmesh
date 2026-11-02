@@ -126,15 +126,19 @@
       "id": "GECTI-DEMO-PROD-SEPARATION",
       "source": "docs/architecture/requirements-map.md",
       "criterion": "Mock/demo production yapılandırmasında kapalı",
-      "verification_status": "PASS",
+      "verification_status": "PARTIAL",
+      "platform_verification": {
+        "web_isE2eMock_behavioral": "PASS",
+        "android_prod_buildconfig_behavioral": "NOT_TESTED"
+      },
+      "notes": "Web PASS via apps/web/lib/config.test.ts (isE2eMock env stubs). Android ProdFlavorBuildConfigTest is NOT_TESTED until MacBook/Gradle prod flavor phase; chaos test is Gradle config evidence only.",
       "tests": [
         "apps/web/lib/config.test.ts",
         "apps/web/lib/demo-mode.test.ts",
-        "apps/android/app/src/test/kotlin/com/sosmesh/android/DemoModeConfigTest.kt",
-        "apps/android/app/src/testProd/kotlin/com/sosmesh/android/ProdFlavorBuildConfigTest.kt",
-        "tests/chaos/demo-mode-production-separation.test.ts"
+        "tests/chaos/demo-mode-production-separation.test.ts",
+        "apps/android/app/src/testProd/kotlin/com/sosmesh/android/ProdFlavorBuildConfigTest.kt"
       ],
-      "evidence": { "ci_jobs": ["Verify Quality Gates", "Android Gradle Build"], "report_paths": ["reports/test.log"] }
+      "evidence": { "ci_jobs": ["Verify Quality Gates"], "report_paths": ["reports/test.log"] }
     }
   ]
 }

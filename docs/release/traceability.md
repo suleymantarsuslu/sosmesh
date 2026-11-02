@@ -4,7 +4,7 @@
 
 **Kural:** Fiziksel cihaz, MacBook/Xcode, mağaza veya hukuki inceleme kanıtı gerektiren maddeler **asla PASS sayılmaz**; `verification_status` status.json ile uyumludur.
 
-**Üretim:** `node scripts/release/generate-traceability.mjs` — 2026-11-02T13:36:32.603Z
+**Üretim:** `node scripts/release/generate-traceability.mjs` — 2026-11-02T13:46:53.766Z
 
 **Kayıt sayısı:** 88 (58 ADIM + M0 senaryoları + GEÇTİ ölçütleri)
 
@@ -109,7 +109,7 @@
 - **GECTI-WEAROS-E2E** (NOT_TESTED): Gerçek saat uçtan uca — `docs/release/wearos.md`
 - **GECTI-DEPLOY-STAGING-PROD** (PARTIAL): Staging çalışır + prod onaylı — `docs/runbooks/deploy.md`
 - **GECTI-THREAT-MODEL** (PARTIAL): STRIDE + bağımsız denetim GEÇTİ — `docs/security/threat-model.md`
-- **GECTI-DEMO-PROD-SEPARATION** (PASS): Mock/demo production yapılandırmasında kapalı — `docs/architecture/requirements-map.md`
+- **GECTI-DEMO-PROD-SEPARATION** (PARTIAL): Mock/demo production yapılandırmasında kapalı — `docs/architecture/requirements-map.md` — platform: {"web_isE2eMock_behavioral":"PASS","android_prod_buildconfig_behavioral":"NOT_TESTED"}
 
 ## CI iş adları (Linux doğrulama)
 

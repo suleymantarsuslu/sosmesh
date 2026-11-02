@@ -2,7 +2,7 @@
 
 **Tarih (UTC):** 2026-11-02  
 **Dal:** `cursor/adim-58-handover-03c7`  
-**HEAD:** `1febe0bc84bba499d2d8aaf948607ecd44faf6c5`  
+**HEAD:** `9192284bf7893bc5a01ba6bb829acd1f3d68b118`  
 **Kaynak (tek doğruluk):** [`docs/handover/status.json`](status.json), [`docs/release/traceability.json`](../release/traceability.json)  
 **Proje tamamlanma:** **NOT_COMPLETE** — zorunlu kapıların tamamı PASS + gerçek kanıt değil; bu rapor **PARTIAL** handover’dır. *“Tamamlandı”* yalnızca tüm gerekli kapılar gerçek kanıtla PASS olduğunda söylenebilir; **şu an sağlanmıyor**.
 

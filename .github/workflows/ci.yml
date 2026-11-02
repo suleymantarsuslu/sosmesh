@@ -203,7 +203,7 @@ jobs:
     if: (vars.SOSMESH_MAC_RUNNER == 'on' || vars.SOSMESH_CI_RUNNER != 'zulal') && needs.detect-mobile.outputs.android == 'true'
     timeout-minutes: 25
     concurrency:
-      group: sosmesh-mobile-${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+      group: sosmesh-mobile-${{ github.job }}-${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
       cancel-in-progress: true
 
     steps:
@@ -301,7 +301,7 @@ jobs:
     if: (vars.SOSMESH_MAC_RUNNER == 'on' || vars.SOSMESH_CI_RUNNER != 'zulal') && needs.detect-mobile.outputs.ios == 'true'
     timeout-minutes: 30
     concurrency:
-      group: sosmesh-mobile-${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+      group: sosmesh-mobile-${{ github.job }}-${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
       cancel-in-progress: true
 
     steps:
@@ -485,7 +485,7 @@ jobs:
     timeout-minutes: 25
     if: (vars.SOSMESH_MAC_RUNNER == 'on' || vars.SOSMESH_CI_RUNNER != 'zulal') && (github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository)
     concurrency:
-      group: sosmesh-mobile-${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+      group: sosmesh-mobile-${{ github.job }}-${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
       cancel-in-progress: true
 
     steps:

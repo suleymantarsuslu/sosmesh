@@ -163,8 +163,8 @@ importers:
         specifier: ^6.21.0
         version: 6.21.0(eslint@8.57.1)(typescript@5.9.3)
       embedded-postgres:
-        specifier: 16.15.0-beta.19
-        version: 16.15.0-beta.19
+        specifier: ^17.5.0-beta.15
+        version: 17.5.0-beta.15
       eslint:
         specifier: ^8.56.0
         version: 8.57.1
@@ -605,50 +605,50 @@ packages:
     resolution: {integrity: sha512-IchNf6dN4tHoMFIn/7OE8LWZ19Y6q/67Bmf6vnGREv8RSbBVb9LPJxEcnwrcwX6ixSvaiGoomAUvu4YSxXrVgw==}
     engines: {node: '>=12'}
 
-  '@embedded-postgres/darwin-arm64@16.15.0-beta.19':
-    resolution: {integrity: sha512-pXgn5H+fHX+jjjE4NcvG2+J3uob8rzuoV0VWXOPkGJqUcaKfctcNFm7Z7DwR2kG5SaXwyfww/q0/OwtQHG7Ivg==}
+  '@embedded-postgres/darwin-arm64@17.5.0-beta.15':
+    resolution: {integrity: sha512-pTtVdnRHKhrBIDpAvaPwFSRymUKFvPRdTfZwAPLxnTsdA6T//vCTTmgq87Cwqs1ET/LVaggpSChAeabtgAXzew==}
     engines: {node: '>=16'}
     cpu: [arm64]
     os: [darwin]
 
-  '@embedded-postgres/darwin-x64@16.15.0-beta.19':
-    resolution: {integrity: sha512-Ic3Z2xL4Lfb1pcub15by9XPQwGcVsR0owbEXnhktRu6KEHvqmGzleyQ4puTUQIHtxuHXL5o7SJu3QPUwbijx7w==}
+  '@embedded-postgres/darwin-x64@17.5.0-beta.15':
+    resolution: {integrity: sha512-GNQPnpfzQlrrABH6f15+GY32A6ucKxxUXqJjLqpDd6cUekJqytNdjLbkLF3OjXGgmFk7dg6eqw1yb5ZVP0zwcQ==}
     engines: {node: '>=16'}
     cpu: [x64]
     os: [darwin]
 
-  '@embedded-postgres/linux-arm64@16.15.0-beta.19':
-    resolution: {integrity: sha512-vD+fCbf++iOCXLWTeGP3jedaTP3S33fyIR+z5wsG0pkT43S5f+4zO6GHvKPvukMcV+ooor1ARQJEo2TdUiPa+A==}
+  '@embedded-postgres/linux-arm64@17.5.0-beta.15':
+    resolution: {integrity: sha512-ikakI9rBRl8xt85xgk38OTB3fCrsI7lJy4ZQLITTkrjNI7Fv75hTLPP9xTpVJ20Mbd0WDytPtRD4Tz0e4449tQ==}
     engines: {node: '>=16'}
     cpu: [arm64]
     os: [linux]
 
-  '@embedded-postgres/linux-arm@16.15.0-beta.19':
-    resolution: {integrity: sha512-hlJCL5kxJw39HNZmMyQ+dJko4H1jh4E9MEB5o5uoun8O0RvSFCjcALcTChkL2hHe9UXuIabWOjckMWzhLZz/Zg==}
+  '@embedded-postgres/linux-arm@17.5.0-beta.15':
+    resolution: {integrity: sha512-w6iImxNwBqRxKjTqQG5bYbpP6+61/bWJiLHswO/gT2FH3J1OhxSP7UlD7i8ig7UURubvC3yTs3WPecZUY6iZdw==}
     engines: {node: '>=16'}
     cpu: [arm]
     os: [linux]
 
-  '@embedded-postgres/linux-ia32@16.15.0-beta.19':
-    resolution: {integrity: sha512-UWNmUrLw43Y1QX7uo4spdotV3bn8Ma8u2cY4+C8wOc7c3XK7r/NEW50+SLfGYOI7LLTQQ++7YJcIchYMoVcS0w==}
+  '@embedded-postgres/linux-ia32@17.5.0-beta.15':
+    resolution: {integrity: sha512-V1/griI0OFG/t6SaG4UXGBE6vy0fSVgVH1xrouHXxUManIF0n1wu5ngPyjFi23wm4/vcA+83OtJ2Eaei4x4RfQ==}
     engines: {node: '>=16'}
     cpu: [ia32]
     os: [linux]
 
-  '@embedded-postgres/linux-ppc64@16.15.0-beta.19':
-    resolution: {integrity: sha512-Y0Y03DFgfHu/Z+E5pmarAqrUgBzeeqGilJxqbacK185V8NqaaStj5JV5epXIZ1YGxaydfBfHJZ7acTVwH4Z3Yw==}
+  '@embedded-postgres/linux-ppc64@17.5.0-beta.15':
+    resolution: {integrity: sha512-uZ72FSmKNM2KbFzaWub35e36XyH4GL6N+GiODTy7ZhUxQmyBa4K3JubPAR8R3MTRrjzpCgiXhqC3Wg7mG+KtYg==}
     engines: {node: '>=16'}
     cpu: [ppc64]
     os: [linux]
 
-  '@embedded-postgres/linux-x64@16.15.0-beta.19':
-    resolution: {integrity: sha512-TXULIde/Cmev3x+mtPjO3PY57M4/Q96Df6dVf0npGVhw5hKAFdhcVFwUXcRxOn+p8JcfpSTWoD4UwLiFHuJX+Q==}
+  '@embedded-postgres/linux-x64@17.5.0-beta.15':
+    resolution: {integrity: sha512-Kf5yATvzPLcNlb8ZBtS/aEaTWeM682rCnPBJW5T11b2iKzEO6qpOzfA2UuZhffEansYzxIoSyHk7jFp+q7rHYA==}
     engines: {node: '>=16'}
     cpu: [x64]
     os: [linux]
 
-  '@embedded-postgres/windows-x64@16.15.0-beta.19':
-    resolution: {integrity: sha512-WRXocVOMYzCweLMLEBKNBZwAup9cnZSkJhHqodrFitiQTsxFxCEak7tq5ITu23igqQs4kJTjA6XqxCMR4wytTg==}
+  '@embedded-postgres/windows-x64@17.5.0-beta.15':
+    resolution: {integrity: sha512-R+tJFzc1K7Ua3LCh25IgdH09pe+wa0saR+ysny2l7dmFXfGYAhHN9atTEgHsP9V3Mp4lI5WB5sN58XtsLKc3gA==}
     engines: {node: '>=16'}
     cpu: [x64]
     os: [win32]
@@ -2386,6 +2386,10 @@ packages:
   ast-types-flow@0.0.8:
     resolution: {integrity: sha512-OH/2E5Fg20h2aPrbe+QL8JZQFko0YZaF+j4mnQ7BGhfavO7OpSLa8a0y9sBwomHdSbkhTS8TQNayBfnW5DwbvQ==}
 
+  async-exit-hook@2.0.1:
+    resolution: {integrity: sha512-NW2cX8m1Q7KPA7a5M2ULQeZ2wR5qI5PAbw5L0UOMxdioVk9PMZ0h1TmyZEkPYrCvYjDlFICusOu1dlEKAAeXBw==}
+    engines: {node: '>=0.12.0'}
+
   async-function@1.0.0:
     resolution: {integrity: sha512-hsU18Ae8CDTR6Kgu9DYf0EbCr/a5iGL0rytQDobUcdpYOKokk8LEjVphnXkDkgpi0wYVsqrXuP0bZxJaTqdgoA==}
     engines: {node: '>= 0.4'}
@@ -2877,8 +2881,8 @@ packages:
   electron-to-chromium@1.5.467:
     resolution: {integrity: sha512-Nw9X371rtZmYcBSnEijnCDONILjs93biCZO34juC7MBOmK8E+GFnyD4T/WvyrlJkppul7oxg6TwvtKst9SODTw==}
 
-  embedded-postgres@16.15.0-beta.19:
-    resolution: {integrity: sha512-dbbCrhVlTYAq4k8eXcwj0QzlHAf/20pHy7AoEQu2YQLXX9F7lpr0vDV3AMsnrzFYTl1AszS2kGJh2CCETKxWKw==}
+  embedded-postgres@17.5.0-beta.15:
+    resolution: {integrity: sha512-kj7dGWyRADPRVOFHunGBPINkNV/VG8p8S3TrRDO4VGbdBZDwmtcY93uqOXHQsEt6B3bu4fXTPHNOjbWRRnttfw==}
     engines: {node: '>=16'}
 
   emittery@0.13.1:
@@ -3114,15 +3118,6 @@ packages:
   execa@5.1.1:
     resolution: {integrity: sha512-8uSpZZocAZRBAPIEINJj3Lo9HyGitllczc27Eh5YYojjMFMn8yHMDMaUHE2Jqfq05D/wucwI4JGURyXt1vchyg==}
     engines: {node: '>=10'}
-
-
-  execa@8.0.1:
-    resolution: {integrity: sha512-VyhnebXciFV2DESc+p6B+y0LjSm0krU4OgJN44qFAhBY0TJ+1V61tYD2+wHusZ6F9n5K+vl8k0sTy7PEfV4qpg==}
-    engines: {node: '>=16.17'}
-
-  exit-hook@5.1.0:
-    resolution: {integrity: sha512-INjr2xyxHo7bhAqf5ong++GZPPnpcuBcaXUKt03yf7Fie9yWD7FapL4teOU0+awQazGs5ucBh7xWs/AD+6nhog==}
-    engines: {node: '>=20'}
 
   exit@0.1.2:
     resolution: {integrity: sha512-Zk/eNKV2zbjpKzrsQ+n1G6poVbErQxJ0LBOJXaKZ1EViLzH+hrLu9cdXI4zw9dBQJslwBEpbQ2P1oS7nDxs6jQ==}
@@ -5741,28 +5736,28 @@ snapshots:
     dependencies:
       '@jridgewell/trace-mapping': 0.3.9
 
-  '@embedded-postgres/darwin-arm64@16.15.0-beta.19':
+  '@embedded-postgres/darwin-arm64@17.5.0-beta.15':
     optional: true
 
-  '@embedded-postgres/darwin-x64@16.15.0-beta.19':
+  '@embedded-postgres/darwin-x64@17.5.0-beta.15':
     optional: true
 
-  '@embedded-postgres/linux-arm64@16.15.0-beta.19':
+  '@embedded-postgres/linux-arm64@17.5.0-beta.15':
     optional: true
 
-  '@embedded-postgres/linux-arm@16.15.0-beta.19':
+  '@embedded-postgres/linux-arm@17.5.0-beta.15':
     optional: true
 
-  '@embedded-postgres/linux-ia32@16.15.0-beta.19':
+  '@embedded-postgres/linux-ia32@17.5.0-beta.15':
     optional: true
 
-  '@embedded-postgres/linux-ppc64@16.15.0-beta.19':
+  '@embedded-postgres/linux-ppc64@17.5.0-beta.15':
     optional: true
 
-  '@embedded-postgres/linux-x64@16.15.0-beta.19':
+  '@embedded-postgres/linux-x64@17.5.0-beta.15':
     optional: true
 
-  '@embedded-postgres/windows-x64@16.15.0-beta.19':
+  '@embedded-postgres/windows-x64@17.5.0-beta.15':
     optional: true
 
   '@emnapi/core@1.10.0':
@@ -7464,6 +7459,8 @@ snapshots:
 
   ast-types-flow@0.0.8: {}
 
+  async-exit-hook@2.0.1: {}
+
   async-function@1.0.0: {}
 
   asynckit@0.4.0: {}
@@ -7955,19 +7952,19 @@ snapshots:
 
   electron-to-chromium@1.5.467: {}
 
-  embedded-postgres@16.15.0-beta.19:
+  embedded-postgres@17.5.0-beta.15:
     dependencies:
-      exit-hook: 5.1.0
+      async-exit-hook: 2.0.1
       pg: 8.23.1
     optionalDependencies:
-      '@embedded-postgres/darwin-arm64': 16.15.0-beta.19
-      '@embedded-postgres/darwin-x64': 16.15.0-beta.19
-      '@embedded-postgres/linux-arm': 16.15.0-beta.19
-      '@embedded-postgres/linux-arm64': 16.15.0-beta.19
-      '@embedded-postgres/linux-ia32': 16.15.0-beta.19
-      '@embedded-postgres/linux-ppc64': 16.15.0-beta.19
-      '@embedded-postgres/linux-x64': 16.15.0-beta.19
-      '@embedded-postgres/windows-x64': 16.15.0-beta.19
+      '@embedded-postgres/darwin-arm64': 17.5.0-beta.15
+      '@embedded-postgres/darwin-x64': 17.5.0-beta.15
+      '@embedded-postgres/linux-arm': 17.5.0-beta.15
+      '@embedded-postgres/linux-arm64': 17.5.0-beta.15
+      '@embedded-postgres/linux-ia32': 17.5.0-beta.15
+      '@embedded-postgres/linux-ppc64': 17.5.0-beta.15
+      '@embedded-postgres/linux-x64': 17.5.0-beta.15
+      '@embedded-postgres/windows-x64': 17.5.0-beta.15
     transitivePeerDependencies:
       - pg-native
 
@@ -8398,21 +8395,6 @@ snapshots:
       onetime: 5.1.2
       signal-exit: 3.0.7
       strip-final-newline: 2.0.0
-
-
-  execa@8.0.1:
-    dependencies:
-      cross-spawn: 7.0.6
-      get-stream: 8.0.1
-      human-signals: 5.0.0
-      is-stream: 3.0.0
-      merge-stream: 2.0.0
-      npm-run-path: 5.3.0
-      onetime: 6.0.0
-      signal-exit: 4.1.0
-      strip-final-newline: 3.0.0
-
-  exit-hook@5.1.0: {}
 
   exit@0.1.2: {}
 

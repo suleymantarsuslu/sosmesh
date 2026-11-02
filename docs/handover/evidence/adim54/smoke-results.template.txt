@@ -1,0 +1,10 @@
+# Smoke results — NOT_TESTED
+# Attach CI run URL or manual curl output (redact tokens).
+
+run_date_utc:
+ci_run_id:
+api_health:
+api_ready:
+web_health:
+worker_ready:
+result: NOT_TESTED

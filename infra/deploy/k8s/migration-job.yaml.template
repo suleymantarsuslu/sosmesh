@@ -1,0 +1,26 @@
+# Prisma migration Job — apply before rolling API/worker Deployments.
+# Status: hazır, uygulanmadı (BLOCKED_APPROVAL)
+
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: sosmesh-migrate-${MIGRATION_ID}
+spec:
+  ttlSecondsAfterFinished: 86400
+  backoffLimit: 2
+  template:
+    spec:
+      restartPolicy: Never
+      containers:
+        - name: migrate
+          image: ${SOSMESH_MIGRATE_IMAGE}
+          env:
+            - name: DATABASE_URL
+              valueFrom:
+                secretKeyRef:
+                  name: sosmesh-staging-db
+                  key: DATABASE_URL
+          securityContext:
+            runAsNonRoot: true
+            runAsUser: 10001
+            allowPrivilegeEscalation: false

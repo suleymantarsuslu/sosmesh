@@ -15,7 +15,7 @@ final class GoldenVectorTests: XCTestCase {
         goldenVector = try XCTUnwrap(JSONSerialization.jsonObject(with: data) as? [String: Any])
     }
 
-    /// Resources copied via Package.swift `resources: [.copy("Resources")]` live under the `Resources` subdirectory in the bundle.
+    /// Bundled by Package.swift via `.copy("Resources/golden-001.json")` at the test resource bundle root.
     private static func bundledGoldenURL() -> URL? {
         Bundle.module.url(forResource: "golden-001", withExtension: "json", subdirectory: "Resources")
             ?? Bundle.module.url(forResource: "golden-001", withExtension: "json")

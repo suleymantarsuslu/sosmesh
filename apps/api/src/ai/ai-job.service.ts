@@ -63,7 +63,7 @@ export class AiJobService {
       Number(process.env.AI_TENANT_RATE_LIMIT_MAX ?? 30),
       Number(process.env.AI_TENANT_RATE_LIMIT_WINDOW_MS ?? 60000)
     );
-    this.costGuard = new AiCostGuard(Number(process.env.AI_DAILY_COST_CAP_USD ?? 5));
+    this.costGuard = new AiCostGuard(() => Number(process.env.AI_DAILY_COST_CAP_USD ?? 5));
     this.incidentTokenBudget = new IncidentTokenBudgetGuard(
       Number(process.env.AI_INCIDENT_TOKEN_BUDGET ?? DEFAULT_INCIDENT_TOKEN_BUDGET)
     );
@@ -78,6 +78,7 @@ export class AiJobService {
   }): void {
     this.pendingJobs += 1;
     this.metrics.setAiQueueDepth(this.pendingJobs);
+    this.metrics.setWorkerStuckSeconds(this.getWorkerStuckSecondsForAlerts());
     setImmediate(() => {
       void this.runJob(params)
         .catch((error) => {
@@ -91,6 +92,7 @@ export class AiJobService {
           this.pendingJobs = Math.max(0, this.pendingJobs - 1);
           this.lastQueueProgressMs = Date.now();
           this.metrics.setAiQueueDepth(this.pendingJobs);
+          this.metrics.setWorkerStuckSeconds(this.getWorkerStuckSecondsForAlerts());
         });
     });
   }

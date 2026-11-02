@@ -93,6 +93,10 @@ export class SosMeshMetricsService {
     this.setGauge('sosmesh_ai_job_queue_depth', depth);
   }
 
+  setWorkerStuckSeconds(seconds: number): void {
+    this.setGauge('sosmesh_ai_worker_stuck_seconds', seconds);
+  }
+
   observeUserLagPeer(seconds: number): void {
     this.observeHistogram('sosmesh_user_visible_lag_peer_seconds', seconds);
   }

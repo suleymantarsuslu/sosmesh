@@ -211,6 +211,35 @@ describe('ADIM 44 privacy (API)', () => {
     expect(serialized).toContain('[REDACTED]');
   });
 
+  it('redacts unknown-key numeric coordinate pairs in export audit trail (integration)', async () => {
+    const prisma = app.get(PrismaService);
+    await prisma.auditLog.create({
+      data: {
+        incidentId,
+        action: 'CASE_UPDATE',
+        detailsJson: {
+          envelope: { q: 40.987654, r: 29.123456 },
+          points: [[39.5, 32.5]],
+        },
+      },
+    });
+    const token = operatorBearerToken({
+      sub: coordinatorId,
+      role: UserRole.COORDINATOR,
+      teamId,
+      organizationId: orgId,
+    });
+    const response = await request(app.getHttpServer())
+      .get(`/v1/operator/privacy/incidents/${incidentId}/export`)
+      .set('Authorization', `Bearer ${token}`);
+    expect(response.status).toBe(200);
+    const serialized = JSON.stringify(response.body);
+    expect(serialized).not.toContain('40.987654');
+    expect(serialized).not.toContain('29.123456');
+    expect(serialized).not.toContain('39.5');
+    expect(serialized).toContain('[REDACTED_COORD]');
+  });
+
   it('blocks cookie-authenticated erase when Origin is not allowlisted (CSRF)', async () => {
     const cookie = await coordinatorCookie();
     const response = await request(app.getHttpServer())
@@ -290,6 +319,92 @@ describe('ADIM 44 privacy (API)', () => {
   });
 });
 
+describe('ADIM 44 ADMIN platform superuser (cross-tenant, audited)', () => {
+  let app: INestApplication;
+  const orgId = '00000000-0000-4000-8000-00000000044f';
+  const teamId = '00000000-0000-4000-8000-000000000450';
+  const incidentId = '00000000-0000-4000-8000-000000000451';
+  const adminId = '00000000-0000-4000-8000-000000000452';
+  const eraseIncidentId = '00000000-0000-4000-8000-000000000453';
+  const password = 'test-password-16chars';
+
+  beforeAll(async () => {
+    applyTestAuthEnv();
+    app = await createTestApp(getTestDatabaseUrl());
+    const prisma = app.get(PrismaService);
+    const hash = await bcrypt.hash(password, 10);
+    await ensureDefaultOrganization(prisma);
+    await createTestOrganization(prisma, { id: orgId, name: 'admin-audit-org', slug: 'admin-audit-org-44' });
+    await prisma.team.create({
+      data: { id: teamId, name: 'admin-audit-team', organizationId: orgId },
+    });
+    await prisma.user.create({
+      data: {
+        id: adminId,
+        email: 'privacy44-platform-admin@sosmesh.example',
+        displayName: 'Platform Admin',
+        role: UserRole.ADMIN,
+        teamId,
+        passwordHash: hash,
+      },
+    });
+    await prisma.incident.create({ data: { id: incidentId, state: 'PENDING' } });
+    await prisma.assignment.create({ data: { incidentId, teamId, status: 'OPEN' } });
+    await prisma.sosMessage.create({
+      data: {
+        messageId: '00000000-0000-4000-8000-000000000454',
+        incidentId,
+        locationStatus: 'UNKNOWN',
+      },
+    });
+    await prisma.incident.create({ data: { id: eraseIncidentId, state: 'PENDING' } });
+    await prisma.assignment.create({ data: { incidentId: eraseIncidentId, teamId, status: 'OPEN' } });
+    await prisma.sosMessage.create({
+      data: {
+        messageId: '00000000-0000-4000-8000-000000000455',
+        incidentId: eraseIncidentId,
+        locationStatus: 'UNKNOWN',
+      },
+    });
+  });
+
+  afterAll(async () => {
+    await app.close();
+  });
+
+  it('allows ADMIN cross-tenant export and writes PRIVACY_EXPORT audit with actor', async () => {
+    const token = operatorBearerToken({ sub: adminId, role: UserRole.ADMIN, teamId });
+    const beforeCount = await app.get(PrismaService).auditLog.count({
+      where: { action: 'PRIVACY_EXPORT', actorId: adminId },
+    });
+    const response = await request(app.getHttpServer())
+      .get(`/v1/operator/privacy/incidents/${incidentId}/export`)
+      .set('Authorization', `Bearer ${token}`);
+    expect(response.status).toBe(200);
+    const afterCount = await app.get(PrismaService).auditLog.count({
+      where: { action: 'PRIVACY_EXPORT', actorId: adminId },
+    });
+    expect(afterCount).toBe(beforeCount + 1);
+  });
+
+  it('allows ADMIN cross-tenant erase and writes PRIVACY_ERASE_REQUEST audit with actor', async () => {
+    const token = operatorBearerToken({ sub: adminId, role: UserRole.ADMIN, teamId });
+    const response = await request(app.getHttpServer())
+      .post(`/v1/operator/privacy/incidents/${eraseIncidentId}/erase`)
+      .set('Authorization', `Bearer ${token}`);
+    expect(response.status).toBe(201);
+    const audits = await app.get(PrismaService).auditLog.findMany({
+      where: { action: 'PRIVACY_ERASE_REQUEST', actorId: adminId },
+      orderBy: { createdAt: 'desc' },
+      take: 1,
+    });
+    expect(audits.length).toBe(1);
+    expect(audits[0].detailsJson).toMatchObject({
+      erasedIncidentId: eraseIncidentId,
+    });
+  });
+});
+
 describe('ADIM 44 retention job', () => {
   let app: INestApplication;
   const orgId = '00000000-0000-4000-8000-000000000447';
@@ -355,6 +470,17 @@ describe('ADIM 44 retention job', () => {
   });
 
   it('deletes expired incident when retention job runs', async () => {
+    const prisma = app.get(PrismaService);
+    const maxAgeSeconds = Number(process.env.RETENTION_SOS_MESSAGE_MAX_AGE_SECONDS ?? '60');
+    const cutoff = new Date(Date.now() - maxAgeSeconds * 1000);
+    const staleMessages = await prisma.sosMessage.findMany({
+      where: { receivedAt: { lt: cutoff } },
+      select: { incidentId: true },
+    });
+    const expectedDeletedIncidents = new Set(staleMessages.map((row) => row.incidentId)).size;
+    expect(expectedDeletedIncidents).toBeGreaterThanOrEqual(1);
+    expect(staleMessages.some((row) => row.incidentId === incidentId)).toBe(true);
+
     const login = await request(app.getHttpServer())
       .post('/v1/auth/login')
       .set('Origin', allowedOrigin)
@@ -366,8 +492,7 @@ describe('ADIM 44 retention job', () => {
       .set('Cookie', cookie)
       .set('Origin', allowedOrigin);
     expect(run.status).toBe(201);
-    expect(run.body.deletedIncidents).toBe(1);
-    const prisma = app.get(PrismaService);
+    expect(run.body.deletedIncidents).toBe(expectedDeletedIncidents);
     const incident = await prisma.incident.findUnique({ where: { id: incidentId } });
     expect(incident).toBeNull();
     const feed = await prisma.operatorFeedEvent.findUnique({ where: { messageId } });

@@ -1,0 +1,6 @@
+#include "SharedRelease.xcconfig"
+SOSMESH_APP_ENV = prod
+PRODUCT_BUNDLE_IDENTIFIER = com.sosmesh.ios
+SOSMESH_BUNDLE_ID_WATCH = com.sosmesh.ios.watch
+SOSMESH_BUNDLE_ID_WIDGETS = com.sosmesh.ios.watch.widgets
+GCC_PREPROCESSOR_DEFINITIONS = $(inherited) SOSMESH_ENV_PROD=1

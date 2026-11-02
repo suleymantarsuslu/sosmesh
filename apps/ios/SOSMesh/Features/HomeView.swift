@@ -8,9 +8,11 @@ struct HomeView: View {
             VStack(alignment: .leading, spacing: 16) {
                 Text("app.tagline")
                     .font(.title2)
+                    .accessibilityAddTraits(.isHeader)
                 Text("onboarding.not112")
                     .font(.body)
                     .accessibilityLabel(Text("onboarding.not112"))
+                CrossPlatformFaultBanner(hint: appModel.platformHint, onOpenSettings: {})
                 NavigationLink {
                     SosSendView()
                 } label: {
@@ -26,6 +28,9 @@ struct HomeView: View {
             }
             .padding()
             .navigationTitle("app.name")
+            .onAppear {
+                appModel.refreshPlatformHint()
+            }
         }
     }
 }

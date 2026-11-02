@@ -71,4 +71,24 @@ class MeshRelayEngineProductionGuardTest {
             )
         assertEquals(MeshRelayDropReason.MAX_HOPS, engine.evaluateForward(maxHopsEnvelope, relayHash).dropReason)
     }
+
+    @Test
+    fun rejects_oversized_opaque_ciphertext_sec_mesh_size_001() {
+        val engine = MeshRelayEngineFactory.createRelayEngine(lruCapacity = 8)
+        val oversized = ByteArray(16_385) { 0x2a.toByte() }
+        val envelope =
+            MeshRelayEnvelopeV2(
+                protocolVersion = 2,
+                messageId = "oversized-mesh",
+                hopCount = 0,
+                maxHops = 5,
+                ttlHops = 2,
+                copyCount = 1,
+                maxCopyCount = 3,
+                originCreatedAt = "2026-11-01T12:00:00Z",
+                opaqueCiphertextBase64 = java.util.Base64.getEncoder().encodeToString(oversized),
+                hopChainReceipt = HopChainReceiptV2(),
+            )
+        assertEquals(MeshRelayDropReason.INVALID_ENVELOPE, engine.evaluateForward(envelope, relayHash).dropReason)
+    }
 }

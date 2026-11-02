@@ -1,9 +1,11 @@
-import { Controller, Get, Header } from '@nestjs/common';
+import { Controller, Get, Header, UseGuards } from '@nestjs/common';
 import { ApiExcludeController } from '@nestjs/swagger';
 
+import { MetricsScrapeGuard } from './metrics-scrape.guard';
 import { SosMeshMetricsService } from './sosmesh-metrics.service';
 
 @ApiExcludeController()
+@UseGuards(MetricsScrapeGuard)
 @Controller()
 export class MetricsController {
   constructor(private readonly metrics: SosMeshMetricsService) {}

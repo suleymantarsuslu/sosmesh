@@ -21,6 +21,9 @@ async function main() {
       .export({ format: 'der', type: 'pkcs8' })
       .toString('base64');
   }
+  if (!process.env.METRICS_SCRAPE_AUTH) {
+    process.env.METRICS_SCRAPE_AUTH = 'local-dev-metrics-scrape-token';
+  }
   process.env.LOG_LEVEL = 'silent';
 
   const { createApp } = await import('../src/main');

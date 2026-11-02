@@ -1,0 +1,8 @@
+# Rollback trial — NOT_TESTED
+# Document snapshot id, previous image digest, and verification curls.
+
+trial_date_utc:
+snapshot_id:
+rolled_back_to_digest:
+post_rollback_health_ready:
+result: NOT_TESTED

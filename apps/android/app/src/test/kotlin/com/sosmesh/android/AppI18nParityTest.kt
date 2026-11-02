@@ -1,0 +1,36 @@
+package com.sosmesh.android
+
+import org.junit.Assert.assertEquals
+import org.junit.Test
+import org.junit.runner.RunWith
+import org.robolectric.RobolectricTestRunner
+import org.robolectric.annotation.Config
+import org.xmlpull.v1.XmlPullParser
+import org.xmlpull.v1.XmlPullParserFactory
+import java.io.File
+
+@RunWith(RobolectricTestRunner::class)
+@Config(sdk = [33])
+class AppI18nParityTest {
+    @Test
+    fun trAndEnStringKeys_match() {
+        val moduleRoot = File("src/main/res")
+        val trKeys = readStringKeys(moduleRoot.resolve("values/strings.xml"))
+        val enKeys = readStringKeys(moduleRoot.resolve("values-en/strings.xml"))
+        assertEquals(trKeys, enKeys)
+    }
+
+    private fun readStringKeys(file: File): Set<String> {
+        val parser = XmlPullParserFactory.newInstance().newPullParser()
+        parser.setInput(file.inputStream(), null)
+        val keys = mutableSetOf<String>()
+        var event = parser.eventType
+        while (event != XmlPullParser.END_DOCUMENT) {
+            if (event == XmlPullParser.START_TAG && parser.name == "string") {
+                keys.add(parser.getAttributeValue(null, "name"))
+            }
+            event = parser.next()
+        }
+        return keys
+    }
+}

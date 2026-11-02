@@ -1,12 +1,12 @@
 id,severity,bileşen,remediation sahibi,durum
 SEC-IND-AUDIT-001,info,program,security lead,NOT_TESTED
-SEC-DEP-NEXT-001,critical,apps/web (next),platform,açık
-SEC-DEP-VITEST-001,critical,packages/contracts (vitest dev),platform,açık
-SEC-DEP-MAPLIBRE-001,critical,apps/web (maplibre-gl),web,açık
+SEC-DEP-NEXT-001,critical,apps/web (next),platform,remediated
+SEC-DEP-VITEST-001,critical,packages/contracts (vitest dev),platform,remediated
+SEC-DEP-MAPLIBRE-001,critical,apps/web (maplibre-gl),web,remediated
 SEC-DEP-NEST-001,high,apps/api (nestjs transitive),platform,açık
 SEC-WEB-CSP-001,high,apps/web (operatör paneli),web,remediated
 SEC-API-HDR-001,medium,apps/api (HTTP başlıkları),backend,remediated
-SEC-MESH-SIZE-001,medium,packages/contracts protocol-v2,mobile mesh,açık
+SEC-MESH-SIZE-001,medium,packages/contracts protocol-v2,mobile mesh,remediated
 SEC-ADIM34-001,medium,iOS↔Android çapraz (PR #48),mobile,NOT_TESTED
 SEC-RADIO-SPOOF-001,high,BLE peer kimliği,mobile,açık
 SEC-INGEST-ABUSE-001,medium,apps/api ingest,backend,remediated

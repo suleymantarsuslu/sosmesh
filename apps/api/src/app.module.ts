@@ -28,6 +28,7 @@ import { PrismaModule } from './prisma/prisma.module';
 import { PublicModule } from './public/public.module';
 import { PrivacyModule } from './privacy/privacy.module';
 import { ObservabilityModule } from './observability/observability.module';
+import { RecommendationModule } from './recommendation/recommendation.module';
 
 @Module({
   imports: [
@@ -82,6 +83,7 @@ import { ObservabilityModule } from './observability/observability.module';
     NotificationsModule,
     PrivacyModule,
     ObservabilityModule,
+    RecommendationModule,
   ],
   providers: [
     HttpExceptionFilter,

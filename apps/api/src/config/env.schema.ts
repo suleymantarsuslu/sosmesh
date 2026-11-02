@@ -27,6 +27,7 @@ export const envValidationSchema = Joi.object({
   AI_TENANT_RATE_LIMIT_WINDOW_MS: Joi.number().integer().min(1000).default(60000),
   AI_DAILY_COST_CAP_USD: Joi.number().min(0).default(5),
   AI_ESTIMATED_COST_USD: Joi.number().min(0).default(0.002),
+  AI_RECOMMENDATION_RATIONALE_ENABLED: Joi.string().valid('true', 'false').default('false'),
   RETENTION_JOB_ENABLED: Joi.string().valid('true', 'false').default('false'),
   RETENTION_SOS_MESSAGE_MAX_AGE_SECONDS: Joi.string().allow('').optional(),
   OTEL_EXPORTER_OTLP_ENABLED: Joi.string().valid('true', 'false').default('false'),
@@ -34,6 +35,7 @@ export const envValidationSchema = Joi.object({
     .uri({ scheme: ['http', 'https'] })
     .default('http://127.0.0.1:4318/v1/traces'),
   OTEL_CONSOLE_EXPORT: Joi.string().valid('true', 'false').default('false'),
+  METRICS_SCRAPE_AUTH: Joi.string().min(16).required(),
   SOSMESH_DISASTER_READ_ONLY_MODE: Joi.string()
     .valid('true', 'false')
     .default('false'),

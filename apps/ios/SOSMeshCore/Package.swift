@@ -3,7 +3,7 @@ import PackageDescription
 
 let package = Package(
     name: "SOSMeshCore",
-    platforms: [.macOS(.v13), .iOS(.v17)],
+    platforms: [.macOS(.v13), .iOS(.v17), .watchOS(.v10)],
     products: [
         .library(name: "SOSMeshCore", targets: ["SOSMeshCore"]),
     ],

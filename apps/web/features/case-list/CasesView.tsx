@@ -15,6 +15,8 @@ import { UnknownLocationQueue } from './UnknownLocationQueue';
 import { useLiveFeed } from './useLiveFeed';
 import { useOperatorPreferences } from '../../components/operator/OperatorPreferencesProvider';
 import { OperatorMap } from '../map/OperatorMap';
+import { AssignmentPreviewPanel } from '../assignment/AssignmentPreviewPanel';
+import type { AssignmentPreviewRoute } from '../assignment/types';
 
 type TimelineEntry = {
   id: string;
@@ -48,6 +50,7 @@ export function CasesView({ initialCases }: { initialCases: OperatorCaseRow[] })
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [timeline, setTimeline] = useState<TimelineEntry[]>([]);
   const [mapZoom, setMapZoom] = useState(6);
+  const [assignmentPreview, setAssignmentPreview] = useState<AssignmentPreviewRoute | null>(null);
 
   const refreshCases = useCallback(async () => {
     const params = new URLSearchParams({ limit: '100' });
@@ -107,6 +110,13 @@ export function CasesView({ initialCases }: { initialCases: OperatorCaseRow[] })
     [filtered]
   );
   const selectedRow = filtered.find((row) => row.incidentId === selectedId) ?? null;
+  const selectedCoordinates =
+    selectedRow &&
+    selectedRow.latitude !== null &&
+    selectedRow.longitude !== null &&
+    hasPlottableCoordinates(selectedRow)
+      ? { latitude: selectedRow.latitude, longitude: selectedRow.longitude }
+      : null;
 
   const openDrawer = useCallback(async (incidentId: string) => {
     setSelectedId(incidentId);
@@ -143,6 +153,7 @@ export function CasesView({ initialCases }: { initialCases: OperatorCaseRow[] })
             onSelect={openDrawer}
             zoom={mapZoom}
             onZoomChange={setMapZoom}
+            assignmentPreview={assignmentPreview}
           />
         </div>
         <div className="cases-view__side">
@@ -154,6 +165,13 @@ export function CasesView({ initialCases }: { initialCases: OperatorCaseRow[] })
           />
         </div>
         <div className="cases-view__detail-column">
+          {selectedId ? (
+            <AssignmentPreviewPanel
+              incidentId={selectedId}
+              caseCoordinates={selectedCoordinates}
+              onPreviewChange={setAssignmentPreview}
+            />
+          ) : null}
           <CaseDetailPanel row={selectedRow} timeline={timeline} />
         </div>
       </div>

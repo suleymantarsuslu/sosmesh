@@ -1,6 +1,7 @@
 import { Global, Module } from '@nestjs/common';
 import { APP_INTERCEPTOR } from '@nestjs/core';
 
+import { MetricsScrapeGuard } from './metrics-scrape.guard';
 import { HttpMetricsInterceptor } from './http-metrics.interceptor';
 import { MetricsController } from './metrics.controller';
 import { OperatorObservabilityController } from './operator-observability.controller';
@@ -15,6 +16,7 @@ import { StructuredEventLogger } from './structured-event-logger.service';
     SosMeshMetricsService,
     StructuredEventLogger,
     OperatorObservabilityService,
+    MetricsScrapeGuard,
     { provide: APP_INTERCEPTOR, useClass: HttpMetricsInterceptor },
   ],
   exports: [SosMeshMetricsService, StructuredEventLogger, OperatorObservabilityService],

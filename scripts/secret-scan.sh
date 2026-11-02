@@ -31,6 +31,31 @@ EMAIL_ALLOWLIST=(
   'admin@sosmesh\.example'
 )
 
+# KEY/SECRET/TOKEN/PASSWORD=<değer> eşleşmesi güvenli mi (atla)?
+# Yalnız: =${VAR} / ="${VAR}" (VAR: [A-Z0-9_], :- yok) ve satırda $(openssl rand ...) üretimi.
+secret_scan_skip_assignment_value() {
+  local file=$1
+  local match=$2
+  local value="${match#*=}"
+
+  # Tam referans: ${VAR} veya ${VAR}"
+  if echo "$value" | grep -qE '^\$\{[A-Z0-9_]+\}"?$'; then
+    return 0
+  fi
+
+  # openssl rand — grep -o kısaltması $(open...); satır bağlamında doğrula
+  if echo "$value" | grep -qE '^\$\(open'; then
+    if [ -f "$file" ] && grep -E '=\$\(openssl rand ' "$file" | grep -qF "$match"; then
+      return 0
+    fi
+  fi
+  if echo "$value" | grep -qE '^\$\(openssl rand '; then
+    return 0
+  fi
+
+  return 1
+}
+
 EXIT_CODE=0
 MATCH_COUNT=0
 
@@ -103,9 +128,23 @@ for PATTERN in "${PATTERNS[@]}"; do
         done
       fi
       
-      # KEY/SECRET/PASSWORD: değer <placeholder>, boş, veya dev-/mock- prefix'li ise atla
-      if [[ "$PATTERN" == *'KEY'* ]] || [[ "$PATTERN" == *'SECRET'* ]]; then
-        if echo "$MATCH" | grep -q -E '=\s*<|=\s*\[|=\s*$|=(dev|mock|test)-'; then
+      # KEY/SECRET/TOKEN: placeholder, boş veya bilinen yerel/CI önekleri
+      if [[ "$PATTERN" == *'KEY'* ]] || [[ "$PATTERN" == *'SECRET'* ]] || [[ "$PATTERN" == *'TOKEN'* ]]; then
+        if echo "$MATCH" | grep -q -E '=\s*<|=\s*\[|=\s*$|=(dev|mock|test|ci-load|smoke-local|local-dev)-'; then
+          SKIP=true
+        fi
+      fi
+
+      # Tüm alternasyonlar: placeholder / boş (TOKEN/PASSWORD dahil, dev- öneki yok)
+      if [[ "$PATTERN" == *'PASSWORD'* ]] || [[ "$PATTERN" == *'TOKEN'* ]]; then
+        if echo "$MATCH" | grep -q -E '=\s*<|=\s*\[|=\s*$'; then
+          SKIP=true
+        fi
+      fi
+
+      # CI ephemeral: yalnız dar ${VAR} referansı veya $(openssl rand ...)
+      if [[ "$PATTERN" == *'KEY'* ]] || [[ "$PATTERN" == *'SECRET'* ]] || [[ "$PATTERN" == *'TOKEN'* ]] || [[ "$PATTERN" == *'PASSWORD'* ]]; then
+        if secret_scan_skip_assignment_value "$FILE" "$MATCH"; then
           SKIP=true
         fi
       fi

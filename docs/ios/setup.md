@@ -34,14 +34,16 @@ swift test
 
 Cloud agent Linux ortamında `swift-crypto` BoringSSL derlemesi araç zincirine bağlı olabilir; kanonik Swift doğrulaması GitHub-hosted `Swift Package Tests` job'ında (`swiftlang/setup-swift` + `swift test`) yapılır; macOS `ios-xcode` job uygulama derlemesini doğrular.
 
-## İmzalama
+## İmzalama ve release (ADIM 52)
 
-- Demo/staging/prod ayrımı ileride `xcconfig` şablonları ile genişletilecek.
-- Fiziksel cihaz testi ve arka plan davranışı **NOT_TESTED** (ayrı cihaz matrisi: `docs/compat/ios-background-matrix.csv`).
+- Ortam şablonları: `apps/ios/Config/Release-*.xcconfig` — team/sertifika yalnız ortam değişkeni (`SOSMESH_APPLE_TEAM_ID`).
+- Archive: `apps/ios/scripts/archive-export.sh` (**macOS gerekir**; Linux agent derleyemez).
+- Release doğrulama (Linux/CI): `bash apps/ios/scripts/check-release-adim52.sh` (verify.sh 26/27).
+- TestFlight yükleme: **BLOCKED_APPROVAL** — bkz. `docs/release/ios.md`.
 
 ## Gizlilik metinleri
 
-Bluetooth ve konum `Info.plist` anahtarları; 112 uyarısı onboarding’de (`onboarding.not112`).
+Bluetooth ve konum: `Info.plist` + `tr.lproj` / `en.lproj` `InfoPlist.strings`; 112 uyarısı onboarding’de (`onboarding.not112`). Privacy manifest: `SOSMesh/PrivacyInfo.xcprivacy`.
 
 ## Lint
 

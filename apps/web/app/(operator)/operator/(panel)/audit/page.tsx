@@ -14,7 +14,7 @@ type AuditItem = {
 };
 
 export default async function OperatorAuditPage() {
-  const session = readSession();
+  const session = await readSession();
   if (!session) {
     redirect('/operator/login?next=/operator/audit');
   }

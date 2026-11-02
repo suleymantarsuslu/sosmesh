@@ -1,0 +1,17 @@
+// SOSMesh shared release settings (ADIM 52). Signing values come from env in archive-export.sh — no secrets in repo.
+#include "Version.xcconfig"
+
+SWIFT_VERSION = 5.0
+IPHONEOS_DEPLOYMENT_TARGET = 17.0
+WATCHOS_DEPLOYMENT_TARGET = 10.0
+
+GCC_PREPROCESSOR_DEFINITIONS = $(inherited) SOSMESH_RELEASE=1
+
+CODE_SIGN_STYLE = Manual
+DEVELOPMENT_TEAM = $(SOSMESH_APPLE_TEAM_ID)
+CODE_SIGN_IDENTITY = $(SOSMESH_CODE_SIGN_IDENTITY)
+
+COPY_PHASE_STRIP = NO
+SWIFT_COMPILATION_MODE = wholemodule
+DEBUG_INFORMATION_FORMAT = dwarf-with-dsym
+ENABLE_NS_ASSERTIONS = NO

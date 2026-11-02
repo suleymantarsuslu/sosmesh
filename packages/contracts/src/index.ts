@@ -43,3 +43,10 @@ export {
   type MeshRelayEngineOutcome,
   type MeshRelayDropReason,
 } from './protocol-v2/mesh-relay-engine';
+export {
+  evaluateDeliveryStateGate,
+  evaluateTransferAckGate,
+  peerReceivedIfIgnoringVerified,
+  type AckGateTransferInput,
+  type AckGateTransferResult,
+} from './cross-platform/ack-delivery-gate';

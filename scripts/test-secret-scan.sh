@@ -97,6 +97,15 @@ test_pattern "SHA dokumentasyonda tespit edilmemeli" "SHA: $FAKE_COMMIT_SHA" 0
 # Temiz dosya
 test_pattern "Temiz dosya tespit edilmemeli" "Bu dosyada secret yok, sadece normal metin." 0
 
+# CI ephemeral env — dar muafiyet (referans / openssl rand)
+test_pattern "JWT_SECRET=\${JWT_SECRET} referansı atlanmalı" 'echo "JWT_SECRET=${JWT_SECRET}"' 0
+test_pattern "openssl rand ataması atlanmalı" 'JWT_SECRET=$(openssl rand -base64 32)' 0
+
+# Geniş muafiyet olmamalı
+test_pattern "varsayılan parola (\${X:-...}) yakalanmalı" 'PASSWORD=${X:-hunter2longsecret}' 1
+test_pattern "sabit PASSWORD değeri yakalanmalı" 'PASSWORD=Sup3rS3cretValue' 1
+test_pattern "API_KEY=\$(echo sabit) yakalanmalı" 'API_KEY=$(echo sabitSecret)' 1
+
 echo ""
 echo "=== Test Özeti ==="
 echo "Başarılı: $TEST_PASSED"

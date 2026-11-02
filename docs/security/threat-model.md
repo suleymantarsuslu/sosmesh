@@ -70,7 +70,7 @@ Bu dalda tehdit modeli **34’ün yüzeyini yalnızca sözleşme/protokol düzey
 |--------|--------|---------|----------------|
 | Ingest/ auth flood | API | Rate limit servisleri | `ingest.spec.ts`, `security-adim43.spec.ts` (auth 429) |
 | Mesh duplicate flood | protocol-v2 engine | Dedup LRU | `duplicateFlood` adversarial fixture |
-| Aşırı büyük payload | Ingest | 413 `PAYLOAD_TOO_LARGE` | `ingest.spec.ts`; mesh motoru boyut sınırı **SEC-MESH-SIZE-001** açık |
+| Aşırı büyük payload | Ingest | 413 `PAYLOAD_TOO_LARGE` | `ingest.spec.ts`; mesh motoru **SEC-MESH-SIZE-001** (16 KiB opaque cap, schema maxLength + TS/Kotlin doğrulayıcı) |
 
 ### E — Elevation of privilege
 

@@ -318,8 +318,53 @@ else
   check_exit "android-relay-no-android-id" $EXIT_CODE
 fi
 
-# 25. Backup restore drill log (ADIM 49; CI postgres — Jest covers embedded)
-echo "25/25: bash scripts/backup-restore-drill.sh"
+# 25. iOS Xcode project golden (generate-xcodeproj.py)
+echo "25/30: bash apps/ios/scripts/check-xcodeproj-golden.sh"
+if bash apps/ios/scripts/check-xcodeproj-golden.sh > "$REPORTS_DIR/ios-xcodeproj-golden.log" 2>&1; then
+  check_exit "ios-xcodeproj-golden" 0
+else
+  EXIT_CODE=$?
+  check_exit "ios-xcodeproj-golden" $EXIT_CODE
+fi
+
+# 26. Android release BuildConfig must not embed secrets
+echo "26/30: bash scripts/android-release-buildconfig-scan.sh"
+if bash "$SCRIPT_DIR/android-release-buildconfig-scan.sh" > "$REPORTS_DIR/android-release-buildconfig-scan.log" 2>&1; then
+  check_exit "android-release-buildconfig-scan" 0
+else
+  EXIT_CODE=$?
+  check_exit "android-release-buildconfig-scan" $EXIT_CODE
+fi
+
+# 27. iOS ADIM 52 release config (privacy, export template, lproj paths)
+echo "27/30: bash apps/ios/scripts/check-release-adim52.sh"
+if bash apps/ios/scripts/check-release-adim52.sh > "$REPORTS_DIR/ios-release-adim52.log" 2>&1; then
+  check_exit "ios-release-adim52" 0
+else
+  EXIT_CODE=$?
+  check_exit "ios-release-adim52" $EXIT_CODE
+fi
+
+# 28. Mutation tests for iOS release checker
+echo "28/30: bash scripts/test-check-ios-release-adim52.sh"
+if bash "$SCRIPT_DIR/test-check-ios-release-adim52.sh" > "$REPORTS_DIR/test-check-ios-release-adim52.log" 2>&1; then
+  check_exit "test-check-ios-release-adim52" 0
+else
+  EXIT_CODE=$?
+  check_exit "test-check-ios-release-adim52" $EXIT_CODE
+fi
+
+# 29. iOS Localizable.strings TR/EN key parity (ADIM 57 help keys)
+echo "29/30: node scripts/check-ios-localizable-parity.js"
+if node "$SCRIPT_DIR/check-ios-localizable-parity.js" > "$REPORTS_DIR/ios-localizable-parity.log" 2>&1; then
+  check_exit "ios-localizable-parity" 0
+else
+  EXIT_CODE=$?
+  check_exit "ios-localizable-parity" $EXIT_CODE
+fi
+
+# 30. Backup restore drill log (ADIM 49; CI postgres — Jest covers embedded)
+echo "30/30: bash scripts/backup-restore-drill.sh"
 if [ -n "${SOSMESH_CI_DATABASE_URL:-}" ]; then
   export DATABASE_URL="$SOSMESH_CI_DATABASE_URL"
   if bash "$SCRIPT_DIR/backup-restore-drill.sh" >> "$REPORTS_DIR/backup-restore-drill.log" 2>&1; then

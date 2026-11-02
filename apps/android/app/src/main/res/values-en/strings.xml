@@ -21,6 +21,11 @@
     <string name="platform_hint_low_battery">Battery is low; volunteer relay paused. SOS remains saved on device.</string>
     <string name="platform_hint_network">No internet; relay upload is waiting. Packets stay on device.</string>
     <string name="platform_hint_power_save">Power save is on; scan intervals are reduced. No background guarantee.</string>
+    <string name="cross_platform_fault_title">Transfer or connectivity warning</string>
+    <string name="cross_platform_fault_aria">Cross-platform fault status announcement</string>
+    <string name="cross_platform_hint_location">Location services off or no GPS. SOS flow continues; location marked unknown.</string>
+    <string name="cross_platform_hint_corrupt">Packet corrupt or could not be verified. Not counted as delivered to a nearby device.</string>
+    <string name="cross_platform_hint_api">Server upload failed. Message waits on device; not operator read.</string>
     <string name="relay_education_title">Volunteer relay (opt-in)</string>
     <string name="relay_education_body">You can volunteer to carry nearby SOS messages to the internet. Content is not read; battery and data limits apply.</string>
     <string name="relay_education_cta">Open relay settings</string>
@@ -52,4 +57,23 @@
     <string name="notification_mesh_title">Nearby device connection</string>
     <string name="notification_mesh_body">SOSMesh is communicating with nearby devices. No guarantee of continuous background connection.</string>
     <string name="notification_mesh_body_pending">%1$d packet(s) waiting to upload. No guarantee of continuous background connection.</string>
+    <string name="home_help_cta">Help and limitations</string>
+    <string name="help_screen_title">Help</string>
+    <string name="help_not112_banner">SOSMesh does not replace 112. Call 112 in an emergency.</string>
+    <string name="help_offline_title">Offline use</string>
+    <string name="help_offline_body">SOS stays in an encrypted on-device queue; nearby BLE transfer runs without AI. No server path without internet.</string>
+    <string name="help_ack_levels_title">Status steps (5 ACK)</string>
+    <string name="help_ack_levels_body">The timeline shows technical delivery stages. Peer ACK is not operator read or a help guarantee.</string>
+    <string name="help_relay_title">Volunteer relay</string>
+    <string name="help_relay_body">Off by default. When enabled you carry encrypted packets only; you cannot read SOS plaintext.</string>
+    <string name="help_watch_title">Watch and paired phone</string>
+    <string name="help_watch_body">Wear OS sends SOS to the paired phone. No standalone watch mesh guarantee.</string>
+    <string name="help_failed_delivery_title">Failed delivery</string>
+    <string name="help_failed_delivery_body">Call 112 first. Check Bluetooth and permissions; avoid duplicate SOS spam.</string>
+    <string name="help_troubleshooting_title">Troubleshooting</string>
+    <string name="help_troubleshooting_body">If Bluetooth is off or permissions are denied, nearby transfer stops. On iOS, force-quit may stop mesh.</string>
+    <string name="help_limitations_title">Known limitations</string>
+    <string name="help_limitations_body">Apple background limits; physical device tests NOT_TESTED; store rollout BLOCKED_APPROVAL.</string>
+    <string name="help_support_title">Support</string>
+    <string name="help_support_body">Contact: TODO_APPROVAL — prod support email not approved yet.</string>
 </resources>

@@ -17,6 +17,12 @@ import { testIngestSigningPrivateKeyBase64 } from './helpers/ingest-test-env';
 import { operatorBearerToken } from './helpers/operator-auth';
 import { createTestApp } from './helpers/test-app';
 
+async function maxOperatorFeedSeq(app: INestApplication): Promise<bigint> {
+  const prisma = app.get(PrismaService);
+  const agg = await prisma.operatorFeedEvent.aggregate({ _max: { seq: true } });
+  return agg._max.seq ?? 0n;
+}
+
 function verifyReceiptSignature(receipt: {
   ackType: string;
   messageId: string;
@@ -101,6 +107,8 @@ describe('GET /v1/operator/events', () => {
       },
     }));
 
+    const afterBefore = await maxOperatorFeedSeq(app);
+
     for (const item of relays) {
       const ingest = await request(app.getHttpServer()).post('/v1/ingest').send(item);
       expect(ingest.status).toBe(200);
@@ -108,7 +116,7 @@ describe('GET /v1/operator/events', () => {
 
     const token = operatorBearerToken();
     const feed = await request(app.getHttpServer())
-      .get('/v1/operator/events')
+      .get(`/v1/operator/events?after=${afterBefore.toString()}`)
       .set('Authorization', `Bearer ${token}`);
 
     expect(feed.status).toBe(200);
@@ -121,11 +129,7 @@ describe('GET /v1/operator/events', () => {
 
   it('replays missed events in order after Last-Event-ID reconnect without duplicates', async () => {
     const token = operatorBearerToken();
-    const first = await request(app.getHttpServer())
-      .get('/v1/operator/events')
-      .set('Authorization', `Bearer ${token}`);
-    expect(first.status).toBe(200);
-    const baseline = first.body.events.length;
+    const beforeSeq = await maxOperatorFeedSeq(app);
 
     const messageId = randomUUID();
     const ingest = await request(app.getHttpServer())
@@ -134,9 +138,15 @@ describe('GET /v1/operator/events', () => {
     expect(ingest.status).toBe(200);
 
     const snapshot = await request(app.getHttpServer())
-      .get('/v1/operator/events')
+      .get(`/v1/operator/events?after=${beforeSeq.toString()}`)
       .set('Authorization', `Bearer ${token}`);
-    expect(snapshot.body.events.length).toBeGreaterThan(baseline);
+    expect(snapshot.status).toBe(200);
+    expect(snapshot.body.events.length).toBeGreaterThan(0);
+    expect(
+      snapshot.body.events.some(
+        (event: { messageId: string }) => event.messageId === messageId
+      )
+    ).toBe(true);
     const lastId = snapshot.body.events[snapshot.body.events.length - 1].id;
 
     const replay = await request(app.getHttpServer())

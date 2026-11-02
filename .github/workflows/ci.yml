@@ -541,9 +541,21 @@ jobs:
           set -euo pipefail
           cd apps/ios/SOSMeshCore
           export SOURCE_ROOT="${GITHUB_WORKSPACE}"
+          set +e
           swift test 2>&1 | tee "${GITHUB_WORKSPACE}/swift-sosmeshcore-test.log"
+          swift_status=${PIPESTATUS[0]}
+          set -e
           passed_count=$(awk '/Test Case.*passed/{c++} END{print c+0}' "${GITHUB_WORKSPACE}/swift-sosmeshcore-test.log")
           echo "SOSMeshCore test lines: ${passed_count:-0}"
+          if [ "$swift_status" -ne 0 ]; then
+            {
+              echo "### SOSMeshCore Swift tests failed (exit ${swift_status})"
+              echo '```'
+              tail -n 120 "${GITHUB_WORKSPACE}/swift-sosmeshcore-test.log"
+              echo '```'
+            } >> "$GITHUB_STEP_SUMMARY"
+            exit "$swift_status"
+          fi
 
       - name: Compare Swift golden vector with master
         run: |

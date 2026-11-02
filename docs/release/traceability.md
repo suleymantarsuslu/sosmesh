@@ -4,7 +4,7 @@
 
 **Kural:** Fiziksel cihaz, MacBook/Xcode, mağaza veya hukuki inceleme kanıtı gerektiren maddeler **asla PASS sayılmaz**; `verification_status` status.json ile uyumludur.
 
-**Üretim:** `node scripts/release/generate-traceability.mjs` — 2026-11-02T15:21:12.388Z
+**Üretim:** `node scripts/release/generate-traceability.mjs` — 2026-11-02T16:07:48.351Z
 
 **Kayıt sayısı:** 88 (58 ADIM + M0 senaryoları + GEÇTİ ölçütleri)
 
@@ -73,7 +73,7 @@
 | ADIM-55 | **NOT_STARTED** | (doküman kanıtı) |
 | ADIM-56 | **PARTIAL** | CHANGELOG.md, docs/release/qa-summary.json |
 | ADIM-57 | **PARTIAL** | SECURITY.md, apps/web/app/(operator)/operator/(panel)/help/page.tsx |
-| ADIM-58 | **NOT_STARTED** | (doküman kanıtı) |
+| ADIM-58 | **PARTIAL** | docs/handover/evidence/adim58/clean-checkout-worktree.txt, docs/handover/final-report.md |
 
 ## M0 senaryoları (@device-required → NOT_TESTED)
 

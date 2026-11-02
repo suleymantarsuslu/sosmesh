@@ -1,6 +1,12 @@
 {
   "source": "master.docx (SOSMesh_Tam_Gelistirme_Master_Plani)",
-  "generated_note": "Parsed from master.txt; status values: PASS|FAIL|BLOCKED_DEVICE|BLOCKED_SECRET|BLOCKED_APPROVAL|NOT_TESTED|NOT_STARTED",
+  "generated_note": "Parsed from master.txt; status values: PASS|FAIL|BLOCKED_DEVICE|BLOCKED_SECRET|BLOCKED_APPROVAL|NOT_TESTED|NOT_STARTED|PENDING_MERGE|ACCEPTED_WITH_DEBT|PARTIAL",
+  "project_completion": {
+    "status": "NOT_COMPLETE",
+    "reason": "ADIM 24 NOT_TESTED; ADIM 49–50 NOT_STARTED; ADIM 55 NOT_STARTED; staging/prod deploy BLOCKED_APPROVAL; mağaza/imza/hukuk/cihaz kapıları PASS değil; qa-summary npm high audit açık.",
+    "last_updated_at": "2026-11-02T16:15:00+00:00",
+    "handover_report": "docs/handover/final-report.md"
+  },
   "gates": {
     "H": {
       "title": "Hackathon / Çekirdek (ADIM 01–25)",
@@ -2047,7 +2053,7 @@
       "pass_criteria": "BLOCKED/NOT_TESTED hiçbir required kalemde PASS gösterilmiyor.",
       "status": "PARTIAL",
       "attempts": 1,
-      "commit": "PLACEHOLDER_SHA",
+      "commit": "98e4e0c0fafa8c6b582ffb3040c2bd8b4d0f74ac",
       "evidence": [
         "docs/release/traceability.md",
         "docs/release/traceability.json",
@@ -2141,12 +2147,22 @@
       ],
       "deliverables": "docs/handover/final-report.md, docs/handover/status.json",
       "pass_criteria": "\"Tamamlandı\" yalnızca tüm gerekli kapılar gerçek kanıtla PASS olduğunda denebilir.",
-      "status": "NOT_STARTED",
-      "attempts": 0,
+      "status": "PARTIAL",
+      "attempts": 1,
       "commit": null,
-      "evidence": [],
-      "blockers": [],
-      "last_checked_at": null,
+      "evidence": [
+        "docs/handover/final-report.md",
+        "scripts/release/verify-handover.mjs",
+        "scripts/test-verify-handover.mjs",
+        "scripts/release/build-final-report.mjs",
+        "docs/handover/evidence/adim58/clean-checkout-worktree.txt"
+      ],
+      "blockers": [
+        "Zorunlu kapılarda PASS + gerçek kanıt yok — project_completion NOT_COMPLETE",
+        "Public demo / prod health URL YOK (deploy onay bekliyor)",
+        "Bağımlı ADIM 56–57 PARTIAL; ADIM 49 PR #59 PENDING_MERGE"
+      ],
+      "last_checked_at": "2026-11-02T16:15:00+00:00",
       "goal": "Grok son cevabı övgü yerine ölçülebilir teslim raporu versin.",
       "cursor_tasks": [
         "Her adım PASS/FAIL/BLOCKED ile tarih, commit, test link, platform kanıtı.",

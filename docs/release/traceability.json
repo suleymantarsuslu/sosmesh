@@ -1,6 +1,6 @@
 {
   "schema_version": "1.0.0",
-  "generated_at": "2026-11-02T15:21:12.388Z",
+  "generated_at": "2026-11-02T16:07:48.351Z",
   "source_of_truth": "docs/handover/status.json",
   "item_count": 88,
   "items": [
@@ -1741,9 +1741,15 @@
       "kind": "master_plan_step",
       "title": "Operasyonel handover ve tamamlanma raporu",
       "pass_criteria": "\"Tamamlandı\" yalnızca tüm gerekli kapılar gerçek kanıtla PASS olduğunda denebilir.",
-      "verification_status": "NOT_STARTED",
+      "verification_status": "PARTIAL",
       "tier": "P",
-      "tests": [],
+      "tests": [
+        "docs/handover/evidence/adim58/clean-checkout-worktree.txt",
+        "docs/handover/final-report.md",
+        "scripts/release/build-final-report.mjs",
+        "scripts/release/verify-handover.mjs",
+        "scripts/test-verify-handover.mjs"
+      ],
       "evidence": {
         "ci_jobs": [
           "Verify Quality Gates"
@@ -1752,8 +1758,14 @@
           "reports/verify-summary (local)",
           "reports/*.log"
         ],
-        "document_paths": [],
-        "status_json_blockers": []
+        "document_paths": [
+          "docs/handover/final-report.md"
+        ],
+        "status_json_blockers": [
+          "Zorunlu kapılarda PASS + gerçek kanıt yok — project_completion NOT_COMPLETE",
+          "Public demo / prod health URL YOK (deploy onay bekliyor)",
+          "Bağımlı ADIM 56–57 PARTIAL; ADIM 49 PR #59 PENDING_MERGE"
+        ]
       }
     },
     {

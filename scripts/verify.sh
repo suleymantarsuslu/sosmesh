@@ -381,7 +381,7 @@ else
 fi
 
 # 32. CycloneDX SBOM (no signing, no secrets)
-echo "32/34: node scripts/release/build-sbom.test.mjs"
+echo "32/36: node scripts/release/build-sbom.test.mjs"
 if node "$SCRIPT_DIR/release/build-sbom.test.mjs" > "$REPORTS_DIR/release-sbom-test.log" 2>&1; then
   check_exit "release-sbom-test" 0
 else
@@ -389,7 +389,7 @@ else
   check_exit "release-sbom-test" $EXIT_CODE
 fi
 
-echo "33/34: bash scripts/release/sbom.sh"
+echo "33/36: bash scripts/release/sbom.sh"
 if bash "$SCRIPT_DIR/release/sbom.sh" > "$REPORTS_DIR/release-sbom.log" 2>&1; then
   check_exit "release-sbom" 0
 else
@@ -397,13 +397,31 @@ else
   check_exit "release-sbom" $EXIT_CODE
 fi
 
-# 33. SHA256 checksums of build artifacts
-echo "34/34: bash scripts/release/checksums.sh"
+# 34. SHA256 checksums of build artifacts
+echo "34/36: bash scripts/release/checksums.sh"
 if bash "$SCRIPT_DIR/release/checksums.sh" > "$REPORTS_DIR/release-checksums.log" 2>&1; then
   check_exit "release-checksums" 0
 else
   EXIT_CODE=$?
   check_exit "release-checksums" $EXIT_CODE
+fi
+
+# 35. ADIM 58 handover report vs status.json
+echo "35/36: node scripts/release/verify-handover.mjs"
+if node "$SCRIPT_DIR/release/verify-handover.mjs" > "$REPORTS_DIR/verify-handover.log" 2>&1; then
+  check_exit "verify-handover" 0
+else
+  EXIT_CODE=$?
+  check_exit "verify-handover" $EXIT_CODE
+fi
+
+# 36. Handover verifier negative test
+echo "36/36: node --test scripts/test-verify-handover.mjs"
+if node --test "$SCRIPT_DIR/test-verify-handover.mjs" > "$REPORTS_DIR/test-verify-handover.log" 2>&1; then
+  check_exit "test-verify-handover" 0
+else
+  EXIT_CODE=$?
+  check_exit "test-verify-handover" $EXIT_CODE
 fi
 
 # Summary

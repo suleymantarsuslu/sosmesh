@@ -56,10 +56,10 @@ jobs:
           set -euo pipefail
           docker compose -f infra/deploy/compose/docker-compose.staging.yml up -d --build
 
-      - name: Dump compose logs on failure
+      - name: Diagnose api and migrate logs
         if: failure()
         shell: bash
-        run: docker compose -f infra/deploy/compose/docker-compose.staging.yml logs --no-color
+        run: bash infra/deploy/scripts/compose-diagnose-logs.sh infra/deploy/compose/docker-compose.staging.yml
 
       - name: Run container smoke script
         run: bash infra/deploy/scripts/container-smoke.sh

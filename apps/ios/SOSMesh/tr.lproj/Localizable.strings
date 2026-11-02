@@ -48,3 +48,16 @@
 "settings.multihop.title" = "Deneysel çok atlama (ön plan)";
 "settings.multihop.footer" = "Varsayılan kapalı. iPhone 7/24 tekrarlayıcı değildir; arka plan ve force-quit sınırları geçerlidir.";
 "settings.multihop.toggle" = "Araştırma çok atlama rölesini etkinleştir";
+"help.title" = "Yardım";
+"help.not112" = "SOSMesh, 112'nin yerine geçmez. Acil durumda 112'yi arayın.";
+"help.offline.title" = "Çevrimdışı kullanım";
+"help.offline.body" = "SOS cihazda şifreli kuyrukta kalır; yakın BLE aktarımı AI olmadan denenir.";
+"help.ackLevels.title" = "Durum adımları";
+"help.ackLevels.body" = "Peer ACK operatör okundu veya yardım garantisi değildir.";
+"help.relay.title" = "Gönüllü röle";
+"help.relay.body" = "Opt-in; şifreli paket taşırsınız, SOS metnini okumazsınız.";
+"help.watch.title" = "Saat ve eşli telefon";
+"help.watch.body" = "Saat bağımsız mesh garantisi yoktur.";
+"help.failed.title" = "Başarısız iletim";
+"help.failed.body" = "Önce 112'yi arayın; Bluetooth ve izinleri kontrol edin.";
+"help.support.body" = "Destek: TODO_APPROVAL (prod e-posta onayı bekleniyor).";

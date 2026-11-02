@@ -88,20 +88,55 @@ set -a
 # shellcheck source=/dev/null
 source /tmp/sosmesh-load-smoke.env
 set +a
+API_PID=""
+SMOKE_FINAL_EXIT=""
+
+stop_api_only() {
+  if [[ -z "$API_PID" ]]; then
+    return 0
+  fi
+  local pid="$API_PID"
+  if kill -0 "$pid" 2>/dev/null; then
+    if command -v pgrep >/dev/null 2>&1; then
+      local child
+      while read -r child; do
+        if [[ -n "$child" && "$child" != "$$" ]]; then
+          kill -TERM "$child" 2>/dev/null
+        fi
+      done < <(pgrep -P "$pid" 2>/dev/null)
+    fi
+    kill -TERM "$pid" 2>/dev/null
+    local waited=0
+    while kill -0 "$pid" 2>/dev/null && [[ "$waited" -lt 15 ]]; do
+      sleep 1
+      waited=$((waited + 1))
+    done
+    if kill -0 "$pid" 2>/dev/null; then
+      kill -KILL "$pid" 2>/dev/null
+    fi
+  fi
+  set +e
+  wait "$pid" 2>/dev/null
+  set -e
+  API_PID=""
+}
+
+on_smoke_exit() {
+  local trap_ec=$?
+  stop_api_only
+  if [[ -n "$SMOKE_FINAL_EXIT" ]]; then
+    exit "$SMOKE_FINAL_EXIT"
+  fi
+  exit "$trap_ec"
+}
+
 DATABASE_URL="$DB_URL" PORT="$PORT" NODE_ENV="$NODE_ENV" \
   AI_ENABLED="$AI_ENABLED" INGEST_RATE_LIMIT_MAX="$INGEST_RATE_LIMIT_MAX" \
   INGEST_RATE_LIMIT_WINDOW_MS="$INGEST_RATE_LIMIT_WINDOW_MS" \
   INGEST_RECEIPT_SIGNING_PRIVATE_KEY="$INGEST_RECEIPT_SIGNING_PRIVATE_KEY" \
   pnpm --filter @sosmesh/api start >>"$API_LOG" 2>&1 &
 API_PID=$!
-
-cleanup() {
-  if kill -0 "$API_PID" 2>/dev/null; then
-    kill "$API_PID"
-    wait "$API_PID" 2>/dev/null
-  fi
-}
-trap cleanup EXIT
+trap on_smoke_exit EXIT
 
 echo "== load-smoke: wait for /health/ready =="
 ready=0
@@ -154,4 +189,10 @@ fi
 
 export K6_VUS=1
 echo "== load-smoke: k6 profile 100 =="
+set +e
 BASE_URL="http://127.0.0.1:${PORT}" bash "$ROOT/tests/load/run-profile.sh" 100
+SMOKE_FINAL_EXIT=$?
+set -e
+trap - EXIT
+stop_api_only
+exit "$SMOKE_FINAL_EXIT"

@@ -53,24 +53,25 @@ Durum sütunu **yalnızca** \`status.json\` ile aynıdır; yükseltme yoktur.
 
 ${table}
 
-### Açık PR referansları (PENDING_MERGE — içerik kopyalanmadı)
+### Açık PR (PENDING_MERGE)
 
 | ADIM | PR | Not |
 |------|-----|-----|
-| 49 | [PR #59](https://github.com/suleymantarsuslu/sosmesh/pull/59) | Yedekleme / geri yükleme — \`status.json\` **PENDING_MERGE**; içerik bu raporda özetlenmez |
+| — | [PR #68](https://github.com/suleymantarsuslu/sosmesh/pull/68) | MacBook self-hosted CI (\`SOSMESH_MAC_RUNNER=on\`) — **henüz merge değil** |
 
 **Main’e merge edildi (PR head SHA → merge commit):**
 
 | ADIM | PR | PR head (merged) | Merge commit (main) |
 |------|-----|------------------|---------------------|
+| 49 | [#59](https://github.com/suleymantarsuslu/sosmesh/pull/59) | \`d42633201280\` | \`8989ae26b68e\` |
 | 50 | [#53](https://github.com/suleymantarsuslu/sosmesh/pull/53) | \`c0c6681db2f8\` | \`70594b3a037e\` |
 | 56 | [#66](https://github.com/suleymantarsuslu/sosmesh/pull/66) | \`07dc3d2dd38a\` | \`54f25c8029ef\` |
 | 57 | [#65](https://github.com/suleymantarsuslu/sosmesh/pull/65) | \`d0dde07728c1\` | \`17bbab7bed7d\` |
 
 ### CI / runner notu
 
-- Varsayılan CI: GitHub Actions **GitHub-hosted** runner (\`SOSMESH_CI_RUNNER=github\`, repo değişkeni).
-- Swift / Android Gradle / iOS archive: yalnızca \`SOSMESH_MAC_RUNNER=on\` iken **self-hosted MacBook** runner’da — [PR #68](https://github.com/suleymantarsuslu/sosmesh/pull/68) (**henüz merge değil**); **mobil CI PASS iddiası yok**.
+- Varsayılan CI: GitHub Actions **GitHub-hosted** runner (\`SOSMESH_CI_RUNNER=github\`, repo değişkeni). ADIM 49 \`backup-restore-drill\` **PASS** on hosted run [41534348548](https://github.com/suleymantarsuslu/sosmesh/actions/runs/41534348548).
+- Swift / Android Gradle / iOS archive: yalnızca \`SOSMESH_MAC_RUNNER=on\` iken **self-hosted MacBook** runner’da — [PR #68](https://github.com/suleymantarsuslu/sosmesh/pull/68) (**PENDING_MERGE**); **mobil CI PASS iddiası yok**.
 - **NOT_TESTED (handover):** \`docker compose\` smoke, Firefox/WebKit tam matrix (CI kapsamı sınırlı), fiziksel cihaz / BLE saha kanıtı.
 
 ---
@@ -90,7 +91,7 @@ ${table}
 
 - \`MODEL_API_KEY\` prod doğrulama (B-05)
 - \`METRICS_SCRAPE_AUTH\` prod değeri (ADIM 48)
-- Yedekleme şifreleme anahtarı / secret manager (ADIM 49 **PENDING_MERGE**, PR #59)
+- Yedekleme şifreleme anahtarı / secret manager (ADIM 49 **PARTIAL** — CI drill PASS; prod/staging restore NOT_TESTED)
 - Prod ingest / receipt anahtarları dağıtımı
 
 ### Onay / hukuk / mağaza (BLOCKED_APPROVAL)

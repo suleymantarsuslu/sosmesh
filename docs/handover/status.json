@@ -3,8 +3,8 @@
   "generated_note": "Parsed from master.txt; status values: PASS|FAIL|BLOCKED_DEVICE|BLOCKED_SECRET|BLOCKED_APPROVAL|NOT_TESTED|NOT_STARTED|PENDING_MERGE|ACCEPTED_WITH_DEBT|PARTIAL",
   "project_completion": {
     "status": "NOT_COMPLETE",
-    "reason": "NOT_TESTED (ADIM 24); NOT_STARTED (ADIM 55); PENDING_MERGE (ADIM 49); PARTIAL (ADIM 12,13,14,15,16,17,19,20,21,22,23,25,26,27,28,29,30,31,32,33,34,35,36,37,38,39,40,41,42,43,44,45,46,47,50,51,52,53,54,56,57,58); ACCEPTED_WITH_DEBT (ADIM 04); staging/prod deploy BLOCKED_APPROVAL; mağaza/imza/hukuk/fiziksel BLE kanıtı PASS değil; qa-summary npm high audit açık",
-    "last_updated_at": "2026-11-02T21:53:21.180Z",
+    "reason": "NOT_TESTED (ADIM 24); NOT_STARTED (ADIM 55); PARTIAL (ADIM 12,13,14,15,16,17,19,20,21,22,23,25,26,27,28,29,30,31,32,33,34,35,36,37,38,39,40,41,42,43,44,45,46,47,49,50,51,52,53,54,56,57,58); ACCEPTED_WITH_DEBT (ADIM 04); staging/prod deploy BLOCKED_APPROVAL; mağaza/imza/hukuk/fiziksel BLE kanıtı PASS değil; qa-summary npm high audit açık",
+    "last_updated_at": "2026-11-02T23:54:31.164Z",
     "handover_report": "docs/handover/final-report.md"
   },
   "gates": {
@@ -1765,17 +1765,24 @@
       ],
       "deliverables": "infra/backup scripts, docs/runbooks/restore.md",
       "pass_criteria": "Yedekten geri dönüş en az bir defa başarıyla kanıtlı.",
-      "status": "PENDING_MERGE",
-      "attempts": 0,
-      "commit": null,
+      "status": "PARTIAL",
+      "attempts": 3,
+      "commit": "d426332012806d4703cdf4d8a5ff4ea6ebd303ee",
       "evidence": [
-        "https://github.com/suleymantarsuslu/sosmesh/pull/59 (PENDING_MERGE — yedekleme/restore; raporda içerik özeti yok)"
+        "infra/backup/* WAL archive + base-backup + rotation (AES-256; key via SOSMESH_BACKUP_ENCRYPTION_KEY only)",
+        "scripts/backup-restore-drill.sh + apps/api/test/helpers/backup-restore-drill.ts — pg_dump -Fc → AES encrypt → DROP source schema → pg_restore + row/checksum verify",
+        "scripts/ci/bootstrap-pgclient.sh — sudo-less pg_dump/pg_restore (Ubuntu 16 / PGDG 17+ by server major)",
+        "apps/api/test/backup-adim49.spec.ts — Jest pg_dump/pg_restore on embedded PG16",
+        "GitHub Actions run 41534348548 — backup-restore-drill PASS (hosted verify job)",
+        "Merge PR #59 → main 8989ae26b68e2224f7f399e8a62cfcdc88dcd38d (PR head d4263320)",
+        "apps/api/src/disaster/disaster-readonly.middleware.ts (default off unless SOSMESH_DISASTER_READ_ONLY_MODE=true)",
+        "docs/runbooks/restore.md — RPO/RTO from measured drill log only"
       ],
       "blockers": [
-        "PR #59 merge bekliyor",
-        "Restore drill kanıtı yok"
+        "Staging/prod restore drill NOT_TESTED (CI hosted drill kanıtı var; prod secret manager yok)",
+        "Migration fail/rollback + mobile backwards protocol rollout NOT_TESTED"
       ],
-      "last_checked_at": null,
+      "last_checked_at": "2026-11-02T22:22:00+00:00",
       "goal": "Sistem arızasında veriyi korumak ve geri dönebilmek.",
       "cursor_tasks": [
         "Database PITR/backups, encryption, restricted storage and rotation.",
@@ -2165,7 +2172,7 @@
       "blockers": [
         "Zorunlu kapılarda PASS + gerçek kanıt yok — project_completion NOT_COMPLETE",
         "Public demo / prod health URL YOK (deploy onay bekliyor)",
-        "Bağımlı ADIM 56–57 PARTIAL; ADIM 49 PR #59 PENDING_MERGE"
+        "Bağımlı ADIM 56–57 PARTIAL; açık PR yalnız #68 (MacBook CI)"
       ],
       "last_checked_at": "2026-11-02T17:49:53.302Z",
       "goal": "Grok son cevabı övgü yerine ölçülebilir teslim raporu versin.",

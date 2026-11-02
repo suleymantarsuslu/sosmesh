@@ -259,12 +259,23 @@ export function verifyHandover(opts = {}) {
   const adim49 = steps.find((s) => s.id === '49');
   if (adim49?.status === 'PENDING_MERGE') {
     const ev = normalizeEvidenceList(adim49.evidence);
-    const hasPr59 = ev.some((e) => String(e).includes('/pull/59'));
-    if (!hasPr59) {
-      errors.push('ADIM 49 PENDING_MERGE must reference PR #59 in evidence');
+    const hasPrLink = ev.some((e) => String(e).includes('/pull/'));
+    if (!hasPrLink) {
+      errors.push('ADIM 49 PENDING_MERGE must reference an open PR in evidence');
     }
-    if (!report.includes('PENDING_MERGE') || !report.includes('/pull/59')) {
-      errors.push('final-report must document ADIM 49 PENDING_MERGE with PR #59 link');
+  }
+
+  const pendingMergeSteps = steps.filter((s) => s.status === 'PENDING_MERGE');
+  for (const step of pendingMergeSteps) {
+    if (!report.includes('PENDING_MERGE') || !report.includes('/pull/')) {
+      errors.push(`final-report must document ADIM ${step.id} PENDING_MERGE with PR link`);
+      break;
+    }
+  }
+
+  if (report.includes('/pull/59') && adim49 && adim49.status !== 'PENDING_MERGE') {
+    if (!report.includes('8989ae26') && !report.includes('d4263320')) {
+      errors.push('final-report must record ADIM 49 merge SHAs when PR #59 is merged');
     }
   }
 

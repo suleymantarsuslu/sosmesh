@@ -1,6 +1,6 @@
 {
   "schema_version": "1.0.0",
-  "generated_at": "2026-11-02T21:53:39.295Z",
+  "generated_at": "2026-11-02T23:54:31.198Z",
   "source_of_truth": "docs/handover/status.json",
   "item_count": 88,
   "items": [
@@ -1428,10 +1428,18 @@
       "kind": "master_plan_step",
       "title": "Yedekleme, veri kurtarma ve güvenli güncelleme",
       "pass_criteria": "Yedekten geri dönüş en az bir defa başarıyla kanıtlı.",
-      "verification_status": "PENDING_MERGE",
+      "verification_status": "PARTIAL",
       "tier": "P",
       "tests": [
-        "https://github.com/suleymantarsuslu/sosmesh/pull/59 (PENDING_MERGE — yedekleme/restore; raporda içerik özeti yok)"
+        "apps/api/src/disaster/disaster-readonly.middleware.ts (default off unless SOSMESH_DISASTER_READ_ONLY_MODE=true)",
+        "apps/api/test/backup-adim49.spec.ts",
+        "apps/api/test/backup-adim49.spec.ts — Jest pg_dump/pg_restore on embedded PG16",
+        "docs/runbooks/restore.md — RPO/RTO from measured drill log only",
+        "infra/backup/* WAL archive + base-backup + rotation (AES-256; key via SOSMESH_BACKUP_ENCRYPTION_KEY only)",
+        "scripts/backup-restore-drill.sh",
+        "scripts/backup-restore-drill.sh + apps/api/test/helpers/backup-restore-drill.ts — pg_dump -Fc → AES encrypt → DROP source schema → pg_restore + row/checksum verify",
+        "scripts/ci/bootstrap-pgclient.sh",
+        "scripts/ci/bootstrap-pgclient.sh — sudo-less pg_dump/pg_restore (Ubuntu 16 / PGDG 17+ by server major)"
       ],
       "evidence": {
         "ci_jobs": [
@@ -1441,10 +1449,13 @@
           "reports/verify-summary (local)",
           "reports/*.log"
         ],
-        "document_paths": [],
+        "document_paths": [
+          "GitHub Actions run 41534348548 — backup-restore-drill PASS (hosted verify job)",
+          "Merge PR #59 → main 8989ae26b68e2224f7f399e8a62cfcdc88dcd38d (PR head d4263320)"
+        ],
         "status_json_blockers": [
-          "PR #59 merge bekliyor",
-          "Restore drill kanıtı yok"
+          "Staging/prod restore drill NOT_TESTED (CI hosted drill kanıtı var; prod secret manager yok)",
+          "Migration fail/rollback + mobile backwards protocol rollout NOT_TESTED"
         ]
       }
     },
@@ -1769,7 +1780,7 @@
         "status_json_blockers": [
           "Zorunlu kapılarda PASS + gerçek kanıt yok — project_completion NOT_COMPLETE",
           "Public demo / prod health URL YOK (deploy onay bekliyor)",
-          "Bağımlı ADIM 56–57 PARTIAL; ADIM 49 PR #59 PENDING_MERGE"
+          "Bağımlı ADIM 56–57 PARTIAL; açık PR yalnız #68 (MacBook CI)"
         ]
       }
     },

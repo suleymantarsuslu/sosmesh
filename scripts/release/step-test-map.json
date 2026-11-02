@@ -52,6 +52,16 @@
       "tests": ["apps/api/test/observability-adim48.spec.ts"],
       "ci_jobs": ["Verify Quality Gates"]
     },
+    "49": {
+      "tests": [
+        "apps/api/test/backup-adim49.spec.ts",
+        "scripts/backup-restore-drill.sh",
+        "scripts/ci/bootstrap-pgclient.sh"
+      ],
+      "ci_jobs": ["Verify Quality Gates"],
+      "verification_status_override": "PARTIAL",
+      "notes": "Jest pg_dump/pg_restore on embedded PG; CI shell drill + real prod PITR/device rollout NOT_TESTED until green verify log."
+    },
     "50": {
       "tests": ["tests/ux/operator-responsive.spec.js", "apps/web/lib/operator-health-access.test.ts"],
       "ci_jobs": ["Verify Quality Gates"]

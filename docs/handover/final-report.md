@@ -2,7 +2,7 @@
 
 **Tarih (UTC):** 2026-11-02  
 **Dal:** `cursor/adim-58-handover-03c7`  
-**HEAD:** `1b1b679bb3b12ab77eed8b64296139a4fd4d0720`  
+**HEAD:** `1febe0bc84bba499d2d8aaf948607ecd44faf6c5`  
 **Kaynak (tek doğruluk):** [`docs/handover/status.json`](status.json), [`docs/release/traceability.json`](../release/traceability.json)  
 **Proje tamamlanma:** **NOT_COMPLETE** — zorunlu kapıların tamamı PASS + gerçek kanıt değil; bu rapor **PARTIAL** handover’dır. *“Tamamlandı”* yalnızca tüm gerekli kapılar gerçek kanıtla PASS olduğunda söylenebilir; **şu an sağlanmıyor**.
 
@@ -76,7 +76,7 @@ Durum sütunu **yalnızca** `status.json` ile aynıdır; yükseltme yoktur.
 | 46 | AI yardım planlama taslakları ve kaynak… | PARTIAL | 2026-11-01T22:25:00 | 4f4bc105e46a | apps/api/src/recommendation (matching-engine, rationale guards, REST) |
 | 47 | Performans, yük ve dayanıklılık | PARTIAL | 2026-11-01T22:30:00 | 2e9bded | tests/load/k6 + ci-k6-smoke.sh (profile 100 CI; 1000/10000 ERTELENDİ manual) |
 | 48 | Gözlemlenebilirlik, incident runbooks v… | PASS | 2026-11-02T05:12:00 | 6bb9c93 | apps/api/src/observability/* OTEL (varsayılan kapalı), /metrics Bearer METRICS_SCRAPE_AUTH, struc… |
-| 49 | Yedekleme, veri kurtarma ve güvenli gün… | PENDING_MERGE | — | — | https://github.com/suleymantarsuslu/sosmesh/pull/59 (PENDING_MERGE — yedekleme/restore; raporda i… |
+| 49 | Yedekleme, veri kurtarma ve güvenli gün… | PARTIAL | 2026-11-02T22:22:00 | d42633201280 | infra/backup/* WAL archive + base-backup + rotation (AES-256; key via SOSMESH_BACKUP_ENCRYPTION_K… |
 | 50 | Web güvenlik, erişilebilirlik ve respon… | PARTIAL | 2026-11-01T22:35:00 | c0c6681db2f8 | tests/ux/adim50-web-closure.spec.js (axe WCAG2.2 AA 7 akış, klavye, 320-1920, zoom 200%, hydratio… |
 | 51 | Android gerçek cihaz yayın kapısı | PARTIAL | 2026-11-02T05:30:00 | 1b6bccea7c73 | apps/android/app/build.gradle.kts: demo/staging/prod flavors, R8 release, env/property signing, r… |
 | 52 | iOS / watchOS gerçek cihaz ve TestFligh… | PARTIAL | 2026-11-02T05:30:00 | 49a43f9 | docs/release/ios.md (test plan, BLOCKED_APPROVAL TestFlight, TR/EN metadata) |
@@ -87,24 +87,25 @@ Durum sütunu **yalnızca** `status.json` ile aynıdır; yükseltme yoktur.
 | 57 | Kullanıcı belgeleri ve açık destek sını… | PARTIAL | 2026-11-02T13:45:00 | d0dde07728c1 | docs/user/kullanici-rehberi-tr.md |
 | 58 | Operasyonel handover ve tamamlanma raporu | PARTIAL | 2026-11-02T17:49:53.302Z | 39c8d1b04460 | docs/handover/final-report.md |
 
-### Açık PR referansları (PENDING_MERGE — içerik kopyalanmadı)
+### Açık PR (PENDING_MERGE)
 
 | ADIM | PR | Not |
 |------|-----|-----|
-| 49 | [PR #59](https://github.com/suleymantarsuslu/sosmesh/pull/59) | Yedekleme / geri yükleme — `status.json` **PENDING_MERGE**; içerik bu raporda özetlenmez |
+| — | [PR #68](https://github.com/suleymantarsuslu/sosmesh/pull/68) | MacBook self-hosted CI (`SOSMESH_MAC_RUNNER=on`) — **henüz merge değil** |
 
 **Main’e merge edildi (PR head SHA → merge commit):**
 
 | ADIM | PR | PR head (merged) | Merge commit (main) |
 |------|-----|------------------|---------------------|
+| 49 | [#59](https://github.com/suleymantarsuslu/sosmesh/pull/59) | `d42633201280` | `8989ae26b68e` |
 | 50 | [#53](https://github.com/suleymantarsuslu/sosmesh/pull/53) | `c0c6681db2f8` | `70594b3a037e` |
 | 56 | [#66](https://github.com/suleymantarsuslu/sosmesh/pull/66) | `07dc3d2dd38a` | `54f25c8029ef` |
 | 57 | [#65](https://github.com/suleymantarsuslu/sosmesh/pull/65) | `d0dde07728c1` | `17bbab7bed7d` |
 
 ### CI / runner notu
 
-- Varsayılan CI: GitHub Actions **GitHub-hosted** runner (`SOSMESH_CI_RUNNER=github`, repo değişkeni).
-- Swift / Android Gradle / iOS archive: yalnızca `SOSMESH_MAC_RUNNER=on` iken **self-hosted MacBook** runner’da — [PR #68](https://github.com/suleymantarsuslu/sosmesh/pull/68) (**henüz merge değil**); **mobil CI PASS iddiası yok**.
+- Varsayılan CI: GitHub Actions **GitHub-hosted** runner (`SOSMESH_CI_RUNNER=github`, repo değişkeni). ADIM 49 `backup-restore-drill` **PASS** on hosted run [41534348548](https://github.com/suleymantarsuslu/sosmesh/actions/runs/41534348548).
+- Swift / Android Gradle / iOS archive: yalnızca `SOSMESH_MAC_RUNNER=on` iken **self-hosted MacBook** runner’da — [PR #68](https://github.com/suleymantarsuslu/sosmesh/pull/68) (**PENDING_MERGE**); **mobil CI PASS iddiası yok**.
 - **NOT_TESTED (handover):** `docker compose` smoke, Firefox/WebKit tam matrix (CI kapsamı sınırlı), fiziksel cihaz / BLE saha kanıtı.
 
 ---
@@ -124,7 +125,7 @@ Durum sütunu **yalnızca** `status.json` ile aynıdır; yükseltme yoktur.
 
 - `MODEL_API_KEY` prod doğrulama (B-05)
 - `METRICS_SCRAPE_AUTH` prod değeri (ADIM 48)
-- Yedekleme şifreleme anahtarı / secret manager (ADIM 49 **PENDING_MERGE**, PR #59)
+- Yedekleme şifreleme anahtarı / secret manager (ADIM 49 **PARTIAL** — CI drill PASS; prod/staging restore NOT_TESTED)
 - Prod ingest / receipt anahtarları dağıtımı
 
 ### Onay / hukuk / mağaza (BLOCKED_APPROVAL)

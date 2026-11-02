@@ -107,7 +107,7 @@ jobs:
       - name: Run verification script
         run: bash scripts/verify.sh
 
-      - name: Upload Playwright snapshot actuals on failure
+      - name: Upload Playwright snapshot debug on failure (Zulal)
         if: failure() && vars.SOSMESH_CI_RUNNER == 'zulal'
         uses: actions/upload-artifact@v4
         with:
@@ -115,8 +115,21 @@ jobs:
           path: |
             test-results/**/*-actual.png
             test-results/**/*-diff.png
+            test-results/**/*-expected.png
           if-no-files-found: ignore
           retention-days: 7
+
+      - name: Upload Playwright snapshot debug on failure (GitHub-hosted)
+        if: failure() && vars.SOSMESH_CI_RUNNER != 'zulal'
+        uses: actions/upload-artifact@v4
+        with:
+          name: github-playwright-snapshot-debug
+          path: |
+            test-results/**/*-actual.png
+            test-results/**/*-diff.png
+            test-results/**/*-expected.png
+          if-no-files-found: ignore
+          retention-days: 3
       
       - name: Upload test reports
         if: always()

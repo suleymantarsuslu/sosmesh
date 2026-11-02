@@ -103,8 +103,10 @@ The timeline shows **technical delivery stages**:
 
 - Privacy draft: [`docs/legal/privacy-policy-draft.md`](../legal/privacy-policy-draft.md)
 - Terms draft: [`docs/legal/terms-of-use-draft.md`](../legal/terms-of-use-draft.md)
-- Security reports: [`SECURITY.md`](../../SECURITY.md) (`TODO_APPROVAL` email placeholder)
-- Operator web help: **Help** in the operator panel
+- Privacy review checklist (legal sign-off pending): [`docs/legal/privacy-review-checklist.md`](../legal/privacy-review-checklist.md)
+- Security reports: [`SECURITY.md`](../../SECURITY.md) (`GUVENLIK_BILDIRIM_TBD`)
+- **Support contact (placeholders):** `DESTEK_ILETISIM_TBD` · `DESTEK_EPOSTA_TBD` · `DESTEK_TELEFON_TBD` — `BLOCKED_APPROVAL`
+- Operator web help: **Help** in the operator panel (`/operator/help`); support form is not sent to a server
 
 ---
 

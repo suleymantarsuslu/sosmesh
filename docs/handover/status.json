@@ -1199,12 +1199,24 @@
       ],
       "deliverables": "cross-platform test report + compatibility grid",
       "pass_criteria": "Temel çapraz SOS PEER_RECEIVED/SERVER_ACCEPTED ayrımını korur.",
-      "status": "NOT_STARTED",
-      "attempts": 0,
-      "commit": null,
-      "evidence": [],
-      "blockers": [],
-      "last_checked_at": null,
+      "status": "PARTIAL",
+      "attempts": 1,
+      "commit": "74dda9e",
+      "evidence": [
+        "packages/fixtures/cross-platform: transfer-ack-gate.json, relay-scenarios.json, encrypted-payload-fixtures.json",
+        "packages/contracts + contracts-kotlin + SOSMeshCore: aynı transfer-ack-gate fixture testleri",
+        "mutation: peerReceivedIfIgnoringVerified ≠ production evaluateTransferAckGate (TS/Kotlin/Swift/chaos)",
+        "docs/tests/cross-platform-integration-report.md",
+        "docs/compat/cross-platform-matrix.csv (fiziksel satırlar NOT_TESTED)",
+        "Android Compose: CrossPlatformFaultCard + PlatformSelfRepairCard; iOS SwiftUI CrossPlatformFaultBanner",
+        "VoiceOver/Dynamic Type fiziksel: NOT_TESTED",
+        "iPhone↔Android 30 senaryo fiziksel lab: NOT_TESTED"
+      ],
+      "blockers": [
+        "Fiziksel iPhone + Android lab kanıtı yok",
+        "Bu VM'de ANDROID_HOME yok — Gradle unit CI doğrular"
+      ],
+      "last_checked_at": "2026-11-01T19:30:00+00:00",
       "goal": "Platformlar arası SOS durumlarını tek sözleşmeye bağla.",
       "cursor_tasks": [
         "iPhone A→Android B (online), Android A→iPhone B (online), offline cross relay iki yönlü cases.",
@@ -1444,12 +1456,22 @@
       ],
       "deliverables": "docs/research/ios-multihop.md; experimental branch gated",
       "pass_criteria": "Yalnız test edilen kombinasyonlar destek listesine girer.",
-      "status": "NOT_STARTED",
-      "attempts": 0,
-      "commit": null,
-      "evidence": [],
-      "blockers": [],
-      "last_checked_at": null,
+      "status": "PARTIAL",
+      "attempts": 1,
+      "commit": "74dda9e",
+      "evidence": [
+        "docs/research/ios-multihop.md",
+        "SOSMeshCore/MeshRelayEngine.swift + MeshMultihopRelayCoordinator + MeshRelayFeatureFlags (default off)",
+        "MeshRelayEngineCrossLanguageTests: relay-engine-cases.json PASS (Swift PM / CI)",
+        "DEBUG MeshRelayEngineMutationTests: skip guard sentinel",
+        "apps/ios/README.md: arka plan/force-quit/7-24 repeater yok",
+        "Settings multihop toggle (experimental only)",
+        "3 cihaz foreground/locked/force-quit fiziksel: NOT_TESTED"
+      ],
+      "blockers": [
+        "Fiziksel multi-hop zincir kanıtı yok"
+      ],
+      "last_checked_at": "2026-11-01T19:30:00+00:00",
       "goal": "iPhone’un doğrulanmış çalışma aralığı içinde sınırlı mesh relay katılımını ölç.",
       "cursor_tasks": [
         "iOS foreground multi-hop sender/receiver behavior within CoreBluetooth permissions.",

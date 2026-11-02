@@ -19,7 +19,7 @@ Koordinatör repo değişkenini **`SOSMESH_MAC_RUNNER=on`** yaptığında şu jo
 - **Xcode / Swift:** `setup-xcode` ve `setup-swift` çalışmaz; job başında `xcodebuild -version` ve `swift --version` yazdırılır (runner’daki Xcode 27.x / Swift 6.x).
 - **Java / Android:** Runner’ın `JAVA_HOME` (Temurin **17**) ve `ANDROID_HOME` / `ANDROID_SDK_ROOT` kullanılır; `setup-java` 21 **Mac yolunda** yok. `platforms;android-35` ve `build-tools;35.0.0` dizinleri yoksa job **sdkmanager çalıştırmadan** açık hata ile düşer.
 - **İzolasyon:** Gradle `GRADLE_USER_HOME=${{ runner.temp }}/gradle-<job>`; Gradle `--no-daemon`. Kalıcı home dizinine cache yazılmaz (runner work dir dışında).
-- **Eşzamanlılık:** Aynı PR/ref için yeni push eski mobile job’ları `concurrency` ile iptal eder (tek MacBook → aynı anda en fazla bir mobile job).
+- **Eşzamanlılık:** Mobile job `concurrency` grupları `github.sha` ile anahtarlanır (aynı commit yeniden koşunca iptal). Yeni push eski workflow’u GitHub iptal eder; tek MacBook’ta Android → iOS sırası `needs` ile korunur.
 
 ### Özet job’u
 

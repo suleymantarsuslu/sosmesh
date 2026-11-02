@@ -234,14 +234,14 @@ public struct SOSMeshCrypto {
         keyId: String
     ) throws -> Data {
         let info = "SOSMesh-\(protocolVersion)-\(keyId)-encryption".data(using: .utf8)!
-        
-        let derivedKey = HKDF<SHA256>.deriveKey(
-            inputKeyMaterial: SymmetricKey(data: sharedSecret),
+
+        let derivedKey = sharedSecret.hkdfDerivedSymmetricKey(
+            using: SHA256.self,
             salt: salt,
-            info: info,
+            sharedInfo: info,
             outputByteCount: 32
         )
-        
+
         return derivedKey.withUnsafeBytes { Data($0) }
     }
     
@@ -279,15 +279,61 @@ public struct SOSMeshCrypto {
     }
     
     /**
-     * Convert object to canonical JSON string using JSONSerialization.
-     * Ensures cross-platform number formatting compatibility.
+     * Convert object to canonical JSON string (sorted keys, minimal number formatting).
+     * Matches TypeScript/Kotlin golden vector serialization for cross-language AAD.
      */
     private static func toCanonicalJSON(_ obj: Any) throws -> String {
-        let jsonData = try JSONSerialization.data(withJSONObject: obj, options: [.sortedKeys, .withoutEscapingSlashes])
-        guard let jsonString = String(data: jsonData, encoding: .utf8) else {
-            throw CryptoError.encryptionFailed
+        switch obj {
+        case is NSNull:
+            return "null"
+        case let value as String:
+            let escaped = value
+                .replacingOccurrences(of: "\\", with: "\\\\")
+                .replacingOccurrences(of: "\"", with: "\\\"")
+            return "\"\(escaped)\""
+        case let value as Bool:
+            return value ? "true" : "false"
+        case let value as Int:
+            return String(value)
+        case let value as Int64:
+            return String(value)
+        case let value as Double:
+            return formatJSONNumber(value)
+        case let value as NSNumber:
+            if CFGetTypeID(value) == CFBooleanGetTypeID() {
+                return value.boolValue ? "true" : "false"
+            }
+            if value.doubleValue.rounded() == value.doubleValue,
+               abs(value.doubleValue) <= Double(Int64.max) {
+                return String(Int64(value.doubleValue))
+            }
+            return formatJSONNumber(value.doubleValue)
+        case let dict as [String: Any]:
+            let parts = try dict.keys.sorted().map { key in
+                let encoded = try toCanonicalJSON(dict[key]!)
+                return "\"\(key)\":\(encoded)"
+            }
+            return "{\(parts.joined(separator: ","))}"
+        case let array as [Any]:
+            let parts = try array.map { try toCanonicalJSON($0) }
+            return "[\(parts.joined(separator: ","))]"
+        default:
+            throw CryptoError.invalidInput("Unsupported JSON type for canonical encoding")
         }
-        return jsonString
+    }
+
+    private static func formatJSONNumber(_ value: Double) -> String {
+        if value.isNaN || value.isInfinite {
+            return "null"
+        }
+        if value.rounded() == value, abs(value) <= Double(Int64.max) {
+            return String(Int64(value))
+        }
+        var text = String(value)
+        if text.contains("e") || text.contains("E") {
+            text = String(format: "%.15g", value)
+        }
+        return text
     }
 }
 

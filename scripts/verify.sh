@@ -355,12 +355,55 @@ else
 fi
 
 # 29. iOS Localizable.strings TR/EN key parity (ADIM 57 help keys)
-echo "29/29: node scripts/check-ios-localizable-parity.js"
+echo "29/33: node scripts/check-ios-localizable-parity.js"
 if node "$SCRIPT_DIR/check-ios-localizable-parity.js" > "$REPORTS_DIR/ios-localizable-parity.log" 2>&1; then
   check_exit "ios-localizable-parity" 0
 else
   EXIT_CODE=$?
   check_exit "ios-localizable-parity" $EXIT_CODE
+fi
+
+# 30. Release traceability + QA summary freshness (ADIM 56)
+echo "30/33: node scripts/release/generate-traceability.mjs --check"
+if node "$SCRIPT_DIR/release/generate-traceability.mjs" --check > "$REPORTS_DIR/release-traceability-check.log" 2>&1; then
+  check_exit "release-traceability-check" 0
+else
+  EXIT_CODE=$?
+  check_exit "release-traceability-check" $EXIT_CODE
+fi
+
+echo "31/33: node scripts/release/generate-qa-summary.mjs --check"
+if node "$SCRIPT_DIR/release/generate-qa-summary.mjs" --check > "$REPORTS_DIR/release-qa-summary-check.log" 2>&1; then
+  check_exit "release-qa-summary-check" 0
+else
+  EXIT_CODE=$?
+  check_exit "release-qa-summary-check" $EXIT_CODE
+fi
+
+# 32. CycloneDX SBOM (no signing, no secrets)
+echo "32/34: node scripts/release/build-sbom.test.mjs"
+if node "$SCRIPT_DIR/release/build-sbom.test.mjs" > "$REPORTS_DIR/release-sbom-test.log" 2>&1; then
+  check_exit "release-sbom-test" 0
+else
+  EXIT_CODE=$?
+  check_exit "release-sbom-test" $EXIT_CODE
+fi
+
+echo "33/34: bash scripts/release/sbom.sh"
+if bash "$SCRIPT_DIR/release/sbom.sh" > "$REPORTS_DIR/release-sbom.log" 2>&1; then
+  check_exit "release-sbom" 0
+else
+  EXIT_CODE=$?
+  check_exit "release-sbom" $EXIT_CODE
+fi
+
+# 33. SHA256 checksums of build artifacts
+echo "34/34: bash scripts/release/checksums.sh"
+if bash "$SCRIPT_DIR/release/checksums.sh" > "$REPORTS_DIR/release-checksums.log" 2>&1; then
+  check_exit "release-checksums" 0
+else
+  EXIT_CODE=$?
+  check_exit "release-checksums" $EXIT_CODE
 fi
 
 # Summary

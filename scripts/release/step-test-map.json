@@ -1,0 +1,144 @@
+{
+  "schema_note": "Supplements docs/handover/status.json evidence with automated test paths and CI job names.",
+  "ci_jobs_default": ["Verify Quality Gates"],
+  "report_paths_default": ["reports/verify-summary (local)", "reports/*.log"],
+  "steps": {
+    "01": {
+      "tests": ["scripts/test-secret-scan.sh"],
+      "ci_jobs": ["Secret Scan", "Verify Quality Gates"]
+    },
+    "02": {
+      "tests": ["scripts/count-scenarios.js", "docs/tests/m0-acceptance.feature"],
+      "ci_jobs": ["Verify Quality Gates"]
+    },
+    "06": {
+      "tests": ["scripts/verify.sh", "scripts/check-no-skips.js"],
+      "ci_jobs": ["Verify Quality Gates"]
+    },
+    "07": {
+      "tests": ["packages/contracts/src/**/*.test.ts", "packages/contracts-kotlin", "packages/contracts-swift"],
+      "ci_jobs": ["Contracts Type Check", "Cross-Language Contract Tests", "Swift Package Tests"]
+    },
+    "11": {
+      "tests": ["tools/mesh-simulator", "tests/chaos/mesh-simulator.test.ts", "scripts/mesh-sim-golden.sh"],
+      "ci_jobs": ["Verify Quality Gates"]
+    },
+    "18": {
+      "tests": ["apps/api/test/ingest.spec.ts"],
+      "ci_jobs": ["Verify Quality Gates"]
+    },
+    "20": {
+      "tests": ["apps/api/test/ai-meta.spec.ts"],
+      "ci_jobs": ["Verify Quality Gates"]
+    },
+    "21": {
+      "tests": ["apps/api/test/operator-auth.spec.ts", "tests/ux/operator-login.spec.js"],
+      "ci_jobs": ["Verify Quality Gates"]
+    },
+    "24": {
+      "tests": ["docs/tests/m0-physical-report.md", "scripts/m0"],
+      "ci_jobs": [],
+      "verification_status_override": null
+    },
+    "43": {
+      "tests": ["docs/security/threat-model.md", "scripts/secret-scan.sh"],
+      "ci_jobs": ["Secret Scan"]
+    },
+    "47": {
+      "tests": ["tests/load/ci-k6-smoke.sh"],
+      "ci_jobs": ["Load smoke (k6 profile 100)"]
+    },
+    "48": {
+      "tests": ["apps/api/test/observability-adim48.spec.ts"],
+      "ci_jobs": ["Verify Quality Gates"]
+    },
+    "50": {
+      "tests": ["tests/ux/operator-responsive.spec.js", "apps/web/lib/operator-health-access.test.ts"],
+      "ci_jobs": ["Verify Quality Gates"]
+    },
+    "51": {
+      "tests": ["apps/android/app/src/testProd/kotlin/com/sosmesh/android/ProdFlavorBuildConfigTest.kt"],
+      "ci_jobs": ["Android Gradle Build"]
+    },
+    "56": {
+      "tests": [
+        "scripts/release/generate-traceability.mjs",
+        "scripts/release/generate-qa-summary.mjs",
+        "tests/chaos/demo-mode-production-separation.test.ts"
+      ],
+      "ci_jobs": ["Verify Quality Gates"]
+    },
+    "57": {
+      "tests": ["tests/ux/operator-help.spec.js", "apps/web/features/help/ios-localizable-parity.test.ts"],
+      "ci_jobs": ["Verify Quality Gates"]
+    }
+  },
+  "m0_scenario_tests": {
+    "@U1": ["apps/android/feature-sos/src/test", "docs/tests/m0-acceptance.feature"],
+    "@U2": ["apps/android/feature-relay/src/test", "apps/android/core/protocol/src/test", "docs/tests/android-transfer.md"],
+    "@U3": ["apps/api/test/operator-case-detail.spec.ts", "apps/web/features/cases", "tests/ux/operator-panel.spec.js"],
+    "@U4": ["docs/tests/watchos-matrix.md", "apps/android/wear"],
+    "@U5": ["scripts/ux-forbidden-copy.js", "tests/chaos/ux-forbidden-simulation.test.ts"],
+    "@M0": ["docs/tests/m0-physical-report.md", "tests/chaos/cross-platform-ack-gate.test.ts"]
+  },
+  "geci_criteria": [
+    {
+      "id": "GECTI-ANDROID-M0M1-DEVICE",
+      "source": "docs/release/android.md",
+      "criterion": "APK gerçek cihazda M0+M1 akışını çalıştırır",
+      "verification_status": "NOT_TESTED",
+      "tests": ["docs/release/evidence/android-device-smoke-template.md"],
+      "evidence": { "ci_jobs": ["Android Gradle Build"], "report_paths": ["docs/handover/status.json ADIM 51"] }
+    },
+    {
+      "id": "GECTI-IOS-DEVICE",
+      "source": "docs/release/ios.md",
+      "criterion": "Gerçek cihaz iş akışı kanıtlı",
+      "verification_status": "NOT_TESTED",
+      "tests": ["docs/release/evidence/ios-field-test-record-template.csv"],
+      "evidence": { "ci_jobs": ["iOS Xcode Build"], "report_paths": ["docs/handover/status.json ADIM 52"] }
+    },
+    {
+      "id": "GECTI-WEAROS-E2E",
+      "source": "docs/release/wearos.md",
+      "criterion": "Gerçek saat uçtan uca",
+      "verification_status": "NOT_TESTED",
+      "tests": ["docs/handover/evidence/adim53/trace-evidence-template.md"],
+      "evidence": { "ci_jobs": ["Android Gradle Build"], "report_paths": ["docs/handover/status.json ADIM 53"] }
+    },
+    {
+      "id": "GECTI-DEPLOY-STAGING-PROD",
+      "source": "docs/runbooks/deploy.md",
+      "criterion": "Staging çalışır + prod onaylı",
+      "verification_status": "PARTIAL",
+      "tests": ["docs/runbooks/deploy.md", ".github/workflows/deploy-container-smoke.yml"],
+      "evidence": { "ci_jobs": [], "report_paths": ["docs/handover/status.json ADIM 54"] }
+    },
+    {
+      "id": "GECTI-THREAT-MODEL",
+      "source": "docs/security/threat-model.md",
+      "criterion": "STRIDE + bağımsız denetim GEÇTİ",
+      "verification_status": "PARTIAL",
+      "tests": ["docs/security/threat-model.md", "docs/security/findings.csv"],
+      "evidence": { "ci_jobs": ["Secret Scan"], "report_paths": ["docs/handover/status.json ADIM 43"] }
+    },
+    {
+      "id": "GECTI-DEMO-PROD-SEPARATION",
+      "source": "docs/architecture/requirements-map.md",
+      "criterion": "Mock/demo production yapılandırmasında kapalı",
+      "verification_status": "PARTIAL",
+      "platform_verification": {
+        "web_isE2eMock_behavioral": "PASS",
+        "android_prod_buildconfig_behavioral": "NOT_TESTED"
+      },
+      "notes": "Web PASS via apps/web/lib/config.test.ts (isE2eMock env stubs). Android ProdFlavorBuildConfigTest is NOT_TESTED until MacBook/Gradle prod flavor phase; chaos test is Gradle config evidence only.",
+      "tests": [
+        "apps/web/lib/config.test.ts",
+        "apps/web/lib/demo-mode.test.ts",
+        "tests/chaos/demo-mode-production-separation.test.ts",
+        "apps/android/app/src/testProd/kotlin/com/sosmesh/android/ProdFlavorBuildConfigTest.kt"
+      ],
+      "evidence": { "ci_jobs": ["Verify Quality Gates"], "report_paths": ["reports/test.log"] }
+    }
+  ]
+}

@@ -21,4 +21,18 @@ describe('web config guards', () => {
     const { isE2eMock } = await import('./config');
     expect(isE2eMock()).toBe(true);
   });
+
+  it('allows OPERATOR_E2E_MOCK when NODE_ENV is test', async () => {
+    vi.stubEnv('NODE_ENV', 'test');
+    vi.stubEnv('OPERATOR_E2E_MOCK', '1');
+    const { isE2eMock } = await import('./config');
+    expect(isE2eMock()).toBe(true);
+  });
+
+  it('disables mock when OPERATOR_E2E_MOCK is unset', async () => {
+    vi.stubEnv('NODE_ENV', 'development');
+    vi.stubEnv('OPERATOR_E2E_MOCK', '');
+    const { isE2eMock } = await import('./config');
+    expect(isE2eMock()).toBe(false);
+  });
 });

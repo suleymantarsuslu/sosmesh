@@ -249,7 +249,7 @@ public struct SOSMeshCrypto {
      * Create canonical AAD (Associated Authenticated Data) for authenticated encryption.
      * AAD binds envelope metadata to the ciphertext.
      */
-    private static func createAAD(envelope: [String: Any], keyId: String) throws -> Data {
+    static func createAAD(envelope: [String: Any], keyId: String) throws -> Data {
         let sorted = sortKeys(envelope)
         let aadObject: [String: Any] = [
             "envelope": sorted,
@@ -300,14 +300,12 @@ public struct SOSMeshCrypto {
         case let value as Double:
             return formatJSONNumber(value)
         case let value as NSNumber:
-            if CFGetTypeID(value) == CFBooleanGetTypeID() {
-                return value.boolValue ? "true" : "false"
+            let doubleValue = value.doubleValue
+            if doubleValue.rounded() == doubleValue,
+               abs(doubleValue) <= Double(Int64.max) {
+                return String(Int64(doubleValue))
             }
-            if value.doubleValue.rounded() == value.doubleValue,
-               abs(value.doubleValue) <= Double(Int64.max) {
-                return String(Int64(value.doubleValue))
-            }
-            return formatJSONNumber(value.doubleValue)
+            return formatJSONNumber(doubleValue)
         case let dict as [String: Any]:
             let parts = try dict.keys.sorted().map { key in
                 let encoded = try toCanonicalJSON(dict[key]!)

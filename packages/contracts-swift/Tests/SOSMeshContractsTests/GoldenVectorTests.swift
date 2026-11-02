@@ -18,6 +18,16 @@ final class GoldenVectorTests: XCTestCase {
         XCTAssertEqual(try Data(contentsOf: bundledURL), try Data(contentsOf: workspaceCopy))
     }
 
+    func testGoldenAADMatchesExpectedCanonical() throws {
+        let inputs = try XCTUnwrap(goldenVector["inputs"] as? [String: Any])
+        let expected = try XCTUnwrap(goldenVector["expected"] as? [String: Any])
+        let envelope = try XCTUnwrap(inputs["envelope"] as? [String: Any])
+        let keyId = try XCTUnwrap(inputs["keyId"] as? String)
+        let expectedAAD = try XCTUnwrap(expected["aadCanonical"] as? String)
+        let aad = try SOSMeshCrypto.createAAD(envelope: envelope, keyId: keyId)
+        XCTAssertEqual(String(data: aad, encoding: .utf8), expectedAAD)
+    }
+
     private func inputsAndExpected() throws -> (inputs: [String: Any], expected: [String: Any]) {
         let inputs = try XCTUnwrap(goldenVector["inputs"] as? [String: Any])
         let expected = try XCTUnwrap(goldenVector["expected"] as? [String: Any])

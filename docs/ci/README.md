@@ -33,7 +33,7 @@ PR’larda `Mobile verification deferred (MacBook phase)` job’u yalnızca Zula
 - **Runner:** `ubuntu-latest`, veya `SOSMESH_CI_RUNNER=zulal` iken `[self-hosted, linux, ARM64, zulal, zulal-verify]`.
 - **PostgreSQL (hosted):** Job `services: postgres` (`postgres:16`; yalnızca CI test parolası). Job `env` ile `SOSMESH_CI_*_URL` tanımlıdır.
 - **PostgreSQL (Zulal):** Service container kullanılmaz; `Load CI PostgreSQL credentials` adımı `/etc/sosmesh-ci/pg.env` dosyasını yükler (`::add-mask::` ile).
-- **Playwright:** Hosted modda `npx playwright install --with-deps chromium`; Zulal modda `npx playwright install chromium` (sudo yok).
+- **Playwright:** Hosted modda `npx playwright install --with-deps chromium firefox webkit`; Zulal modda `npx playwright install chromium firefox webkit` (sudo yok). Zulal’da Firefox/WebKit axe projeleri koşulmaz (sistem kütüphaneleri `install-deps` sudo gerektirir); chromium + `-linux-arm64` snapshot yolu kullanılır.
 - Zulal modunda `verify`, port 3000/3001 çakışmasını önlemek için `zulal-verify` etiketli tek runner'da sırayla koşar.
 
 ## Load smoke (`load-smoke` job)

@@ -29,6 +29,7 @@ jobs:
           --health-retries 5
 
     env:
+      SOSMESH_CI_RUNNER: ${{ vars.SOSMESH_CI_RUNNER }}
       SOSMESH_CI_PG_ADMIN_URL: postgresql://postgres:postgres@localhost:5432/postgres
       SOSMESH_CI_DATABASE_URL: postgresql://postgres:postgres@localhost:5432/postgres
 
@@ -94,8 +95,41 @@ jobs:
             echo "SOSMESH_CI_DATABASE_URL=${SOSMESH_CI_DATABASE_URL}"
           } >> "$GITHUB_ENV"
 
+      - name: Ensure Zulal ARM64 reduced-motion snapshot baselines
+        if: vars.SOSMESH_CI_RUNNER == 'zulal'
+        shell: bash
+        env:
+          SOSMESH_CI_RUNNER: zulal
+        run: |
+          set -euo pipefail
+          snap_dir=tests/ux/adim50-web-closure.spec.js-snapshots
+          login="${snap_dir}/adim50-login-reduced-motion-chromium-linux-arm64.png"
+          dash="${snap_dir}/adim50-dashboard-reduced-motion-chromium-linux-arm64.png"
+          if [ -f "$login" ] && [ -f "$dash" ]; then
+            echo "ARM64 reduced-motion snapshots already present"
+            exit 0
+          fi
+          echo "Generating ARM64 reduced-motion snapshots on Zulal runner (commit to repo after review)"
+          pnpm install --frozen-lockfile
+          pnpm exec playwright test \
+            --config=playwright.web.config.js \
+            --project=chromium \
+            --grep "prefers-reduced-motion" \
+            --update-snapshots
+          test -f "$login"
+          test -f "$dash"
+
       - name: Run verification script
         run: bash scripts/verify.sh
+
+      - name: Upload Zulal snapshot actuals (bootstrap ARM64 baselines)
+        if: failure() && vars.SOSMESH_CI_RUNNER == 'zulal'
+        uses: actions/upload-artifact@v4
+        with:
+          name: zulal-playwright-snapshot-actuals
+          path: test-results/**/*-actual.png
+          if-no-files-found: ignore
+          retention-days: 7
       
       - name: Upload test reports
         if: always()
@@ -497,6 +531,7 @@ jobs:
           {
             echo 'Swift/Android/iOS: NOT_TESTED — deferred to MacBook phase (user decision 2026-11-02)'
             echo 'Compose smoke: NOT_TESTED on Zulal (no Docker for ghrunner; needs approval)'
+            echo 'Firefox/WebKit axe smoke: NOT_TESTED on Zulal (playwright system deps need sudo)'
           } >> "$GITHUB_STEP_SUMMARY"
 
   load-smoke:

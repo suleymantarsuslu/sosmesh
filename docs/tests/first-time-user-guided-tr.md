@@ -1,5 +1,7 @@
 # İlk kez kullanıcı — rehberli test senaryosu
 
+**Facilitator script (ADIM 57):** [`docs/user/first-time-user-script.md`](../user/first-time-user-script.md)
+
 **Durum:** `NOT_TESTED` — yalnızca plan; MacBook / fiziksel cihaz aşamasında koşturulacak.  
 **Sonuç şablonu:** Aşağıdaki tabloda kanıt doldurulmadan **PASS yazılmaz**.
 

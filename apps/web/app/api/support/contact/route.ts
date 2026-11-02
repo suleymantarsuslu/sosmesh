@@ -8,7 +8,7 @@ export async function POST() {
     {
       status: 'BLOCKED_APPROVAL',
       message:
-        'Destek kanalı yapılandırılmadı (BLOCKED_APPROVAL). TODO_APPROVAL: prod e-posta onayı sonrası etkinleştirilecek.',
+        'Destek kanalı yapılandırılmadı (BLOCKED_APPROVAL). İletişim yer tutucusu: DESTEK_ILETISIM_TBD.',
     },
     { status: 503 }
   );

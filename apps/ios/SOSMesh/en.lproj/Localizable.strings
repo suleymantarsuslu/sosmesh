@@ -60,4 +60,4 @@
 "help.watch.body" = "No standalone watch mesh guarantee.";
 "help.failed.title" = "Failed delivery";
 "help.failed.body" = "Call 112 first; check Bluetooth and permissions.";
-"help.support.body" = "Support: TODO_APPROVAL (prod email pending approval).";
+"help.support.body" = "Support: DESTEK_ILETISIM_TBD (BLOCKED_APPROVAL).";

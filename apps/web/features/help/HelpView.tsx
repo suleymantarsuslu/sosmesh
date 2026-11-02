@@ -73,6 +73,7 @@ export function HelpView() {
           id={`help-${id}`}
           className="operator-help__section"
           aria-labelledby={`help-${id}-title`}
+          data-testid={`help-section-${id}`}
         >
           <h2 id={`help-${id}-title`}>{t(HELP_I18N_KEYS[id].title)}</h2>
           <p>{t(HELP_I18N_KEYS[id].body)}</p>

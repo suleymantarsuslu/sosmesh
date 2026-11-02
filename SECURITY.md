@@ -8,8 +8,8 @@ Bu depo SOSMesh acil durum mesh prototipini içerir. **SOSMesh resmî 112 veya b
 
 | Alan | Değer |
 | --- | --- |
-| **Durum** | `TODO_APPROVAL` — prod iletişim kanalı henüz onaylanmadı |
-| **E-posta (yer tutucu)** | `security-report@TODO_APPROVAL.example` |
+| **Durum** | `BLOCKED_APPROVAL` — prod iletişim kanalı henüz onaylanmadı |
+| **E-posta (yer tutucu)** | `GUVENLIK_BILDIRIM_TBD` |
 | **PGP (opsiyonel)** | Anahtar yayımlanmadı — `BLOCKED_APPROVAL` |
 | **Yanıt hedefi** | İlk yanıt: 5 iş günü (hedef; prod SLA onayı gerekir) |
 

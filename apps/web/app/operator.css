@@ -60,6 +60,7 @@
 .operator-main-wrap {
   display: flex;
   flex-direction: column;
+  min-width: 0;
 }
 
 .operator-topbar {
@@ -498,9 +499,14 @@
   padding-left: var(--space-4, 1rem);
 }
 
+.cases-a11y-table-wrap {
+  max-width: 100%;
+  overflow-x: auto;
+  margin-top: var(--space-4, 1rem);
+}
+
 .cases-a11y-table {
   width: 100%;
-  margin-top: var(--space-4, 1rem);
   border-collapse: collapse;
 }
 
@@ -644,6 +650,10 @@
 }
 
 @media (max-width: 768px) {
+  .operator-layout {
+    grid-template-columns: 1fr;
+  }
+
   .operator-sidebar {
     display: none;
   }

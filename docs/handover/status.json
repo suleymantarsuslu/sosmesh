@@ -1788,12 +1788,24 @@
       ],
       "deliverables": "apps/web e2e + screenshots, docs/ux/a11y-report.md",
       "pass_criteria": "Kritik akışlarda blocker düzeyi a11y defect = 0.",
-      "status": "NOT_STARTED",
-      "attempts": 0,
-      "commit": null,
-      "evidence": [],
-      "blockers": [],
-      "last_checked_at": null,
+      "status": "PARTIAL",
+      "attempts": 2,
+      "commit": "0cfd3ca3bd28d3bc79bd3f82064a71c3c0b521c4",
+      "evidence": [
+        "tests/ux/adim50-web-closure.spec.js (axe WCAG2.2 AA 7 akış, klavye, 320-1920, zoom 200%, hydration, slow 3G, offline banner, RBAC UI + Nest 403 guard)",
+        "tests/ux/adim50-cross-browser.spec.js + firefox/webkit Playwright projeleri",
+        "tests/ux/helpers/web-e2e.js",
+        "apps/web/lib/login-route-production-guard.test.ts (production mock kapalı)",
+        "MobileNavDrawer dialog/aria-modal; mobil menü E2E 390px",
+        "docs/ux/a11y-report.md (manuel ekran okuyucu: NOT_TESTED)",
+        "CaseDetailView aria-labelledby; OperatorShell skip-target tabIndex; mobil overflow CSS",
+        "Bağımsız denetim: merge origin/main 97d0eee; ADIM 43 zinciri main'de"
+      ],
+      "blockers": [
+        "Manuel NVDA/JAWS/VoiceOver NOT_TESTED",
+        "Yerel VM: JDK 17 yok — contracts-kotlin Gradle CI doğrular"
+      ],
+      "last_checked_at": "2026-11-01T22:35:00+00:00",
       "goal": "Paneli küçük ekrandan operatör ekranına kadar release kalitesinde kapat.",
       "cursor_tasks": [
         "Lighthouse/axe WCAG 2.2 AA oriented review, keyboard and screenreader full workflows.",
@@ -1803,7 +1815,8 @@
       ],
       "verification_evidence": "Automated accessibility + manual screen-reader reports.",
       "risk_note": "",
-      "gate_raw": "KAPI: TAM ÜRÜN    •    BAĞIMLILIK: 26–28,43"
+      "gate_raw": "KAPI: TAM ÜRÜN    •    BAĞIMLILIK: 26–28,43",
+      "notes": "PR #49 (ADIM 43) zinciri üzerinde; axe blocker düzeltmeleri apps/web CaseDetailView + operator.css"
     },
     {
       "id": "51",
@@ -2081,26 +2094,32 @@
       "deliverables": "docs/user/*.md, web help, mobile help screens",
       "pass_criteria": "Kullanıcı bağlantı düzeyini ve başarısız iletimi anlıyor.",
       "status": "PARTIAL",
-      "attempts": 1,
-      "commit": "1a8a52f7f991d54cbf474f0e60f7f39de938429d",
+      "attempts": 2,
+      "commit": "3c504e64e97f6394edf0894f9136045cf7752be4",
       "evidence": [
         "docs/user/kullanici-rehberi-tr.md",
         "docs/user/user-guide-en.md",
         "docs/user/platform-destek-matrisi.md",
+        "docs/user/first-time-user-script.md",
+        "docs/user/mobile-help-strings.md",
         "apps/web/app/(operator)/operator/(panel)/help/page.tsx",
+        "apps/web/features/help/help-content.test.ts",
         "apps/web/features/help/ios-localizable-parity.test.ts",
         "scripts/check-ios-localizable-parity.js",
         "tests/ux/operator-help.spec.js",
         "SECURITY.md",
         "docs/tests/first-time-user-guided-tr.md",
+        "docs/legal/privacy-review-checklist.md (hukuki inceleme BLOCKED)",
         "docs/legal/kvkk-gdpr-legal-review-checklist.md (hukuki inceleme NOT_TESTED)"
       ],
       "blockers": [
         "First-time user fiziksel senaryo NOT_TESTED",
-        "Destek formu prod e-posta TODO_APPROVAL / BLOCKED_APPROVAL",
+        "Hukuki gizlilik incelemesi BLOCKED (privacy-review-checklist)",
+        "Destek iletişimi DESTEK_ILETISIM_TBD / BLOCKED_APPROVAL",
+        "Mobil tam ekran yardım UI NOT_TESTED (MacBook fazı)",
         "Mağaza/prod deploy BLOCKED_APPROVAL"
       ],
-      "last_checked_at": "2026-11-02T05:36:30+00:00",
+      "last_checked_at": "2026-11-02T13:45:00+00:00",
       "goal": "Gerçek kullanıcıya güvenilir rehberlik ve denetim kabiliyeti ver.",
       "cursor_tasks": [
         "TR/EN offline usage, permissions, relay opt-in, watch paired phone guide, troubleshooting.",
@@ -2108,8 +2127,8 @@
         "Support form, contact, privacy/terms link ve vulnerability disclosure path.",
         "Farklı platformların minimum sürüm/destek matrisi; on-device warning policy."
       ],
-      "verification_evidence": "First-time user guided script, legal privacy review checklist.",
-      "risk_note": "",
+      "verification_evidence": "docs/user/first-time-user-script.md, docs/legal/privacy-review-checklist.md, Playwright operator-help + vitest help-content.",
+      "risk_note": "PASS yasak: hukuki inceleme ve gerçek kullanıcı kavrama testi bekliyor.",
       "gate_raw": "KAPI: TAM ÜRÜN    •    BAĞIMLILIK: 44,55–56"
     },
     {

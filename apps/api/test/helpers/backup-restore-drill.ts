@@ -87,6 +87,7 @@ function bootstrapPgClient(databaseUrl: string): { dump: string; restore: string
       ...process.env,
       DATABASE_URL: databaseUrl,
       RUNNER_TEMP: runnerTemp,
+      SOSMESH_PG_SERVER_MAJOR: process.env.SOSMESH_PG_SERVER_MAJOR,
     },
     stdio: 'pipe',
   });
@@ -248,6 +249,16 @@ export async function runBackupRestoreDrill(databaseUrl: string): Promise<Backup
   const schema = `sosmesh_drill_${Date.now()}_${process.pid}`;
   const prisma = new PrismaClient({ datasources: { db: { url: databaseUrl } } });
   const conn = parsePgUrl(databaseUrl);
+
+  const serverMajorRows = await prisma.$queryRawUnsafe<{ major: number }[]>(
+    `SELECT current_setting('server_version_num')::int / 10000 AS major`
+  );
+  const serverMajor = serverMajorRows[0]?.major ?? 0;
+  if (serverMajor <= 0) {
+    throw new Error('unable to read PostgreSQL server major for backup drill');
+  }
+  process.env.SOSMESH_PG_SERVER_MAJOR = String(serverMajor);
+
   const { pgDump, pgRestore, libDir } = resolvePgBinaries(databaseUrl);
   const workDir = mkdtempSync(path.join(tmpdir(), 'sosmesh-drill-'));
   const dumpPath = path.join(workDir, 'source.custom');

@@ -1788,7 +1788,7 @@
       "pass_criteria": "APK gerçek cihazda M0+M1 akışını çalıştırır; store acceptance ayrı gate.",
       "status": "PARTIAL",
       "attempts": 1,
-      "commit": null,
+      "commit": "1b6bccea7c7372faf779908dc91aad74d4db0e98",
       "evidence": [
         "apps/android/app/build.gradle.kts: demo/staging/prod flavors, R8 release, env/property signing, releaseProdArtifacts",
         "apps/android/app/proguard-rules.pro + mapping prodRelease path (docs/release/android.md)",

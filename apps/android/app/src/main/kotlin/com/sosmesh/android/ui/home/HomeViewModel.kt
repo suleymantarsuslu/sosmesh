@@ -1,6 +1,9 @@
 package com.sosmesh.android.ui.home
 
 import androidx.lifecycle.ViewModel
+import com.sosmesh.android.core.platform.CrossPlatformFaultEvaluator
+import com.sosmesh.android.core.platform.CrossPlatformFaultHint
+import com.sosmesh.android.core.platform.CrossPlatformFaultState
 import com.sosmesh.android.core.platform.PlatformUserHint
 import com.sosmesh.android.feature.sos.ExpressSosSaver
 import com.sosmesh.android.platform.MeshPlatformSignalBridge
@@ -13,6 +16,7 @@ import javax.inject.Inject
 
 data class HomeUiState(
     val platformHint: PlatformUserHint = PlatformUserHint.NONE,
+    val crossPlatformFault: CrossPlatformFaultHint = CrossPlatformFaultHint.NONE,
     val expressSavedMessageId: String? = null,
 )
 
@@ -28,7 +32,23 @@ class HomeViewModel
 
         fun refreshPlatform() {
             val evaluation = platformBridge.refresh()
-            _uiState.update { it.copy(platformHint = evaluation.userHint) }
+            val faultState =
+                CrossPlatformFaultState(
+                    bluetoothEnabled = evaluation.state.bluetoothEnabled,
+                    blePermissionsGranted = evaluation.state.blePermissionsGranted,
+                    locationAvailable = platformBridge.locationServicesAvailable(),
+                    networkValidated = evaluation.state.networkValidated,
+                    batteryLevelPercent = evaluation.state.batteryLevelPercent,
+                    relayOptIn = evaluation.state.relayOptIn,
+                    lastTransferCorrupt = platformBridge.lastTransferCorruptFlag(),
+                    lastApiUploadFailed = platformBridge.lastApiUploadFailedFlag(),
+                )
+            _uiState.update {
+                it.copy(
+                    platformHint = evaluation.userHint,
+                    crossPlatformFault = CrossPlatformFaultEvaluator.userHint(faultState),
+                )
+            }
         }
 
         fun expressSaveSos(nowMs: Long = System.currentTimeMillis()): String {

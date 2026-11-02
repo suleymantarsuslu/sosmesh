@@ -19,6 +19,8 @@ Her satır: **amaç**, **erişim rolü**, **retention**, **silme yolu**.
 
 ## Notlar
 
+- **`ADMIN` rolü:** Platform süper kullanıcısıdır; erase/export uçlarında tenant sınırı uygulanmaz. Her erase (`PRIVACY_ERASE_REQUEST`) ve export (`PRIVACY_EXPORT`) işlemi `audit_logs` içinde `actorId` ile kaydedilir (API testleri ile doğrulanır).
+- **`COORDINATOR` / `OPERATOR`:** Organizasyon ve takım kapsamı (`TenantScopeService`) — çapraz tenant erişimi yok (404).
 - Röle düğümü SOS **içeriğini okumaz** (ADR-009).
 - Peer ACK, operatör “okundu” anlamına gelmez (`docs/transport/states.md`).
 - Gerçek GPS/PII/sağlık verisi repoya ve CI loglarına yazılmaz.

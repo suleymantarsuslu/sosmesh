@@ -1,7 +1,8 @@
 import { CaseDetailClient } from '../../../../../../features/cases/CaseDetailClient';
 
-type Params = { params: { incidentId: string } };
+type Params = { params: Promise<{ incidentId: string }> };
 
-export default function OperatorCaseDetailPage({ params }: Params) {
-  return <CaseDetailClient incidentId={params.incidentId} />;
+export default async function OperatorCaseDetailPage({ params }: Params) {
+  const { incidentId } = await params;
+  return <CaseDetailClient incidentId={incidentId} />;
 }

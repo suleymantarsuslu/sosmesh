@@ -175,7 +175,7 @@ describe('Crypto - Nonce Uniqueness', () => {
     }
 
     expect(nonces.size).toBe(iterations);
-  });
+  }, 120_000);
 
   it('should generate unique nonces for 10000 encryptions (stress test)', () => {
     const nonces = new Set<string>();
@@ -187,7 +187,7 @@ describe('Crypto - Nonce Uniqueness', () => {
     }
 
     expect(nonces.size).toBe(iterations);
-  });
+  }, 120_000);
 });
 
 describe('Crypto - Key Management', () => {

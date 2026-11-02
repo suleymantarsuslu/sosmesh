@@ -37,7 +37,7 @@
     { "id": "adv_mesh_spoof_extra_property", "patch": { "messageId": "adv-spoof-meta", "spoofedPeerName": "fake-rescue" }, "dropReason": null, "decision": "FORWARD" },
     { "id": "adv_mesh_ttl_hop_mismatch", "patch": { "messageId": "adv-mismatch", "hopCount": 5, "ttlHops": 2, "maxHops": 5 }, "dropReason": "MAX_HOPS" },
     { "id": "adv_mesh_zero_max_hops_invalid", "patch": { "maxHops": 0, "hopCount": 0 }, "dropReason": "MAX_HOPS" },
-    { "id": "adv_mesh_huge_ciphertext_meta", "patch": { "messageId": "adv-huge", "opaqueCiphertextBase64": "QUJD" }, "dropReason": null, "decision": "FORWARD", "oversizedNote": "engine accepts; size cap tracked SEC-MESH-SIZE-001" }
+    { "id": "adv_mesh_huge_ciphertext_meta", "patch": { "messageId": "adv-huge", "opaqueCiphertextBase64": "QUJD" }, "dropReason": null, "decision": "FORWARD" }
   ],
   "duplicateFlood": {
     "id": "adv_mesh_duplicate_flood",

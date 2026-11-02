@@ -4,7 +4,7 @@ import { apiBaseUrl, isE2eMock } from '../../../../lib/config';
 import { getSessionToken } from '../../../../lib/session';
 
 export async function GET(request: NextRequest) {
-  const token = getSessionToken();
+  const token = await getSessionToken();
   if (!token && !isE2eMock()) {
     return NextResponse.json({ code: 'UNAUTHORIZED' }, { status: 401 });
   }

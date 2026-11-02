@@ -1,3 +1,11 @@
+import { opaqueCiphertextBase64WithinLimit } from './mesh-payload-limits';
+
+export {
+  MAX_MESH_OPAQUE_CIPHERTEXT_BASE64_LENGTH,
+  MAX_MESH_OPAQUE_CIPHERTEXT_BYTES,
+  opaqueCiphertextBase64WithinLimit,
+} from './mesh-payload-limits';
+
 export interface HopChainReceiptV2 {
   relayDeviceIdHashes: string[];
 }
@@ -125,7 +133,7 @@ function validateEnvelope(envelope: MeshRelayEnvelopeV2): boolean {
       return false;
     }
   }
-  return envelope.opaqueCiphertextBase64.length >= 4;
+  return opaqueCiphertextBase64WithinLimit(envelope.opaqueCiphertextBase64);
 }
 
 const MESH_RELAY_ENGINE_TESTING_BRAND = Symbol('meshRelayEngineTesting');

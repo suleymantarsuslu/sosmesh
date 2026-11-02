@@ -146,18 +146,19 @@ test.describe('ADIM 50 prefers-reduced-motion görsel regresyon', () => {
     await page.emulateMedia({ reducedMotion: 'reduce' });
     await page.goto('/operator/login');
     await expect(page.getByTestId('login-form')).toBeVisible();
-    await expect(page).toHaveScreenshot('adim50-login-reduced-motion.png', {
-      fullPage: true,
-    });
+    // Tam sayfa yüksekliği CI font/render farkında değiştiği için kararlı login bloğu.
+    await expect(page.locator('main.login-page')).toHaveScreenshot(
+      'adim50-login-reduced-motion.png'
+    );
   });
 
   test('dashboard reduced-motion', async ({ page }) => {
     await page.emulateMedia({ reducedMotion: 'reduce' });
     await loginAsOperator(page);
     await expect(page.getByTestId('operator-dashboard')).toBeVisible();
-    await expect(page).toHaveScreenshot('adim50-dashboard-reduced-motion.png', {
-      fullPage: true,
-    });
+    await expect(page.getByTestId('operator-dashboard')).toHaveScreenshot(
+      'adim50-dashboard-reduced-motion.png'
+    );
   });
 });
 

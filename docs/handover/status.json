@@ -1827,6 +1827,7 @@
         "apps/ios/SOSMesh/PrivacyInfo.xcprivacy + watchOS PrivacyInfo manifests",
         "apps/ios/SOSMesh/tr|en.lproj/InfoPlist.strings",
         "apps/ios/scripts/check-xcodeproj-golden.sh PASS (regenerated golden)",
+        "apps/ios/scripts/check-release-adim52.sh + scripts/test-check-ios-release-adim52.sh (verify 26–27/27)",
         "Fiziksel iPhone/Watch + TestFlight kurulum: NOT_TESTED",
         "xcodebuild archive: BLOCKED macOS/Linux agent (script hazır)"
       ],

@@ -29,10 +29,10 @@
 		A3100220000000000000001 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
 		A3100230000000000000001 /* SOSMesh.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = SOSMesh.entitlements; sourceTree = "<group>"; };
 		A3100240000000000000001 /* PrivacyInfo.xcprivacy */ = {isa = PBXFileReference; lastKnownFileType = text.xml; path = PrivacyInfo.xcprivacy; sourceTree = "<group>"; };
-		A3100250000000000000001 /* Localizable.strings */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; path = Localizable.strings; sourceTree = "<group>"; };
-		A3100260000000000000001 /* Localizable.strings */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; path = Localizable.strings; sourceTree = "<group>"; };
-		A3100270000000000000001 /* InfoPlist.strings */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; path = InfoPlist.strings; sourceTree = "<group>"; };
-		A3100280000000000000001 /* InfoPlist.strings */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; path = InfoPlist.strings; sourceTree = "<group>"; };
+		A3100250000000000000001 /* Localizable.strings */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; path = SOSMesh/tr.lproj/Localizable.strings; sourceTree = SOURCE_ROOT; };
+		A3100260000000000000001 /* Localizable.strings */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; path = SOSMesh/en.lproj/Localizable.strings; sourceTree = SOURCE_ROOT; };
+		A3100270000000000000001 /* InfoPlist.strings */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; path = SOSMesh/tr.lproj/InfoPlist.strings; sourceTree = SOURCE_ROOT; };
+		A3100280000000000000001 /* InfoPlist.strings */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; path = SOSMesh/en.lproj/InfoPlist.strings; sourceTree = SOURCE_ROOT; };
 		A3100290000000000000001 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
 		A3100300000000000000001 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = ../watchos/SOSMeshWatch/Info.plist; sourceTree = SOURCE_ROOT; };
 		A3100310000000000000001 /* PrivacyInfo.xcprivacy */ = {isa = PBXFileReference; lastKnownFileType = text.xml; path = ../watchos/SOSMeshWatch/PrivacyInfo.xcprivacy; sourceTree = SOURCE_ROOT; };

@@ -2,7 +2,7 @@
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
 <!--
   Template — archive-export.sh copies to build/ExportOptions.plist and substitutes
-  __SOSMESH_APPLE_TEAM_ID__ from SOSMESH_APPLE_TEAM_ID (never commit real team ID).
+  __SOSMESH_APPLE_TEAM_ID__, __SOSMESH_BUNDLE_ID_*__, and profile name placeholders (never commit real team ID).
 -->
 <plist version="1.0">
 <dict>
@@ -18,11 +18,11 @@
 	<string>Apple Distribution</string>
 	<key>provisioningProfiles</key>
 	<dict>
-		<key>com.sosmesh.ios</key>
+		<key>__SOSMESH_BUNDLE_ID_IOS__</key>
 		<string>__SOSMESH_IOS_PROFILE_NAME__</string>
-		<key>com.sosmesh.ios.watch</key>
+		<key>__SOSMESH_BUNDLE_ID_WATCH__</key>
 		<string>__SOSMESH_WATCH_PROFILE_NAME__</string>
-		<key>com.sosmesh.ios.watch.widgets</key>
+		<key>__SOSMESH_BUNDLE_ID_WIDGETS__</key>
 		<string>__SOSMESH_WIDGET_PROFILE_NAME__</string>
 	</dict>
 	<key>destination</key>

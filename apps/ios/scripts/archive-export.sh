@@ -22,6 +22,22 @@ case "$FLAVOR" in
     ;;
 esac
 
+read_xcconfig_var() {
+  local key=$1
+  local file=$2
+  local line
+  line="$(grep -E "^[[:space:]]*${key}[[:space:]]*=" "$file" | tail -n 1 || true)"
+  if [[ -z "$line" ]]; then
+    echo "ERROR: missing ${key} in ${file}" >&2
+    exit 1
+  fi
+  echo "${line#*=}" | sed -e 's/^[[:space:]]*//' -e 's/[[:space:]]*$//'
+}
+
+BUNDLE_ID_IOS="$(read_xcconfig_var PRODUCT_BUNDLE_IDENTIFIER "$XCCONFIG")"
+BUNDLE_ID_WATCH="$(read_xcconfig_var SOSMESH_BUNDLE_ID_WATCH "$XCCONFIG")"
+BUNDLE_ID_WIDGETS="$(read_xcconfig_var SOSMESH_BUNDLE_ID_WIDGETS "$XCCONFIG")"
+
 : "${SOSMESH_APPLE_TEAM_ID:?Set SOSMESH_APPLE_TEAM_ID (10-char Team ID, not committed)}"
 : "${SOSMESH_CODE_SIGN_IDENTITY:=Apple Distribution}"
 : "${SOSMESH_IOS_PROFILE_NAME:?Set SOSMESH_IOS_PROFILE_NAME (provisioning profile name for iOS app)}"
@@ -37,6 +53,9 @@ python3 scripts/generate-xcodeproj.py
 cmp -s SOSMesh.xcodeproj/project.pbxproj scripts/golden-project.pbxproj
 
 sed -e "s/__SOSMESH_APPLE_TEAM_ID__/${SOSMESH_APPLE_TEAM_ID}/g" \
+  -e "s/__SOSMESH_BUNDLE_ID_IOS__/${BUNDLE_ID_IOS}/g" \
+  -e "s/__SOSMESH_BUNDLE_ID_WATCH__/${BUNDLE_ID_WATCH}/g" \
+  -e "s/__SOSMESH_BUNDLE_ID_WIDGETS__/${BUNDLE_ID_WIDGETS}/g" \
   -e "s/__SOSMESH_IOS_PROFILE_NAME__/${SOSMESH_IOS_PROFILE_NAME}/g" \
   -e "s/__SOSMESH_WATCH_PROFILE_NAME__/${SOSMESH_WATCH_PROFILE_NAME}/g" \
   -e "s/__SOSMESH_WIDGET_PROFILE_NAME__/${SOSMESH_WIDGET_PROFILE_NAME}/g" \

@@ -8,10 +8,10 @@
 
 | Kapı | Sonuç | Not |
 |------|--------|-----|
-| `pnpm -r build` | Koşulacak | Monorepo |
-| `pnpm test` | Koşulacak | |
-| `bash scripts/verify.sh` | Koşulacak | golden pbxproj dahil |
-| `packages/contracts-kotlin ./gradlew test` | Koşulacak | ANDROID_HOME yoksa Gradle Android modülü atlanır — CI doğrular |
+| `pnpm -r build` | EXIT 0 | Monorepo (denetçi 2026-11-02) |
+| `pnpm test` | EXIT 0 | |
+| `bash scripts/verify.sh` | 27/27 EXIT 0 | golden pbxproj + `check-release-adim52.sh` + mutation test |
+| `packages/contracts-kotlin ./gradlew test` | **NOT_TESTED** | Bu VM'de JDK 17 toolchain yok — CI `contracts-kotlin` job doğrular |
 | `xcodebuild archive` / imzalı IPA | **YOK** | macOS + Xcode + Apple Developer hesabı gerekir |
 | TestFlight | **BLOCKED_APPROVAL** | Transporter / App Store Connect yüklemesi yapılmadı |
 | Fiziksel iPhone / Apple Watch testleri | **NOT_TESTED** | MacBook + cihaz aşamasında |
@@ -141,7 +141,7 @@ Kanıt şablonu: `docs/release/evidence/ios-field-test-record-template.csv` — 
 
 1. Apple Developer Program / Team ID ve dağıtım sertifikaları (repoya yazılmaz).
 2. App Store Connect uygulama kaydı + bundle ID’ler (`Release-Prod.xcconfig` ile uyumlu).
-3. Provisioning profile adlarının `ExportOptions.template.plist` yer tutucularına eşlenmesi.
+3. Provisioning profile adlarının `ExportOptions.template.plist` yer tutucularına eşlenmesi; bundle ID'ler `Release-*.xcconfig` ile `archive-export.sh` tarafından otomatik doldurulur (`__SOSMESH_BUNDLE_ID_*__`).
 4. `./scripts/archive-export.sh` çalıştırması (MacBook).
 5. TestFlight yükleme ve internal test (BLOCKED_APPROVAL → onay sonrası).
 6. Fiziksel test matrisinin doldurulması; kanıt video/log (PII/GPS ham verisi repoya **konmaz**).

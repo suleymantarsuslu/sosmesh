@@ -38,6 +38,7 @@ Cloud agent Linux ortamında `swift-crypto` BoringSSL derlemesi araç zincirine 
 
 - Ortam şablonları: `apps/ios/Config/Release-*.xcconfig` — team/sertifika yalnız ortam değişkeni (`SOSMESH_APPLE_TEAM_ID`).
 - Archive: `apps/ios/scripts/archive-export.sh` (**macOS gerekir**; Linux agent derleyemez).
+- Release doğrulama (Linux/CI): `bash apps/ios/scripts/check-release-adim52.sh` (verify.sh 26/27).
 - TestFlight yükleme: **BLOCKED_APPROVAL** — bkz. `docs/release/ios.md`.
 
 ## Gizlilik metinleri

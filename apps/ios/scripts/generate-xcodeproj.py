@@ -114,7 +114,14 @@ for i, path in enumerate(
                 f"\t\t{ref} /* {last} */ = {{isa = {isa}; lastKnownFileType = text.plist.xml; path = {last}; sourceTree = \"<group>\"; }};"
             )
     elif path.endswith(".strings"):
-        lines.append(f"\t\t{ref} /* {last} */ = {{isa = {isa}; lastKnownFileType = text.plist.strings; path = {last}; sourceTree = \"<group>\"; }};")
+        if ".lproj/" in path:
+            lines.append(
+                f"\t\t{ref} /* {last} */ = {{isa = {isa}; lastKnownFileType = text.plist.strings; path = {path}; sourceTree = SOURCE_ROOT; }};"
+            )
+        else:
+            lines.append(
+                f"\t\t{ref} /* {last} */ = {{isa = {isa}; lastKnownFileType = text.plist.strings; path = {last}; sourceTree = \"<group>\"; }};"
+            )
     elif path.endswith(".xcassets"):
         lines.append(f"\t\t{ref} /* {last} */ = {{isa = {isa}; lastKnownFileType = folder.assetcatalog; path = {last}; sourceTree = \"<group>\"; }};")
     elif path.endswith(".xcprivacy"):

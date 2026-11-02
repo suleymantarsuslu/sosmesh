@@ -1611,12 +1611,20 @@
       ],
       "deliverables": "apps/api/src/ai/evals, docs/ai/model-card.md",
       "pass_criteria": "Unknown bilgisi asla uydurulmuyor, model outage vaka ingest’i bloklamıyor.",
-      "status": "NOT_STARTED",
-      "attempts": 0,
-      "commit": null,
-      "evidence": [],
-      "blockers": [],
-      "last_checked_at": null,
+      "status": "PARTIAL",
+      "attempts": 1,
+      "commit": "f284bc2",
+      "evidence": [
+        "apps/api/src/ai/evals (113 sentetik fixture, mock eval-runner, operator correction capture)",
+        "apps/api/src/ai/schemas/safe-fallback.ts, deidentify-plaintext.ts, ai-metrics.ts, incident token budget",
+        "docs/ai/model-card.md (gerçek vaka öncesi sağlayıcı onayı zorunlu)",
+        "apps/api/test/ai-adim45.spec.ts, ai-worker.spec.ts ingest 200 when AI fails"
+      ],
+      "blockers": [
+        "gerçek model doğruluğu: NOT_TESTED (CI mock sağlayıcı)",
+        "B-07 kullanıcı bütçe onayı — production spend cap tam GEÇTİ değil"
+      ],
+      "last_checked_at": "2026-11-01T22:45:00+00:00",
       "goal": "AI’nin hatalı çıkarımları olay yönetimini yanlış yönlendirmesin.",
       "cursor_tasks": [
         "Türkçe/İngilizce, yazım hatası, panik metni, çelişki, “bilmiyoruz” senaryolarından eval dataset.",

@@ -28,7 +28,7 @@ async function lockLoginFormForSnapshot(page) {
   await page.addStyleTag({
     content: `[data-testid="login-form"]{
       width:420px!important;max-width:420px!important;
-      height:190px!important;min-height:190px!important;max-height:190px!important;
+      height:191px!important;min-height:191px!important;max-height:191px!important;
       box-sizing:border-box!important;overflow:hidden!important;
       gap:12px!important;padding:0!important;margin:0!important;border:0!important;
       flex-shrink:0!important;

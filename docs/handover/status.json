@@ -2149,7 +2149,7 @@
       "pass_criteria": "\"Tamamlandı\" yalnızca tüm gerekli kapılar gerçek kanıtla PASS olduğunda denebilir.",
       "status": "PARTIAL",
       "attempts": 1,
-      "commit": null,
+      "commit": "81411462a7cde85c4f879558ebfd4ff69ed571b9",
       "evidence": [
         "docs/handover/final-report.md",
         "scripts/release/verify-handover.mjs",
@@ -2162,7 +2162,7 @@
         "Public demo / prod health URL YOK (deploy onay bekliyor)",
         "Bağımlı ADIM 56–57 PARTIAL; ADIM 49 PR #59 PENDING_MERGE"
       ],
-      "last_checked_at": "2026-11-02T16:15:00+00:00",
+      "last_checked_at": "2026-11-02T17:49:53.302Z",
       "goal": "Grok son cevabı övgü yerine ölçülebilir teslim raporu versin.",
       "cursor_tasks": [
         "Her adım PASS/FAIL/BLOCKED ile tarih, commit, test link, platform kanıtı.",

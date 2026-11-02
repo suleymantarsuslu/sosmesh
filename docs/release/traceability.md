@@ -4,7 +4,7 @@
 
 **Kural:** Fiziksel cihaz, MacBook/Xcode, mağaza veya hukuki inceleme kanıtı gerektiren maddeler **asla PASS sayılmaz**; `verification_status` status.json ile uyumludur.
 
-**Üretim:** `node scripts/release/generate-traceability.mjs` — 2026-11-02T16:07:48.351Z
+**Üretim:** `node scripts/release/generate-traceability.mjs` — 2026-11-02T17:49:53.335Z
 
 **Kayıt sayısı:** 88 (58 ADIM + M0 senaryoları + GEÇTİ ölçütleri)
 

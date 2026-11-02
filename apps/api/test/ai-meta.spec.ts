@@ -30,7 +30,7 @@ describe('Meta AI provider', () => {
     expect(rejected.ok).toBe(false);
   });
 
-  it('MockMetaProvider returns schema-valid suggestions for 30+ fixtures', async () => {
+  it('MockMetaProvider returns schema-valid suggestions for 100+ fixtures', async () => {
     const provider = buildMockMetaProvider(EVAL_FIXTURES);
     for (const fixture of EVAL_FIXTURES) {
       const result = await provider.classify({ plaintext: fixture.input });
@@ -126,6 +126,111 @@ describe('Meta AI provider', () => {
     expect(third.ok).toBe(false);
     if (third.ok === false) {
       expect(third.reason).toBe('circuit_open');
+    }
+  });
+
+  it('redacts PII before HTTP prompt body is sent', async () => {
+    let requestBody = '';
+    const fetchImpl = async (_url: string, init?: RequestInit) => {
+      requestBody = String(init?.body ?? '');
+      return new Response(
+        JSON.stringify({
+          choices: [
+            {
+              message: {
+                content: JSON.stringify({
+                  categories: ['general'],
+                  persons_estimate: null,
+                  injuries_reported: [],
+                  needs: ['assistance'],
+                  urgency_suggestion: 'unknown',
+                  uncertainty: true,
+                  quoted_evidence: ['help'],
+                  location_unknown: true,
+                  language: 'en',
+                  requires_human_review: true,
+                }),
+              },
+            },
+          ],
+        }),
+        { status: 200, headers: { 'Content-Type': 'application/json' } }
+      );
+    };
+
+    const provider = new MetaHttpProvider(
+      {
+        baseUrl: 'https://api.meta.ai/v1',
+        model: 'muse-spark-1.3',
+        apiKey: 'test-key',
+        timeoutMs: 2000,
+        maxRetries: 0,
+        maxTokens: 2048,
+        fetchImpl: fetchImpl as typeof fetch,
+      },
+      new MetaCircuitBreaker(3, 1000)
+    );
+
+    const syntheticLat = '12.3456';
+    const syntheticLon = '54.3210';
+    const coordPair = `${syntheticLat},${syntheticLon}`;
+    const sensitive =
+      `help at ${coordPair} phone +90 555 999 88 77 mail victim@example.com case-en-01`;
+    const result = await provider.classify({ plaintext: sensitive });
+    expect(result.ok).toBe(true);
+    expect(requestBody).toContain('[redacted-email]');
+    expect(requestBody).toContain('[redacted-phone]');
+    expect(requestBody).toContain('[redacted-coordinates]');
+    expect(requestBody).not.toContain('victim@example.com');
+    expect(requestBody).not.toContain(coordPair);
+    expect(requestBody).not.toContain('555 999');
+  });
+
+  it('rejects model JSON with forbidden triage or treatment fields', async () => {
+    const fetchImpl = async () =>
+      new Response(
+        JSON.stringify({
+          choices: [
+            {
+              message: {
+                content: JSON.stringify({
+                  categories: ['medical'],
+                  persons_estimate: 1,
+                  injuries_reported: [],
+                  needs: ['medical'],
+                  urgency_suggestion: 'high',
+                  uncertainty: true,
+                  quoted_evidence: [],
+                  location_unknown: true,
+                  language: 'en',
+                  requires_human_review: true,
+                  treatment_plan: 'administer morphine',
+                }),
+              },
+            },
+          ],
+        }),
+        { status: 200, headers: { 'Content-Type': 'application/json' } }
+      );
+
+    const provider = new MetaHttpProvider(
+      {
+        baseUrl: 'https://api.meta.ai/v1',
+        model: 'muse-spark-1.3',
+        apiKey: 'test-key',
+        timeoutMs: 2000,
+        maxRetries: 0,
+        maxTokens: 2048,
+        fetchImpl: fetchImpl as typeof fetch,
+      },
+      new MetaCircuitBreaker(3, 1000)
+    );
+
+    const result = await provider.classify({ plaintext: 'injured person needs help' });
+    expect(result.ok).toBe(false);
+    if (result.ok === false) {
+      expect(result.reason).toMatch(/forbidden field/);
+      expect(result.retryable).toBe(false);
     }
   });
 

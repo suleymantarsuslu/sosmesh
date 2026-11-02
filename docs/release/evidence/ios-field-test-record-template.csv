@@ -1,0 +1,8 @@
+test_id,category,platform,devices_required,preconditions,steps,expected,result,evidence_path,tester,date_utc,notes
+IOS-LC-01,iPhone↔Android lifecycle,iOS+iOS,1× iPhone + 1× Android,Both apps installed; BT on; foreground,Send SOS iPhone→Android peer; lock iPhone; resume,PEER_RECEIVED only after verified ack; no false delivered copy,NOT_TESTED,,,,
+IOS-LC-02,iPhone↔Android lifecycle,iOS+iOS,1× iPhone + 1× Android,Android online relay optional,Android→iPhone SOS; toggle BT off/on once,Queue retained; honest error UX; no SERVER_ACCEPTED on device,NOT_TESTED,,,,
+IOS-WCH-01,Paired Apple Watch SOS,iOS+watchOS,Paired iPhone + Apple Watch,Watch app installed; WCSession paired,Two-step SOS on watch; verify iPhone outbox origin=watch_os,Single outbox entry; watch shows pending not rescue complete,NOT_TESTED,,,,
+IOS-WCH-02,Watch background transfer,iOS+watchOS,Paired set,iPhone app backgrounded,Send SOS from watch with phone locked,transferUserInfo or sendMessage queued; no fake success,NOT_TESTED,,,,
+IOS-BG-01,Background BLE,iOS,1× iPhone,ADIM 33 matrix row BG-02,Start BLE relay; background lock 10 min,Partial behavior documented; no guarantee claim,NOT_TESTED,,,See docs/compat/ios-background-matrix.csv
+IOS-A11Y-01,VoiceOver,iOS,1× iPhone,VoiceOver on,Tabs SOS/Status/Relay/Settings; fault banners,All CTAs labeled; no misleading success,NOT_TESTED,,,,
+IOS-FLD-01,Pil/izin saha,iOS,2× iPhone models,Low power + location deny matrix,Run permission deny + low power relay opt-in,Battery/permission banners visible; relay respects opt-in,NOT_TESTED,,,,

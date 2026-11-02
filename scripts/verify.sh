@@ -318,6 +318,33 @@ else
   check_exit "android-relay-no-android-id" $EXIT_CODE
 fi
 
+# 25. iOS Xcode project golden (generate-xcodeproj.py)
+echo "25/27: bash apps/ios/scripts/check-xcodeproj-golden.sh"
+if bash apps/ios/scripts/check-xcodeproj-golden.sh > "$REPORTS_DIR/ios-xcodeproj-golden.log" 2>&1; then
+  check_exit "ios-xcodeproj-golden" 0
+else
+  EXIT_CODE=$?
+  check_exit "ios-xcodeproj-golden" $EXIT_CODE
+fi
+
+# 26. iOS ADIM 52 release config (privacy, export template, lproj paths)
+echo "26/27: bash apps/ios/scripts/check-release-adim52.sh"
+if bash apps/ios/scripts/check-release-adim52.sh > "$REPORTS_DIR/ios-release-adim52.log" 2>&1; then
+  check_exit "ios-release-adim52" 0
+else
+  EXIT_CODE=$?
+  check_exit "ios-release-adim52" $EXIT_CODE
+fi
+
+# 27. Mutation tests for iOS release checker
+echo "27/27: bash scripts/test-check-ios-release-adim52.sh"
+if bash "$SCRIPT_DIR/test-check-ios-release-adim52.sh" > "$REPORTS_DIR/test-check-ios-release-adim52.log" 2>&1; then
+  check_exit "test-check-ios-release-adim52" 0
+else
+  EXIT_CODE=$?
+  check_exit "test-check-ios-release-adim52" $EXIT_CODE
+fi
+
 # Summary
 echo "============================================"
 echo "Finished: $(date -u +%Y-%m-%dT%H:%M:%SZ)"

@@ -1,0 +1,11 @@
+scenario_id,ios_version,android_version,device_class,direction,network_on_receiver,physical_verification,notes
+CP-01,17.0,14,iPhone SE → Pixel,ios_sender_android_receiver,yes,NOT_TESTED,Online cross SOS; lab required
+CP-02,17.0,14,Pixel → iPhone,android_sender_ios_receiver,yes,NOT_TESTED,Reverse online cross
+CP-03,17.0,14,iPhone ↔ Pixel,offline_cross_relay_bidirectional,no,NOT_TESTED,Store-forward hop; no 24/7 claim
+CP-04,17.0,14,Any,sha_digest_gate,na,PASS,JVM/TS/Swift fixture transfer-ack-gate.json
+CP-05,17.0,14,Any,ble_v1_mock_transport,na,PASS,packages/ble-protocol integration
+CP-06,17.0,14,iPhone SE,VoiceOver labels,na,NOT_TESTED,Manual VoiceOver script pending
+CP-07,17.0,14,iPhone regular,Dynamic Type 200%,na,NOT_TESTED,Manual large content size
+CP-08,17.0,16,Pixel 8,Compose fault banners,na,PASS,Robolectric/unit strings (not device)
+CP-09,17.0,14,2 physical devices,30 scenario matrix,na,NOT_TESTED,Master plan ADIM 34 evidence target
+CP-10,17.0,14,3 devices,multi_hop_ios_foreground,na,NOT_TESTED,ADIM 41 physical foreground chain

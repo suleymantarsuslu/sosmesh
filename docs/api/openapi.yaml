@@ -610,6 +610,45 @@ paths:
           description: ""
       tags: *a9
       security: *a10
+  /v1/operator/privacy/incidents/{incidentId}/erase:
+    post:
+      operationId: PrivacyController_eraseIncident
+      parameters:
+        - name: incidentId
+          required: true
+          in: path
+          schema:
+            type: string
+      responses:
+        "201":
+          description: ""
+      tags: &a11
+        - privacy
+      security: &a12
+        - bearer: []
+  /v1/operator/privacy/incidents/{incidentId}/export:
+    get:
+      operationId: PrivacyController_exportIncident
+      parameters:
+        - name: incidentId
+          required: true
+          in: path
+          schema:
+            type: string
+      responses:
+        "200":
+          description: ""
+      tags: *a11
+      security: *a12
+  /v1/operator/privacy/retention/run:
+    post:
+      operationId: PrivacyController_runRetention
+      parameters: []
+      responses:
+        "201":
+          description: ""
+      tags: *a11
+      security: *a12
 info:
   title: SOSMesh API
   description: Emergency mesh network API — public and operator surfaces

@@ -66,6 +66,7 @@ async function main() {
   });
 
   const messageId = '00000000-0000-4000-8000-000000000020';
+  // Synthetic demo coordinates (Ankara-ish grid); not real incident locations.
   await prisma.sosMessage.upsert({
     where: { messageId },
     update: {},

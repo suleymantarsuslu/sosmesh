@@ -23,6 +23,10 @@
     <string name="sos_error_note_long">Note cannot exceed 200 characters</string>
     <string name="sos_saved_local">Saved on device — searching for nearby devices</string>
     <string name="sos_not112_disclaimer">SOSMesh does not replace 112. Call emergency services in an emergency.</string>
+    <string name="sos_consent_title">SOS and data use</string>
+    <string name="sos_consent_body">No account required. Location and message are encrypted; only authorized operators decrypt on the server. Confirm to continue.</string>
+    <string name="sos_consent_accept">Agree and continue</string>
+    <string name="sos_consent_decline">Cancel</string>
     <string name="sos_type_deprem">Earthquake</string>
     <string name="sos_type_yangin">Fire</string>
     <string name="sos_type_sel">Flood</string>

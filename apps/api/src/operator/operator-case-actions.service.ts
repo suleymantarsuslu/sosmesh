@@ -24,6 +24,7 @@ import {
   type MetadataCorrectionInput,
 } from './metadata-correction.util';
 import { canTransitionReview } from './review-status.util';
+import { redactAuditDetails } from '../privacy/audit-redaction.util';
 
 export type OperatorCaseAuditEntry = {
   id: string;
@@ -285,7 +286,11 @@ export class OperatorCaseActionsService {
           actorId: user.sub,
           incidentId,
           action: 'METADATA_CORRECTION',
-          detailsJson: { before, after, expectedVersion: body.expectedVersion },
+          detailsJson: redactAuditDetails({
+            before,
+            after,
+            expectedVersion: body.expectedVersion,
+          }) as Prisma.InputJsonValue,
         },
       });
       return nextVersion;
@@ -390,7 +395,10 @@ export class OperatorCaseActionsService {
       },
     });
     return rows.map((row) => {
-      const details = (row.detailsJson ?? {}) as Record<string, unknown>;
+      const details = redactAuditDetails((row.detailsJson ?? {}) as Record<string, unknown>) as Record<
+        string,
+        unknown
+      >;
       return {
         id: row.id,
         action: row.action,

@@ -12,6 +12,7 @@ struct StatusView: View {
                     List {
                         Label("status.timeline.1", systemImage: "1.circle")
                         Label("status.timeline.2", systemImage: "2.circle")
+                            .accessibilityHint(Text("status.peer_not_server"))
                     }
                 }
                 Text("status.disclaimer")

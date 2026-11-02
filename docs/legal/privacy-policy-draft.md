@@ -25,4 +25,4 @@ Koordinatör veya yönetici rolüne sahip kurum temsilcileri, vaka bazında expo
 
 ## İletişim
 
-Güvenlik açığı bildirimi: `docs/security/threat-model.md` içindeki sorumlu iletişim bölümüne bakın (placeholder).
+Güvenlik açığı bildirimi: [`SECURITY.md`](../../SECURITY.md) (`TODO_APPROVAL` e-posta yer tutucusu).

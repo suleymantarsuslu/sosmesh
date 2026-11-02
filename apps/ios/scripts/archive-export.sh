@@ -26,7 +26,7 @@ read_xcconfig_var() {
   local key=$1
   local file=$2
   local line
-  line="$(grep -E "^[[:space:]]*${key}[[:space:]]*=" "$file" | tail -n 1 || true)"
+  line="$(awk -v k="$key" '$0 ~ "^[[:space:]]*" k "[[:space:]]*=" { l = $0 } END { print l }' "$file")"
   if [[ -z "$line" ]]; then
     echo "ERROR: missing ${key} in ${file}" >&2
     exit 1

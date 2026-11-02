@@ -205,7 +205,7 @@ jobs:
     if: (vars.SOSMESH_MAC_RUNNER == 'on' || vars.SOSMESH_CI_RUNNER != 'zulal') && needs.detect-mobile.outputs.android == 'true' && (vars.SOSMESH_MAC_RUNNER != 'on' || needs.swift-package-tests.result == 'success')
     timeout-minutes: 25
     concurrency:
-      group: sosmesh-mobile-${{ github.job }}-${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+      group: sosmesh-mobile-${{ github.job }}-${{ github.workflow }}-${{ github.sha }}
       cancel-in-progress: true
 
     steps:
@@ -302,10 +302,11 @@ jobs:
     needs:
       - detect-mobile
       - swift-package-tests
-    if: (vars.SOSMESH_MAC_RUNNER == 'on' || vars.SOSMESH_CI_RUNNER != 'zulal') && needs.detect-mobile.outputs.ios == 'true' && (vars.SOSMESH_MAC_RUNNER != 'on' || needs.swift-package-tests.result == 'success')
+      - android-gradle
+    if: (vars.SOSMESH_MAC_RUNNER == 'on' || vars.SOSMESH_CI_RUNNER != 'zulal') && needs.detect-mobile.outputs.ios == 'true' && (vars.SOSMESH_MAC_RUNNER != 'on' || needs.swift-package-tests.result == 'success') && (needs.detect-mobile.outputs.android != 'true' || needs.android-gradle.result == 'success' || needs.android-gradle.result == 'skipped')
     timeout-minutes: 30
     concurrency:
-      group: sosmesh-mobile-${{ github.job }}-${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+      group: sosmesh-mobile-${{ github.job }}-${{ github.workflow }}-${{ github.sha }}
       cancel-in-progress: true
 
     steps:
@@ -489,7 +490,7 @@ jobs:
     timeout-minutes: 25
     if: (vars.SOSMESH_MAC_RUNNER == 'on' || vars.SOSMESH_CI_RUNNER != 'zulal') && (github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository)
     concurrency:
-      group: sosmesh-mobile-${{ github.job }}-${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+      group: sosmesh-mobile-${{ github.job }}-${{ github.workflow }}-${{ github.sha }}
       cancel-in-progress: true
 
     steps:

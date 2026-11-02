@@ -14,20 +14,25 @@ final class GoldenVectorCoreTests: XCTestCase {
         return url.path
     }
 
-    let goldenVector: [String: Any] = {
-        guard let url = Bundle.module.url(forResource: "golden-001", withExtension: "json"),
-              let data = try? Data(contentsOf: url),
-              let json = try? JSONSerialization.jsonObject(with: data) as? [String: Any] else {
-            fatalError("Failed to load golden-001.json")
-        }
-        return json
-    }()
+    private static func bundledGoldenURL() -> URL? {
+        Bundle.module.url(forResource: "golden-001", withExtension: "json", subdirectory: "Resources")
+            ?? Bundle.module.url(forResource: "golden-001", withExtension: "json")
+    }
+
+    private var goldenVector: [String: Any]!
+
+    override func setUpWithError() throws {
+        try super.setUpWithError()
+        let url = try XCTUnwrap(
+            Self.bundledGoldenURL(),
+            "Failed to locate golden-001.json in Bundle.module"
+        )
+        let data = try Data(contentsOf: url)
+        goldenVector = try XCTUnwrap(JSONSerialization.jsonObject(with: data) as? [String: Any])
+    }
 
     func testGolden001BundledBytesMatchMasterVector() throws {
-        guard let bundledURL = Bundle.module.url(forResource: "golden-001", withExtension: "json") else {
-            XCTFail("Bundled golden-001.json missing")
-            return
-        }
+        let bundledURL = try XCTUnwrap(Self.bundledGoldenURL())
         let masterURL = URL(fileURLWithPath: sourceRoot())
             .appendingPathComponent("packages/contracts/crypto-test-vectors/golden-001.json")
         let bundled = try Data(contentsOf: bundledURL)
@@ -36,18 +41,22 @@ final class GoldenVectorCoreTests: XCTestCase {
     }
 
     func testGoldenEncryptMatchesContractsPackage() throws {
-        let inputs = goldenVector["inputs"] as! [String: Any]
-        let expected = goldenVector["expected"] as! [String: Any]
+        let inputs = try XCTUnwrap(goldenVector["inputs"] as? [String: Any])
+        let expected = try XCTUnwrap(goldenVector["expected"] as? [String: Any])
 
-        let ephemeralPrivateKeyData = Data(base64Encoded: inputs["ephemeralPrivateKey"] as! String)!
-        let nonceData = Data(base64Encoded: inputs["nonce"] as! String)!
-        let plaintext = (inputs["plaintext"] as! String).data(using: .utf8)!
-        let envelope = inputs["envelope"] as! [String: Any]
+        let ephemeralPrivateKey = try XCTUnwrap(inputs["ephemeralPrivateKey"] as? String)
+        let nonce = try XCTUnwrap(inputs["nonce"] as? String)
+        let plaintextString = try XCTUnwrap(inputs["plaintext"] as? String)
+        let envelope = try XCTUnwrap(inputs["envelope"] as? [String: Any])
+
+        let ephemeralPrivateKeyData = try XCTUnwrap(Data(base64Encoded: ephemeralPrivateKey))
+        let nonceData = try XCTUnwrap(Data(base64Encoded: nonce))
+        let plaintext = try XCTUnwrap(plaintextString.data(using: .utf8))
 
         let config = CryptoConfig(
-            keyId: inputs["keyId"] as! String,
-            serverPublicKey: inputs["serverPublicKey"] as! String,
-            serverPrivateKey: inputs["serverPrivateKey"] as! String
+            keyId: try XCTUnwrap(inputs["keyId"] as? String),
+            serverPublicKey: try XCTUnwrap(inputs["serverPublicKey"] as? String),
+            serverPrivateKey: try XCTUnwrap(inputs["serverPrivateKey"] as? String)
         )
 
         let encrypted = try SOSMeshCrypto.encryptDeterministic(
@@ -58,11 +67,11 @@ final class GoldenVectorCoreTests: XCTestCase {
             nonceData: nonceData
         )
 
-        let ciphertextData = Data(base64Encoded: encrypted.ciphertext)!
+        let ciphertextData = try XCTUnwrap(Data(base64Encoded: encrypted.ciphertext))
         let ciphertextHex = ciphertextData.map { String(format: "%02x", $0) }.joined()
 
-        XCTAssertEqual(ciphertextHex, expected["ciphertextWithTagHex"] as! String)
-        XCTAssertEqual(encrypted.ephemeralPublicKey, expected["ephemeralPublicKey"] as! String)
+        XCTAssertEqual(ciphertextHex, expected["ciphertextWithTagHex"] as? String)
+        XCTAssertEqual(encrypted.ephemeralPublicKey, expected["ephemeralPublicKey"] as? String)
     }
 
     func testMessageEnvelopeBuilderRejectsBadTimestamp() {

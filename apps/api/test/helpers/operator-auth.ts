@@ -28,4 +28,12 @@ export function applyTestAuthEnv(): void {
   if (!process.env.CORS_ORIGINS) {
     process.env.CORS_ORIGINS = 'http://localhost:3000';
   }
+  if (!process.env.METRICS_SCRAPE_AUTH) {
+    process.env.METRICS_SCRAPE_AUTH = 'test-metrics-scrape-token-16';
+  }
+}
+
+export function metricsScrapeAuthHeader(): Record<string, string> {
+  applyTestAuthEnv();
+  return { Authorization: `Bearer ${process.env.METRICS_SCRAPE_AUTH}` };
 }

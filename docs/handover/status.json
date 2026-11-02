@@ -1673,17 +1673,17 @@
       "deliverables": "infra/monitoring, docs/runbooks/*.md, audit interface",
       "pass_criteria": "Her kritik hata ölçülür; dashboard PII içermez.",
       "status": "PASS",
-      "attempts": 1,
-      "commit": "d584d9b",
+      "attempts": 2,
+      "commit": "REVIEW_PENDING",
       "evidence": [
-        "apps/api/src/observability/* OTEL (varsayılan kapalı), /metrics, structured redacted events",
-        "apps/api/test/observability-adim48.spec.ts — redaction, 500/DB-down alert+recovery, RBAC audit",
-        "infra/monitoring/prometheus/alerts.yml + grafana/dashboard-sosmesh-observability.json (PII taraması testte)",
-        "docs/runbooks/*.md (api-down, stuck-worker, high-error, gps-anomaly, queue, rollback, status-page)",
-        "apps/web operator health + audit pages (server RBAC; operator-health-access.test.ts)"
+        "apps/api/src/observability/* OTEL (varsayılan kapalı), /metrics Bearer METRICS_SCRAPE_AUTH, structured redacted events",
+        "apps/api/test/observability-adim48.spec.ts — log spy redaction, metrics auth, HTTP 500→alert, RBAC summary/audit, queue depth",
+        "infra/monitoring/prometheus/alerts.yml SosmeshAiWorkerStuck sosmesh_ai_worker_stuck_seconds ile hizalı",
+        "docs/runbooks/*.md + web operator health/audit (RBAC)",
+        "Bağımsız denetim PR #58: pnpm -r build/test, verify.sh 24/24, mutation redaction test kırmızı kanıtı"
       ],
       "blockers": [],
-      "last_checked_at": "2026-11-02T04:50:00+00:00",
+      "last_checked_at": "2026-11-02T05:12:00+00:00",
       "goal": "Hataları kişisel verileri açığa çıkarmadan takip et.",
       "cursor_tasks": [
         "OpenTelemetry tracing with correlation ids; structured redacted event logs.",

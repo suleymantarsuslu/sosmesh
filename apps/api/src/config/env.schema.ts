@@ -34,6 +34,7 @@ export const envValidationSchema = Joi.object({
     .uri({ scheme: ['http', 'https'] })
     .default('http://127.0.0.1:4318/v1/traces'),
   OTEL_CONSOLE_EXPORT: Joi.string().valid('true', 'false').default('false'),
+  METRICS_SCRAPE_AUTH: Joi.string().min(16).required(),
 });
 
 export type AppEnv = {

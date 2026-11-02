@@ -78,6 +78,7 @@ export class AiJobService {
   }): void {
     this.pendingJobs += 1;
     this.metrics.setAiQueueDepth(this.pendingJobs);
+    this.metrics.setWorkerStuckSeconds(this.getWorkerStuckSecondsForAlerts());
     setImmediate(() => {
       void this.runJob(params)
         .catch((error) => {
@@ -91,6 +92,7 @@ export class AiJobService {
           this.pendingJobs = Math.max(0, this.pendingJobs - 1);
           this.lastQueueProgressMs = Date.now();
           this.metrics.setAiQueueDepth(this.pendingJobs);
+          this.metrics.setWorkerStuckSeconds(this.getWorkerStuckSecondsForAlerts());
         });
     });
   }

@@ -20,7 +20,7 @@ groups:
           runbook_url: docs/runbooks/high-error-rate.md
 
       - alert: SosmeshAiWorkerStuck
-        expr: sosmesh_ai_job_queue_depth > 0
+        expr: sosmesh_ai_job_queue_depth > 0 and sosmesh_ai_worker_stuck_seconds >= 120
         for: 2m
         labels:
           severity: warning

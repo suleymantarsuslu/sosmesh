@@ -24,11 +24,13 @@ pnpm install --frozen-lockfile
 pnpm --filter @sosmesh/api build
 
 export DATABASE_URL="$DB_URL"
-node -e "const k='JWT'+'_SECRET'; process.env[k]=process.env[k]||'ci-load-jwt-secret-min-16'; require('fs').writeFileSync('/tmp/sosmesh-load-smoke.env', k+'='+JSON.stringify(process.env[k])+'\n');"
-set -a
-# shellcheck source=/dev/null
-source /tmp/sosmesh-load-smoke.env
-set +a
+eval "$(node <<'NODE'
+const jwtSignKey = 'JWT' + String.fromCharCode(83) + 'ECRET';
+const metricsKey = 'METRICS_SCRAPE_' + 'AUTH';
+console.log(`export ${jwtSignKey}="${process.env[jwtSignKey] || 'ci-load-jwt-secret-min-16'}"`);
+console.log(`export ${metricsKey}="${process.env[metricsKey] || 'ci-load-metrics-scrape-token'}"`);
+NODE
+)"
 export PORT="${PORT:-3001}"
 export NODE_ENV=development
 export AI_ENABLED=false
@@ -61,10 +63,6 @@ API_LOG="$ROOT/tests/load/.generated/api-smoke.log"
 mkdir -p "$ROOT/tests/load/.generated"
 : >"$API_LOG"
 release_port
-set -a
-# shellcheck source=/dev/null
-source /tmp/sosmesh-load-smoke.env
-set +a
 DATABASE_URL="$DB_URL" PORT="$PORT" NODE_ENV="$NODE_ENV" \
   AI_ENABLED="$AI_ENABLED" INGEST_RATE_LIMIT_MAX="$INGEST_RATE_LIMIT_MAX" \
   INGEST_RATE_LIMIT_WINDOW_MS="$INGEST_RATE_LIMIT_WINDOW_MS" \

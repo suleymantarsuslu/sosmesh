@@ -58,16 +58,27 @@ export class HttpMetricsInterceptor implements NestInterceptor {
   }
 }
 
+function sanitizePathSegment(path: string): string {
+  const withoutQuery = path.split('?')[0] ?? path;
+  return withoutQuery.replace(
+    /[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/gi,
+    ':id'
+  );
+}
+
 function normalizeRoute(req: Request): string {
   if (req.route?.path) {
-    return String(req.route.path);
+    return sanitizePathSegment(String(req.route.path));
   }
   const path = req.path ?? req.url ?? 'unknown';
   if (path.startsWith('/v1/ingest')) {
     return '/v1/ingest';
   }
   if (path.startsWith('/health')) {
-    return path.split('?')[0] ?? '/health';
+    return sanitizePathSegment(path);
   }
-  return path.split('?')[0] ?? 'unknown';
+  if (path.startsWith('/v1/operator/cases/')) {
+    return '/v1/operator/cases/:id';
+  }
+  return sanitizePathSegment(path);
 }

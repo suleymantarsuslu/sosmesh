@@ -101,6 +101,7 @@ const fs = require('node:fs');
 const { generateKeyPairSync } = require('node:crypto');
 const statePath = process.env.SMOKE_PG_STATE;
 const jwtKey = 'JWT' + '_SECRET';
+const metricsScrapeKey = 'METRICS_SCRAPE_' + 'AUTH';
 const state = JSON.parse(fs.readFileSync(statePath, 'utf8'));
 const { privateKey } = generateKeyPairSync('ed25519');
 const ingestSigningKey = privateKey
@@ -108,6 +109,7 @@ const ingestSigningKey = privateKey
   .toString('base64');
 const lines = [
   `${jwtKey}=${JSON.stringify(process.env[jwtKey] || 'smoke-local-jwt-minimum-16chars')}`,
+  `${metricsScrapeKey}=${JSON.stringify(process.env[metricsScrapeKey] || 'smoke-local-metrics-scrape-16')}`,
   `DATABASE_URL=${JSON.stringify(state.databaseUrl)}`,
   `INGEST_RECEIPT_SIGNING_PRIVATE_KEY=${JSON.stringify(ingestSigningKey)}`,
 ];

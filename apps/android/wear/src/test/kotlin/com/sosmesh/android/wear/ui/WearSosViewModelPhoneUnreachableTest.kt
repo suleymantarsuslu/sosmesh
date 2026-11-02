@@ -1,10 +1,12 @@
 package com.sosmesh.android.wear.ui
 
 import com.sosmesh.android.core.wear.companion.queue.InMemoryWearOfflineQueueStore
+import com.sosmesh.android.core.wear.companion.sync.WearUserFacingPhase
 import com.sosmesh.android.core.wear.companion.transport.WearCompanionTransport
 import com.sosmesh.android.core.wear.companion.watch.WearSosCoordinator
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
+import org.junit.Assert.assertTrue
 import org.junit.Test
 
 class WearSosViewModelPhoneUnreachableTest {
@@ -20,9 +22,9 @@ class WearSosViewModelPhoneUnreachableTest {
         viewModel.onConfirmSend(nowMs = 100L)
         viewModel.refreshStatus(nowMs = 101L)
 
-        assertEquals("Telefona ulaşılamıyor", viewModel.statusHeadline)
-        assertFalse(viewModel.statusDetail.contains("gönderildi"))
-        assertFalse(viewModel.statusHeadline.contains("gönderildi"))
+        assertEquals(WearUserFacingPhase.PHONE_UNREACHABLE, viewModel.userFacingPhase)
+        assertFalse(viewModel.showsFalseSuccess)
+        assertTrue(viewModel.statusDetail.contains("denmez"))
     }
 
     private class UnreachableTransport : WearCompanionTransport {

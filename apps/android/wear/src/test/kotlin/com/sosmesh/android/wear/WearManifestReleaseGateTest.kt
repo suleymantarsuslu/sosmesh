@@ -23,7 +23,12 @@ class WearManifestReleaseGateTest {
     @Test
     fun manifest_hasWatchFeatureAndMinimalPermissions() {
         val app = ApplicationProvider.getApplicationContext<android.app.Application>()
-        val info = app.packageManager.getPackageInfo(app.packageName, android.content.pm.PackageManager.GET_PERMISSIONS)
+        val flags =
+            android.content.pm.PackageManager.GET_CONFIGURATIONS or
+                android.content.pm.PackageManager.GET_PERMISSIONS
+        val info = app.packageManager.getPackageInfo(app.packageName, flags)
+        val reqFeatures = info.reqFeatures?.map { it.name }?.toSet().orEmpty()
+        assertTrue(reqFeatures.contains("android.hardware.type.watch"))
         val perms = info.requestedPermissions?.toSet().orEmpty()
         assertTrue(perms.contains("android.permission.WAKE_LOCK"))
         assertTrue(perms.contains("android.permission.VIBRATE"))

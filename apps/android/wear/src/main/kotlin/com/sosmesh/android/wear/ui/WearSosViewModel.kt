@@ -29,7 +29,13 @@ class WearSosViewModel(
     var isAmbientMode by mutableStateOf(false)
         private set
 
-    fun setAmbientMode(enabled: Boolean) {
+    var userFacingPhase by mutableStateOf(WearUserFacingPhase.IDLE)
+        private set
+
+    var showsFalseSuccess by mutableStateOf(false)
+        private set
+
+    fun applyAmbientMode(enabled: Boolean) {
         isAmbientMode = enabled
     }
 
@@ -60,6 +66,8 @@ class WearSosViewModel(
 
     fun refreshStatus(nowMs: Long = System.currentTimeMillis()) {
         val display = coordinator.displayState(nowMs)
+        userFacingPhase = display.phase
+        showsFalseSuccess = display.showsFalseSuccess
         statusHeadline = display.headlineTr
         statusDetail = display.detailTr
         if (display.phase == WearUserFacingPhase.PHONE_UNREACHABLE) {

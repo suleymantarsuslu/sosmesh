@@ -1,7 +1,6 @@
 package com.sosmesh.android.wear.ui
 
 import androidx.activity.ComponentActivity
-import androidx.compose.ui.test.assertDoesNotExist
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.junit4.createAndroidComposeRule
 import androidx.compose.ui.test.onNodeWithTag
@@ -99,7 +98,7 @@ class WearRootScreenAmbientRobolectricTest {
     @Test
     fun ambientMode_hidesSecondaryDetailTag() {
         val viewModel = WearSosViewModel(WearSosCoordinator(InMemoryWearOfflineQueueStore(), ReachableTransport()))
-        viewModel.setAmbientMode(true)
+        viewModel.applyAmbientMode(true)
         composeRule.setContent {
             WearRootScreen(viewModel = viewModel)
         }

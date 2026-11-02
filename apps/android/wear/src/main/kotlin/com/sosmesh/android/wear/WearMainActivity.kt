@@ -1,15 +1,15 @@
 package com.sosmesh.android.wear
 
 import android.os.Bundle
-import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
+import androidx.fragment.app.FragmentActivity
 import androidx.wear.ambient.AmbientModeSupport
 import com.sosmesh.android.wear.companion.WearAppCoordinatorHolder
 import com.sosmesh.android.wear.ui.WearRootScreen
 import com.sosmesh.android.wear.ui.WearSosViewModel
 
 class WearMainActivity :
-    ComponentActivity(),
+    FragmentActivity(),
     AmbientModeSupport.AmbientCallbackProvider {
     private lateinit var ambientController: AmbientModeSupport.AmbientController
     private lateinit var viewModel: WearSosViewModel
@@ -29,16 +29,16 @@ class WearMainActivity :
 
     override fun getAmbientCallback(): AmbientModeSupport.AmbientCallback =
         object : AmbientModeSupport.AmbientCallback() {
-            override fun onEnterAmbient(ambientDetails: AmbientModeSupport.AmbientDetails) {
-                viewModel.setAmbientMode(true)
+            override fun onEnterAmbient(ambientDetails: Bundle) {
+                viewModel.applyAmbientMode(true)
             }
 
             override fun onUpdateAmbient() {
-                viewModel.setAmbientMode(true)
+                viewModel.applyAmbientMode(true)
             }
 
             override fun onExitAmbient() {
-                viewModel.setAmbientMode(false)
+                viewModel.applyAmbientMode(false)
             }
         }
 }

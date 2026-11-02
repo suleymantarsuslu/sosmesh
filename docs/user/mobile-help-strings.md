@@ -23,7 +23,10 @@ Yardım **tam ekran** henüz yok; string’ler ADIM 57 ile eklendi ve Settings /
 | `help_support_title` / `help_support_body` | Destek (`TODO_APPROVAL`) |
 | `home_help_cta` | Ana ekran CTA (ekran bağlantısı sonraki UI adımı) |
 
-Parity test: `apps/android/app/src/test/kotlin/com/sosmesh/android/AppI18nParityTest.kt`
+Parity tests:
+
+- Android: `apps/android/app/src/test/kotlin/com/sosmesh/android/AppI18nParityTest.kt`
+- iOS: `scripts/check-ios-localizable-parity.js` ve `apps/web/features/help/ios-localizable-parity.test.ts`
 
 ## iOS
 

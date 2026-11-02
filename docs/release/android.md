@@ -43,9 +43,9 @@ Tanımlı değilse release derlemesi **debug imzası** ile üretilir (yerel smok
 
 ```bash
 export SOSMESH_RELEASE_STORE_FILE="$HOME/keystores/sosmesh-upload.jks"
-export SOSMESH_RELEASE_STORE_PASSWORD='…'
+export SOSMESH_RELEASE_STORE_PASSWORD=<store-password>
 export SOSMESH_RELEASE_KEY_ALIAS='upload'
-export SOSMESH_RELEASE_KEY_PASSWORD='…'
+export SOSMESH_RELEASE_KEY_PASSWORD=<key-password>
 cd apps/android && ./gradlew bundleProdRelease
 ```
 

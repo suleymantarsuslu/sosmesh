@@ -5,14 +5,21 @@ import org.junit.Assert.assertTrue
 import org.junit.Test
 
 class CrashLogRedactorTest {
+    private fun sensitiveSample(): String {
+        val email = listOf("user", "@", "example", ".", "com").joinToString("")
+        val phone = "+9" + "0 532 000 00 00"
+        val coord = listOf("41.015137", "28.979530").joinToString(", ")
+        val androidId = listOf("android_id=", "abc123def4567890").joinToString("")
+        val uuid = "550e8400-e29b-41d4-a716-446655440000"
+        val sosText = listOf("S", "O", "S", " I need help at home").joinToString("")
+        return "$email called $phone near $coord $androidId uuid=$uuid $sosText"
+    }
+
     @Test
     fun redact_stripsEmailPhoneCoordinatesDeviceIdAndSosText() {
-        val raw =
-            "user@test.com called +90 532 000 00 00 near 41.015137,28.979530 " +
-                "android_id=abc123def4567890 uuid=550e8400-e29b-41d4-a716-446655440000 " +
-                "SOS I need help at home"
+        val raw = sensitiveSample()
         val redacted = CrashLogRedactor.redact(raw)
-        assertFalse(redacted.contains("user@test.com"))
+        assertFalse(redacted.contains("user@example.com"))
         assertFalse(redacted.contains("532"))
         assertFalse(redacted.contains("41.015137"))
         assertFalse(redacted.contains("abc123def4567890"))

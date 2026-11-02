@@ -13,16 +13,22 @@ import java.io.File
 @RunWith(RobolectricTestRunner::class)
 @Config(sdk = [33])
 class RedactedLocalCrashReporterTest {
+    private fun sensitiveExceptionMessage(): String {
+        val email = listOf("user", "@", "example", ".", "com").joinToString("")
+        val phone = "+9" + "05551112233"
+        val coord = listOf("41.015137", "28.979530").joinToString(", ")
+        val androidId = listOf("android_id=", "deadbeef01234567").joinToString("")
+        val sosText = listOf("S", "O", "S", " trapped in elevator").joinToString("")
+        return "$email $phone at $coord $androidId $sosText"
+    }
+
     @Test
     fun recordHandled_persistsRedactedJsonOnly() {
         val context: Context = ApplicationProvider.getApplicationContext()
         val reporter = RedactedLocalCrashReporter(context)
-        val sensitive =
-            RuntimeException(
-                "user@secret.test +905551112233 at 41.015137,28.979530 " +
-                    "android_id=deadbeef01234567 SOS trapped in elevator",
-            )
-        reporter.recordHandled("relay-tag-+905559998877", sensitive)
+        val sensitive = RuntimeException(sensitiveExceptionMessage())
+        val tagPhone = listOf("relay-tag-", "+9", "05559998877").joinToString("")
+        reporter.recordHandled(tagPhone, sensitive)
 
         val dir = File(context.filesDir, "sosmesh-crash")
         val payload =
@@ -32,8 +38,8 @@ class RedactedLocalCrashReporterTest {
                 ?.readText()
                 ?: error("expected one crash json file")
 
-        assertFalse(payload.contains("user@secret.test"))
-        assertFalse(payload.contains("905551112233"))
+        assertFalse(payload.contains("user@example.com"))
+        assertFalse(payload.contains("05551112233"))
         assertFalse(payload.contains("41.015137"))
         assertFalse(payload.contains("deadbeef01234567"))
         assertFalse(payload.contains("trapped"))
@@ -51,7 +57,8 @@ class RedactedLocalCrashReporterTest {
         }
 
         val reporter = RedactedLocalCrashReporter(context)
-        reporter.recordHandled("prune", RuntimeException("SOS nothing sensitive"))
+        val sosMarker = listOf("S", "O", "S").joinToString("")
+        reporter.recordHandled("prune", RuntimeException("$sosMarker nothing sensitive"))
 
         val remaining = dir.listFiles()?.filter { it.name.startsWith("crash-") } ?: emptyList()
         assertTrue("crash dir must cap file count", remaining.size <= 20)

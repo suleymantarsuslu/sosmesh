@@ -103,8 +103,10 @@ Durum zaman çizelgesi **teknik iletim basamaklarını** gösterir:
 
 - Gizlilik taslağı: [`docs/legal/privacy-policy-draft.md`](../legal/privacy-policy-draft.md)
 - Kullanım koşulları taslağı: [`docs/legal/terms-of-use-draft.md`](../legal/terms-of-use-draft.md)
-- Güvenlik açığı: [`SECURITY.md`](../../SECURITY.md) (`TODO_APPROVAL` e-posta)
-- Operatör paneli yardım: web uygulamasında **Yardım** menüsü
+- Gizlilik inceleme kontrol listesi (hukuk onayı bekliyor): [`docs/legal/privacy-review-checklist.md`](../legal/privacy-review-checklist.md)
+- Güvenlik açığı: [`SECURITY.md`](../../SECURITY.md) (`GUVENLIK_BILDIRIM_TBD`)
+- **Destek iletişimi (yer tutucu):** `DESTEK_ILETISIM_TBD` · `DESTEK_EPOSTA_TBD` · `DESTEK_TELEFON_TBD` — `BLOCKED_APPROVAL`
+- Operatör paneli yardım: web uygulamasında **Yardım** menüsü (`/operator/help`); destek formu sunucuya iletilmez
 
 ---
 

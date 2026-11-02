@@ -38,6 +38,22 @@ test.describe('Operator help', () => {
     expect(serious).toHaveLength(0);
   });
 
+  test('help page renders five ACK levels and peer vs operator distinction', async ({
+    page,
+  }) => {
+    await loginAsOperator(page);
+    await page.goto('/operator/help');
+    const ackSection = page.getByTestId('help-section-ack');
+    await expect(ackSection).toBeVisible();
+    await expect(ackSection.getByRole('heading', { level: 2 })).toContainText(
+      'ACK'
+    );
+    const ackText = await ackSection.innerText();
+    expect(ackText.toLowerCase()).toContain('peer');
+    expect(ackText.toLowerCase()).toContain('operatör');
+    expect(ackText.toLowerCase()).toContain('sunucu');
+  });
+
   test('support form shows BLOCKED_APPROVAL feedback', async ({ page }) => {
     await loginAsOperator(page);
     await page.goto('/operator/help');

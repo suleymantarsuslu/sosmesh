@@ -2,7 +2,7 @@
 
 **Tarih (UTC):** 2026-11-02  
 **Dal:** `cursor/adim-58-handover-03c7`  
-**HEAD:** `81411462a7cde85c4f879558ebfd4ff69ed571b9`  
+**HEAD:** `39c8d1b04460f57b43a70cf9dfb5d4d4f1f5cbeb`  
 **Kaynak (tek doğruluk):** [`docs/handover/status.json`](status.json), [`docs/release/traceability.json`](../release/traceability.json)  
 **Proje tamamlanma:** **NOT_COMPLETE** — zorunlu kapıların tamamı PASS + gerçek kanıt değil; bu rapor **PARTIAL** handover’dır. *“Tamamlandı”* yalnızca tüm gerekli kapılar gerçek kanıtla PASS olduğunda söylenebilir; **şu an sağlanmıyor**.
 
@@ -85,7 +85,7 @@ Durum sütunu **yalnızca** `status.json` ile aynıdır; yükseltme yoktur.
 | 55 | Pilot kullanıcı testi ve saha güvenilir… | NOT_STARTED | — | — | — |
 | 56 | Hata düzeltme, regresyon ve sürüm dondurma | PARTIAL | 2026-11-02T13:45:00 | 98e4e0c0fafa | docs/release/traceability.md |
 | 57 | Kullanıcı belgeleri ve açık destek sını… | PARTIAL | 2026-11-02T13:45:00 | 3c504e64e97f | docs/user/kullanici-rehberi-tr.md |
-| 58 | Operasyonel handover ve tamamlanma raporu | PARTIAL | 2026-11-02T16:15:00 | — | docs/handover/final-report.md |
+| 58 | Operasyonel handover ve tamamlanma raporu | PARTIAL | 2026-11-02T17:49:53.302Z | 81411462a7cd | docs/handover/final-report.md |
 
 ### Açık PR referansları (PENDING_MERGE — içerik kopyalanmadı)
 

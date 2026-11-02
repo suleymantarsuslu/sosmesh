@@ -21,6 +21,7 @@ ensure_pnpm() {
 
 ensure_pnpm
 pnpm install --frozen-lockfile
+pnpm --filter @sosmesh/contracts build
 pnpm --filter @sosmesh/api build
 
 export DATABASE_URL="$DB_URL"
@@ -81,8 +82,8 @@ cleanup() {
 trap cleanup EXIT
 
 ready=0
-for _ in $(seq 1 60); do
-  if curl -fsS "http://127.0.0.1:${PORT}/health" >/dev/null 2>&1; then
+for _ in $(seq 1 90); do
+  if curl -fsS "http://127.0.0.1:${PORT}/health/ready" >/dev/null 2>&1; then
     ready=1
     break
   fi

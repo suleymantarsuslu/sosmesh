@@ -656,9 +656,9 @@ paths:
       responses:
         "200":
           description: ""
-      tags:
+      tags: &a13
         - operator
-      security:
+      security: &a14
         - bearer: []
   /v1/operator/observability/audit:
     get:
@@ -667,10 +667,8 @@ paths:
       responses:
         "200":
           description: ""
-      tags:
-        - operator
-      security:
-        - bearer: []
+      tags: *a13
+      security: *a14
   /v1/operator/incidents/{incidentId}/recommendations/plan:
     post:
       operationId: RecommendationController_plan
@@ -688,9 +686,9 @@ paths:
       responses:
         "201":
           description: ""
-      tags: &a13
+      tags: &a15
         - operator-recommendations
-      security: &a14
+      security: &a16
         - bearer: []
   /v1/operator/incidents/{incidentId}/recommendations:
     get:
@@ -704,8 +702,8 @@ paths:
       responses:
         "200":
           description: ""
-      tags: *a13
-      security: *a14
+      tags: *a15
+      security: *a16
   /v1/operator/recommendations/{recommendationId}/reject:
     patch:
       operationId: RecommendationController_reject
@@ -718,8 +716,8 @@ paths:
       responses:
         "200":
           description: ""
-      tags: *a13
-      security: *a14
+      tags: *a15
+      security: *a16
   /v1/operator/recommendations/{recommendationId}/confirm:
     post:
       operationId: RecommendationController_confirm
@@ -732,8 +730,8 @@ paths:
       responses:
         "201":
           description: ""
-      tags: *a13
-      security: *a14
+      tags: *a15
+      security: *a16
   /v1/operator/recommendations/{recommendationId}/feedback:
     post:
       operationId: RecommendationController_feedback
@@ -746,8 +744,8 @@ paths:
       responses:
         "201":
           description: ""
-      tags: *a13
-      security: *a14
+      tags: *a15
+      security: *a16
 info:
   title: SOSMesh API
   description: Emergency mesh network API — public and operator surfaces

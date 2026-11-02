@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import { AiSuggestionPanel } from './AiSuggestionPanel';
+import { AssignmentPreviewPanel } from '../assignment/AssignmentPreviewPanel';
 import { REVIEW_STATUS_OPTIONS, type OperatorCaseDetail } from './types';
 
 type Props = {
@@ -17,6 +18,14 @@ export function CaseDetailView({ detail, onRefresh }: Props) {
   );
   const [conflictMessage, setConflictMessage] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
+
+  const caseCoordinates =
+    detail.verifiedMetadata.latitude !== null && detail.verifiedMetadata.longitude !== null
+      ? {
+          latitude: detail.verifiedMetadata.latitude,
+          longitude: detail.verifiedMetadata.longitude,
+        }
+      : null;
 
   const saveCorrection = async () => {
     setBusy(true);
@@ -120,6 +129,8 @@ export function CaseDetailView({ detail, onRefresh }: Props) {
       </section>
 
       <AiSuggestionPanel ai={detail.ai} />
+
+      <AssignmentPreviewPanel incidentId={detail.incidentId} caseCoordinates={caseCoordinates} />
 
       <section aria-labelledby="case-actions-title">
         <h2 id="case-actions-title">Operatör durumu</h2>

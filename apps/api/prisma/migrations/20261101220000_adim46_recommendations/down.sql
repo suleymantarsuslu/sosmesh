@@ -1,0 +1,10 @@
+ALTER TABLE "recommendation_feedback" DROP CONSTRAINT IF EXISTS "recommendation_feedback_actor_id_fkey";
+ALTER TABLE "recommendation_feedback" DROP CONSTRAINT IF EXISTS "recommendation_feedback_recommendation_id_fkey";
+ALTER TABLE "assignment_recommendations" DROP CONSTRAINT IF EXISTS "assignment_recommendations_work_task_id_fkey";
+ALTER TABLE "assignment_recommendations" DROP CONSTRAINT IF EXISTS "assignment_recommendations_resource_id_fkey";
+ALTER TABLE "assignment_recommendations" DROP CONSTRAINT IF EXISTS "assignment_recommendations_team_id_fkey";
+ALTER TABLE "assignment_recommendations" DROP CONSTRAINT IF EXISTS "assignment_recommendations_incident_id_fkey";
+DROP TABLE IF EXISTS "recommendation_feedback";
+DROP TABLE IF EXISTS "assignment_recommendations";
+DROP TYPE IF EXISTS "RecommendationFeedbackRating";
+DROP TYPE IF EXISTS "AssignmentRecommendationStatus";

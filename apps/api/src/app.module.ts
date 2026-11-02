@@ -26,6 +26,7 @@ import { NotificationsModule } from './notifications/notifications.module';
 import { PrismaModule } from './prisma/prisma.module';
 import { PublicModule } from './public/public.module';
 import { PrivacyModule } from './privacy/privacy.module';
+import { RecommendationModule } from './recommendation/recommendation.module';
 
 @Module({
   imports: [
@@ -79,6 +80,7 @@ import { PrivacyModule } from './privacy/privacy.module';
     CoordinationModule,
     NotificationsModule,
     PrivacyModule,
+    RecommendationModule,
   ],
   providers: [
     {

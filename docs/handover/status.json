@@ -1674,7 +1674,7 @@
       "pass_criteria": "Her kritik hata ölçülür; dashboard PII içermez.",
       "status": "PASS",
       "attempts": 1,
-      "commit": null,
+      "commit": "d584d9b",
       "evidence": [
         "apps/api/src/observability/* OTEL (varsayılan kapalı), /metrics, structured redacted events",
         "apps/api/test/observability-adim48.spec.ts — redaction, 500/DB-down alert+recovery, RBAC audit",

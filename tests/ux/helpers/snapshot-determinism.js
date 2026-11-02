@@ -29,7 +29,15 @@ async function lockLoginFormForSnapshot(page) {
     content: `[data-testid="login-form"]{
       width:420px!important;max-width:420px!important;
       height:190px!important;min-height:190px!important;max-height:190px!important;
-      box-sizing:border-box;overflow:hidden;
+      box-sizing:border-box!important;overflow:hidden!important;
+      gap:12px!important;padding:0!important;margin:0!important;border:0!important;
+      flex-shrink:0!important;
+    }
+    [data-testid="login-form"] label,
+    [data-testid="login-form"] input,
+    [data-testid="login-form"] button,
+    [data-testid="login-form"] .login-form__error{
+      flex-shrink:0!important;margin:0!important;
     }`,
   });
 }

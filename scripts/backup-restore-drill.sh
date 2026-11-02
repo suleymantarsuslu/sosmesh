@@ -12,4 +12,4 @@ if [ -z "${DATABASE_URL:-}" ] && [ -f "$ENV_FILE" ]; then
 fi
 
 cd "$REPO_ROOT/apps/api"
-npx tsx test/helpers/backup-restore-drill.ts
+pnpm exec ts-node --transpile-only test/helpers/backup-restore-drill.ts

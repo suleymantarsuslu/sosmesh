@@ -2062,7 +2062,7 @@
       "pass_criteria": "Kullanıcı bağlantı düzeyini ve başarısız iletimi anlıyor.",
       "status": "PARTIAL",
       "attempts": 2,
-      "commit": "a6ee3b8496723084753fa79f66773e77929fb021",
+      "commit": "3c504e64e97f6394edf0894f9136045cf7752be4",
       "evidence": [
         "docs/user/kullanici-rehberi-tr.md",
         "docs/user/user-guide-en.md",

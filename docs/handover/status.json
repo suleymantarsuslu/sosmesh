@@ -1873,12 +1873,26 @@
       ],
       "deliverables": "infra/deploy, docs/runbooks/deploy.md, .env.example",
       "pass_criteria": "Staging çalışır; production yalnızca kullanıcı onayıyla.",
-      "status": "NOT_STARTED",
-      "attempts": 0,
+      "status": "PARTIAL",
+      "attempts": 1,
       "commit": null,
-      "evidence": [],
-      "blockers": [],
-      "last_checked_at": null,
+      "evidence": [
+        "infra/deploy/docker (api, web, worker, migrate multi-stage non-root)",
+        "infra/deploy/compose/docker-compose.staging.yml",
+        "infra/deploy/nginx + ingress + k8s migration templates (BLOCKED_APPROVAL)",
+        "docs/runbooks/deploy.md + deploy-workflow-draft.md",
+        ".env.example secret names only",
+        "apps/api/src/worker-main.ts + apps/web/app/health/route.ts",
+        ".github/workflows/deploy-container-smoke.yml (ubuntu-latest, fork guard)",
+        "docs/handover/evidence/adim54/*.template.txt",
+        "Staging deploy/smoke/rollback/TLS: NOT_TESTED",
+        "Prod deploy/DNS/cert/public push: BLOCKED_APPROVAL"
+      ],
+      "blockers": [
+        "Gerçek staging ortamı ve secret manager wiring yok",
+        "Production environment protection + kullanıcı onayı bekleniyor"
+      ],
+      "last_checked_at": "2026-11-02T05:30:00+00:00",
       "goal": "Staging/production ayrımını güvenli kur.",
       "cursor_tasks": [
         "Docker multi-stage, health/readiness, nginx/ingress TLS, migrations job, secret manager.",

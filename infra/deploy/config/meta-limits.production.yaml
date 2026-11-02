@@ -1,0 +1,21 @@
+# Production Meta AI / cost guard — env names only; all values via secret manager + user approval.
+
+environment: production
+status: BLOCKED_APPROVAL
+meta:
+  env:
+    MODEL_API_KEY: MODEL_API_KEY
+    META_BASE_URL: META_BASE_URL
+    META_MODEL: META_MODEL
+    META_MAX_TOKENS: META_MAX_TOKENS
+  recommended_limits:
+    META_MAX_TOKENS: '4096'
+    AI_DAILY_COST_CAP_USD: '5'
+    AI_TENANT_RATE_LIMIT_MAX: '30'
+    AI_TENANT_RATE_LIMIT_WINDOW_MS: '60000'
+  notes: Production MODEL_API_KEY and spend caps require documented user sign-off.
+
+database:
+  env:
+    DATABASE_URL: DATABASE_URL
+  isolation: Dedicated production database; backups per ADIM 49 runbook (not executed here).

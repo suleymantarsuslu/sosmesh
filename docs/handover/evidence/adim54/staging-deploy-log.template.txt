@@ -1,0 +1,14 @@
+# Staging deploy log — NOT_TESTED
+# Fill after approved staging deploy. Do not paste secrets or real PII.
+
+deploy_date_utc:
+operator:
+cloud_profile:
+git_sha:
+image_digests:
+  api:
+  web:
+  worker:
+  migrate:
+migration_revision:
+notes:

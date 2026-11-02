@@ -11,6 +11,8 @@ evidence
 .env
 .env.*
 !.env.example
+*.key
+*.pem
 apps/android
 apps/ios
 apps/wearos

@@ -6,6 +6,9 @@ on:
   pull_request:
     branches: [main, dev]
 
+permissions:
+  contents: read
+
 jobs:
   container-smoke:
     name: Build images and staging compose smoke
@@ -24,20 +27,21 @@ jobs:
           JWT_SECRET=$(openssl rand -base64 32)
           POSTGRES_PASSWORD=$(openssl rand -hex 16)
           SIGN_KEY=$(openssl rand -base64 48)
+          DATABASE_URL="postgresql://sosmesh:${POSTGRES_PASSWORD}@postgres:5432/sosmesh_staging"
+          echo "::add-mask::${JWT_SECRET}"
+          echo "::add-mask::${POSTGRES_PASSWORD}"
+          echo "::add-mask::${SIGN_KEY}"
+          echo "::add-mask::${DATABASE_URL}"
           {
             echo "JWT_SECRET=${JWT_SECRET}"
             echo "POSTGRES_PASSWORD=${POSTGRES_PASSWORD}"
             echo "POSTGRES_USER=sosmesh"
             echo "POSTGRES_DB=sosmesh_staging"
-            echo "DATABASE_URL=postgresql://sosmesh:${POSTGRES_PASSWORD}@postgres:5432/sosmesh_staging"
+            echo "DATABASE_URL=${DATABASE_URL}"
             echo "INGEST_RECEIPT_SIGNING_PRIVATE_KEY=${SIGN_KEY}"
             echo "AI_ENABLED=false"
             echo "NEXT_PUBLIC_MAP_TEST_MODE=1"
           } >> "$GITHUB_ENV"
-          echo "::add-mask::${JWT_SECRET}"
-          echo "::add-mask::${POSTGRES_PASSWORD}"
-          echo "::add-mask::${SIGN_KEY}"
-          echo "::add-mask::postgresql://sosmesh:${POSTGRES_PASSWORD}@postgres:5432/sosmesh_staging"
 
       - name: Build and start staging stack
         shell: bash

@@ -103,9 +103,10 @@ for PATTERN in "${PATTERNS[@]}"; do
         done
       fi
       
-      # KEY/SECRET/PASSWORD: değer <placeholder>, boş, veya dev-/mock- prefix'li ise atla
-      if [[ "$PATTERN" == *'KEY'* ]] || [[ "$PATTERN" == *'SECRET'* ]]; then
-        if echo "$MATCH" | grep -q -E '=\s*<|=\s*\[|=\s*$|=(dev|mock|test)-'; then
+      # KEY/SECRET/TOKEN/PASSWORD: değer <placeholder>, boş, dev-/mock- prefix'li,
+      # veya shell üretimi (${var}, $(cmd)) ise atla (CI ephemeral env)
+      if [[ "$PATTERN" == *'KEY'* ]] || [[ "$PATTERN" == *'SECRET'* ]] || [[ "$PATTERN" == *'TOKEN'* ]] || [[ "$PATTERN" == *'PASSWORD'* ]]; then
+        if echo "$MATCH" | grep -q -E '=\s*<|=\s*\[|=\s*$|=(dev|mock|test)-|=\$\{|=\$\('; then
           SKIP=true
         fi
       fi

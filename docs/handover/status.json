@@ -1711,7 +1711,7 @@
       "evidence": [
         "infra/backup/* WAL archive + base-backup + rotation (AES-256; key via SOSMESH_BACKUP_ENCRYPTION_KEY only)",
         "scripts/backup-restore-drill.sh + apps/api/test/helpers/backup-restore-drill.ts — pg_dump -Fc → AES encrypt → DROP source schema → pg_restore + row/checksum verify",
-        "scripts/ci/bootstrap-pgclient-16.sh — sudo-less pg_dump/pg_restore for Zulal verify",
+        "scripts/ci/bootstrap-pgclient.sh — sudo-less pg_dump/pg_restore (Ubuntu 16 / PGDG 17+ by server major)",
         "apps/api/test/backup-adim49.spec.ts — Jest pg_dump/pg_restore on embedded PG16; CI drill log (reports/backup-restore-drill.log artifact) pending on green verify",
         "apps/api/src/disaster/disaster-readonly.middleware.ts (default off unless SOSMESH_DISASTER_READ_ONLY_MODE=true)",
         "docs/runbooks/restore.md — RPO/RTO from measured drill log only"

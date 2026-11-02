@@ -326,7 +326,7 @@ if [ -n "${SOSMESH_CI_DATABASE_URL:-}" ]; then
   if ! command -v pg_dump >/dev/null 2>&1 || ! command -v pg_restore >/dev/null 2>&1; then
     {
       echo "FAIL: SOSMESH_CI_DATABASE_URL is set but pg_dump/pg_restore are not on PATH"
-      echo "Hint: run scripts/ci/bootstrap-pgclient-16.sh or install postgresql-client-16"
+      echo "Hint: run scripts/ci/bootstrap-pgclient.sh (uses server major from SOSMESH_CI_DATABASE_URL)"
     } >> "$REPORTS_DIR/backup-restore-drill.log"
     check_exit "backup-restore-drill" 1 "backup-restore-drill.log"
   elif bash "$SCRIPT_DIR/backup-restore-drill.sh" >> "$REPORTS_DIR/backup-restore-drill.log" 2>&1; then

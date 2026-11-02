@@ -65,11 +65,11 @@ jobs:
       - name: Install Playwright browsers
         run: npx playwright install --with-deps chromium
 
-      - name: Bootstrap PostgreSQL 16 client (no sudo, Zulal-safe)
+      - name: Bootstrap PostgreSQL client (no sudo, server-major aware)
         shell: bash
         env:
           RUNNER_TEMP: ${{ runner.temp }}
-        run: bash scripts/ci/bootstrap-pgclient-16.sh
+        run: bash scripts/ci/bootstrap-pgclient.sh
 
       - name: Run verification script
         run: bash scripts/verify.sh

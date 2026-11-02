@@ -27,7 +27,9 @@ async function lockDashboardVisualCoreForSnapshot(page) {
 async function lockLoginFormForSnapshot(page) {
   await page.addStyleTag({
     content: `[data-testid="login-form"]{
-      width:420px!important;max-width:420px!important;box-sizing:border-box;
+      width:420px!important;max-width:420px!important;
+      height:190px!important;min-height:190px!important;max-height:190px!important;
+      box-sizing:border-box;overflow:hidden;
     }`,
   });
 }

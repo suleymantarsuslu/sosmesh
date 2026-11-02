@@ -7,6 +7,8 @@ RUN corepack enable && corepack prepare pnpm@9.0.0 --activate
 COPY package.json pnpm-lock.yaml pnpm-workspace.yaml ./
 COPY apps/web/package.json apps/web/
 RUN pnpm install --frozen-lockfile --filter @sosmesh/web...
+COPY docs/ux/content-en.json docs/ux/content-en.json
+COPY docs/ux/content-tr.json docs/ux/content-tr.json
 COPY apps/web apps/web
 ARG NEXT_PUBLIC_API_URL=http://localhost:3001
 ARG NEXT_PUBLIC_MAP_TILE_URL=https://tile.openstreetmap.org/{z}/{x}/{y}.png

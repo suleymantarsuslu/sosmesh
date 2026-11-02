@@ -18,6 +18,7 @@ GitHub Actions faturalama / kota sorunlarında koordinatör repo değişkenini `
 - **PostgreSQL (hosted):** Job `services: postgres` (`postgres:16`; yalnızca CI test parolası). Job `env` ile `SOSMESH_CI_*_URL` tanımlıdır.
 - **PostgreSQL (Zulal):** Service container kullanılmaz; `Load CI PostgreSQL credentials` adımı `/etc/sosmesh-ci/pg.env` dosyasını yükler (`::add-mask::` ile).
 - **Playwright:** Hosted modda `npx playwright install --with-deps chromium`; Zulal modda `npx playwright install chromium` (sudo yok).
+- Zulal modunda `verify`, port 3000/3001 çakışmasını önlemek için `zulal-verify` etiketli tek runner'da sırayla koşar.
 
 ## Diğer job’lar
 

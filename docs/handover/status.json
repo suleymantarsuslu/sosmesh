@@ -1812,12 +1812,26 @@
       ],
       "deliverables": "apps/android release artifacts, docs/release/android.md",
       "pass_criteria": "APK gerçek cihazda M0+M1 akışını çalıştırır; store acceptance ayrı gate.",
-      "status": "NOT_STARTED",
-      "attempts": 0,
-      "commit": null,
-      "evidence": [],
-      "blockers": [],
-      "last_checked_at": null,
+      "status": "PARTIAL",
+      "attempts": 1,
+      "commit": "1b6bccea7c7372faf779908dc91aad74d4db0e98",
+      "evidence": [
+        "apps/android/app/build.gradle.kts: demo/staging/prod flavors, R8 release, env/property signing, releaseProdArtifacts",
+        "apps/android/app/proguard-rules.pro + mapping prodRelease path (docs/release/android.md)",
+        "AppReleaseModule: BuildConfig INGEST_BASE_URL → RelayIngestConfig (no embedded secrets)",
+        "RedactedLocalCrashReporter + CrashLogRedactor (local files only, no external SDK)",
+        "ReleaseBuildConfigGuardTest + android-release-buildconfig-scan.sh",
+        "docs/release/android.md, play-console-declarations-draft.md, android-device-smoke-template.md",
+        "scripts/android-device-release-smoke-adim51.sh → NOT_TESTED without adb/2 devices",
+        "Gerçek cihaz BLE/Doze/24h smoke + Play upload: NOT_TESTED / BLOCKED_APPROVAL",
+        "ANDROID_HOME yok: Gradle release assemble bu VM'de koşulmadı (CI android-gradle job doğrular)"
+      ],
+      "blockers": [
+        "Fiziksel 2 cihaz smoke kanıtı NOT_TESTED",
+        "Play Console track yükleme BLOCKED_APPROVAL",
+        "Production ingest URL + receipt key dağıtımı BLOCKED_APPROVAL"
+      ],
+      "last_checked_at": "2026-11-02T05:30:00+00:00",
       "goal": "Android build’ini teslim edilebilir artifact haline getir.",
       "cursor_tasks": [
         "Signed build flavors demo/staging/prod; Android App Bundle/APK; play store privacy declarations review.",
@@ -1826,8 +1840,9 @@
         "Release notes and rollback/install guide; izinle Test track publish."
       ],
       "verification_evidence": "APK install and end-to-end evidence + hash, Play review blockers.",
-      "risk_note": "",
-      "gate_raw": "KAPI: TAM ÜRÜN    •    BAĞIMLILIK: 29–30,40,43,50"
+      "risk_note": "Store submission and upload keystore require explicit user approval.",
+      "gate_raw": "KAPI: TAM ÜRÜN    •    BAĞIMLILIK: 29–30,40,43,50",
+      "notes": "Yapılandırma hazır; GEÇTİ için fiziksel M0+M1 kanıtı gerekir"
     },
     {
       "id": "52",

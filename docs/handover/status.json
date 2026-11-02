@@ -1824,12 +1824,27 @@
       ],
       "deliverables": "iOS/watchOS archives, test report, app listing metadata",
       "pass_criteria": "iOS ve watchOS gerçek cihaz iş akışı kanıtlı; mağaza yayınına otomatik geçilmez.",
-      "status": "NOT_STARTED",
-      "attempts": 0,
-      "commit": null,
-      "evidence": [],
-      "blockers": [],
-      "last_checked_at": null,
+      "status": "PARTIAL",
+      "attempts": 1,
+      "commit": "49a43f9",
+      "evidence": [
+        "docs/release/ios.md (test plan, BLOCKED_APPROVAL TestFlight, TR/EN metadata)",
+        "docs/release/evidence/ios-field-test-record-template.csv (result=NOT_TESTED)",
+        "apps/ios/Config/Release-{Demo,Staging,Prod}.xcconfig",
+        "apps/ios/scripts/archive-export.sh + ExportOptions.template.plist (env-only signing)",
+        "apps/ios/SOSMesh/PrivacyInfo.xcprivacy + watchOS PrivacyInfo manifests",
+        "apps/ios/SOSMesh/tr|en.lproj/InfoPlist.strings",
+        "apps/ios/scripts/check-xcodeproj-golden.sh PASS (regenerated golden)",
+        "apps/ios/scripts/check-release-adim52.sh + scripts/test-check-ios-release-adim52.sh (verify 26–27/27)",
+        "Fiziksel iPhone/Watch + TestFlight kurulum: NOT_TESTED",
+        "xcodebuild archive: BLOCKED macOS/Linux agent (script hazır)"
+      ],
+      "blockers": [
+        "TestFlight upload BLOCKED_APPROVAL",
+        "Apple Developer imzalama kullanıcı Mac/cihaz aşaması",
+        "Fiziksel BLE/Watch/VoiceOver kanıtı yok"
+      ],
+      "last_checked_at": "2026-11-02T05:30:00+00:00",
       "goal": "Apple ekosistemini sadece simülatör değil gerçek cihaz üzerinde doğrula.",
       "cursor_tasks": [
         "Signing, capabilities, privacy manifests, Xcode archive, ipa/TestFlight eligibility.",

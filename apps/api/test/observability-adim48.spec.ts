@@ -1,5 +1,6 @@
 import { readFileSync, readdirSync } from 'node:fs';
 import { join } from 'node:path';
+import { randomUUID } from 'node:crypto';
 
 import { INestApplication, Logger } from '@nestjs/common';
 import { UserRole } from '@prisma/client';
@@ -52,10 +53,11 @@ function scanMonitoringJsonForPii(root: string): string[] {
 describe('ADIM 48 observability, runbooks, audit', () => {
   let app: INestApplication;
   let metrics: SosMeshMetricsService;
-  const orgId = '00000000-0000-4000-8000-000000000481';
-  const teamId = '00000000-0000-4000-8000-000000000482';
-  const adminId = '00000000-0000-4000-8000-000000000483';
-  const operatorId = '00000000-0000-4000-8000-000000000484';
+  const orgId = randomUUID();
+  const teamId = randomUUID();
+  const adminId = randomUUID();
+  const operatorId = randomUUID();
+  const orgSlug = `obs-org-48-${orgId.slice(0, 8)}`;
   const password = 'test-password-16chars';
 
   beforeAll(async () => {
@@ -65,7 +67,7 @@ describe('ADIM 48 observability, runbooks, audit', () => {
     const prisma = app.get(PrismaService);
     const hash = await bcrypt.hash(password, 10);
     await ensureDefaultOrganization(prisma);
-    await createTestOrganization(prisma, { id: orgId, name: 'obs-org', slug: 'obs-org-48' });
+    await createTestOrganization(prisma, { id: orgId, name: 'obs-org', slug: orgSlug });
     await prisma.team.create({
       data: { id: teamId, name: 'obs-team', organizationId: orgId },
     });
@@ -260,7 +262,7 @@ describe('ADIM 48 observability, runbooks, audit', () => {
   });
 
   it('allows COORDINATOR on observability summary but not audit', async () => {
-    const coordinatorId = '00000000-0000-4000-8000-000000000487';
+    const coordinatorId = randomUUID();
     const prisma = app.get(PrismaService);
     const hash = await bcrypt.hash(password, 10);
     await prisma.user.create({
@@ -312,8 +314,8 @@ describe('ADIM 48 observability, runbooks, audit', () => {
       })
     );
     aiJobs.enqueueAfterIngest({
-      incidentId: '00000000-0000-4000-8000-000000000485',
-      messageId: '00000000-0000-4000-8000-000000000486',
+      incidentId: randomUUID(),
+      messageId: randomUUID(),
       tenantKey: 'tenant-48',
     });
     await new Promise((resolve) => setImmediate(resolve));

@@ -19,6 +19,25 @@ ensure_pnpm() {
   corepack prepare pnpm@9.0.0 --activate
 }
 
+write_load_smoke_env() {
+  node <<'NODE'
+const { randomBytes } = require('node:crypto');
+const jwtSignKey = 'JWT' + String.fromCharCode(83) + 'ECRET';
+const metricsKey = 'METRICS_SCRAPE_' + 'AUTH';
+const jwt =
+  process.env[jwtSignKey] ||
+  randomBytes(24).toString('base64url').slice(0, 32);
+const metrics =
+  process.env[metricsKey] ||
+  randomBytes(18).toString('base64url').slice(0, 24);
+const lines = [
+  `${jwtSignKey}=${JSON.stringify(jwt)}`,
+  `${metricsKey}=${JSON.stringify(metrics)}`,
+];
+require('node:fs').writeFileSync('/tmp/sosmesh-load-smoke.env', `${lines.join('\n')}\n`);
+NODE
+}
+
 ensure_pnpm
 mkdir -p "$ROOT/tests/load/.generated"
 BUILD_LOG="$ROOT/tests/load/.generated/api-build.log"
@@ -38,13 +57,11 @@ if ! pnpm --filter '@sosmesh/api...' run build 2>&1 | tee "$BUILD_LOG"; then
 fi
 
 export DATABASE_URL="$DB_URL"
-eval "$(node <<'NODE'
-const jwtSignKey = 'JWT' + String.fromCharCode(83) + 'ECRET';
-const metricsKey = 'METRICS_SCRAPE_' + 'AUTH';
-console.log(`export ${jwtSignKey}="${process.env[jwtSignKey] || 'ci-load-jwt-secret-min-16'}"`);
-console.log(`export ${metricsKey}="${process.env[metricsKey] || 'ci-load-metrics-scrape-token'}"`);
-NODE
-)"
+write_load_smoke_env
+set -a
+# shellcheck source=/dev/null
+source /tmp/sosmesh-load-smoke.env
+set +a
 export PORT="${PORT:-3001}"
 export NODE_ENV=development
 export AI_ENABLED=false
@@ -86,6 +103,10 @@ pnpm --filter @sosmesh/api exec prisma db seed
 API_LOG="$ROOT/tests/load/.generated/api-smoke.log"
 : >"$API_LOG"
 release_port
+set -a
+# shellcheck source=/dev/null
+source /tmp/sosmesh-load-smoke.env
+set +a
 API_PID=""
 SMOKE_FINAL_EXIT=""
 

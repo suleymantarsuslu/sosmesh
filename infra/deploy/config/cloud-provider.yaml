@@ -1,0 +1,33 @@
+# Cloud deployment profile — config-driven; application code must not branch on provider IDs.
+# Set SOSMESH_CLOUD_PROFILE to one of the keys below; infra templates read this file only.
+
+default_profile: generic
+
+profiles:
+  generic:
+    description: Portable Docker Compose / bare VM + nginx TLS termination
+    ingress_template: infra/deploy/nginx/staging.conf.template
+    secrets_backend: env_or_secret_manager
+    database: managed_postgres_or_compose
+
+  aws:
+    description: EKS/ECS + ALB + AWS Secrets Manager (BLOCKED_APPROVAL until account wiring)
+    ingress_template: infra/deploy/ingress/ingress.staging.yaml.template
+    secrets_backend: aws_secrets_manager
+    database: rds_postgres
+
+  gcp:
+    description: GKE + Cloud Load Balancing + Secret Manager (BLOCKED_APPROVAL)
+    ingress_template: infra/deploy/ingress/ingress.staging.yaml.template
+    secrets_backend: gcp_secret_manager
+    database: cloud_sql_postgres
+
+  azure:
+    description: AKS + Application Gateway + Key Vault (BLOCKED_APPROVAL)
+    ingress_template: infra/deploy/ingress/ingress.staging.yaml.template
+    secrets_backend: azure_key_vault
+    database: azure_postgres_flexible
+
+selection:
+  env_var: SOSMESH_CLOUD_PROFILE
+  config_path_env: SOSMESH_CLOUD_CONFIG_PATH

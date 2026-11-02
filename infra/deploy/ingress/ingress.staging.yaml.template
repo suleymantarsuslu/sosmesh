@@ -1,0 +1,41 @@
+# Kubernetes Ingress TLS template (provider-agnostic shape).
+# Wire cert-manager ClusterIssuer or cloud-managed cert separately.
+# Status: hazır, uygulanmadı (BLOCKED_APPROVAL)
+
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: sosmesh-staging
+  annotations:
+    kubernetes.io/ingress.class: nginx
+    cert-manager.io/cluster-issuer: ${CLUSTER_ISSUER_NAME}
+spec:
+  tls:
+    - hosts:
+        - ${STAGING_HOST}
+      secretName: sosmesh-staging-tls
+  rules:
+    - host: ${STAGING_HOST}
+      http:
+        paths:
+          - path: /v1
+            pathType: Prefix
+            backend:
+              service:
+                name: sosmesh-api
+                port:
+                  number: 3001
+          - path: /health
+            pathType: Prefix
+            backend:
+              service:
+                name: sosmesh-api
+                port:
+                  number: 3001
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: sosmesh-web
+                port:
+                  number: 3000

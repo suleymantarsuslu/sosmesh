@@ -1,0 +1,40 @@
+# SOSMesh Next.js operator web — standalone output, non-root (ADIM 54)
+# Build: docker build -f infra/deploy/docker/Dockerfile.web -t sosmesh-web:local .
+
+FROM node:20-bookworm-slim AS build
+WORKDIR /app
+RUN corepack enable && corepack prepare pnpm@9.0.0 --activate
+COPY package.json pnpm-lock.yaml pnpm-workspace.yaml ./
+COPY apps/web/package.json apps/web/
+RUN pnpm install --frozen-lockfile --filter @sosmesh/web...
+COPY docs/ux/content-en.json docs/ux/content-en.json
+COPY docs/ux/content-tr.json docs/ux/content-tr.json
+COPY apps/web apps/web
+ARG NEXT_PUBLIC_API_URL=http://localhost:3001
+ARG NEXT_PUBLIC_MAP_TILE_URL=https://tile.openstreetmap.org/{z}/{x}/{y}.png
+ARG NEXT_PUBLIC_MAP_TEST_MODE=1
+ENV NEXT_PUBLIC_API_URL=$NEXT_PUBLIC_API_URL
+ENV NEXT_PUBLIC_MAP_TILE_URL=$NEXT_PUBLIC_MAP_TILE_URL
+ENV NEXT_PUBLIC_MAP_TEST_MODE=$NEXT_PUBLIC_MAP_TEST_MODE
+ENV NEXT_TELEMETRY_DISABLED=1
+RUN pnpm --filter @sosmesh/web build
+
+FROM node:20-bookworm-slim AS runtime
+RUN apt-get update \
+  && apt-get install -y --no-install-recommends ca-certificates tini wget \
+  && rm -rf /var/lib/apt/lists/* \
+  && groupadd -r sosmesh -g 10001 \
+  && useradd -r -g sosmesh -u 10001 -d /app -s /usr/sbin/nologin sosmesh
+WORKDIR /app
+ENV NODE_ENV=production
+ENV PORT=3000
+ENV HOSTNAME=0.0.0.0
+COPY --from=build /app/apps/web/public ./apps/web/public
+COPY --from=build /app/apps/web/.next/standalone ./
+COPY --from=build /app/apps/web/.next/static ./apps/web/.next/static
+USER sosmesh
+EXPOSE 3000
+HEALTHCHECK --interval=15s --timeout=5s --start-period=90s --retries=5 \
+  CMD wget -q -O- "http://127.0.0.1:${PORT:-3000}/health" >/dev/null || exit 1
+ENTRYPOINT ["/usr/bin/tini", "--"]
+CMD ["node", "apps/web/server.js"]

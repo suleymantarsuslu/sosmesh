@@ -43,7 +43,7 @@ describe('ADIM 49 backup, disaster read-only, migration rollback', () => {
     it('leaves zero public tables after down following a failed DDL attempt', async () => {
       const databaseUrl = getTestDatabaseUrl();
       const tablesBeforeFail = await countPublicTables(databaseUrl);
-      expect(tablesBeforeFail).toBe(17);
+      expect(tablesBeforeFail).toBe(19);
 
       const { PrismaClient } = await import('@prisma/client');
       const prisma = new PrismaClient({
@@ -58,7 +58,7 @@ describe('ADIM 49 backup, disaster read-only, migration rollback', () => {
       }
 
       const tablesAfterFailedDdl = await countPublicTables(databaseUrl);
-      expect(tablesAfterFailedDdl).toBe(17);
+      expect(tablesAfterFailedDdl).toBe(19);
 
       runMigrationDown(databaseUrl);
       const afterDown = await countPublicTables(databaseUrl);
@@ -66,7 +66,7 @@ describe('ADIM 49 backup, disaster read-only, migration rollback', () => {
 
       runPrismaMigrateDeploy(databaseUrl);
       const afterUp = await countPublicTables(databaseUrl);
-      expect(afterUp).toBe(17);
+      expect(afterUp).toBe(19);
     });
   });
 

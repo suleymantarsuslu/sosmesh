@@ -48,6 +48,8 @@ describe('ADIM 47 — perf indexes and DB profile', () => {
       expect(response.status).toBe(200);
     }
 
+    await prisma.$executeRawUnsafe('ANALYZE sos_messages');
+
     const planRows = await prisma.$queryRaw<ExplainRow[]>`
       EXPLAIN
       SELECT id, priority, received_at
@@ -65,6 +67,8 @@ describe('ADIM 47 — perf indexes and DB profile', () => {
       const response = await request(app.getHttpServer()).post('/v1/ingest').send(body);
       expect(response.status).toBe(200);
     }
+
+    await prisma.$executeRawUnsafe('ANALYZE operator_feed_events');
 
     const planRows = await prisma.$queryRaw<ExplainRow[]>`
       EXPLAIN

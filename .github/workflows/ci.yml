@@ -113,6 +113,9 @@ jobs:
         with:
           name: zulal-playwright-snapshot-debug
           path: |
+            reports/playwright-snapshot-debug/**/*-actual.png
+            reports/playwright-snapshot-debug/**/*-diff.png
+            reports/playwright-snapshot-debug/**/*-expected.png
             test-results/**/*-actual.png
             test-results/**/*-diff.png
             test-results/**/*-expected.png
@@ -125,9 +128,9 @@ jobs:
         with:
           name: github-playwright-snapshot-debug
           path: |
-            test-results/**/*-actual.png
-            test-results/**/*-diff.png
-            test-results/**/*-expected.png
+            reports/playwright-snapshot-debug/**/*-actual.png
+            reports/playwright-snapshot-debug/**/*-diff.png
+            reports/playwright-snapshot-debug/**/*-expected.png
           if-no-files-found: ignore
           retention-days: 3
       

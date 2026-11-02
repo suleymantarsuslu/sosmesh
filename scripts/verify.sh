@@ -163,6 +163,18 @@ else
   check_exit "a11y-web" $EXIT_CODE
 fi
 
+# Step 8 UX Playwright resets test-results; keep a11y/visual snapshot PNGs for CI debug artifacts.
+if [ -d test-results ]; then
+  SNAPSHOT_DEBUG="$REPORTS_DIR/playwright-snapshot-debug"
+  mkdir -p "$SNAPSHOT_DEBUG"
+  find test-results \( -name '*-actual.png' -o -name '*-diff.png' -o -name '*-expected.png' \) -print0 |
+    while IFS= read -r -d '' snap; do
+      rel="${snap#test-results/}"
+      mkdir -p "$SNAPSHOT_DEBUG/$(dirname "$rel")"
+      cp -f "$snap" "$SNAPSHOT_DEBUG/$rel"
+    done
+fi
+
 # 8. UX Playwright suite
 echo "8/18: npx playwright test"
 if npx playwright test > "$REPORTS_DIR/playwright-ux.log" 2>&1; then

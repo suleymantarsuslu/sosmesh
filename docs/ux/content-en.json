@@ -200,7 +200,7 @@
       "permissionsTitle": "Permissions",
       "permissionsBody": "Bluetooth and (on Android) location for scanning are required. If denied, nearby transfer stops; the record remains on device.",
       "relayTitle": "Volunteer relay (opt-in)",
-      "relayBody": "Off by default. When enabled you carry encrypted packets only and cannot read SOS plaintext. Peer ACK does not mean an operator read your message.",
+      "relayBody": "Off by default. When enabled you carry encrypted packets only and cannot read SOS plaintext. Peer ACK does not mean the server accepted the message or that an operator read it.",
       "watchTitle": "Watch and paired phone",
       "watchBody": "Wear OS / watchOS sends SOS to the paired phone. No standalone watch mesh or 24/7 relay guarantee.",
       "ackTitle": "Five status (ACK) levels",

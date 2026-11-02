@@ -200,7 +200,7 @@
       "permissionsTitle": "İzinler",
       "permissionsBody": "Bluetooth ve (Android'de) tarama için konum izinleri gerekir. Reddedilirse yakın aktarım durur; kayıt cihazda saklanır.",
       "relayTitle": "Gönüllü röle (opt-in)",
-      "relayBody": "Varsayılan kapalıdır. Açarsanız yalnızca şifreli paket taşırsınız; SOS düz metnini okumazsınız. Peer ACK, operatör panelinde görüntüleme veya müdahale taahhüdü değildir.",
+      "relayBody": "Varsayılan kapalıdır. Açarsanız yalnızca şifreli paket taşırsınız; SOS düz metnini okumazsınız. Peer ACK sunucuya ulaştı veya operatör mesajı gördü anlamına gelmez.",
       "watchTitle": "Saat ve eşli telefon",
       "watchBody": "Wear OS / watchOS SOS'u eşli telefona iletir. Saat bağımsız mesh veya 7/24 röle garantisi yoktur.",
       "ackTitle": "5 durum (ACK) seviyesi",

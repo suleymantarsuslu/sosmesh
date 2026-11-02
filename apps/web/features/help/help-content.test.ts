@@ -31,10 +31,16 @@ describe('operator help i18n', () => {
   it('states relay carries ciphertext only and peer ACK is not operator read', () => {
     const trRelay = translate('tr', 'web.help.relayBody');
     const enRelay = translate('en', 'web.help.relayBody');
-    expect(trRelay.toLowerCase()).toMatch(/şifre|düz metin/);
-    expect(trRelay.toLowerCase()).toMatch(/peer ack|operatör/);
-    expect(enRelay.toLowerCase()).toMatch(/encrypt|plaintext/);
-    expect(enRelay.toLowerCase()).toMatch(/peer ack|operator read/);
+    expect(trRelay.toLowerCase()).toContain('şifre');
+    expect(trRelay.toLowerCase()).toContain('düz metn');
+    expect(trRelay.toLowerCase()).toContain('peer ack');
+    expect(trRelay.toLowerCase()).toContain('operatör');
+    expect(trRelay.toLowerCase()).toContain('sunucu');
+    expect(enRelay.toLowerCase()).toContain('encrypt');
+    expect(enRelay.toLowerCase()).toContain('plaintext');
+    expect(enRelay.toLowerCase()).toContain('peer ack');
+    expect(enRelay.toLowerCase()).toContain('operator');
+    expect(enRelay.toLowerCase()).toContain('server');
   });
 
   it('offline help states BLE works without AI', () => {

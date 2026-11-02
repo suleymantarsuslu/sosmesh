@@ -41,7 +41,7 @@ final class GoldenVectorCoreTests: XCTestCase {
         XCTAssertEqual(bundled, master, "iOS bundled golden-001 must byte-match TypeScript master vector")
     }
 
-    // Crypto AAD canonicalization is owned by SOSMeshContracts (see GoldenVectorTests + TypeScriptCryptoReference there).
+    // Crypto AAD canonicalization is covered by SOSMeshContracts GoldenVectorTests and canonical-json-001 vectors.
 
     func testGoldenEncryptMatchesContractsPackage() throws {
         let inputs = try XCTUnwrap(goldenVector["inputs"] as? [String: Any])

@@ -28,25 +28,6 @@ final class GoldenVectorTests: XCTestCase {
         XCTAssertEqual(String(data: aad, encoding: .utf8), expectedAAD)
     }
 
-    func testGoldenAADMatchesTypeScriptCreateAADReference() throws {
-        let inputs = try XCTUnwrap(goldenVector["inputs"] as? [String: Any])
-        let expected = try XCTUnwrap(goldenVector["expected"] as? [String: Any])
-        let envelope = try XCTUnwrap(inputs["envelope"] as? [String: Any])
-        let keyId = try XCTUnwrap(inputs["keyId"] as? String)
-        let expectedAAD = try XCTUnwrap(expected["aadCanonical"] as? String)
-
-        let tsReference = TypeScriptCryptoReference.createAADUTF8(envelope: envelope, keyId: keyId)
-        XCTAssertEqual(tsReference, expectedAAD, "TS reference must match golden-001 aadCanonical from generate-golden.ts")
-
-        let production = try SOSMeshCrypto.createAAD(envelope: envelope, keyId: keyId)
-        let productionUTF8 = try XCTUnwrap(String(data: production, encoding: .utf8))
-        XCTAssertEqual(productionUTF8, tsReference, "Swift createAAD must match TS createAAD bytes")
-
-        let hex = production.map { String(format: "%02x", $0) }.joined()
-        let expectedHex = Data(expectedAAD.utf8).map { String(format: "%02x", $0) }.joined()
-        XCTAssertEqual(hex, expectedHex)
-    }
-
     private func inputsAndExpected() throws -> (inputs: [String: Any], expected: [String: Any]) {
         let inputs = try XCTUnwrap(goldenVector["inputs"] as? [String: Any])
         let expected = try XCTUnwrap(goldenVector["expected"] as? [String: Any])

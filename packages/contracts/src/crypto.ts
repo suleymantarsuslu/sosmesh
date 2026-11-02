@@ -3,6 +3,7 @@ import { hkdf } from '@noble/hashes/hkdf.js';
 import { sha256 } from '@noble/hashes/sha2.js';
 import { chacha20poly1305 } from '@noble/ciphers/chacha.js';
 import { randomBytes } from '@noble/hashes/utils.js';
+import { sortKeys } from './canonical-json.js';
 
 export interface EncryptedPayload {
   keyId: string;
@@ -70,28 +71,13 @@ function deriveEncryptionKey(
  * Ensures consistent serialization across platforms
  */
 function createAAD(envelope: any, keyId: string, protocolVersion: string): Uint8Array {
-  // Create AAD object with deterministic order
-  // Sort keys recursively for consistent serialization
-  const sortKeys = (obj: any): any => {
-    if (obj === null || typeof obj !== 'object') return obj;
-    if (Array.isArray(obj)) return obj.map(sortKeys);
-    
-    const sorted: any = {};
-    Object.keys(obj).sort().forEach(key => {
-      sorted[key] = sortKeys(obj[key]);
-    });
-    return sorted;
-  };
-
   const aadObject = sortKeys({
     envelope: envelope,
     keyId: keyId,
-    protocol: protocolVersion
+    protocol: protocolVersion,
   });
-
-  // Canonical JSON: no whitespace
-  const canonicalJSON = JSON.stringify(aadObject);
-  return new TextEncoder().encode(canonicalJSON);
+  const canonical = JSON.stringify(aadObject);
+  return new TextEncoder().encode(canonical);
 }
 
 /**

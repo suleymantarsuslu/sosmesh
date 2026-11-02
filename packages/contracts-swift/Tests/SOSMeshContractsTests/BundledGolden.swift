@@ -35,4 +35,31 @@ enum BundledGolden {
         }
         return json
     }
+
+    static func canonicalJson001URL() throws -> URL {
+        if let url = Bundle.module.url(forResource: "canonical-json-001", withExtension: "json", subdirectory: "Resources") {
+            return url
+        }
+        if let url = Bundle.module.url(forResource: "canonical-json-001", withExtension: "json") {
+            return url
+        }
+        throw NSError(
+            domain: "BundledGolden",
+            code: 3,
+            userInfo: [NSLocalizedDescriptionKey: "canonical-json-001.json missing from Bundle.module"]
+        )
+    }
+
+    static func canonicalJson001Cases() throws -> [[String: Any]] {
+        let url = try canonicalJson001URL()
+        let data = try Data(contentsOf: url)
+        guard let json = try JSONSerialization.jsonObject(with: data) as? [[String: Any]] else {
+            throw NSError(
+                domain: "BundledGolden",
+                code: 4,
+                userInfo: [NSLocalizedDescriptionKey: "canonical-json-001.json is not a JSON array"]
+            )
+        }
+        return json
+    }
 }

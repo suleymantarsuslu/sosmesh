@@ -23,6 +23,7 @@ let package = Package(
             dependencies: ["SOSMeshContracts"],
             resources: [
                 .copy("Resources/golden-001.json"),
+                .copy("Resources/canonical-json-001.json"),
             ]),
     ]
 )

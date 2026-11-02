@@ -24,18 +24,26 @@ parse_tool_major() {
 }
 
 detect_server_major() {
-  if ! command -v psql >/dev/null 2>&1; then
-    echo "bootstrap-pgclient: psql not found; GitHub/ubuntu runners usually ship postgresql-client" >&2
+  if [ -n "${SOSMESH_PG_SERVER_MAJOR:-}" ]; then
+    echo "${SOSMESH_PG_SERVER_MAJOR}"
+    return 0
+  fi
+  if command -v psql >/dev/null 2>&1; then
+    local major
+    major="$(psql "$DATABASE_URL" -tAc "SELECT current_setting('server_version_num')::int / 10000")"
+    major="${major//[[:space:]]/}"
+    if [[ "$major" =~ ^[0-9]+$ ]] && [ "$major" -gt 0 ]; then
+      echo "$major"
+      return 0
+    fi
+  fi
+  local repo_root
+  repo_root="$(cd "$(dirname "$0")/../.." && pwd)"
+  if [ ! -f "$repo_root/node_modules/.modules.yaml" ]; then
+    echo "bootstrap-pgclient: node_modules missing; run pnpm install before bootstrap (required when psql is absent)" >&2
     exit 1
   fi
-  local major
-  major="$(psql "$DATABASE_URL" -tAc "SELECT current_setting('server_version_num')::int / 10000")"
-  major="${major//[[:space:]]/}"
-  if ! [[ "$major" =~ ^[0-9]+$ ]] || [ "$major" -le 0 ]; then
-    echo "bootstrap-pgclient: unable to read server major from DATABASE_URL" >&2
-    exit 1
-  fi
-  echo "$major"
+  node "$repo_root/scripts/ci/detect-pg-server-major.mjs"
 }
 
 extract_debs() {
@@ -158,16 +166,12 @@ install_client_from_debs() {
   rm -rf "$ROOT" "$WORKDIR"
   mkdir -p "$ROOT" "$WORKDIR"
 
-  if [ "$major" -le 16 ]; then
-    if ! download_ubuntu_client_debs "$major" "$WORKDIR"; then
-      echo "bootstrap-pgclient: ubuntu archive download failed for postgresql-client-${major}" >&2
-      exit 1
-    fi
+  local arch
+  arch="$(dpkg --print-architecture 2>/dev/null || uname -m)"
+  if [ "$arch" = "amd64" ] && [ "$major" -le 16 ]; then
+    download_ubuntu_client_debs "$major" "$WORKDIR"
   else
-    if ! download_pgdg_client_debs "$major" "$WORKDIR"; then
-      echo "bootstrap-pgclient: PGDG download failed for postgresql-client-${major}" >&2
-      exit 1
-    fi
+    download_pgdg_client_debs "$major" "$WORKDIR"
   fi
 
   shopt -s nullglob

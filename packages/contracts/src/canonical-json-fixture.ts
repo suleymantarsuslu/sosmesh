@@ -51,6 +51,10 @@ export function buildCanonicalJsonVectorCases(): CanonicalJsonVectorCase[] {
       name: 'key-order-utf16',
       input: { b: 1, a: 2, B: 3, ä: 4, 'Ｚ': 5, '😀': 6 },
     },
+    {
+      name: 'int-vs-bool-fields',
+      input: { version: 1, enabled: true, hopCount: 0, ttl: 300 },
+    },
   ];
 
   return inputs.map(({ name, input }) => ({

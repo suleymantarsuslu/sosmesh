@@ -114,5 +114,15 @@
       "😀": 6
     },
     "expected": "{\"B\":3,\"a\":2,\"b\":1,\"ä\":4,\"😀\":6,\"Ｚ\":5}"
+  },
+  {
+    "name": "int-vs-bool-fields",
+    "input": {
+      "version": 1,
+      "enabled": true,
+      "hopCount": 0,
+      "ttl": 300
+    },
+    "expected": "{\"enabled\":true,\"hopCount\":0,\"ttl\":300,\"version\":1}"
   }
 ]

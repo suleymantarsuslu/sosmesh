@@ -42,44 +42,52 @@ enum CanonicalJSON {
         a.utf16.lexicographicallyPrecedes(b.utf16)
     }
 
+    /// JSON fragment encoder (order matters: `NSNumber` before `Bool` so 0/1 are never booleans).
     private static func toCanonicalJSON(_ obj: Any) throws -> String {
-        switch obj {
-        case is NSNull:
+        if obj is NSNull {
             return "null"
-        case let value as String:
-            return "\"\(escapeJSONString(value))\""
-        case let value as NSNumber:
-            if CFGetTypeID(value) == CFBooleanGetTypeID() {
-                return value.boolValue ? "true" : "false"
+        }
+        if let string = obj as? String {
+            return "\"\(escapeJSONString(string))\""
+        }
+        if let number = obj as? NSNumber {
+            if CFGetTypeID(number) == CFBooleanGetTypeID() {
+                return number.boolValue ? "true" : "false"
             }
-            return formatJSONNumber(value.doubleValue)
-        case let value as Bool:
-            return value ? "true" : "false"
-        case let value as Int:
-            return formatJSONNumber(Double(value))
-        case let value as Int64:
-            return formatJSONNumber(Double(value))
-        case let value as Double:
-            return formatJSONNumber(value)
-        case let dict as [String: Any]:
+            return formatJSONNumber(number.doubleValue)
+        }
+        if let boolean = obj as? Bool {
+            return boolean ? "true" : "false"
+        }
+        if let dict = obj as? [String: Any] {
             let parts = try dict.keys.sorted(by: utf16Sort).map { key in
                 let encoded = try toCanonicalJSON(dict[key]!)
                 return "\"\(escapeJSONString(key))\":\(encoded)"
             }
             return "{\(parts.joined(separator: ","))}"
-        case let array as [Any]:
+        }
+        if let array = obj as? [Any] {
             let parts = try array.map { try toCanonicalJSON($0) }
             return "[\(parts.joined(separator: ","))]"
-        default:
-            throw CryptoError.invalidInput("Unsupported JSON type for canonical encoding")
         }
+        if let value = obj as? Int {
+            return formatJSONNumber(Double(value))
+        }
+        if let value = obj as? Int64 {
+            return formatJSONNumber(Double(value))
+        }
+        if let value = obj as? Double {
+            return formatJSONNumber(value)
+        }
+        throw CryptoError.invalidInput("Unsupported JSON type for canonical encoding")
     }
 
+    /// `JSON.stringify` string escaping (UTF-16 code units; lone surrogates preserved like V8).
     private static func escapeJSONString(_ value: String) -> String {
         var out = ""
         out.reserveCapacity(value.count + 8)
-        for scalar in value.unicodeScalars {
-            switch scalar.value {
+        for unit in value.utf16 {
+            switch unit {
             case 0x22:
                 out.append("\\\"")
             case 0x5c:
@@ -94,10 +102,10 @@ enum CanonicalJSON {
                 out.append("\\r")
             case 0x09:
                 out.append("\\t")
-            case 0 ..< 0x20:
-                out.append(String(format: "\\u%04x", scalar.value))
+            case 0x0000 ... 0x001f:
+                out.append(String(format: "\\u%04x", unit))
             default:
-                out.unicodeScalars.append(scalar)
+                out.append(String(utf16CodeUnits: [unit], count: 1))
             }
         }
         return out
@@ -117,14 +125,13 @@ enum CanonicalJSON {
             return String(Int64(value))
         }
 
-        let useDecimal = absValue > 1e-7 && absValue < 1e21
+        let useDecimal = absValue >= 1e-6 && absValue < 1e21
         if useDecimal {
             return shortestDecimalString(value)
         }
         return scientificString(value)
     }
 
-    /// Shortest round-trip decimal text, trimmed like JS Number#toString for non-scientific range.
     private static func shortestDecimalString(_ value: Double) -> String {
         var text = String(value)
         if text.contains("e") || text.contains("E") {
@@ -141,7 +148,6 @@ enum CanonicalJSON {
         return text
     }
 
-    /// JS-style exponential notation with explicit '+' on positive exponent.
     private static func scientificString(_ value: Double) -> String {
         let negative = value < 0
         let absValue = abs(value)

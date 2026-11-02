@@ -1,0 +1,2571 @@
+{
+  "schema_version": "1.0.0",
+  "generated_at": "2026-11-02T18:39:47.663Z",
+  "source_of_truth": "docs/handover/status.json",
+  "item_count": 88,
+  "items": [
+    {
+      "id": "ADIM-01",
+      "kind": "master_plan_step",
+      "title": "Geliştirme yetkileri ve keşif",
+      "pass_criteria": "Mevcut ve eksik erişimler tam; sırlar hiçbir logda yok.",
+      "verification_status": "PASS",
+      "tier": "H",
+      "tests": [
+        "9 desen gizlilik taraması + Grok bağımsız token/secret atama taraması exit=1 (bulgu yok), negatif test yakaladı",
+        "Grok→Cursor cloud agent launch/reply/rapor yolu çalıştı",
+        "scripts/test-secret-scan.sh"
+      ],
+      "evidence": {
+        "ci_jobs": [
+          "Secret Scan",
+          "Verify Quality Gates"
+        ],
+        "report_paths": [
+          "reports/verify-summary (local)",
+          "reports/*.log"
+        ],
+        "document_paths": [
+          "git ls-files = 10 dosya (sınır içi)",
+          "docx sha256 8d312ed5… eşit",
+          "status.json 58 adım geçerli"
+        ],
+        "status_json_blockers": []
+      }
+    },
+    {
+      "id": "ADIM-02",
+      "kind": "master_plan_step",
+      "title": "Ürün kapsamı, kullanım riski ve M0 kapısı",
+      "pass_criteria": "M0 doğrulanabilir ve açık bir demo kapsamına sahip.",
+      "verification_status": "PASS",
+      "tier": "H",
+      "tests": [
+        "24 senaryo (@cucumber/gherkin parse başarılı)",
+        "Grok bağımsız e-posta/telefon/koordinat/anahtar taraması 0 bulgu",
+        "docs/tests/m0-acceptance.feature",
+        "scripts/count-scenarios.js"
+      ],
+      "evidence": {
+        "ci_jobs": [
+          "Verify Quality Gates"
+        ],
+        "report_paths": [
+          "reports/verify-summary (local)",
+          "reports/*.log"
+        ],
+        "document_paths": [
+          "U1-U5 master §07 ile uyumlu (traceability tablosu)",
+          "16 negatif senaryo (@negative)",
+          "Master-specified Meta model identifiers (MODEL_API_KEY, META_MODEL)"
+        ],
+        "status_json_blockers": []
+      }
+    },
+    {
+      "id": "ADIM-03",
+      "kind": "master_plan_step",
+      "title": "Mimari ADR ve monorepo tasarımı",
+      "pass_criteria": "API/transport veri akışı ve sınırları çelişkisiz.",
+      "verification_status": "PASS",
+      "tier": "H",
+      "tests": [],
+      "evidence": {
+        "ci_jobs": [
+          "Verify Quality Gates"
+        ],
+        "report_paths": [
+          "reports/verify-summary (local)",
+          "reports/*.log"
+        ],
+        "document_paths": [],
+        "status_json_blockers": []
+      }
+    },
+    {
+      "id": "ADIM-04",
+      "kind": "master_plan_step",
+      "title": "UX bilgi mimarisi ve tasarım sistemi",
+      "pass_criteria": "Her ana görev üç veya daha az belirgin eylem; metin durumu yanlış umut vermiyor.",
+      "verification_status": "ACCEPTED_WITH_DEBT",
+      "tier": "H",
+      "tests": [
+        "Kullanıcı kararı 2026-10-29, mobil/web kanıtları bağımsız denetlendi"
+      ],
+      "evidence": {
+        "ci_jobs": [
+          "Verify Quality Gates"
+        ],
+        "report_paths": [
+          "reports/verify-summary (local)",
+          "reports/*.log"
+        ],
+        "document_paths": [],
+        "status_json_blockers": []
+      }
+    },
+    {
+      "id": "ADIM-05",
+      "kind": "master_plan_step",
+      "title": "Monorepo, standartlar ve local geliştirme",
+      "pass_criteria": "İlk kurulum tekrarlanabilir, secret repoda yok.",
+      "verification_status": "PASS",
+      "tier": "H",
+      "tests": [],
+      "evidence": {
+        "ci_jobs": [
+          "Verify Quality Gates"
+        ],
+        "report_paths": [
+          "reports/verify-summary (local)",
+          "reports/*.log"
+        ],
+        "document_paths": [],
+        "status_json_blockers": [
+          "docker compose up NOT_TESTED (daemon yok)",
+          "LICENSE kullanıcı kararı bekliyor"
+        ]
+      }
+    },
+    {
+      "id": "ADIM-06",
+      "kind": "master_plan_step",
+      "title": "CI/CD ve doğrulama iskeleti",
+      "pass_criteria": "CI kilidi gerçek; sahte/skip test başarı sayılmıyor.",
+      "verification_status": "PASS",
+      "tier": "H",
+      "tests": [
+        "PR #16: https://github.com/suleymantarsuslu/sosmesh/pull/16",
+        "scripts/check-no-skips.js",
+        "scripts/verify.sh",
+        "scripts/verify.sh quality gates"
+      ],
+      "evidence": {
+        "ci_jobs": [
+          "Verify Quality Gates"
+        ],
+        "report_paths": [
+          "reports/verify-summary (local)",
+          "reports/*.log"
+        ],
+        "document_paths": [
+          "CI run 41120079781 (main push success)"
+        ],
+        "status_json_blockers": []
+      }
+    },
+    {
+      "id": "ADIM-07",
+      "kind": "master_plan_step",
+      "title": "Ortak şema ve çapraz dil sözleşmeleri",
+      "pass_criteria": "Aynı SOS fixture’ı üç dilde eşdeğer çözülür.",
+      "verification_status": "PASS",
+      "tier": "H",
+      "tests": [
+        "PR #18: https://github.com/suleymantarsuslu/sosmesh/pull/18",
+        "packages/contracts-kotlin",
+        "packages/contracts-swift",
+        "packages/contracts/src/**/*.test.ts"
+      ],
+      "evidence": {
+        "ci_jobs": [
+          "Contracts Type Check",
+          "Cross-Language Contract Tests",
+          "Swift Package Tests"
+        ],
+        "report_paths": [
+          "reports/verify-summary (local)",
+          "reports/*.log"
+        ],
+        "document_paths": [
+          "Cross-language CI job"
+        ],
+        "status_json_blockers": [
+          "docs/api/openapi.yaml not in repo"
+        ]
+      }
+    },
+    {
+      "id": "ADIM-08",
+      "kind": "master_plan_step",
+      "title": "BLE haberleşme v1 tasarımı",
+      "pass_criteria": "Kesilen transfer yanlış teslim işareti üretmeden yeniden denenebiliyor.",
+      "verification_status": "PASS",
+      "tier": "H",
+      "tests": [],
+      "evidence": {
+        "ci_jobs": [
+          "Verify Quality Gates"
+        ],
+        "report_paths": [
+          "reports/verify-summary (local)",
+          "reports/*.log"
+        ],
+        "document_paths": [
+          "CI run 41120079781",
+          "Merged PR #21 D-08 resume to main 74f4b4c"
+        ],
+        "status_json_blockers": []
+      }
+    },
+    {
+      "id": "ADIM-09",
+      "kind": "master_plan_step",
+      "title": "Kriptografi ve yerel mahremiyet",
+      "pass_criteria": "Eşleşmeyen ciphertext veya imza hiçbir zaman kabul edilmez.",
+      "verification_status": "PASS",
+      "tier": "H",
+      "tests": [
+        "Golden vectors TS/Kotlin/Swift 3+3+3",
+        "PR #20: https://github.com/suleymantarsuslu/sosmesh/pull/20",
+        "verify 19/19"
+      ],
+      "evidence": {
+        "ci_jobs": [
+          "Verify Quality Gates"
+        ],
+        "report_paths": [
+          "reports/verify-summary (local)",
+          "reports/*.log"
+        ],
+        "document_paths": [
+          "CI run 40964679700"
+        ],
+        "status_json_blockers": []
+      }
+    },
+    {
+      "id": "ADIM-10",
+      "kind": "master_plan_step",
+      "title": "Outbox, store-and-forward ve durum motoru",
+      "pass_criteria": "Tek SOS tek kimlik; yeniden açılışta sıradan kaybolmuyor.",
+      "verification_status": "PASS",
+      "tier": "H",
+      "tests": [],
+      "evidence": {
+        "ci_jobs": [
+          "Verify Quality Gates"
+        ],
+        "report_paths": [
+          "reports/verify-summary (local)",
+          "reports/*.log"
+        ],
+        "document_paths": [
+          "CI run 41128740240",
+          "PR #22"
+        ],
+        "status_json_blockers": []
+      }
+    },
+    {
+      "id": "ADIM-11",
+      "kind": "master_plan_step",
+      "title": "Radyo simülatörü ve test laboratuvarı",
+      "pass_criteria": "Paket kaybında çökme yok; doğrulanmamış aktarım success değil.",
+      "verification_status": "PASS",
+      "tier": "H",
+      "tests": [
+        "100-transfer 36 success / 64 failed",
+        "scripts/mesh-sim-golden.sh",
+        "tests/chaos/mesh-simulator.test.ts",
+        "tools/mesh-simulator",
+        "verify 20/20"
+      ],
+      "evidence": {
+        "ci_jobs": [
+          "Verify Quality Gates"
+        ],
+        "report_paths": [
+          "reports/verify-summary (local)",
+          "reports/*.log"
+        ],
+        "document_paths": [
+          "PR #23",
+          "CI run 41132795663"
+        ],
+        "status_json_blockers": []
+      }
+    },
+    {
+      "id": "ADIM-12",
+      "kind": "master_plan_step",
+      "title": "Android uygulama iskeleti ve izinler",
+      "pass_criteria": "Uygulama en az bir gerçek Android’de açılır ve izin akışı çalışır.",
+      "verification_status": "PARTIAL",
+      "tier": "H",
+      "tests": [
+        "Gerçek Android cihaz / Android 12-14-16 enstrümantasyon: NOT_TESTED"
+      ],
+      "evidence": {
+        "ci_jobs": [
+          "Verify Quality Gates"
+        ],
+        "report_paths": [
+          "reports/verify-summary (local)",
+          "reports/*.log"
+        ],
+        "document_paths": [
+          "PR #24",
+          "CI run 41142459079",
+          "Gradle assembleDebug testDebugUnitTest lintDebug PASS",
+          "Android Keystore hardware-backed EncryptedSharedPreferences: NOT_TESTED"
+        ],
+        "status_json_blockers": []
+      }
+    },
+    {
+      "id": "ADIM-13",
+      "kind": "master_plan_step",
+      "title": "Android afetzede SOS ekranı",
+      "pass_criteria": "Gerçek SOS offline queue’ya kaydolur; yanlış “ekibe ulaştı” mesajı yok.",
+      "verification_status": "PARTIAL",
+      "tier": "H",
+      "tests": [
+        "Compose/Robolectric unit tests: outbox enqueue, forbidden copy, i18n parity",
+        "docs/tests/android-talkback-script.md NOT_TESTED",
+        "docs/ux/android-sos Robolectric PNGs (NOT real device)"
+      ],
+      "evidence": {
+        "ci_jobs": [
+          "Verify Quality Gates"
+        ],
+        "report_paths": [
+          "reports/verify-summary (local)",
+          "reports/*.log"
+        ],
+        "document_paths": [],
+        "status_json_blockers": [
+          "TalkBack fiziksel cihaz: NOT_TESTED",
+          "Gerçek GPS runtime: NOT_TESTED"
+        ]
+      }
+    },
+    {
+      "id": "ADIM-14",
+      "kind": "master_plan_step",
+      "title": "Android BLE central/peripheral ve peer keşfi",
+      "pass_criteria": "En az 2 Android cihaz birbirini keşfeder ve GATT oturumu kurar.",
+      "verification_status": "PARTIAL",
+      "tier": "H",
+      "tests": [
+        "Gerçek 2 cihaz keşif/GATT: NOT_TESTED",
+        "docs/tests/android-radio.md prosedür + OEM şablon"
+      ],
+      "evidence": {
+        "ci_jobs": [
+          "Verify Quality Gates"
+        ],
+        "report_paths": [
+          "reports/verify-summary (local)",
+          "reports/*.log"
+        ],
+        "document_paths": [
+          "JVM unit: GattClientSession, PeerRegistry, PermissionAndAdapterGuard, BleAdvertiser payload"
+        ],
+        "status_json_blockers": []
+      }
+    },
+    {
+      "id": "ADIM-15",
+      "kind": "master_plan_step",
+      "title": "Android SOS transferi ve ack doğrulaması",
+      "pass_criteria": "A cihazında PEER_RECEIVED yalnızca B'nin doğrulanmış ack'ı üzerine görünür.",
+      "verification_status": "PARTIAL",
+      "tier": "H",
+      "tests": [
+        "AndroidGattClientPort/ServerPort: GATT write/notify (ADIM 14)",
+        "BleTransferSimulatedTest: senderCompleted_onlyAfterTransferVerified; paket kaybı/resume simülasyonu",
+        "docs/protocol/ble-v1.md: TRANSFER_VERIFIED (0x21), PEER_RECEIVED yalnız doğrulanmış tamamlama",
+        "docs/tests/android-transfer.md JSONL trace şablonu"
+      ],
+      "evidence": {
+        "ci_jobs": [
+          "Verify Quality Gates"
+        ],
+        "report_paths": [
+          "reports/verify-summary (local)",
+          "reports/*.log"
+        ],
+        "document_paths": [
+          "BleTransferReceiver: sha256 OK → TRANSFER_VERIFIED; digest hata → NACK DIGEST_INVALID",
+          "BleTransferSender: chunk ACK sonrası WAIT_PEER_VERIFIED; onCompleted yalnız TRANSFER_VERIFIED (transferId+digest)",
+          "BleTransferGateTest: CRC_MISMATCH NACK + chunk saklanmaz",
+          "BleTransferGateTest: digest uyuşmazlığı → receiver FAILED, sender onCompleted yok, PEER_RECEIVED yok",
+          "BleTransferGateTest: tüm ACK, VERIFIED yok → sender fail, PEER_RECEIVED yok",
+          "SimulatedBleTransferClock: timer cancel (peer verify timeout yanlış tetiklenmesin)",
+          "BleTransferSender: tek parça payload+digest için chunkSize−32 yeniden bölme",
+          "SosPeerDeliveryTracker: PEER_RECEIVED yalnız sender onCompleted (verified gate)",
+          "feature-relay: RelayDedupKeyTest (sosId,digest anahtarı)",
+          "feature-relay: RelayRoomOutboxDedupTest (RoomOutboxQueueAdapter JVM)",
+          "Gerçek 2 cihaz BLE transfer: NOT_TESTED"
+        ],
+        "status_json_blockers": []
+      }
+    },
+    {
+      "id": "ADIM-16",
+      "kind": "master_plan_step",
+      "title": "Android röle modu, batarya ve background",
+      "pass_criteria": "Cihazda desteklenen aktif röle davranışı gerçekten çalışıyor; kısıtlar gizlenmiyor.",
+      "verification_status": "PARTIAL",
+      "tier": "H",
+      "tests": [
+        "Ekran kapalı / reboot / background-kill / enerji ölçümü: NOT_TESTED",
+        "RelayScreen/ViewModel: yalnız sayı/meta; OS kısıt metinleri",
+        "RelayUploadWorker/Executor + RelayIngestUplink (fake/deferred; URL config; HTTP ADIM 18)",
+        "docs/tests/background-android.md"
+      ],
+      "evidence": {
+        "ci_jobs": [
+          "Verify Quality Gates"
+        ],
+        "report_paths": [
+          "reports/verify-summary (local)",
+          "reports/*.log"
+        ],
+        "document_paths": [
+          "feature-relay: RelaySettingsStore opt-in (varsayılan kapalı), pil eşiği, saatlik veri limiti",
+          "RelayBatteryPolicy + RelaySessionController + connectedDevice FGS",
+          "docs/tests/background-android.md",
+          "JVM: RelaySessionControllerTest, RelayBatteryPolicyTest, RelayUploadExecutorTest, RelayUiStatePrivacyTest"
+        ],
+        "status_json_blockers": []
+      }
+    },
+    {
+      "id": "ADIM-17",
+      "kind": "master_plan_step",
+      "title": "Backend iskeleti ve veri modeli",
+      "pass_criteria": "İlk kez boş DB ile API başlar, tablo ilişkileri ve indexler doğru.",
+      "verification_status": "PARTIAL",
+      "tier": "H",
+      "tests": [
+        "Gate H 2026-11-01: apps/api jest 91/91 (docs/handover/evidence/gate-h/adim17-deferred-api-tests.txt)",
+        "Gate H 2026-11-01: mesh-sim-mutation + mutation-sentinel (docs/handover/evidence/gate-h/*.txt)",
+        "Gate H 2026-11-01: schema-introspection.spec.ts FK/index PASS",
+        "Gate H 2026-11-01: tests/chaos/mandatory-digest-chaos.test.ts + docs/handover/evidence/gate-h/digest-chaos-20runs.txt",
+        "apps/api embedded-postgres integration tests (5 senaryo)"
+      ],
+      "evidence": {
+        "ci_jobs": [
+          "Verify Quality Gates"
+        ],
+        "report_paths": [
+          "reports/verify-summary (local)",
+          "reports/*.log"
+        ],
+        "document_paths": [
+          "verify check-openapi",
+          "ADR-012",
+          "Gate H 2026-11-01: request-id-redaction.spec.ts x-request-id + pino redact paths PASS",
+          "Gate H 2026-11-01: env-validation-boot.spec.ts Joi DATABASE_URL zorunlu PASS",
+          "Gate H 2026-11-01: ingest.spec.ts 20 eşzamanlı ingest → 1 satır PASS",
+          "Gate H 2026-11-01: operator-feed-transaction.spec.ts 20 concurrent feed PASS"
+        ],
+        "status_json_blockers": [
+          "infra/compose/docker-compose.yml NOT_TESTED (docker yok)",
+          "API NestJS Stryker mutation score ölçülmedi (yalnız mesh-sim-mutation.sh)"
+        ]
+      }
+    },
+    {
+      "id": "ADIM-18",
+      "kind": "master_plan_step",
+      "title": "SOS ingest, idempotency ve doğrulama",
+      "pass_criteria": "Tek geçerli SOS tek kalıcı kayıt ve SERVER_ACCEPTED imzalı receipt üretir.",
+      "verification_status": "PASS",
+      "tier": "H",
+      "tests": [
+        "ADR-011 envelope locationStatus (UNKNOWN/MANUAL/GPS) + ingest envelope-location.ts",
+        "apps/api/test/ingest.spec.ts",
+        "apps/api/test/ingest.spec.ts (unknown/manual/conflict/receipt)"
+      ],
+      "evidence": {
+        "ci_jobs": [
+          "Verify Quality Gates"
+        ],
+        "report_paths": [
+          "reports/verify-summary (local)",
+          "reports/*.log"
+        ],
+        "document_paths": [
+          "packet_hash column + MESSAGE_ID_CONFLICT (409) on hash mismatch",
+          "Receipt sign: SERVER_ACCEPTED|messageId|packetHash|timestamp",
+          "migration 20261031220000_ingest_packet_hash",
+          "verify.sh self-hosted gates"
+        ],
+        "status_json_blockers": []
+      }
+    },
+    {
+      "id": "ADIM-19",
+      "kind": "master_plan_step",
+      "title": "Gateway senkronizasyonu ve gerçek zamanlı yayın",
+      "pass_criteria": "B internet alınca SOS tek kez panel feed’ine düşer.",
+      "verification_status": "PARTIAL",
+      "tier": "H",
+      "tests": [
+        "API: POST /v1/ingest/batch, GET /v1/operator/events (SSE Accept + ?after= polling), operator_feed_events",
+        "apps/api/test/sync-events.spec.ts; JVM: ServerReceiptVerifierTest, RelayOfflineOnlineIntegrationTest, RelayUploadExecutorTest (409)",
+        "denetim T4: RelayIdentityProvider SecureRandom install id; RelayIdentityProviderTest; scripts/android-relay-no-android-id.sh",
+        "merge: cursor/sos-ingest-idempotency-ca96 + cursor/android-relay-battery-09d4 (verify.sh birleşik)",
+        "pnpm build/test; verify.sh; Android assembleDebug testDebugUnitTest lintDebug ktlintCheck EXIT=0"
+      ],
+      "evidence": {
+        "ci_jobs": [
+          "Verify Quality Gates"
+        ],
+        "report_paths": [
+          "reports/verify-summary (local)",
+          "reports/*.log"
+        ],
+        "document_paths": [
+          "denetim T1: feed first-accept tx + message_id UNIQUE; operator-feed-transaction.spec.ts (feed stub rollback + retry)",
+          "denetim T2: pg_advisory_xact_lock; operator-feed-transaction.spec.ts (20 concurrent ingest + after=cursor poll)",
+          "denetim T3: init down.sql operator_feed drop geri alındı; runMigrationDown tüm down.sql ters sırada",
+          "Android: HttpRelayIngestUplink (HttpURLConnection), Ed25519 receipt verify, 409 needs_review, 429 Retry-After, ağ restore upload trigger",
+          "FakeRelayIngestUplink yalnız test kaynak setinde; prod DI HttpRelayIngestUplink"
+        ],
+        "status_json_blockers": []
+      }
+    },
+    {
+      "id": "ADIM-20",
+      "kind": "master_plan_step",
+      "title": "Meta AI servis entegrasyonu",
+      "pass_criteria": "AI yokken ingest devam eder; AI çıktısı insan onayı gerektiren öneridir.",
+      "verification_status": "PARTIAL",
+      "tier": "H",
+      "tests": [
+        "Canlı Meta chat/completions smoke: denetçi 2026-11-01 (sentetik TR fixture, 200/stop/şema; ~1.9k token/istek)",
+        "apps/api/src/ai/evals/fixtures.ts (32 TR/EN fixtures)",
+        "apps/api/src/ai/providers/meta.ts",
+        "apps/api/test/ai-meta.spec.ts",
+        "apps/api/test/ai-worker.spec.ts",
+        "docs/ai/meta-provider.md"
+      ],
+      "evidence": {
+        "ci_jobs": [
+          "Verify Quality Gates"
+        ],
+        "report_paths": [
+          "reports/verify-summary (local)",
+          "reports/*.log"
+        ],
+        "document_paths": [
+          "docs/ai/meta-provider.md"
+        ],
+        "status_json_blockers": []
+      }
+    },
+    {
+      "id": "ADIM-21",
+      "kind": "master_plan_step",
+      "title": "Koordinasyon paneli temeli ve güvenli oturum",
+      "pass_criteria": "Operatör admin olmayan rol yetkisi dışında vaka göremez.",
+      "verification_status": "PARTIAL",
+      "tier": "H",
+      "tests": [
+        "API auth-rbac.spec.ts: 401/403/scope 404",
+        "Gate H 2026-11-01: reports/operator-dashboard-{390,768,1440}.png Playwright PASS",
+        "apps/api auth login (bcrypt, rate limit, httpOnly cookie) + RBAC incident scope + dashboard stats API",
+        "apps/api/test/operator-auth.spec.ts",
+        "apps/web operator panel: login, dashboard, role denied, SSE polling fallback banner, Playwright 6/6",
+        "pnpm -r build EXIT=0; pnpm test EXIT=0; pnpm test:a11y:web 22/22 EXIT=0; verify.sh lint fix pending CI",
+        "reports/operator-dashboard-1440.png (Playwright)",
+        "tests/ux/operator-login.spec.js"
+      ],
+      "evidence": {
+        "ci_jobs": [
+          "Verify Quality Gates"
+        ],
+        "report_paths": [
+          "reports/verify-summary (local)",
+          "reports/*.log"
+        ],
+        "document_paths": [],
+        "status_json_blockers": [
+          "Self-hosted CI yeşil olana kadar PASS değil"
+        ]
+      }
+    },
+    {
+      "id": "ADIM-22",
+      "kind": "master_plan_step",
+      "title": "Harita, filtreleme ve canlı SOS listesi",
+      "pass_criteria": "Panel gelen SOS'u gerçek zamanlı gösterir; harita doğruluğunu abartmaz.",
+      "verification_status": "PARTIAL",
+      "tier": "H",
+      "tests": [
+        "GET /v1/operator/cases + /cases/:incidentId (OperatorAuthGuard + IncidentScopeService); operator-cases.spec.ts 401/scope",
+        "Gate H 2026-11-01: pnpm test:a11y:web 22/22; verify.sh 24/24 EXIT=0",
+        "Gate H 2026-11-01: reports/operator-map-cases-{390,768,1440}.png (390/768 mobil liste; harita sütunu CSS gizli)",
+        "Vitest geo + filter; Playwright operator-map 5/5 + panel 5/5 (1440 screenshot reports/operator-map-cases-1440.png)",
+        "apps/web/features/map (MapLibre + supercluster), case-list filtre/kuyruk/çekmece/SSE+polling",
+        "docs/web/map-tiles.md OSM lisans + tile.openstreetmap.org prod uyarısı"
+      ],
+      "evidence": {
+        "ci_jobs": [
+          "Verify Quality Gates"
+        ],
+        "report_paths": [
+          "reports/verify-summary (local)",
+          "reports/*.log"
+        ],
+        "document_paths": [],
+        "status_json_blockers": [
+          "Self-hosted CI yeşil olana kadar PASS değil",
+          "prod tile kaynağı kullanıcı onayı (docs/web/map-tiles.md)"
+        ]
+      }
+    },
+    {
+      "id": "ADIM-23",
+      "kind": "master_plan_step",
+      "title": "Vaka ayrıntısı, AI önerisi ve operatör eylemleri",
+      "pass_criteria": "Operatör görünce gerçek OPERATOR_SEEN olayı oluşur, AI otorite gibi sunulmaz.",
+      "verification_status": "PARTIAL",
+      "tier": "H",
+      "tests": [
+        "GET /v1/operator/cases/:id/detail → idempotent OPERATOR_SEEN (operator_view) + audit; operator-case-detail.spec.ts",
+        "PATCH review-status + POST corrections/ai-override (version 409); Incident.reviewStatus + optimistic version",
+        "apps/web/features/cases (CaseDetailView, AiSuggestionPanel); Playwright ADIM 23 5/5 + XSS/conflict",
+        "pnpm -r build EXIT=0; pnpm test EXIT=0; verify.sh EXIT=0; test:a11y:web 16/16",
+        "reports/operator-case-detail-1440.png"
+      ],
+      "evidence": {
+        "ci_jobs": [
+          "Verify Quality Gates"
+        ],
+        "report_paths": [
+          "reports/verify-summary (local)",
+          "reports/*.log"
+        ],
+        "document_paths": [],
+        "status_json_blockers": [
+          "Self-hosted CI yeşil olana kadar PASS değil",
+          "Bu VM'de ANDROID_HOME yok — Gradle assembleDebug yerelde koşulamadı",
+          "PR base main; #34 ve #37 merge edildikten sonra merge edilecek"
+        ]
+      }
+    },
+    {
+      "id": "ADIM-24",
+      "kind": "master_plan_step",
+      "title": "M0 gerçek cihaz uçtan uca senaryo",
+      "pass_criteria": "Bağımsız bir kişi kanıtla A→B→API→AI→web akışını tekrarlayabilir.",
+      "verification_status": "NOT_TESTED",
+      "tier": "H",
+      "tests": [
+        "apps/android RelayUploadExecutorTest http500",
+        "apps/web map/config production guard testleri",
+        "docs/tests/m0-physical-report.md",
+        "docs/tests/m0-physical-report.md (NOT_TESTED şablon + prosedür)",
+        "evidence/m0/README.md",
+        "scripts/m0",
+        "scripts/m0/collect-logs.sh (adb yoksa exit≠0, sahte log yok)",
+        "scripts/m0/fetch-api-trace.sh (yalnız localhost API + OPERATOR_BEARER_TOKEN)",
+        "tests/chaos/false-green-confidence.test.ts"
+      ],
+      "evidence": {
+        "ci_jobs": [],
+        "report_paths": [
+          "reports/verify-summary (local)",
+          "reports/*.log"
+        ],
+        "document_paths": [
+          "evidence/m0/README.md",
+          "Fiziksel 2 cihaz kanıtı: yok (BLOCKED_DEVICE)"
+        ],
+        "status_json_blockers": [
+          "Fiziksel Android A/B cihazı yok",
+          "M0 video kaydı yok"
+        ]
+      }
+    },
+    {
+      "id": "ADIM-25",
+      "kind": "master_plan_step",
+      "title": "Hackathon sunumu ve yedek demo",
+      "pass_criteria": "Jüri kaynak koddan en az bir uçtan uca akışı doğrulayabilir.",
+      "verification_status": "PARTIAL",
+      "tier": "H",
+      "tests": [
+        "demo/storyboard.md (video henüz yok)",
+        "docs/architecture/requirements-map.md",
+        "docs/architecture/system-diagram.md",
+        "docs/hackathon/submission.md checklist"
+      ],
+      "evidence": {
+        "ci_jobs": [
+          "Verify Quality Gates"
+        ],
+        "report_paths": [
+          "reports/verify-summary (local)",
+          "reports/*.log"
+        ],
+        "document_paths": [
+          "docs/architecture/system-diagram.md",
+          "docs/architecture/requirements-map.md",
+          "Web DEMO MODE banner + production mock guard testleri",
+          "Android debug DEMO MODE etiketi + release gradle guard testi",
+          "Önerilen demo tag: demo-2026-hackathon (tag oluşturulmadı)"
+        ],
+        "status_json_blockers": [
+          "Hackathon teslim formu kullanıcı onayı",
+          "Fiziksel demo videosu yok"
+        ]
+      }
+    },
+    {
+      "id": "ADIM-26",
+      "kind": "master_plan_step",
+      "title": "Kapsamlı web tasarım sistemi ve çoklu organizasyon",
+      "pass_criteria": "Profesyonel görünüm erişilebilirlikten ödün vermeden tutarlı.",
+      "verification_status": "PARTIAL",
+      "tier": "P",
+      "tests": [
+        "Cases 3-col + tablet split; dashboard bento; axe AA 0 violations (test:a11y:web 16/16)",
+        "Operatör shell: org header, incident switcher, saved views, theme TR/EN, mobile drawer",
+        "Playwright operator-dashboard-1440.png (reports/)",
+        "apps/api/src/organization (TenantScopeService, OrganizationController, organization-isolation.spec.ts)",
+        "apps/web/design-system (ScreenState, BentoCard, skeleton) + vitest screen-state.test.ts"
+      ],
+      "evidence": {
+        "ci_jobs": [
+          "Verify Quality Gates"
+        ],
+        "report_paths": [
+          "reports/verify-summary (local)",
+          "reports/*.log"
+        ],
+        "document_paths": [
+          "Prisma organizations + team.organization_id migration 20261101180000_organization_tenant",
+          "ERTELENDI: visual regression 320–1920px ve geniş ekran görüntüleri (PASS sayılmadı)"
+        ],
+        "status_json_blockers": []
+      }
+    },
+    {
+      "id": "ADIM-27",
+      "kind": "master_plan_step",
+      "title": "Ekip, kaynak ve görev yönetimi",
+      "pass_criteria": "Her görev için açık sorumlu ve izlenebilir değişiklik geçmişi var.",
+      "verification_status": "PARTIAL",
+      "tier": "P",
+      "tests": [
+        "ERTELENDI: mutation/geniş ekran görüntüleri PASS sayılmadı",
+        "apps/api/src/coordination (teams/resources/tasks, optimistic version 409, audit_logs)",
+        "apps/api/test/work-tasks.spec.ts (RBAC, assignee org scope, resourceWhere fail-closed, lifecycle)",
+        "apps/web features/tasks + /operator/tasks,/teams (ScreenState, icon+label status)",
+        "pnpm -r build EXIT=0; pnpm test EXIT=0; verify.sh 24/24 EXIT=0",
+        "reports/operator-tasks-1440.png (Playwright)"
+      ],
+      "evidence": {
+        "ci_jobs": [
+          "Verify Quality Gates"
+        ],
+        "report_paths": [
+          "reports/verify-summary (local)",
+          "reports/*.log"
+        ],
+        "document_paths": [
+          "Prisma migration 20261101193000_adim27_28 (resources, work_tasks, location_share_grants)"
+        ],
+        "status_json_blockers": [
+          "Self-hosted CI yeşil olana kadar PASS değil (pnpm ENOTEMPTY — PR #41)"
+        ]
+      }
+    },
+    {
+      "id": "ADIM-28",
+      "kind": "master_plan_step",
+      "title": "Bildirim, abonelik ve işlem geçmişi",
+      "pass_criteria": "Aynı olaydan notification fırtınası yok; zaman çizelgesi doğru.",
+      "verification_status": "PARTIAL",
+      "tier": "P",
+      "tests": [
+        "GET /v1/operator/notifications, /activity, /activity/export (role guard)",
+        "Push/email gerçek sağlayıcı: in-app worker only (NOT_TESTED prod delivery)",
+        "apps/api/src/notifications (dedupe upsert, quiet hours, preferences/subscriptions)",
+        "apps/api/test/notifications-adim28.spec.ts",
+        "apps/web /operator/activity (ActivityView)"
+      ],
+      "evidence": {
+        "ci_jobs": [
+          "Verify Quality Gates"
+        ],
+        "report_paths": [
+          "reports/verify-summary (local)",
+          "reports/*.log"
+        ],
+        "document_paths": [
+          "pnpm test + verify.sh EXIT=0"
+        ],
+        "status_json_blockers": [
+          "Self-hosted CI yeşil olana kadar PASS değil (pnpm ENOTEMPTY — PR #41)"
+        ]
+      }
+    },
+    {
+      "id": "ADIM-29",
+      "kind": "master_plan_step",
+      "title": "Android tasarım polish ve gelişmiş akışlar",
+      "pass_criteria": "Kullanıcı yanlış teslim algısına düşmeden iki dakikadan kısa temel akışı tamamlar.",
+      "verification_status": "PARTIAL",
+      "tier": "P",
+      "tests": [
+        "Gradle :core:ble/:core:platform testDebugUnitTest + ktlintCheck EXIT=0 (review VM, JDK 17 bytecode, ANDROID_HOME=/opt/android-sdk); tam monorepo CI android-gradle job",
+        "SosFlowScreen: konum tazelik rozeti (LocationFreshness); birincil/ikincil CTA ayrımı (continue pill, express ana ekranda)",
+        "StatusScreen: hop kanıtı (StatusHopProgress) + UTC created/updated meta",
+        "TalkBack canlı / screenshot golden / 30fps ölçümü: NOT_TESTED (ERTELENDİ)"
+      ],
+      "evidence": {
+        "ci_jobs": [
+          "Verify Quality Gates"
+        ],
+        "report_paths": [
+          "reports/verify-summary (local)",
+          "reports/*.log"
+        ],
+        "document_paths": [
+          "HomeRoute: express SOS (ExpressSosSaver) + rehberli sihirbaz (OutlinedButton); PlatformSelfRepairCard; RelayEducationCard",
+          "SettingsRoute: yüksek kontrast + yerel veri kontrolü metni",
+          "Robolectric: ExpressSosSaverTest, SosA11yRobolectricTest (fontScale 2), LocationFreshnessTest",
+          "Bağımsız PR #44 inceleme: BleScannerEnergyProfileTest BleScanner.start(EnergyRadioProfile) → ScanRequest (sabit-only test kaldırıldı)"
+        ],
+        "status_json_blockers": [
+          "Fiziksel cihaz TalkBack ve akış süresi ölçümü yok",
+          "Screenshot golden suite ERTELENDİ"
+        ]
+      }
+    },
+    {
+      "id": "ADIM-30",
+      "kind": "master_plan_step",
+      "title": "Android ağ/OS durum makinesi ve pil profili",
+      "pass_criteria": "Desteklenen senaryolar belgeli; yanlış sürekli arka plan garantisi yok.",
+      "verification_status": "PARTIAL",
+      "tier": "P",
+      "tests": [
+        "Gerçek cihaz pil ölçümü / 3+ OEM / BLE: NOT_TESTED",
+        "Gradle :core:ble/:core:platform testDebugUnitTest + ktlintCheck EXIT=0 (review VM); tam monorepo CI android-gradle job PR #44",
+        "MeshPlatformSignalBridge: ağ/BT/izin/pil/güç tasarrufu/doze sinyalleri",
+        "apps/android/core/platform: MeshPlatformStateMachine + EnergyRadioProfile (SOS_URGENT vs CONSTRAINED vs relay)",
+        "docs/compat/android-matrix.csv (fiziksel OEM satırları NOT_TESTED)"
+      ],
+      "evidence": {
+        "ci_jobs": [
+          "Verify Quality Gates"
+        ],
+        "report_paths": [
+          "reports/verify-summary (local)",
+          "reports/*.log"
+        ],
+        "document_paths": [
+          "BleScanner.start(EnergyRadioProfile); RelayBatteryPolicy duty-cycle EnergyRadioProfile ile hizalı",
+          "MeshPlatformStateMachineTest (BT kapalı, izin reddi, pil, doze, ağ); bozuk reduce mantığında test kırmızı (denetçi doğruladı)"
+        ],
+        "status_json_blockers": [
+          "Fiziksel Android matrisi ve pil tüketimi ölçümü yok"
+        ]
+      }
+    },
+    {
+      "id": "ADIM-31",
+      "kind": "master_plan_step",
+      "title": "iOS SwiftUI uygulama iskeleti ve ilk açılış",
+      "pass_criteria": "iOS uygulaması derlenir; offline SOS kuyrukta kalıcıdır.",
+      "verification_status": "PARTIAL",
+      "tier": "P",
+      "tests": [
+        "Fiziksel imzalama/simulator UI NOT_TESTED",
+        "apps/ios/SOSMesh.xcodeproj + SwiftUI tab iskelet (SOS/Status/Relay/Settings)",
+        "apps/ios/SOSMeshCore DiskOutboxQueue reopen test (Linux swift test when toolchain OK)",
+        "docs/ios/setup.md"
+      ],
+      "evidence": {
+        "ci_jobs": [
+          "Verify Quality Gates"
+        ],
+        "report_paths": [
+          "reports/verify-summary (local)",
+          "reports/*.log"
+        ],
+        "document_paths": [
+          "docs/ios/setup.md"
+        ],
+        "status_json_blockers": [
+          "Fiziksel iPhone/Mac imzalama (B-13)",
+          "Simulator erişimi cloud agent'ta yok"
+        ]
+      }
+    },
+    {
+      "id": "ADIM-32",
+      "kind": "master_plan_step",
+      "title": "iOS Core Bluetooth central/peripheral iletişim",
+      "pass_criteria": "Foregound iPhone ↔ Android SOS aktarımları kayıpsız; arka plan ayrı matris.",
+      "verification_status": "PARTIAL",
+      "tier": "P",
+      "tests": [
+        "apps/ios/CoreBLE central/peripheral + GATT UUID parity",
+        "docs/tests/cross-platform-ble.md"
+      ],
+      "evidence": {
+        "ci_jobs": [
+          "Verify Quality Gates"
+        ],
+        "report_paths": [
+          "reports/verify-summary (local)",
+          "reports/*.log"
+        ],
+        "document_paths": [
+          "docs/tests/cross-platform-ble.md",
+          "iPhone↔Android 20 test NOT_TESTED"
+        ],
+        "status_json_blockers": [
+          "Fiziksel BLE lab (ADIM 34)"
+        ]
+      }
+    },
+    {
+      "id": "ADIM-33",
+      "kind": "master_plan_step",
+      "title": "iOS arka plan ve state restoration testleri",
+      "pass_criteria": "Destek vaatleri yalnızca doğrulanmış OS/sürüm/cihaz kombinasyonlarıyla sınırlı.",
+      "verification_status": "PARTIAL",
+      "tier": "P",
+      "tests": [
+        "Fiziksel video/trace NOT_TESTED",
+        "UIBackgroundModes bluetooth-central/peripheral in Info.plist",
+        "docs/compat/ios-background-matrix.csv (NOT_TESTED rows)"
+      ],
+      "evidence": {
+        "ci_jobs": [
+          "Verify Quality Gates"
+        ],
+        "report_paths": [
+          "reports/verify-summary (local)",
+          "reports/*.log"
+        ],
+        "document_paths": [
+          "BleRestorationStateMachine unit tests (force-quit terminal)"
+        ],
+        "status_json_blockers": [
+          "Apple background/force-quit cihaz kanıtı yok — garanti verilmez"
+        ]
+      }
+    },
+    {
+      "id": "ADIM-34",
+      "kind": "master_plan_step",
+      "title": "iOS ↔ Android çapraz entegrasyon ve hata UX",
+      "pass_criteria": "Temel çapraz SOS PEER_RECEIVED/SERVER_ACCEPTED ayrımını korur.",
+      "verification_status": "PARTIAL",
+      "tier": "P",
+      "tests": [
+        "VoiceOver/Dynamic Type fiziksel: NOT_TESTED",
+        "docs/compat/cross-platform-matrix.csv (fiziksel satırlar NOT_TESTED)",
+        "docs/tests/cross-platform-integration-report.md",
+        "mutation: peerReceivedIfIgnoringVerified ≠ production evaluateTransferAckGate (TS/Kotlin/Swift/chaos)",
+        "packages/contracts + contracts-kotlin + SOSMeshCore: aynı transfer-ack-gate fixture testleri",
+        "packages/fixtures/cross-platform: transfer-ack-gate.json, relay-scenarios.json, encrypted-payload-fixtures.json"
+      ],
+      "evidence": {
+        "ci_jobs": [
+          "Verify Quality Gates"
+        ],
+        "report_paths": [
+          "reports/verify-summary (local)",
+          "reports/*.log"
+        ],
+        "document_paths": [
+          "docs/tests/cross-platform-integration-report.md",
+          "Android Compose: CrossPlatformFaultCard + PlatformSelfRepairCard; iOS SwiftUI CrossPlatformFaultBanner",
+          "iPhone↔Android 30 senaryo fiziksel lab: NOT_TESTED"
+        ],
+        "status_json_blockers": [
+          "Fiziksel iPhone + Android lab kanıtı yok",
+          "Bu VM'de ANDROID_HOME yok — Gradle unit CI doğrular"
+        ]
+      }
+    },
+    {
+      "id": "ADIM-35",
+      "kind": "master_plan_step",
+      "title": "Wear OS companion proje ve tek dokunuş SOS",
+      "pass_criteria": "Saatten basılan SOS Android outbox’ta tek kez görülür.",
+      "verification_status": "PARTIAL",
+      "tier": "P",
+      "tests": [
+        "Wear emulator / gerçek saat: NOT_TESTED (B-04)",
+        "apps/android/core/wear-companion Data Layer yolları /sosmesh/v1/sos/create + phone_ack",
+        "apps/android/wear Wear Compose iki adımlı SOS (bas-bırak + onay diyaloğu)",
+        "apps/wearos/README.md → :wear modülü"
+      ],
+      "evidence": {
+        "ci_jobs": [
+          "Verify Quality Gates"
+        ],
+        "report_paths": [
+          "reports/verify-summary (local)",
+          "reports/*.log"
+        ],
+        "document_paths": [
+          "PhoneWearSosIngress + PhoneWearCompanionListenerService → Room outbox origin=wear_os",
+          "JVM: PhoneWearSosIngressIdempotencyTest, WearOfflineQueueTest (idempotency)"
+        ],
+        "status_json_blockers": [
+          "B-04"
+        ]
+      }
+    },
+    {
+      "id": "ADIM-36",
+      "kind": "master_plan_step",
+      "title": "Wear OS durum senkronu ve offline queue",
+      "pass_criteria": "Telefon çevrimdışı olsa bile saat doğru “beklemede” der; sahte başarı yok.",
+      "verification_status": "PARTIAL",
+      "tier": "P",
+      "tests": [
+        "Paired/unpaired gerçek cihaz, tile/complication: NOT_TESTED / ERTELENDİ",
+        "docs/watches/wear-policy.md; apps/wearos/state-sync/README.md"
+      ],
+      "evidence": {
+        "ci_jobs": [
+          "Verify Quality Gates"
+        ],
+        "report_paths": [
+          "reports/verify-summary (local)",
+          "reports/*.log"
+        ],
+        "document_paths": [
+          "WearOfflineQueue + WearRetryPolicy + WearStateSyncEngine (PHONE_UNREACHABLE, sahte başarı yok)",
+          "WearSosCoordinator + WearPhoneAckListenerService ACK senkronu",
+          "docs/watches/wear-policy.md; apps/wearos/state-sync/README.md",
+          "JVM: WearOfflineQueueTest, WearRetryPolicyTest"
+        ],
+        "status_json_blockers": [
+          "B-04"
+        ]
+      }
+    },
+    {
+      "id": "ADIM-37",
+      "kind": "master_plan_step",
+      "title": "Apple Watch SwiftUI ve Watch Connectivity",
+      "pass_criteria": "Saatten SOS iPhone outbox’a girer; saat sadece doğrulanmış alım teyidi gösterir.",
+      "verification_status": "PARTIAL",
+      "tier": "P",
+      "tests": [
+        "SOSMeshCore/WatchCompanion wire, offline queue, ingress idempotency",
+        "apps/ios/SOSMesh/Companion PhoneWatchSessionManager + PhoneWatchSosIngress → outbox origin=watch_os",
+        "apps/watchos/SOSMeshWatch SwiftUI iki adımlı SOS + WatchSessionBridge (WCSession)",
+        "docs/watchos/setup.md"
+      ],
+      "evidence": {
+        "ci_jobs": [
+          "Verify Quality Gates"
+        ],
+        "report_paths": [
+          "reports/verify-summary (local)",
+          "reports/*.log"
+        ],
+        "document_paths": [
+          "docs/watchos/setup.md",
+          "Swift: WatchOfflineQueueTests, WatchConnectivitySendPlannerTests, PhoneWatchSosIngressTests",
+          "Gerçek Apple Watch + eşleşmiş iPhone: NOT_TESTED (B-04)"
+        ],
+        "status_json_blockers": [
+          "B-04"
+        ]
+      }
+    },
+    {
+      "id": "ADIM-38",
+      "kind": "master_plan_step",
+      "title": "Apple Watch komplikasyonları ve yeniden deneme",
+      "pass_criteria": "Yeniden erişildiğinde kuyruk doğru eşitlenir; gecikme açıkça gösterilir.",
+      "verification_status": "PARTIAL",
+      "tier": "P",
+      "tests": [
+        "Gerçek saat komplikasyon tap / phone off: NOT_TESTED (B-04)",
+        "apps/watchos/SOSMeshWatchWidgets WidgetKit complication + WatchRetryPolicy backoff",
+        "docs/tests/watchos-matrix.md"
+      ],
+      "evidence": {
+        "ci_jobs": [
+          "Verify Quality Gates"
+        ],
+        "report_paths": [
+          "reports/verify-summary (local)",
+          "reports/*.log"
+        ],
+        "document_paths": [
+          "WatchConnectivitySendPlanner sendMessage vs transferUserInfo",
+          "docs/tests/watchos-matrix.md",
+          "Swift: WatchOfflineQueueTests, WatchConnectivitySendPlannerTests"
+        ],
+        "status_json_blockers": [
+          "B-04"
+        ]
+      }
+    },
+    {
+      "id": "ADIM-39",
+      "kind": "master_plan_step",
+      "title": "Saat bağlantısı olmayan kullanım deneyimi",
+      "pass_criteria": "Her saat özelliği “supported/tested/experimental” olarak sınıflandırılır.",
+      "verification_status": "PARTIAL",
+      "tier": "P",
+      "tests": [
+        "WatchOfflineHelpView + phoneNotReachableCopy (TR/EN)",
+        "docs/watches/capability-matrix.md + WatchCapabilityMatrix.swift"
+      ],
+      "evidence": {
+        "ci_jobs": [
+          "Verify Quality Gates"
+        ],
+        "report_paths": [
+          "reports/verify-summary (local)",
+          "reports/*.log"
+        ],
+        "document_paths": [
+          "Mesh relay iddiası unsupported; direct HTTPS experimental",
+          "Wear OS ile ortak offline kopya (wear-policy referans)",
+          "6 senaryo matrisi dokümante; fiziksel doğrulama NOT_TESTED"
+        ],
+        "status_json_blockers": [
+          "B-04"
+        ]
+      }
+    },
+    {
+      "id": "ADIM-40",
+      "kind": "master_plan_step",
+      "title": "Çok atlamalı Android mesh v2",
+      "pass_criteria": "3 telefonlu doğrulanmış gerçek transfer; no infinite flood.",
+      "verification_status": "PARTIAL",
+      "tier": "P",
+      "tests": [
+        "3 fiziksel Android zinciri / link drop / OEM: NOT_TESTED",
+        "apps/android/mesh-v2: MeshV2RelayCoordinator, MeshForwardQueue, MeshRouteSelector, MeshPeerAckSemantics",
+        "packages/contracts-kotlin/meshv2: MeshRelayEngine JVM tests (vectors PASS)",
+        "packages/contracts/protocol-v2: mesh-relay-envelope-v2 schema + relay-engine cross-language vectors",
+        "pnpm -r build + pnpm test EXIT=0; contracts-kotlin ./gradlew test EXIT=0 (JDK 17)",
+        "scripts/mesh-sim-mutation.sh tam koşu: ERTELENDİ (sentinel test mevcut)",
+        "tests/chaos: multi-hop privacy + TTL + mutation sentinel PASS (simulated)",
+        "tools/mesh-simulator/relay-mesh.ts: MeshRelayEngine (@sosmesh/contracts) ile A→B→C"
+      ],
+      "evidence": {
+        "ci_jobs": [
+          "Verify Quality Gates"
+        ],
+        "report_paths": [
+          "reports/verify-summary (local)",
+          "reports/*.log"
+        ],
+        "document_paths": [
+          "feature-relay: RelayTransferHandler + RelayEnvelopeRegistrar protocolVersion=2 (messageId)",
+          "ADIM 34 (iOS↔Android) yok: iOS uyumu yalnız protocol-v2 sözleşme+vektör seviyesinde; native iOS ADIM 34'e bırakıldı"
+        ],
+        "status_json_blockers": [
+          "Fiziksel 3 telefon A→B→C doğrulaması yok",
+          "ANDROID_HOME yok: apps/android Gradle unit testleri bu ortamda koşulmadı (CI doğrular)"
+        ]
+      }
+    },
+    {
+      "id": "ADIM-41",
+      "kind": "master_plan_step",
+      "title": "Çok atlamalı iOS uyumluluk araştırması",
+      "pass_criteria": "Yalnız test edilen kombinasyonlar destek listesine girer.",
+      "verification_status": "PARTIAL",
+      "tier": "E",
+      "tests": [
+        "3 cihaz foreground/locked/force-quit fiziksel: NOT_TESTED",
+        "MeshRelayEngineCrossLanguageTests: relay-engine-cases.json PASS (Swift PM / CI)",
+        "SOSMeshCore/MeshRelayEngine.swift + MeshMultihopRelayCoordinator + MeshRelayFeatureFlags (default off)",
+        "apps/ios/README.md: arka plan/force-quit/7-24 repeater yok",
+        "docs/research/ios-multihop.md"
+      ],
+      "evidence": {
+        "ci_jobs": [
+          "Verify Quality Gates"
+        ],
+        "report_paths": [
+          "reports/verify-summary (local)",
+          "reports/*.log"
+        ],
+        "document_paths": [
+          "docs/research/ios-multihop.md",
+          "DEBUG MeshRelayEngineMutationTests: skip guard sentinel",
+          "Settings multihop toggle (experimental only)"
+        ],
+        "status_json_blockers": [
+          "Fiziksel multi-hop zincir kanıtı yok"
+        ]
+      }
+    },
+    {
+      "id": "ADIM-42",
+      "kind": "master_plan_step",
+      "title": "Gelişmiş radyo planlayıcı ve pil optimizasyonu",
+      "pass_criteria": "Rapor gerçek ölçüm sunar; pil sürüklenmesi belirsizse “ölçülemedi”.",
+      "verification_status": "PARTIAL",
+      "tier": "P",
+      "tests": [
+        "AdaptiveRadioPlanner (Kotlin + Swift) + packages/contracts/radio-planner/vectors/radio-planner-cases.json",
+        "AdaptiveRadioPlannerTest / AdaptiveRadioPlannerTests + internal AdaptiveRadioPlannerTesting mutation",
+        "MeshPlatformStateMachine ADIM 42 planlayıcı entegrasyonu; termal/rıza sinyalleri MeshPlatformSignalBridge",
+        "docs/performance/radio.md — fiziksel 1h radyo bütçesi ölçümü: ölçülemedi"
+      ],
+      "evidence": {
+        "ci_jobs": [
+          "Verify Quality Gates"
+        ],
+        "report_paths": [
+          "reports/verify-summary (local)",
+          "reports/*.log"
+        ],
+        "document_paths": [
+          "Yüksek güç rızası UI: Android SettingsRoute, iOS SettingsView"
+        ],
+        "status_json_blockers": [
+          "1 saat kontrollü radyo bütçesi fiziksel telefon ölçümü yok",
+          "ANDROID_HOME yok: apps/android Gradle unit testleri bu ortamda koşulmadı (CI doğrular)"
+        ]
+      }
+    },
+    {
+      "id": "ADIM-43",
+      "kind": "master_plan_step",
+      "title": "Güvenlik tehdit modeli ve bağımsız denetim",
+      "pass_criteria": "Critical risk = 0; high risk için onaylı remediated status.",
+      "verification_status": "PARTIAL",
+      "tier": "P",
+      "tests": [
+        "apps/api/test/security-adim43.spec.ts (CSRF, RBAC, rate limit 429, HTTP başlıkları)",
+        "docs/security/findings.csv (critical npm remediated; SEC-RADIO-SPOOF-001 açık)",
+        "docs/security/threat-model.md",
+        "docs/security/threat-model.md (STRIDE/TARA; bağımsız denetim NOT_TESTED)",
+        "merge origin/main (ADIM 42 radio planner); adversarial + verify.sh 24/24 yerel EXIT=0",
+        "packages/contracts-kotlin MeshRelayEngine.kt opaque size guard + production guard test",
+        "packages/contracts/src/protocol-v2/mesh-payload-limits.ts + schema maxLength 21848",
+        "packages/contracts/src/security/adversarial-security.test.ts (53 test, ≥30 fixture id, SEC-MESH-SIZE-001)",
+        "scripts/secret-scan.sh"
+      ],
+      "evidence": {
+        "ci_jobs": [
+          "Secret Scan"
+        ],
+        "report_paths": [
+          "reports/verify-summary (local)",
+          "reports/*.log"
+        ],
+        "document_paths": [
+          "pnpm audit critical=0 (next 15.5.28, vitest 3.2.6, maplibre-gl 6.4.1); high açık (nest transitive vb.)"
+        ],
+        "status_json_blockers": [
+          "Bağımsız insan güvenlik denetimi NOT_TESTED (SEC-IND-AUDIT-001)",
+          "pnpm audit high açık (SEC-DEP-NEST-001 vb.)",
+          "SEC-RADIO-SPOOF-001 fiziksel BLE lab yok",
+          "SEC-ADIM34-001 NOT_TESTED (çapraz cihaz)"
+        ]
+      }
+    },
+    {
+      "id": "ADIM-44",
+      "kind": "master_plan_step",
+      "title": "Veri mahremiyeti, rıza ve saklama",
+      "pass_criteria": "Her veri alanı için amaç, erişim, retention ve silme yolu belli.",
+      "verification_status": "PARTIAL",
+      "tier": "P",
+      "tests": [
+        "apps/api/src/privacy/* erase/export/retention + audit-redaction.util.ts",
+        "apps/api/test/privacy-adim44.spec.ts (RBAC, IDOR, CSRF, export audit redaction, erase cascade, retention purge, seed sentetik guard)",
+        "docs/adr/ADR-013-retention-and-erasure.md (RETENTION_* onay gerektirir; varsayılan süre yok)",
+        "docs/legal/privacy-policy-draft.md, docs/legal/kvkk-gdpr-legal-review-checklist.md (hukuki inceleme NOT_TESTED)",
+        "docs/privacy/data-map.md, docs/privacy/lawful-emergency-access.md",
+        "docs/ux/content-tr.json + content-en.json privacy.*; Android feature-sos/feature-relay consent strings"
+      ],
+      "evidence": {
+        "ci_jobs": [
+          "Verify Quality Gates"
+        ],
+        "report_paths": [
+          "reports/verify-summary (local)",
+          "reports/*.log"
+        ],
+        "document_paths": [
+          "docs/privacy/data-map.md, docs/privacy/lawful-emergency-access.md"
+        ],
+        "status_json_blockers": [
+          "Hukuki onay NOT_TESTED — tam uyumlu denmez"
+        ]
+      }
+    },
+    {
+      "id": "ADIM-45",
+      "kind": "master_plan_step",
+      "title": "Meta AI değerlendirme ve maliyet sınırı",
+      "pass_criteria": "Unknown bilgisi asla uydurulmuyor, model outage vaka ingest’i bloklamıyor.",
+      "verification_status": "PARTIAL",
+      "tier": "P",
+      "tests": [
+        "apps/api/src/ai/evals (113 sentetik fixture, mock eval-runner, operator correction capture)",
+        "apps/api/src/ai/schemas/safe-fallback.ts, deidentify-plaintext.ts, ai-metrics.ts, incident token budget",
+        "apps/api/test/ai-adim45.spec.ts, ai-worker.spec.ts ingest 200 when AI fails",
+        "docs/ai/model-card.md (gerçek vaka öncesi sağlayıcı onayı zorunlu)"
+      ],
+      "evidence": {
+        "ci_jobs": [
+          "Verify Quality Gates"
+        ],
+        "report_paths": [
+          "reports/verify-summary (local)",
+          "reports/*.log"
+        ],
+        "document_paths": [],
+        "status_json_blockers": [
+          "gerçek model doğruluğu: NOT_TESTED (CI mock sağlayıcı)",
+          "B-07 kullanıcı bütçe onayı — production spend cap tam GEÇTİ değil"
+        ]
+      }
+    },
+    {
+      "id": "ADIM-46",
+      "kind": "master_plan_step",
+      "title": "AI yardım planlama taslakları ve kaynak eşleştirme",
+      "pass_criteria": "Öneri güvenli şekilde reddedilebilir; otomatik fiziksel sevk yok.",
+      "verification_status": "PARTIAL",
+      "tier": "P",
+      "tests": [
+        "apps/api/src/recommendation (matching-engine, rationale guards, REST)",
+        "apps/api/test/recommendation-adim46.spec.ts",
+        "apps/web/features/assignment/AssignmentPreviewPanel.tsx",
+        "apps/web/features/case-list/CasesView.tsx harita önizleme",
+        "gerçek model / AI gerekçe canlı doğrulama: NOT_TESTED (varsayılan kapalı)",
+        "pnpm -r build EXIT=0; apps/api jest recommendation + matching-engine PASS"
+      ],
+      "evidence": {
+        "ci_jobs": [
+          "Verify Quality Gates"
+        ],
+        "report_paths": [
+          "reports/verify-summary (local)",
+          "reports/*.log"
+        ],
+        "document_paths": [
+          "Android SDK Gradle yerel: NOT_RUN (CI doğrular)"
+        ],
+        "status_json_blockers": []
+      }
+    },
+    {
+      "id": "ADIM-47",
+      "kind": "master_plan_step",
+      "title": "Performans, yük ve dayanıklılık",
+      "pass_criteria": "Ölçülen limitler yayınlanır; kapasiteyi kanıtsız “ölçeklenebilir” diye yazma.",
+      "verification_status": "PARTIAL",
+      "tier": "P",
+      "tests": [
+        "Android OutboxAdim47CapacityTest + Swift TransportOutboxTests 1k/TTL",
+        "apps/api/prisma/migrations/20261101220000_adim47_perf_indexes",
+        "apps/api/test/perf-adim47.spec.ts (EXPLAIN indexes, restart cursor, 429 backpressure, AI off)",
+        "docs/perf/perf-report.md",
+        "infra/monitoring/grafana/dashboard-sosmesh-perf.json",
+        "tests/load/ci-k6-smoke.sh",
+        "tests/load/k6 + ci-k6-smoke.sh (profile 100 CI; 1000/10000 ERTELENDİ manual)"
+      ],
+      "evidence": {
+        "ci_jobs": [
+          "Load smoke (k6 profile 100)"
+        ],
+        "report_paths": [
+          "reports/verify-summary (local)",
+          "reports/*.log"
+        ],
+        "document_paths": [
+          "docs/perf/perf-report.md"
+        ],
+        "status_json_blockers": [
+          "k6 profile 1000/10000: ERTELENDİ (CI runner/VM kapasitesi üretimi temsil etmez)",
+          "Grafana panelleri yalnızca şablon; metrik export ADIM 48 ile tamamlanacak"
+        ]
+      }
+    },
+    {
+      "id": "ADIM-48",
+      "kind": "master_plan_step",
+      "title": "Gözlemlenebilirlik, incident runbooks ve audit",
+      "pass_criteria": "Her kritik hata ölçülür; dashboard PII içermez.",
+      "verification_status": "PASS",
+      "tier": "P",
+      "tests": [
+        "Bağımsız denetim PR #58: pnpm -r build/test, verify.sh 24/24, mutation redaction test kırmızı kanıtı",
+        "apps/api/src/observability/* OTEL (varsayılan kapalı), /metrics Bearer METRICS_SCRAPE_AUTH, structured redacted events",
+        "apps/api/test/observability-adim48.spec.ts",
+        "apps/api/test/observability-adim48.spec.ts — log spy redaction, metrics auth, HTTP 500→alert, RBAC summary/audit, queue depth",
+        "docs/runbooks/*.md + web operator health/audit (RBAC)",
+        "infra/monitoring/prometheus/alerts.yml SosmeshAiWorkerStuck sosmesh_ai_worker_stuck_seconds ile hizalı"
+      ],
+      "evidence": {
+        "ci_jobs": [
+          "Verify Quality Gates"
+        ],
+        "report_paths": [
+          "reports/verify-summary (local)",
+          "reports/*.log"
+        ],
+        "document_paths": [],
+        "status_json_blockers": []
+      }
+    },
+    {
+      "id": "ADIM-49",
+      "kind": "master_plan_step",
+      "title": "Yedekleme, veri kurtarma ve güvenli güncelleme",
+      "pass_criteria": "Yedekten geri dönüş en az bir defa başarıyla kanıtlı.",
+      "verification_status": "PARTIAL",
+      "tier": "P",
+      "tests": [
+        "apps/api/src/disaster/disaster-readonly.middleware.ts (default off unless SOSMESH_DISASTER_READ_ONLY_MODE=true)",
+        "apps/api/test/backup-adim49.spec.ts",
+        "apps/api/test/backup-adim49.spec.ts — Jest pg_dump/pg_restore on embedded PG16; CI drill log (reports/backup-restore-drill.log artifact) pending on green verify",
+        "docs/runbooks/restore.md — RPO/RTO from measured drill log only",
+        "infra/backup/* WAL archive + base-backup + rotation (AES-256; key via SOSMESH_BACKUP_ENCRYPTION_KEY only)",
+        "scripts/backup-restore-drill.sh",
+        "scripts/backup-restore-drill.sh + apps/api/test/helpers/backup-restore-drill.ts — pg_dump -Fc → AES encrypt → DROP source schema → pg_restore + row/checksum verify",
+        "scripts/ci/bootstrap-pgclient.sh",
+        "scripts/ci/bootstrap-pgclient.sh — sudo-less pg_dump/pg_restore (Ubuntu 16 / PGDG 17+ by server major)"
+      ],
+      "evidence": {
+        "ci_jobs": [
+          "Verify Quality Gates"
+        ],
+        "report_paths": [
+          "reports/verify-summary (local)",
+          "reports/*.log"
+        ],
+        "document_paths": [],
+        "status_json_blockers": [
+          "ADIM 49 PASS blocked until CI verify produces backup-restore-drill.log with PASS and measured RPO/RTO (pg_dump major must be >= server major)"
+        ]
+      }
+    },
+    {
+      "id": "ADIM-50",
+      "kind": "master_plan_step",
+      "title": "Web güvenlik, erişilebilirlik ve responsive kapanış",
+      "pass_criteria": "Kritik akışlarda blocker düzeyi a11y defect = 0.",
+      "verification_status": "PARTIAL",
+      "tier": "P",
+      "tests": [
+        "Bağımsız denetim: merge origin/main 97d0eee; ADIM 43 zinciri main'de",
+        "MobileNavDrawer dialog/aria-modal; mobil menü E2E 390px",
+        "apps/web/lib/login-route-production-guard.test.ts (production mock kapalı)",
+        "apps/web/lib/operator-health-access.test.ts",
+        "docs/ux/a11y-report.md (manuel ekran okuyucu: NOT_TESTED)",
+        "tests/ux/adim50-cross-browser.spec.js + firefox/webkit Playwright projeleri",
+        "tests/ux/adim50-web-closure.spec.js (axe WCAG2.2 AA 7 akış, klavye, 320-1920, zoom 200%, hydration, slow 3G, offline banner, RBAC UI + Nest 403 guard)",
+        "tests/ux/helpers/web-e2e.js",
+        "tests/ux/operator-responsive.spec.js"
+      ],
+      "evidence": {
+        "ci_jobs": [
+          "Verify Quality Gates"
+        ],
+        "report_paths": [
+          "reports/verify-summary (local)",
+          "reports/*.log"
+        ],
+        "document_paths": [
+          "CaseDetailView aria-labelledby; OperatorShell skip-target tabIndex; mobil overflow CSS"
+        ],
+        "status_json_blockers": [
+          "Manuel NVDA/JAWS/VoiceOver NOT_TESTED",
+          "Yerel VM: JDK 17 yok — contracts-kotlin Gradle CI doğrular"
+        ]
+      }
+    },
+    {
+      "id": "ADIM-51",
+      "kind": "master_plan_step",
+      "title": "Android gerçek cihaz yayın kapısı",
+      "pass_criteria": "APK gerçek cihazda M0+M1 akışını çalıştırır; store acceptance ayrı gate.",
+      "verification_status": "PARTIAL",
+      "tier": "P",
+      "tests": [
+        "Gerçek cihaz BLE/Doze/24h smoke + Play upload: NOT_TESTED / BLOCKED_APPROVAL",
+        "ReleaseBuildConfigGuardTest + android-release-buildconfig-scan.sh",
+        "apps/android/app/build.gradle.kts: demo/staging/prod flavors, R8 release, env/property signing, releaseProdArtifacts",
+        "apps/android/app/proguard-rules.pro + mapping prodRelease path (docs/release/android.md)",
+        "apps/android/app/src/testProd/kotlin/com/sosmesh/android/ProdFlavorBuildConfigTest.kt",
+        "docs/release/android.md, play-console-declarations-draft.md, android-device-smoke-template.md",
+        "scripts/android-device-release-smoke-adim51.sh → NOT_TESTED without adb/2 devices"
+      ],
+      "evidence": {
+        "ci_jobs": [
+          "Android Gradle Build"
+        ],
+        "report_paths": [
+          "reports/verify-summary (local)",
+          "reports/*.log"
+        ],
+        "document_paths": [
+          "AppReleaseModule: BuildConfig INGEST_BASE_URL → RelayIngestConfig (no embedded secrets)",
+          "RedactedLocalCrashReporter + CrashLogRedactor (local files only, no external SDK)",
+          "docs/release/android.md, play-console-declarations-draft.md, android-device-smoke-template.md",
+          "ANDROID_HOME yok: Gradle release assemble bu VM'de koşulmadı (CI android-gradle job doğrular)"
+        ],
+        "status_json_blockers": [
+          "Fiziksel 2 cihaz smoke kanıtı NOT_TESTED",
+          "Play Console track yükleme BLOCKED_APPROVAL",
+          "Production ingest URL + receipt key dağıtımı BLOCKED_APPROVAL"
+        ]
+      }
+    },
+    {
+      "id": "ADIM-52",
+      "kind": "master_plan_step",
+      "title": "iOS / watchOS gerçek cihaz ve TestFlight kapısı",
+      "pass_criteria": "iOS ve watchOS gerçek cihaz iş akışı kanıtlı; mağaza yayınına otomatik geçilmez.",
+      "verification_status": "PARTIAL",
+      "tier": "P",
+      "tests": [
+        "Fiziksel iPhone/Watch + TestFlight kurulum: NOT_TESTED",
+        "apps/ios/Config/Release-{Demo,Staging,Prod}.xcconfig",
+        "apps/ios/SOSMesh/PrivacyInfo.xcprivacy + watchOS PrivacyInfo manifests",
+        "apps/ios/SOSMesh/tr|en.lproj/InfoPlist.strings",
+        "apps/ios/scripts/archive-export.sh + ExportOptions.template.plist (env-only signing)",
+        "apps/ios/scripts/check-release-adim52.sh + scripts/test-check-ios-release-adim52.sh (verify 26–27/27)",
+        "apps/ios/scripts/check-xcodeproj-golden.sh PASS (regenerated golden)",
+        "docs/release/evidence/ios-field-test-record-template.csv (result=NOT_TESTED)",
+        "docs/release/ios.md (test plan, BLOCKED_APPROVAL TestFlight, TR/EN metadata)",
+        "xcodebuild archive: BLOCKED macOS/Linux agent (script hazır)"
+      ],
+      "evidence": {
+        "ci_jobs": [
+          "Verify Quality Gates"
+        ],
+        "report_paths": [
+          "reports/verify-summary (local)",
+          "reports/*.log"
+        ],
+        "document_paths": [],
+        "status_json_blockers": [
+          "TestFlight upload BLOCKED_APPROVAL",
+          "Apple Developer imzalama kullanıcı Mac/cihaz aşaması",
+          "Fiziksel BLE/Watch/VoiceOver kanıtı yok"
+        ]
+      }
+    },
+    {
+      "id": "ADIM-53",
+      "kind": "master_plan_step",
+      "title": "Wear OS gerçek cihaz ve Play release kapısı",
+      "pass_criteria": "En az bir gerçek saatle fiziksel uçtan uca kanıt var.",
+      "verification_status": "PARTIAL",
+      "tier": "P",
+      "tests": [
+        "Play upload / imzalı artifact: BLOCKED_APPROVAL (B-06)",
+        "Tile/complication: yok (bilinçli; wearos.md)",
+        "apps/android/wear/build.gradle.kts — release AAB, imza env: SOSMESH_WEAR_RELEASE_*",
+        "docs/handover/evidence/adim53/trace-evidence-template.md (NOT_TESTED)",
+        "docs/release/wearos.md (Play metadata/gizlilik/kademeli yayın BLOCKED_APPROVAL)",
+        "scripts/wear-release-bundle.sh, scripts/wear-unit-tests.sh"
+      ],
+      "evidence": {
+        "ci_jobs": [
+          "Verify Quality Gates"
+        ],
+        "report_paths": [
+          "reports/verify-summary (local)",
+          "reports/*.log"
+        ],
+        "document_paths": [
+          "WearManifestReleaseGateTest — standalone=false, minimal izinler",
+          "WearAmbientUiPolicy + AmbientModeSupport; WearPowerRetryPolicy (pil tasarrufu)",
+          "WearRootScreen Robolectric: round, fontScale 2, ambient",
+          "WearSosViewModelPhoneUnreachableTest — «Telefona ulaşılamıyor», sahte gönderildi yok",
+          "Gerçek saat click→phone outbox→gateway: NOT_TESTED (B-04, GEÇTİ ölçütü)"
+        ],
+        "status_json_blockers": [
+          "B-04",
+          "B-06",
+          "Fiziksel Wear uçtan uca kanıt yok — şablon doldurulmadı"
+        ]
+      }
+    },
+    {
+      "id": "ADIM-54",
+      "kind": "master_plan_step",
+      "title": "Backend deployment ve environment yönetimi",
+      "pass_criteria": "Staging çalışır; production yalnızca kullanıcı onayıyla.",
+      "verification_status": "PARTIAL",
+      "tier": "P",
+      "tests": [
+        ".github/workflows/deploy-container-smoke.yml (ubuntu-latest, fork guard)",
+        "Prod deploy/DNS/cert/public push: BLOCKED_APPROVAL",
+        "Staging deploy/smoke/rollback/TLS: NOT_TESTED",
+        "apps/api/src/worker-main.ts + apps/web/app/health/route.ts",
+        "docs/handover/evidence/adim54/*.template.txt",
+        "docs/runbooks/deploy.md + deploy-workflow-draft.md",
+        "infra/deploy/compose/docker-compose.staging.yml",
+        "infra/deploy/docker (api, web, worker, migrate multi-stage non-root)",
+        "infra/deploy/nginx + ingress + k8s migration templates (BLOCKED_APPROVAL)"
+      ],
+      "evidence": {
+        "ci_jobs": [
+          "Verify Quality Gates"
+        ],
+        "report_paths": [
+          "reports/verify-summary (local)",
+          "reports/*.log"
+        ],
+        "document_paths": [
+          "docs/runbooks/deploy.md + deploy-workflow-draft.md",
+          ".env.example secret names only"
+        ],
+        "status_json_blockers": [
+          "Gerçek staging ortamı ve secret manager wiring yok",
+          "Production environment protection + kullanıcı onayı bekleniyor"
+        ]
+      }
+    },
+    {
+      "id": "ADIM-55",
+      "kind": "master_plan_step",
+      "title": "Pilot kullanıcı testi ve saha güvenilirliği",
+      "pass_criteria": "Her major platform için physical pilot evidence; misleading delivery text = 0.",
+      "verification_status": "NOT_STARTED",
+      "tier": "P",
+      "tests": [],
+      "evidence": {
+        "ci_jobs": [
+          "Verify Quality Gates"
+        ],
+        "report_paths": [
+          "reports/verify-summary (local)",
+          "reports/*.log"
+        ],
+        "document_paths": [],
+        "status_json_blockers": []
+      }
+    },
+    {
+      "id": "ADIM-56",
+      "kind": "master_plan_step",
+      "title": "Hata düzeltme, regresyon ve sürüm dondurma",
+      "pass_criteria": "BLOCKED/NOT_TESTED hiçbir required kalemde PASS gösterilmiyor.",
+      "verification_status": "PARTIAL",
+      "tier": "P",
+      "tests": [
+        "CHANGELOG.md",
+        "docs/release/qa-summary.json",
+        "docs/release/release-readiness.md",
+        "docs/release/traceability.json",
+        "docs/release/traceability.md",
+        "scripts/release/checksums.sh",
+        "scripts/release/generate-qa-summary.mjs",
+        "scripts/release/generate-traceability.mjs",
+        "scripts/release/sbom.sh",
+        "scripts/verify.sh (release-sbom, release-checksums, traceability/qa freshness)",
+        "tests/chaos/demo-mode-production-separation.test.ts"
+      ],
+      "evidence": {
+        "ci_jobs": [
+          "Verify Quality Gates"
+        ],
+        "report_paths": [
+          "reports/verify-summary (local)",
+          "reports/*.log"
+        ],
+        "document_paths": [
+          "docs/release/traceability.md",
+          "docs/release/release-readiness.md",
+          "CHANGELOG.md"
+        ],
+        "status_json_blockers": [
+          "Fiziksel cihaz M0/M1 kanıtı NOT_TESTED (B-02, ADIM 24)",
+          "Apple imzalama / TestFlight BLOCKED_APPROVAL (B-06)",
+          "Mağaza incelemesi BLOCKED_APPROVAL",
+          "Hukuki inceleme NOT_TESTED",
+          "Staging/prod deploy BLOCKED_APPROVAL",
+          "METRICS_SCRAPE_AUTH prod secret BLOCKED_APPROVAL",
+          "v1.0.0-rc.1 git tag + imzalı checksum — kullanıcı onayı gerekir"
+        ]
+      }
+    },
+    {
+      "id": "ADIM-57",
+      "kind": "master_plan_step",
+      "title": "Kullanıcı belgeleri ve açık destek sınırları",
+      "pass_criteria": "Kullanıcı bağlantı düzeyini ve başarısız iletimi anlıyor.",
+      "verification_status": "PARTIAL",
+      "tier": "P",
+      "tests": [
+        "SECURITY.md",
+        "apps/web/app/(operator)/operator/(panel)/help/page.tsx",
+        "apps/web/features/help/help-content.test.ts",
+        "apps/web/features/help/ios-localizable-parity.test.ts",
+        "docs/legal/kvkk-gdpr-legal-review-checklist.md (hukuki inceleme NOT_TESTED)",
+        "docs/legal/privacy-review-checklist.md (hukuki inceleme BLOCKED)",
+        "docs/tests/first-time-user-guided-tr.md",
+        "docs/user/first-time-user-script.md",
+        "docs/user/kullanici-rehberi-tr.md",
+        "docs/user/mobile-help-strings.md",
+        "docs/user/platform-destek-matrisi.md",
+        "docs/user/user-guide-en.md",
+        "scripts/check-ios-localizable-parity.js",
+        "tests/ux/operator-help.spec.js"
+      ],
+      "evidence": {
+        "ci_jobs": [
+          "Verify Quality Gates"
+        ],
+        "report_paths": [
+          "reports/verify-summary (local)",
+          "reports/*.log"
+        ],
+        "document_paths": [
+          "docs/user/kullanici-rehberi-tr.md",
+          "docs/user/user-guide-en.md",
+          "docs/user/platform-destek-matrisi.md",
+          "docs/user/first-time-user-script.md",
+          "docs/user/mobile-help-strings.md",
+          "SECURITY.md",
+          "docs/tests/first-time-user-guided-tr.md"
+        ],
+        "status_json_blockers": [
+          "First-time user fiziksel senaryo NOT_TESTED",
+          "Hukuki gizlilik incelemesi BLOCKED (privacy-review-checklist)",
+          "Destek iletişimi DESTEK_ILETISIM_TBD / BLOCKED_APPROVAL",
+          "Mobil tam ekran yardım UI NOT_TESTED (MacBook fazı)",
+          "Mağaza/prod deploy BLOCKED_APPROVAL"
+        ]
+      }
+    },
+    {
+      "id": "ADIM-58",
+      "kind": "master_plan_step",
+      "title": "Operasyonel handover ve tamamlanma raporu",
+      "pass_criteria": "\"Tamamlandı\" yalnızca tüm gerekli kapılar gerçek kanıtla PASS olduğunda denebilir.",
+      "verification_status": "NOT_STARTED",
+      "tier": "P",
+      "tests": [],
+      "evidence": {
+        "ci_jobs": [
+          "Verify Quality Gates"
+        ],
+        "report_paths": [
+          "reports/verify-summary (local)",
+          "reports/*.log"
+        ],
+        "document_paths": [],
+        "status_json_blockers": []
+      }
+    },
+    {
+      "id": "M0-U1-afetzede-offline-sos-olu-turur",
+      "kind": "m0_acceptance_scenario",
+      "title": "Afetzede offline SOS oluşturur",
+      "feature_tags": [
+        "@U1",
+        "@device-required"
+      ],
+      "pass_criteria": "docs/tests/m0-acceptance.feature senaryosu",
+      "verification_status": "NOT_TESTED",
+      "tests": [
+        "apps/android/feature-sos/src/test",
+        "docs/tests/m0-acceptance.feature"
+      ],
+      "evidence": {
+        "ci_jobs": [],
+        "report_paths": [
+          "docs/tests/m0-physical-report.md",
+          "evidence/m0/ (NOT_TESTED)"
+        ],
+        "document_paths": [
+          "docs/tests/m0-acceptance.feature"
+        ],
+        "status_json_blockers": [
+          "ADIM 24 fiziksel M0 NOT_TESTED (B-02)"
+        ]
+      }
+    },
+    {
+      "id": "M0-U1-konum-izni-olmadan-sos-olu-turma",
+      "kind": "m0_acceptance_scenario",
+      "title": "Konum izni olmadan SOS oluşturma",
+      "feature_tags": [
+        "@U1",
+        "@device-required",
+        "@negative"
+      ],
+      "pass_criteria": "docs/tests/m0-acceptance.feature senaryosu",
+      "verification_status": "NOT_TESTED",
+      "tests": [
+        "apps/android/feature-sos/src/test",
+        "docs/tests/m0-acceptance.feature"
+      ],
+      "evidence": {
+        "ci_jobs": [],
+        "report_paths": [
+          "docs/tests/m0-physical-report.md",
+          "evidence/m0/ (NOT_TESTED)"
+        ],
+        "document_paths": [
+          "docs/tests/m0-acceptance.feature"
+        ],
+        "status_json_blockers": [
+          "ADIM 24 fiziksel M0 NOT_TESTED (B-02)"
+        ]
+      }
+    },
+    {
+      "id": "M0-U2-g-n-ll-r-le-ble-ile-sos-al-r",
+      "kind": "m0_acceptance_scenario",
+      "title": "Gönüllü röle BLE ile SOS alır",
+      "feature_tags": [
+        "@U2",
+        "@device-required"
+      ],
+      "pass_criteria": "docs/tests/m0-acceptance.feature senaryosu",
+      "verification_status": "NOT_TESTED",
+      "tests": [
+        "apps/android/core/protocol/src/test",
+        "apps/android/feature-relay/src/test",
+        "docs/tests/android-transfer.md"
+      ],
+      "evidence": {
+        "ci_jobs": [],
+        "report_paths": [
+          "docs/tests/m0-physical-report.md",
+          "evidence/m0/ (NOT_TESTED)"
+        ],
+        "document_paths": [
+          "docs/tests/m0-acceptance.feature"
+        ],
+        "status_json_blockers": [
+          "ADIM 24 fiziksel M0 NOT_TESTED (B-02)"
+        ]
+      }
+    },
+    {
+      "id": "M0-U2-r-le-ifreli-payload-g-rmez",
+      "kind": "m0_acceptance_scenario",
+      "title": "Röle şifreli payload'ı görmez",
+      "feature_tags": [
+        "@U2",
+        "@device-required"
+      ],
+      "pass_criteria": "docs/tests/m0-acceptance.feature senaryosu",
+      "verification_status": "NOT_TESTED",
+      "tests": [
+        "apps/android/core/protocol/src/test",
+        "apps/android/feature-relay/src/test",
+        "docs/tests/android-transfer.md"
+      ],
+      "evidence": {
+        "ci_jobs": [],
+        "report_paths": [
+          "docs/tests/m0-physical-report.md",
+          "evidence/m0/ (NOT_TESTED)"
+        ],
+        "document_paths": [
+          "docs/tests/m0-acceptance.feature"
+        ],
+        "status_json_blockers": [
+          "ADIM 24 fiziksel M0 NOT_TESTED (B-02)"
+        ]
+      }
+    },
+    {
+      "id": "M0-U2-bluetooth-kapal-yken-r-le-al-maz",
+      "kind": "m0_acceptance_scenario",
+      "title": "Bluetooth kapalıyken röle çalışmaz",
+      "feature_tags": [
+        "@U2",
+        "@device-required",
+        "@negative"
+      ],
+      "pass_criteria": "docs/tests/m0-acceptance.feature senaryosu",
+      "verification_status": "NOT_TESTED",
+      "tests": [
+        "apps/android/core/protocol/src/test",
+        "apps/android/feature-relay/src/test",
+        "docs/tests/android-transfer.md"
+      ],
+      "evidence": {
+        "ci_jobs": [],
+        "report_paths": [
+          "docs/tests/m0-physical-report.md",
+          "evidence/m0/ (NOT_TESTED)"
+        ],
+        "document_paths": [
+          "docs/tests/m0-acceptance.feature"
+        ],
+        "status_json_blockers": [
+          "ADIM 24 fiziksel M0 NOT_TESTED (B-02)"
+        ]
+      }
+    },
+    {
+      "id": "M0-U2-r-le-internete-ula-nca-sunucuya-upload-yapar",
+      "kind": "m0_acceptance_scenario",
+      "title": "Röle internete ulaşınca sunucuya upload yapar",
+      "feature_tags": [
+        "@U2",
+        "@device-required"
+      ],
+      "pass_criteria": "docs/tests/m0-acceptance.feature senaryosu",
+      "verification_status": "NOT_TESTED",
+      "tests": [
+        "apps/android/core/protocol/src/test",
+        "apps/android/feature-relay/src/test",
+        "docs/tests/android-transfer.md"
+      ],
+      "evidence": {
+        "ci_jobs": [],
+        "report_paths": [
+          "docs/tests/m0-physical-report.md",
+          "evidence/m0/ (NOT_TESTED)"
+        ],
+        "document_paths": [
+          "docs/tests/m0-acceptance.feature"
+        ],
+        "status_json_blockers": [
+          "ADIM 24 fiziksel M0 NOT_TESTED (B-02)"
+        ]
+      }
+    },
+    {
+      "id": "M0-M0-i-ki-android-ile-m0-u-tan-uca-ak",
+      "kind": "m0_acceptance_scenario",
+      "title": "İki Android ile M0 uçtan uca akış",
+      "feature_tags": [
+        "@M0",
+        "@device-required"
+      ],
+      "pass_criteria": "docs/tests/m0-acceptance.feature senaryosu",
+      "verification_status": "NOT_TESTED",
+      "tests": [
+        "docs/tests/m0-physical-report.md",
+        "tests/chaos/cross-platform-ack-gate.test.ts"
+      ],
+      "evidence": {
+        "ci_jobs": [],
+        "report_paths": [
+          "docs/tests/m0-physical-report.md",
+          "evidence/m0/ (NOT_TESTED)"
+        ],
+        "document_paths": [
+          "docs/tests/m0-acceptance.feature"
+        ],
+        "status_json_blockers": [
+          "ADIM 24 fiziksel M0 NOT_TESTED (B-02)"
+        ]
+      }
+    },
+    {
+      "id": "M0-M0-duplicate-paket-tek-vaka-olu-turur-idempotency",
+      "kind": "m0_acceptance_scenario",
+      "title": "Duplicate paket tek vaka oluşturur (idempotency)",
+      "feature_tags": [
+        "@M0",
+        "@negative"
+      ],
+      "pass_criteria": "docs/tests/m0-acceptance.feature senaryosu",
+      "verification_status": "PARTIAL",
+      "tests": [
+        "docs/tests/m0-physical-report.md",
+        "tests/chaos/cross-platform-ack-gate.test.ts"
+      ],
+      "evidence": {
+        "ci_jobs": [
+          "Verify Quality Gates"
+        ],
+        "report_paths": [
+          "docs/tests/traceability.md",
+          "reports/playwright-ux.log"
+        ],
+        "document_paths": [
+          "docs/tests/m0-acceptance.feature"
+        ],
+        "status_json_blockers": []
+      }
+    },
+    {
+      "id": "M0-M0-offline-yolda-meta-api-a-r-s-yap-lmaz",
+      "kind": "m0_acceptance_scenario",
+      "title": "Offline yolda Meta API çağrısı yapılmaz",
+      "feature_tags": [
+        "@M0",
+        "@negative"
+      ],
+      "pass_criteria": "docs/tests/m0-acceptance.feature senaryosu",
+      "verification_status": "PARTIAL",
+      "tests": [
+        "docs/tests/m0-physical-report.md",
+        "tests/chaos/cross-platform-ack-gate.test.ts"
+      ],
+      "evidence": {
+        "ci_jobs": [
+          "Verify Quality Gates"
+        ],
+        "report_paths": [
+          "docs/tests/traceability.md",
+          "reports/playwright-ux.log"
+        ],
+        "document_paths": [
+          "docs/tests/m0-acceptance.feature"
+        ],
+        "status_json_blockers": []
+      }
+    },
+    {
+      "id": "M0-U3-operat-r-panelde-vaka-g-r-nt-ler",
+      "kind": "m0_acceptance_scenario",
+      "title": "Operatör panelde vaka görüntüler",
+      "feature_tags": [
+        "@U3"
+      ],
+      "pass_criteria": "docs/tests/m0-acceptance.feature senaryosu",
+      "verification_status": "PARTIAL",
+      "tests": [
+        "apps/api/test/operator-case-detail.spec.ts",
+        "apps/web/features/cases",
+        "tests/ux/operator-panel.spec.js"
+      ],
+      "evidence": {
+        "ci_jobs": [
+          "Verify Quality Gates"
+        ],
+        "report_paths": [
+          "docs/tests/traceability.md",
+          "reports/playwright-ux.log"
+        ],
+        "document_paths": [
+          "docs/tests/m0-acceptance.feature"
+        ],
+        "status_json_blockers": []
+      }
+    },
+    {
+      "id": "M0-U3-yetkisiz-rol-vaka-g-remez",
+      "kind": "m0_acceptance_scenario",
+      "title": "Yetkisiz rol vaka göremez",
+      "feature_tags": [
+        "@U3",
+        "@negative"
+      ],
+      "pass_criteria": "docs/tests/m0-acceptance.feature senaryosu",
+      "verification_status": "PARTIAL",
+      "tests": [
+        "apps/api/test/operator-case-detail.spec.ts",
+        "apps/web/features/cases",
+        "tests/ux/operator-panel.spec.js"
+      ],
+      "evidence": {
+        "ci_jobs": [
+          "Verify Quality Gates"
+        ],
+        "report_paths": [
+          "docs/tests/traceability.md",
+          "reports/playwright-ux.log"
+        ],
+        "document_paths": [
+          "docs/tests/m0-acceptance.feature"
+        ],
+        "status_json_blockers": []
+      }
+    },
+    {
+      "id": "M0-U3-meta-ai-sos-u-s-n-fland-r-r-yaln-zca-destekleyic",
+      "kind": "m0_acceptance_scenario",
+      "title": "Meta AI SOS'u sınıflandırır (yalnızca destekleyici öneri)",
+      "feature_tags": [
+        "@U3",
+        "@ai"
+      ],
+      "pass_criteria": "docs/tests/m0-acceptance.feature senaryosu",
+      "verification_status": "PARTIAL",
+      "tests": [
+        "apps/api/test/operator-case-detail.spec.ts",
+        "apps/web/features/cases",
+        "tests/ux/operator-panel.spec.js"
+      ],
+      "evidence": {
+        "ci_jobs": [
+          "Verify Quality Gates"
+        ],
+        "report_paths": [
+          "docs/tests/traceability.md",
+          "reports/playwright-ux.log"
+        ],
+        "document_paths": [
+          "docs/tests/m0-acceptance.feature"
+        ],
+        "status_json_blockers": []
+      }
+    },
+    {
+      "id": "M0-U3-meta-api-anahtar-yoksa-ai-ad-m-atlan-r",
+      "kind": "m0_acceptance_scenario",
+      "title": "Meta API anahtarı yoksa AI adımı atlanır",
+      "feature_tags": [
+        "@U3",
+        "@ai",
+        "@negative"
+      ],
+      "pass_criteria": "docs/tests/m0-acceptance.feature senaryosu",
+      "verification_status": "PARTIAL",
+      "tests": [
+        "apps/api/test/operator-case-detail.spec.ts",
+        "apps/web/features/cases",
+        "tests/ux/operator-panel.spec.js"
+      ],
+      "evidence": {
+        "ci_jobs": [
+          "Verify Quality Gates"
+        ],
+        "report_paths": [
+          "docs/tests/traceability.md",
+          "reports/playwright-ux.log"
+        ],
+        "document_paths": [
+          "docs/tests/m0-acceptance.feature"
+        ],
+        "status_json_blockers": []
+      }
+    },
+    {
+      "id": "M0-U3-meta-ai-timeout-veya-5xx-hatas",
+      "kind": "m0_acceptance_scenario",
+      "title": "Meta AI timeout veya 5xx hatası",
+      "feature_tags": [
+        "@U3",
+        "@ai",
+        "@negative"
+      ],
+      "pass_criteria": "docs/tests/m0-acceptance.feature senaryosu",
+      "verification_status": "PARTIAL",
+      "tests": [
+        "apps/api/test/operator-case-detail.spec.ts",
+        "apps/web/features/cases",
+        "tests/ux/operator-panel.spec.js"
+      ],
+      "evidence": {
+        "ci_jobs": [
+          "Verify Quality Gates"
+        ],
+        "report_paths": [
+          "docs/tests/traceability.md",
+          "reports/playwright-ux.log"
+        ],
+        "document_paths": [
+          "docs/tests/m0-acceptance.feature"
+        ],
+        "status_json_blockers": []
+      }
+    },
+    {
+      "id": "M0-U3-ai-hal-sinasyon-a-k-a-s-ylenmeyeni-uydurma",
+      "kind": "m0_acceptance_scenario",
+      "title": "AI halüsinasyon — açıkça söylenmeyeni uydurma",
+      "feature_tags": [
+        "@U3",
+        "@ai",
+        "@negative"
+      ],
+      "pass_criteria": "docs/tests/m0-acceptance.feature senaryosu",
+      "verification_status": "PARTIAL",
+      "tests": [
+        "apps/api/test/operator-case-detail.spec.ts",
+        "apps/web/features/cases",
+        "tests/ux/operator-panel.spec.js"
+      ],
+      "evidence": {
+        "ci_jobs": [
+          "Verify Quality Gates"
+        ],
+        "report_paths": [
+          "docs/tests/traceability.md",
+          "reports/playwright-ux.log"
+        ],
+        "document_paths": [
+          "docs/tests/m0-acceptance.feature"
+        ],
+        "status_json_blockers": []
+      }
+    },
+    {
+      "id": "M0-U4-saat-watch-offline-sos-u-e-le-mi-telefona-aktar-",
+      "kind": "m0_acceptance_scenario",
+      "title": "Saat (watch) offline SOS'u eşleşmiş telefona aktarır",
+      "feature_tags": [
+        "@U4",
+        "@post-m0"
+      ],
+      "pass_criteria": "docs/tests/m0-acceptance.feature senaryosu",
+      "verification_status": "NOT_TESTED",
+      "tests": [
+        "apps/android/wear",
+        "docs/tests/watchos-matrix.md"
+      ],
+      "evidence": {
+        "ci_jobs": [
+          "Verify Quality Gates"
+        ],
+        "report_paths": [
+          "docs/tests/traceability.md",
+          "reports/playwright-ux.log"
+        ],
+        "document_paths": [
+          "docs/tests/m0-acceptance.feature"
+        ],
+        "status_json_blockers": []
+      }
+    },
+    {
+      "id": "M0-U4-telefon-eri-ilemezken-saat-durumu-do-ru-g-sterir",
+      "kind": "m0_acceptance_scenario",
+      "title": "Telefon erişilemezken saat durumu doğru gösterir",
+      "feature_tags": [
+        "@U4",
+        "@post-m0",
+        "@negative"
+      ],
+      "pass_criteria": "docs/tests/m0-acceptance.feature senaryosu",
+      "verification_status": "NOT_TESTED",
+      "tests": [
+        "apps/android/wear",
+        "docs/tests/watchos-matrix.md"
+      ],
+      "evidence": {
+        "ci_jobs": [
+          "Verify Quality Gates"
+        ],
+        "report_paths": [
+          "docs/tests/traceability.md",
+          "reports/playwright-ux.log"
+        ],
+        "document_paths": [
+          "docs/tests/m0-acceptance.feature"
+        ],
+        "status_json_blockers": []
+      }
+    },
+    {
+      "id": "M0-U4-saat-ba-ms-z-mesh-r-lesi-de-ildir",
+      "kind": "m0_acceptance_scenario",
+      "title": "Saat bağımsız mesh rölesi değildir",
+      "feature_tags": [
+        "@U4",
+        "@post-m0",
+        "@negative"
+      ],
+      "pass_criteria": "docs/tests/m0-acceptance.feature senaryosu",
+      "verification_status": "NOT_TESTED",
+      "tests": [
+        "apps/android/wear",
+        "docs/tests/watchos-matrix.md"
+      ],
+      "evidence": {
+        "ci_jobs": [
+          "Verify Quality Gates"
+        ],
+        "report_paths": [
+          "docs/tests/traceability.md",
+          "reports/playwright-ux.log"
+        ],
+        "document_paths": [
+          "docs/tests/m0-acceptance.feature"
+        ],
+        "status_json_blockers": []
+      }
+    },
+    {
+      "id": "M0-U5-i-zin-reddi-ak",
+      "kind": "m0_acceptance_scenario",
+      "title": "İzin reddi akışı",
+      "feature_tags": [
+        "@U5",
+        "@device-required",
+        "@negative"
+      ],
+      "pass_criteria": "docs/tests/m0-acceptance.feature senaryosu",
+      "verification_status": "NOT_TESTED",
+      "tests": [
+        "scripts/ux-forbidden-copy.js",
+        "tests/chaos/ux-forbidden-simulation.test.ts"
+      ],
+      "evidence": {
+        "ci_jobs": [],
+        "report_paths": [
+          "docs/tests/m0-physical-report.md",
+          "evidence/m0/ (NOT_TESTED)"
+        ],
+        "document_paths": [
+          "docs/tests/m0-acceptance.feature"
+        ],
+        "status_json_blockers": [
+          "ADIM 24 fiziksel M0 NOT_TESTED (B-02)"
+        ]
+      }
+    },
+    {
+      "id": "M0-U5-api-429-rate-limit",
+      "kind": "m0_acceptance_scenario",
+      "title": "API 429 rate limit",
+      "feature_tags": [
+        "@U5",
+        "@negative"
+      ],
+      "pass_criteria": "docs/tests/m0-acceptance.feature senaryosu",
+      "verification_status": "PARTIAL",
+      "tests": [
+        "scripts/ux-forbidden-copy.js",
+        "tests/chaos/ux-forbidden-simulation.test.ts"
+      ],
+      "evidence": {
+        "ci_jobs": [
+          "Verify Quality Gates"
+        ],
+        "report_paths": [
+          "docs/tests/traceability.md",
+          "reports/playwright-ux.log"
+        ],
+        "document_paths": [
+          "docs/tests/m0-acceptance.feature"
+        ],
+        "status_json_blockers": []
+      }
+    },
+    {
+      "id": "M0-U5-api-500-internal-server-error",
+      "kind": "m0_acceptance_scenario",
+      "title": "API 500 Internal Server Error",
+      "feature_tags": [
+        "@U5",
+        "@negative"
+      ],
+      "pass_criteria": "docs/tests/m0-acceptance.feature senaryosu",
+      "verification_status": "PARTIAL",
+      "tests": [
+        "scripts/ux-forbidden-copy.js",
+        "tests/chaos/ux-forbidden-simulation.test.ts"
+      ],
+      "evidence": {
+        "ci_jobs": [
+          "Verify Quality Gates"
+        ],
+        "report_paths": [
+          "docs/tests/traceability.md",
+          "reports/playwright-ux.log"
+        ],
+        "document_paths": [
+          "docs/tests/m0-acceptance.feature"
+        ],
+        "status_json_blockers": []
+      }
+    },
+    {
+      "id": "M0-negative-demo-sim-lasyon-a-k-a-etiketlenir",
+      "kind": "m0_acceptance_scenario",
+      "title": "Demo/simülasyon açıkça etiketlenir",
+      "feature_tags": [
+        "@negative"
+      ],
+      "pass_criteria": "docs/tests/m0-acceptance.feature senaryosu",
+      "verification_status": "PARTIAL",
+      "tests": [],
+      "evidence": {
+        "ci_jobs": [
+          "Verify Quality Gates"
+        ],
+        "report_paths": [
+          "docs/tests/traceability.md",
+          "reports/playwright-ux.log"
+        ],
+        "document_paths": [
+          "docs/tests/m0-acceptance.feature"
+        ],
+        "status_json_blockers": []
+      }
+    },
+    {
+      "id": "M0-negative-112-uyar-s-onboarding-de-zorunlu",
+      "kind": "m0_acceptance_scenario",
+      "title": "112 uyarısı onboarding'de zorunlu",
+      "feature_tags": [
+        "@negative"
+      ],
+      "pass_criteria": "docs/tests/m0-acceptance.feature senaryosu",
+      "verification_status": "PARTIAL",
+      "tests": [],
+      "evidence": {
+        "ci_jobs": [
+          "Verify Quality Gates"
+        ],
+        "report_paths": [
+          "docs/tests/traceability.md",
+          "reports/playwright-ux.log"
+        ],
+        "document_paths": [
+          "docs/tests/m0-acceptance.feature"
+        ],
+        "status_json_blockers": []
+      }
+    },
+    {
+      "id": "M0-negative-yasak-etiketler-ui-da-g-r-nmez",
+      "kind": "m0_acceptance_scenario",
+      "title": "Yasak etiketler UI'da görünmez",
+      "feature_tags": [
+        "@negative"
+      ],
+      "pass_criteria": "docs/tests/m0-acceptance.feature senaryosu",
+      "verification_status": "PARTIAL",
+      "tests": [],
+      "evidence": {
+        "ci_jobs": [
+          "Verify Quality Gates"
+        ],
+        "report_paths": [
+          "docs/tests/traceability.md",
+          "reports/playwright-ux.log"
+        ],
+        "document_paths": [
+          "docs/tests/m0-acceptance.feature"
+        ],
+        "status_json_blockers": []
+      }
+    },
+    {
+      "id": "GECTI-ANDROID-M0M1-DEVICE",
+      "kind": "geci_criterion",
+      "title": "APK gerçek cihazda M0+M1 akışını çalıştırır",
+      "source": "docs/release/android.md",
+      "pass_criteria": "APK gerçek cihazda M0+M1 akışını çalıştırır",
+      "verification_status": "NOT_TESTED",
+      "tests": [
+        "docs/release/evidence/android-device-smoke-template.md"
+      ],
+      "evidence": {
+        "ci_jobs": [
+          "Android Gradle Build"
+        ],
+        "report_paths": [
+          "docs/handover/status.json ADIM 51"
+        ]
+      }
+    },
+    {
+      "id": "GECTI-IOS-DEVICE",
+      "kind": "geci_criterion",
+      "title": "Gerçek cihaz iş akışı kanıtlı",
+      "source": "docs/release/ios.md",
+      "pass_criteria": "Gerçek cihaz iş akışı kanıtlı",
+      "verification_status": "NOT_TESTED",
+      "tests": [
+        "docs/release/evidence/ios-field-test-record-template.csv"
+      ],
+      "evidence": {
+        "ci_jobs": [
+          "iOS Xcode Build"
+        ],
+        "report_paths": [
+          "docs/handover/status.json ADIM 52"
+        ]
+      }
+    },
+    {
+      "id": "GECTI-WEAROS-E2E",
+      "kind": "geci_criterion",
+      "title": "Gerçek saat uçtan uca",
+      "source": "docs/release/wearos.md",
+      "pass_criteria": "Gerçek saat uçtan uca",
+      "verification_status": "NOT_TESTED",
+      "tests": [
+        "docs/handover/evidence/adim53/trace-evidence-template.md"
+      ],
+      "evidence": {
+        "ci_jobs": [
+          "Android Gradle Build"
+        ],
+        "report_paths": [
+          "docs/handover/status.json ADIM 53"
+        ]
+      }
+    },
+    {
+      "id": "GECTI-DEPLOY-STAGING-PROD",
+      "kind": "geci_criterion",
+      "title": "Staging çalışır + prod onaylı",
+      "source": "docs/runbooks/deploy.md",
+      "pass_criteria": "Staging çalışır + prod onaylı",
+      "verification_status": "PARTIAL",
+      "tests": [
+        "docs/runbooks/deploy.md",
+        ".github/workflows/deploy-container-smoke.yml"
+      ],
+      "evidence": {
+        "ci_jobs": [],
+        "report_paths": [
+          "docs/handover/status.json ADIM 54"
+        ]
+      }
+    },
+    {
+      "id": "GECTI-THREAT-MODEL",
+      "kind": "geci_criterion",
+      "title": "STRIDE + bağımsız denetim GEÇTİ",
+      "source": "docs/security/threat-model.md",
+      "pass_criteria": "STRIDE + bağımsız denetim GEÇTİ",
+      "verification_status": "PARTIAL",
+      "tests": [
+        "docs/security/threat-model.md",
+        "docs/security/findings.csv"
+      ],
+      "evidence": {
+        "ci_jobs": [
+          "Secret Scan"
+        ],
+        "report_paths": [
+          "docs/handover/status.json ADIM 43"
+        ]
+      }
+    },
+    {
+      "id": "GECTI-DEMO-PROD-SEPARATION",
+      "kind": "geci_criterion",
+      "title": "Mock/demo production yapılandırmasında kapalı",
+      "source": "docs/architecture/requirements-map.md",
+      "pass_criteria": "Mock/demo production yapılandırmasında kapalı",
+      "verification_status": "PARTIAL",
+      "tests": [
+        "apps/web/lib/config.test.ts",
+        "apps/web/lib/demo-mode.test.ts",
+        "tests/chaos/demo-mode-production-separation.test.ts",
+        "apps/android/app/src/testProd/kotlin/com/sosmesh/android/ProdFlavorBuildConfigTest.kt"
+      ],
+      "evidence": {
+        "ci_jobs": [
+          "Verify Quality Gates"
+        ],
+        "report_paths": [
+          "reports/test.log"
+        ]
+      },
+      "platform_verification": {
+        "web_isE2eMock_behavioral": "PASS",
+        "android_prod_buildconfig_behavioral": "NOT_TESTED"
+      },
+      "notes": "Web PASS via apps/web/lib/config.test.ts (isE2eMock env stubs). Android ProdFlavorBuildConfigTest is NOT_TESTED until MacBook/Gradle prod flavor phase; chaos test is Gradle config evidence only."
+    }
+  ]
+}

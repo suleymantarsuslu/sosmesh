@@ -1,0 +1,226 @@
+{
+  "schema_version": "1.0.0",
+  "generated_at": "2026-11-02T18:39:55.620Z",
+  "release_candidate": "v1.0.0-rc.1",
+  "defect_inventory": {
+    "todo_fixme_scan": [
+      {
+        "id": "SCAN-TODO_APPROVAL-1",
+        "severity": "high",
+        "owner": "TBD",
+        "file": "docs/legal/privacy-review-checklist.md",
+        "line": 27,
+        "summary": "| 8 | Güvenlik açığı yolu (yer tutucu) | `SECURITY.md` (`GUVENLIK_BILDIRIM_TBD`) | Yer tutucu — TODO_APPROVAL workflow |",
+        "release_note": "Requires user approval before prod",
+        "workaround": "Placeholder until operator configures prod contact/secrets"
+      },
+      {
+        "id": "SCAN-TODO-2",
+        "severity": "medium",
+        "owner": "TBD",
+        "file": "packages/contracts-kotlin/src/main/kotlin/Crypto.kt",
+        "line": 356,
+        "summary": "TODO(\"NOT_TESTED: Requires Android Keystore on real device\")",
+        "release_note": null,
+        "workaround": "Track in tech-debt; non-blocking for rc.1 CI"
+      },
+      {
+        "id": "SCAN-TODO-3",
+        "severity": "medium",
+        "owner": "TBD",
+        "file": "packages/contracts-kotlin/src/main/kotlin/Crypto.kt",
+        "line": 360,
+        "summary": "TODO(\"NOT_TESTED: Requires Android Keystore on real device\")",
+        "release_note": null,
+        "workaround": "Track in tech-debt; non-blocking for rc.1 CI"
+      },
+      {
+        "id": "SCAN-TODO-4",
+        "severity": "medium",
+        "owner": "TBD",
+        "file": "packages/contracts-kotlin/src/main/kotlin/Crypto.kt",
+        "line": 364,
+        "summary": "TODO(\"NOT_TESTED: Requires Android Keystore on real device\")",
+        "release_note": null,
+        "workaround": "Track in tech-debt; non-blocking for rc.1 CI"
+      }
+    ],
+    "critical_high_unresolved": [
+      {
+        "id": "SCAN-TODO_APPROVAL-1",
+        "severity": "high",
+        "owner": "TBD",
+        "file": "docs/legal/privacy-review-checklist.md",
+        "line": 27,
+        "summary": "| 8 | Güvenlik açığı yolu (yer tutucu) | `SECURITY.md` (`GUVENLIK_BILDIRIM_TBD`) | Yer tutucu — TODO_APPROVAL workflow |",
+        "release_note": "Requires user approval before prod",
+        "workaround": "Placeholder until operator configures prod contact/secrets"
+      },
+      {
+        "id": "KI-ADIM24-M0",
+        "severity": "critical",
+        "owner": "TBD",
+        "summary": "M0 physical two-Android E2E not executed (B-02 BLOCKED_DEVICE)",
+        "workaround": "Sim + CI gates only until lab evidence uploaded"
+      },
+      {
+        "id": "KI-METRICS-SCRAPE-AUTH",
+        "severity": "high",
+        "owner": "TBD",
+        "summary": "Production METRICS_SCRAPE_AUTH not provisioned (metrics scrape blocked in prod)",
+        "workaround": "Disable public scrape; operator health UI uses authenticated routes only"
+      },
+      {
+        "id": "KI-MODEL-API-KEY",
+        "severity": "high",
+        "owner": "TBD",
+        "summary": "MODEL_API_KEY validity not verified (B-05 BLOCKED_SECRET)",
+        "workaround": "AI step skipped; ingest and operator case remain"
+      },
+      {
+        "id": "KI-NPM-AUDIT",
+        "severity": "critical",
+        "owner": "TBD",
+        "summary": "pnpm audit reports critical=2 high=32",
+        "workaround": "Patch dependencies before prod; rc.1 documents counts honestly"
+      }
+    ],
+    "medium_with_workaround": [
+      {
+        "id": "SCAN-TODO-2",
+        "severity": "medium",
+        "owner": "TBD",
+        "file": "packages/contracts-kotlin/src/main/kotlin/Crypto.kt",
+        "line": 356,
+        "summary": "TODO(\"NOT_TESTED: Requires Android Keystore on real device\")",
+        "release_note": null,
+        "workaround": "Track in tech-debt; non-blocking for rc.1 CI"
+      },
+      {
+        "id": "SCAN-TODO-3",
+        "severity": "medium",
+        "owner": "TBD",
+        "file": "packages/contracts-kotlin/src/main/kotlin/Crypto.kt",
+        "line": 360,
+        "summary": "TODO(\"NOT_TESTED: Requires Android Keystore on real device\")",
+        "release_note": null,
+        "workaround": "Track in tech-debt; non-blocking for rc.1 CI"
+      },
+      {
+        "id": "SCAN-TODO-4",
+        "severity": "medium",
+        "owner": "TBD",
+        "file": "packages/contracts-kotlin/src/main/kotlin/Crypto.kt",
+        "line": 364,
+        "summary": "TODO(\"NOT_TESTED: Requires Android Keystore on real device\")",
+        "release_note": null,
+        "workaround": "Track in tech-debt; non-blocking for rc.1 CI"
+      }
+    ],
+    "known_issues": [
+      {
+        "id": "KI-ADIM24-M0",
+        "severity": "critical",
+        "owner": "TBD",
+        "summary": "M0 physical two-Android E2E not executed (B-02 BLOCKED_DEVICE)",
+        "workaround": "Sim + CI gates only until lab evidence uploaded"
+      },
+      {
+        "id": "KI-METRICS-SCRAPE-AUTH",
+        "severity": "high",
+        "owner": "TBD",
+        "summary": "Production METRICS_SCRAPE_AUTH not provisioned (metrics scrape blocked in prod)",
+        "workaround": "Disable public scrape; operator health UI uses authenticated routes only"
+      },
+      {
+        "id": "KI-MODEL-API-KEY",
+        "severity": "high",
+        "owner": "TBD",
+        "summary": "MODEL_API_KEY validity not verified (B-05 BLOCKED_SECRET)",
+        "workaround": "AI step skipped; ingest and operator case remain"
+      },
+      {
+        "id": "KI-NPM-AUDIT",
+        "severity": "critical",
+        "owner": "TBD",
+        "summary": "pnpm audit reports critical=2 high=32",
+        "workaround": "Patch dependencies before prod; rc.1 documents counts honestly"
+      }
+    ]
+  },
+  "npm_audit": {
+    "tool": "pnpm audit",
+    "critical": 2,
+    "high": 32,
+    "moderate": 36,
+    "low": 7,
+    "info": 0,
+    "total": 0,
+    "note": "pnpm audit exited non-zero when vulnerabilities exist"
+  },
+  "open_blockers_snapshot": {
+    "status_json_gate_h": {
+      "title": "Hackathon / Çekirdek (ADIM 01–25)",
+      "status": "PARTIAL",
+      "last_checked_at": "2026-11-01T20:16:00+00:00",
+      "head_ref": "91636f37ae5a663526b4c6e02d5255094a503869",
+      "ci_run_id": "41345163177",
+      "summary": "Ertelenen ağır testler koşturuldu; ADIM 24 NOT_TESTED; Android fiziksel ve M0 tam PASS yok",
+      "evidence": [
+        "docs/handover/final-report.md",
+        "docs/handover/evidence/gate-h/verify-gate-h-summary.txt",
+        "docs/handover/evidence/gate-h/pnpm-test-full.txt",
+        "docs/handover/evidence/gate-h/adim17-deferred-api-tests.txt",
+        "docs/handover/evidence/gate-h/mesh-sim-mutation.txt",
+        "docs/handover/evidence/gate-h/mutation-sentinel-ttl.txt",
+        "docs/handover/evidence/gate-h/digest-chaos-20runs.txt",
+        "docs/handover/evidence/gate-h/playwright-web-gate-h.txt",
+        "docs/handover/evidence/gate-h/contracts-kotlin-test.txt"
+      ],
+      "blockers": [
+        "ADIM 24 fiziksel M0 NOT_TESTED",
+        "Android 12–16 gerçek cihaz kanıtı yok",
+        "Self-hosted CI onayı bekleniyor"
+      ]
+    },
+    "adim_56_note": "PARTIAL — device evidence and user approval pending",
+    "device_tests": [
+      "ADIM 24 M0 physical NOT_TESTED",
+      "B-02 two Android phones",
+      "B-04 wearables"
+    ],
+    "apple_signing": [
+      "B-06 Apple Developer / TestFlight BLOCKED_APPROVAL",
+      "B-13 Mac private worker for iOS build"
+    ],
+    "store_review": [
+      "Play Internal / App Store Connect BLOCKED_APPROVAL (ADIM 51–53)"
+    ],
+    "legal_review": [
+      "docs/legal/kvkk-gdpr-legal-review-checklist.md NOT_TESTED"
+    ],
+    "ai_spend_approval": [
+      "B-07 production spend cap BLOCKED_APPROVAL"
+    ],
+    "deploy_approvals": [
+      "Staging/prod deploy BLOCKED_APPROVAL (ADIM 54)"
+    ],
+    "metrics_prod_secret": [
+      "METRICS_SCRAPE_AUTH prod secret BLOCKED_APPROVAL — see apps/api/src/config/env.schema.ts"
+    ],
+    "blockers_md_excerpt": [
+      "# SOSMesh — Blokajlar (ADIM 01; yalnız kanıtlananlar)",
+      "",
+      "| # | Blokaj | Etiket | Kanıt | Gereken |",
+      "|---|---|---|---|---|",
+      "| B-01 | SOSMesh için GitHub/Origin repo yok; oluşturma onaysız yapılmadı | BLOCKED_APPROVAL | GitHub arama 0 sonuç; Origin `list_namespaces` boş | Kullanıcı: repo adı/sahibi/görünürlük (private önerilir) |",
+      "| B-02 | Bağlı fiziksel Android cihaz yok (M0 için 2 gerçek Android şart) | BLOCKED_DEVICE | `adb devices -l` boş | 2 Android telefon (BLE 5, Android 12+ önerilir), USB hata ayıklama |",
+      "| B-03 | iPhone'lar OFFLINE (iOS 26.6.1, 27.2) | BLOCKED_DEVICE | `xctrace list devices` → Offline | Kablo/Wi-Fi ile bağla, geliştirici modu, güven |",
+      "| B-04 | Wear OS ve Apple Watch cihazı/simülatörü doğrulanmadı | BLOCKED_DEVICE | listede yok / test edilmedi | Gerçek saatler (ADIM 35–39, 52–53) |",
+      "| B-05 | Meta Model API anahtarı (`MODEL_API_KEY`) doğrulanmadı; kutuda yalnız `META_APP_ID`, `META_APP_SECRET` adı var | BLOCKED_SECRET | env isimleri | Kullanıcı: anahtarın doğru tür/limit olduğunu onaylasın; değer paylaşılmaz, secret manager ile |",
+      "| B-06 | Apple Developer / Google Play hesabı ve imzalama erişimi doğrulanmadı | BLOCKED_APPROVAL | kanıt yok | Kullanıcı hesapları; TestFlight/Play başvurusu onay işlemi |",
+      "| B-07 | Bütçe/harcama limiti bilinmiyor | BLOCKED_APPROVAL | kayıt yok | Kullanıcı: aylık USD limiti, AI günlük limit (şablon: 5 USD/gün) |",
+      "| B-08 | Docker daemon Mac'te kapalı; kutuda Docker yok | NOT_TESTED/BLOCKED | `docker info` hata | Docker Desktop başlatma (kullanıcı) veya CI/cloud ortamı |"
+    ]
+  }
+}

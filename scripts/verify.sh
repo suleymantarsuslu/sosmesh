@@ -355,7 +355,7 @@ else
 fi
 
 # 29. iOS Localizable.strings TR/EN key parity (ADIM 57 help keys)
-echo "29/30: node scripts/check-ios-localizable-parity.js"
+echo "29/35: node scripts/check-ios-localizable-parity.js"
 if node "$SCRIPT_DIR/check-ios-localizable-parity.js" > "$REPORTS_DIR/ios-localizable-parity.log" 2>&1; then
   check_exit "ios-localizable-parity" 0
 else
@@ -364,7 +364,7 @@ else
 fi
 
 # 30. Backup restore drill log (ADIM 49; CI postgres — Jest covers embedded)
-echo "30/30: bash scripts/backup-restore-drill.sh"
+echo "30/35: bash scripts/backup-restore-drill.sh"
 if [ -n "${SOSMESH_CI_DATABASE_URL:-}" ]; then
   export DATABASE_URL="$SOSMESH_CI_DATABASE_URL"
   mkdir -p "$REPORTS_DIR"
@@ -382,6 +382,49 @@ if [ -n "${SOSMESH_CI_DATABASE_URL:-}" ]; then
   fi
 else
   echo -e "${YELLOW}backup-restore-drill: NOT_TESTED (SOSMESH_CI_DATABASE_URL unset; CI verify job runs pg_dump drill)${NC}"
+fi
+
+# 31. Release traceability + QA summary freshness (ADIM 56)
+echo "31/35: node scripts/release/generate-traceability.mjs --check"
+if node "$SCRIPT_DIR/release/generate-traceability.mjs" --check > "$REPORTS_DIR/release-traceability-check.log" 2>&1; then
+  check_exit "release-traceability-check" 0
+else
+  EXIT_CODE=$?
+  check_exit "release-traceability-check" $EXIT_CODE
+fi
+
+echo "32/35: node scripts/release/generate-qa-summary.mjs --check"
+if node "$SCRIPT_DIR/release/generate-qa-summary.mjs" --check > "$REPORTS_DIR/release-qa-summary-check.log" 2>&1; then
+  check_exit "release-qa-summary-check" 0
+else
+  EXIT_CODE=$?
+  check_exit "release-qa-summary-check" $EXIT_CODE
+fi
+
+# 33. CycloneDX SBOM (no signing, no secrets)
+echo "33/35: node scripts/release/build-sbom.test.mjs"
+if node "$SCRIPT_DIR/release/build-sbom.test.mjs" > "$REPORTS_DIR/release-sbom-test.log" 2>&1; then
+  check_exit "release-sbom-test" 0
+else
+  EXIT_CODE=$?
+  check_exit "release-sbom-test" $EXIT_CODE
+fi
+
+echo "34/35: bash scripts/release/sbom.sh"
+if bash "$SCRIPT_DIR/release/sbom.sh" > "$REPORTS_DIR/release-sbom.log" 2>&1; then
+  check_exit "release-sbom" 0
+else
+  EXIT_CODE=$?
+  check_exit "release-sbom" $EXIT_CODE
+fi
+
+# 35. SHA256 checksums of build artifacts
+echo "35/35: bash scripts/release/checksums.sh"
+if bash "$SCRIPT_DIR/release/checksums.sh" > "$REPORTS_DIR/release-checksums.log" 2>&1; then
+  check_exit "release-checksums" 0
+else
+  EXIT_CODE=$?
+  check_exit "release-checksums" $EXIT_CODE
 fi
 
 # Summary

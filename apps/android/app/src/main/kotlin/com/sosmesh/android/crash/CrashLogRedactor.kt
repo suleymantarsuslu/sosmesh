@@ -24,8 +24,8 @@ object CrashLogRedactor {
     fun redact(input: String): String {
         var out = input
         out = emailPattern.replace(out, "[REDACTED_EMAIL]")
-        out = phonePattern.replace(out, "[REDACTED_PHONE]")
         out = coordinatePattern.replace(out, "[REDACTED_COORD]")
+        out = phonePattern.replace(out, "[REDACTED_PHONE]")
         out = androidIdPattern.replace(out, "[REDACTED_DEVICE_ID]")
         out = deviceUuidPattern.replace(out, "[REDACTED_DEVICE_ID]")
         out = sosFreeTextPattern.replace(out, "[REDACTED_SOS]")

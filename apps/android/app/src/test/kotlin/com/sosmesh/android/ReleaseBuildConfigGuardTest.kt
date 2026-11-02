@@ -56,8 +56,8 @@ class ReleaseBuildConfigGuardTest {
     @Test
     fun releaseGradleConfig_doesNotSilentlySignWithDebugKey() {
         assertTrue(
-            gradle.contains("sosmesh.allowDebugSignedRelease"),
             "release signing must gate debug key behind sosmesh.allowDebugSignedRelease",
+            gradle.contains("sosmesh.allowDebugSignedRelease"),
         )
         assertFalse(
             "release must not unconditionally assign debug signingConfig",

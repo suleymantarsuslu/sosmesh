@@ -18,13 +18,78 @@ android {
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
 
+    signingConfigs {
+        create("release") {
+            val storePath =
+                System.getenv("SOSMESH_RELEASE_STORE_FILE")
+                    ?: (findProperty("sosmesh.release.storeFile") as String?)
+            if (!storePath.isNullOrBlank()) {
+                storeFile = file(storePath)
+                storePassword =
+                    System.getenv("SOSMESH_RELEASE_STORE_PASSWORD")
+                        ?: (findProperty("sosmesh.release.storePassword") as String?)
+                keyAlias =
+                    System.getenv("SOSMESH_RELEASE_KEY_ALIAS")
+                        ?: (findProperty("sosmesh.release.keyAlias") as String?)
+                keyPassword =
+                    System.getenv("SOSMESH_RELEASE_KEY_PASSWORD")
+                        ?: (findProperty("sosmesh.release.keyPassword") as String?)
+            }
+        }
+    }
+
+    flavorDimensions += "environment"
+    productFlavors {
+        create("demo") {
+            dimension = "environment"
+            applicationIdSuffix = ".demo"
+            versionNameSuffix = "-demo"
+            buildConfigField("String", "SOSMESH_ENV", "\"demo\"")
+            buildConfigField("String", "INGEST_BASE_URL", "\"https://api.demo.sosmesh.local\"")
+            buildConfigField("boolean", "SHOW_DEMO_MODE_LABEL", "true")
+            buildConfigField("boolean", "REQUIRE_HTTPS_INGEST", "true")
+        }
+        create("staging") {
+            dimension = "environment"
+            applicationIdSuffix = ".staging"
+            versionNameSuffix = "-staging"
+            buildConfigField("String", "SOSMESH_ENV", "\"staging\"")
+            buildConfigField("String", "INGEST_BASE_URL", "\"https://api.staging.sosmesh.local\"")
+            buildConfigField("boolean", "SHOW_DEMO_MODE_LABEL", "false")
+            buildConfigField("boolean", "REQUIRE_HTTPS_INGEST", "true")
+        }
+        create("prod") {
+            dimension = "environment"
+            isDefault = true
+            buildConfigField("String", "SOSMESH_ENV", "\"prod\"")
+            buildConfigField(
+                "String",
+                "INGEST_BASE_URL",
+                "\"https://api.sosmesh.example\"",
+            )
+            buildConfigField("boolean", "SHOW_DEMO_MODE_LABEL", "false")
+            buildConfigField("boolean", "REQUIRE_HTTPS_INGEST", "true")
+        }
+    }
+
     buildTypes {
         debug {
-            buildConfigField("boolean", "SHOW_DEMO_MODE_LABEL", "true")
+            isMinifyEnabled = false
         }
         release {
-            isMinifyEnabled = false
-            buildConfigField("boolean", "SHOW_DEMO_MODE_LABEL", "false")
+            isMinifyEnabled = true
+            isShrinkResources = true
+            proguardFiles(
+                getDefaultProguardFile("proguard-android-optimize.txt"),
+                "proguard-rules.pro",
+            )
+            val releaseSigning = signingConfigs.getByName("release")
+            signingConfig =
+                if (releaseSigning.storeFile != null && releaseSigning.storeFile!!.exists()) {
+                    releaseSigning
+                } else {
+                    signingConfigs.getByName("debug")
+                }
         }
     }
 
@@ -91,6 +156,7 @@ dependencies {
     debugImplementation("androidx.compose.ui:ui-tooling")
 
     testImplementation("junit:junit:4.13.2")
+    testImplementation("org.robolectric:robolectric:4.11.1")
 }
 
 kapt {
@@ -99,4 +165,22 @@ kapt {
 
 configurations.configureEach {
     exclude(group = "org.xerial", module = "sqlite-jdbc")
+}
+
+tasks.register("assembleAllReleaseApks") {
+    group = "release"
+    description = "Build demo, staging, and prod release APKs (unsigned or env-signed)."
+    dependsOn("assembleDemoRelease", "assembleStagingRelease", "assembleProdRelease")
+}
+
+tasks.register("bundleAllReleaseAabs") {
+    group = "release"
+    description = "Build release App Bundles for all product flavors."
+    dependsOn("bundleDemoRelease", "bundleStagingRelease", "bundleProdRelease")
+}
+
+tasks.register("releaseProdArtifacts") {
+    group = "release"
+    description = "Primary Play-track artifacts: prod release APK + AAB."
+    dependsOn("assembleProdRelease", "bundleProdRelease")
 }

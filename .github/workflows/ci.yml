@@ -218,13 +218,13 @@ jobs:
         uses: gradle/actions/setup-gradle@v3
       
       - name: Gradle assemble, unit tests, lint
-        run: cd apps/android && ./gradlew assembleDebug testDebugUnitTest lintDebug ktlintCheck --no-daemon
+        run: cd apps/android && ./gradlew assembleProdDebug testProdDebugUnitTest lintProdDebug assembleProdRelease bundleProdRelease ktlintCheck --no-daemon
       
       - name: Upload APK
         uses: actions/upload-artifact@v4
         with:
           name: android-debug-apk
-          path: apps/android/app/build/outputs/apk/debug/*.apk
+          path: apps/android/app/build/outputs/apk/prod/debug/*.apk
 
   ios-xcode:
     name: iOS Xcode Build

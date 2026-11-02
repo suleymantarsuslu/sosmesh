@@ -3,6 +3,7 @@ package com.sosmesh.android
 import android.app.Application
 import androidx.hilt.work.HiltWorkerFactory
 import androidx.work.Configuration
+import com.sosmesh.android.crash.LocalCrashReporter
 import dagger.hilt.android.HiltAndroidApp
 import javax.inject.Inject
 
@@ -10,6 +11,14 @@ import javax.inject.Inject
 class SosMeshApplication : Application(), Configuration.Provider {
     @Inject
     lateinit var workerFactory: HiltWorkerFactory
+
+    @Inject
+    lateinit var crashReporter: LocalCrashReporter
+
+    override fun onCreate() {
+        super.onCreate()
+        crashReporter.install()
+    }
 
     override val workManagerConfiguration: Configuration
         get() =

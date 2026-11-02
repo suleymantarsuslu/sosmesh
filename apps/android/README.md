@@ -25,9 +25,11 @@ apps/android/
 ```bash
 export ANDROID_HOME="${ANDROID_HOME:-$HOME/Android/Sdk}"
 cd apps/android
-./gradlew assembleDebug testDebugUnitTest lintDebug
-./gradlew ktlintCheck
+./gradlew assembleProdDebug testProdDebugUnitTest lintProdDebug ktlintCheck
+./gradlew releaseProdArtifacts   # prod release APK + AAB (debug signing if no env keystore)
 ```
+
+Release kapısı: [docs/release/android.md](../../docs/release/android.md) (ADIM 51).
 
 ## Permissions
 

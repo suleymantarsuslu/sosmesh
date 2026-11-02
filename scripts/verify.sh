@@ -319,12 +319,21 @@ else
 fi
 
 # 25. iOS Xcode project golden (generate-xcodeproj.py)
-echo "25/26: bash apps/ios/scripts/check-xcodeproj-golden.sh"
+echo "25/27: bash apps/ios/scripts/check-xcodeproj-golden.sh"
 if bash apps/ios/scripts/check-xcodeproj-golden.sh > "$REPORTS_DIR/ios-xcodeproj-golden.log" 2>&1; then
   check_exit "ios-xcodeproj-golden" 0
 else
   EXIT_CODE=$?
   check_exit "ios-xcodeproj-golden" $EXIT_CODE
+fi
+
+# 26. Android release BuildConfig must not embed secrets
+echo "26/27: bash scripts/android-release-buildconfig-scan.sh"
+if bash "$SCRIPT_DIR/android-release-buildconfig-scan.sh" > "$REPORTS_DIR/android-release-buildconfig-scan.log" 2>&1; then
+  check_exit "android-release-buildconfig-scan" 0
+else
+  EXIT_CODE=$?
+  check_exit "android-release-buildconfig-scan" $EXIT_CODE
 fi
 
 # Summary

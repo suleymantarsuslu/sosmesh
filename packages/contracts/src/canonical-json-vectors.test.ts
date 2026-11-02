@@ -3,9 +3,10 @@ import * as fs from 'fs';
 import * as path from 'path';
 import {
   buildCanonicalJsonVectorCases,
+  expectedCanonicalJSON,
   type CanonicalJsonVectorCase,
 } from './canonical-json-fixture.js';
-import { canonicalJSON } from './canonical-json.js';
+import { sortKeys } from './crypto.js';
 
 const fixturePath = path.join(__dirname, '../test-vectors/canonical-json-001.json');
 
@@ -19,7 +20,8 @@ describe('canonical-json-001 fixture', () => {
     for (let i = 0; i < regenerated.length; i++) {
       expect(regenerated[i].name).toBe(committed[i].name);
       expect(regenerated[i].expected).toBe(committed[i].expected);
-      expect(canonicalJSON(regenerated[i].input)).toBe(committed[i].expected);
+      expect(expectedCanonicalJSON(regenerated[i].input)).toBe(committed[i].expected);
+      expect(JSON.stringify(sortKeys(regenerated[i].input))).toBe(committed[i].expected);
     }
 
     const regeneratedJson = `${JSON.stringify(regenerated, null, 2)}\n`;

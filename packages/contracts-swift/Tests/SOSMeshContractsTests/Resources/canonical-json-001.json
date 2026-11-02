@@ -93,6 +93,11 @@
     "expected": "\"\\\" \\\\ \\n \\t \\r \\b \\f \\u0001 \\u001f / ğüşıöçİ 😀\""
   },
   {
+    "name": "string-lone-surrogate",
+    "input": "\ud800",
+    "expected": "\"\\ud800\""
+  },
+  {
     "name": "object-special-keys",
     "input": {
       "\"key\"": 1,
@@ -114,6 +119,15 @@
       "😀": 6
     },
     "expected": "{\"B\":3,\"a\":2,\"b\":1,\"ä\":4,\"😀\":6,\"Ｚ\":5}"
+  },
+  {
+    "name": "key-order-ffff-vs-astral",
+    "input": {
+      "￿": 1,
+      "𐀀": 2,
+      "a": 3
+    },
+    "expected": "{\"a\":3,\"𐀀\":2,\"￿\":1}"
   },
   {
     "name": "int-vs-bool-fields",

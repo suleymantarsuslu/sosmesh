@@ -82,33 +82,60 @@ enum CanonicalJSON {
         throw CryptoError.invalidInput("Unsupported JSON type for canonical encoding")
     }
 
-    /// `JSON.stringify` string escaping (UTF-16 code units; lone surrogates preserved like V8).
+    /// `JSON.stringify` string escaping (UTF-16 code units; lone surrogates as `\uXXXX`).
     private static func escapeJSONString(_ value: String) -> String {
         var out = ""
         out.reserveCapacity(value.count + 8)
-        for unit in value.utf16 {
-            switch unit {
-            case 0x22:
-                out.append("\\\"")
-            case 0x5c:
-                out.append("\\\\")
-            case 0x08:
-                out.append("\\b")
-            case 0x0c:
-                out.append("\\f")
-            case 0x0a:
-                out.append("\\n")
-            case 0x0d:
-                out.append("\\r")
-            case 0x09:
-                out.append("\\t")
-            case 0x0000 ... 0x001f:
-                out.append(String(format: "\\u%04x", unit))
-            default:
-                out.append(String(utf16CodeUnits: [unit], count: 1))
+        var index = value.utf16.startIndex
+        while index < value.utf16.endIndex {
+            let unit = value.utf16[index]
+            if isHighSurrogate(unit),
+               value.utf16.index(after: index) < value.utf16.endIndex {
+                let nextIndex = value.utf16.index(after: index)
+                let nextUnit = value.utf16[nextIndex]
+                if isLowSurrogate(nextUnit) {
+                    out.append(String(utf16CodeUnits: [unit, nextUnit], count: 2))
+                    index = value.utf16.index(after: nextIndex)
+                    continue
+                }
             }
+            appendEscapedUTF16Unit(unit, to: &out)
+            index = value.utf16.index(after: index)
         }
         return out
+    }
+
+    private static func isHighSurrogate(_ unit: UTF16.CodeUnit) -> Bool {
+        unit >= 0xD800 && unit <= 0xDBFF
+    }
+
+    private static func isLowSurrogate(_ unit: UTF16.CodeUnit) -> Bool {
+        unit >= 0xDC00 && unit <= 0xDFFF
+    }
+
+    private static func appendEscapedUTF16Unit(_ unit: UTF16.CodeUnit, to out: inout String) {
+        switch unit {
+        case 0x22:
+            out.append("\\\"")
+        case 0x5c:
+            out.append("\\\\")
+        case 0x08:
+            out.append("\\b")
+        case 0x0c:
+            out.append("\\f")
+        case 0x0a:
+            out.append("\\n")
+        case 0x0d:
+            out.append("\\r")
+        case 0x09:
+            out.append("\\t")
+        case 0x0000 ... 0x001f:
+            out.append(String(format: "\\u%04x", unit))
+        case 0xD800 ... 0xDFFF:
+            out.append(String(format: "\\u%04x", unit))
+        default:
+            out.append(String(utf16CodeUnits: [unit], count: 1))
+        }
     }
 
     private static func formatJSONNumber(_ value: Double) -> String {

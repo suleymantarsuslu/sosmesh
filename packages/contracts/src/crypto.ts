@@ -3,7 +3,9 @@ import { hkdf } from '@noble/hashes/hkdf.js';
 import { sha256 } from '@noble/hashes/sha2.js';
 import { chacha20poly1305 } from '@noble/ciphers/chacha.js';
 import { randomBytes } from '@noble/hashes/utils.js';
-import { sortKeys } from './canonical-json.js';
+import { sortKeys, canonicalJSON } from './canonical-json.js';
+
+export { sortKeys, canonicalJSON };
 
 export interface EncryptedPayload {
   keyId: string;

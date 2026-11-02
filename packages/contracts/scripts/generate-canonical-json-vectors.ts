@@ -1,3 +1,7 @@
+#!/usr/bin/env tsx
+/**
+ * Regenerate canonical-json-001.json using the same sortKeys + JSON.stringify path as createAAD in crypto.ts.
+ */
 import * as fs from 'fs';
 import * as path from 'path';
 import { buildCanonicalJsonVectorCases } from '../src/canonical-json-fixture.js';

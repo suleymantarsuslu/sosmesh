@@ -119,6 +119,15 @@ jobs:
           test -f "$login"
           test -f "$dash"
 
+      - name: Upload ARM64 reduced-motion snapshot baselines
+        if: vars.SOSMESH_CI_RUNNER == 'zulal'
+        uses: actions/upload-artifact@v4
+        with:
+          name: zulal-arm64-reduced-motion-snapshots
+          path: tests/ux/adim50-web-closure.spec.js-snapshots/*-linux-arm64.png
+          if-no-files-found: ignore
+          retention-days: 14
+
       - name: Run verification script
         run: bash scripts/verify.sh
 

@@ -27,6 +27,8 @@ execSync('pnpm --filter @sosmesh/api openapi:generate', {
       process.env.DATABASE_URL ??
       'postgresql://postgres:postgres@127.0.0.1:5432/postgres',
     JWT_SECRET: process.env.JWT_SECRET ?? 'local-dev-jwt-secret-min-16',
+    METRICS_SCRAPE_AUTH:
+      process.env.METRICS_SCRAPE_AUTH ?? 'local-dev-metrics-scrape-token',
     NODE_ENV: 'test',
   },
 });

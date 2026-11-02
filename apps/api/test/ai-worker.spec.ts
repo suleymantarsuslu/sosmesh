@@ -19,12 +19,35 @@ import { applyTestAuthEnv } from './helpers/operator-auth';
 import { createTestApp } from './helpers/test-app';
 
 async function flushAiJobs(): Promise<void> {
+  for (let i = 0; i < 8; i++) {
+    await new Promise<void>((resolve) => {
+      setImmediate(resolve);
+    });
+  }
   await new Promise<void>((resolve) => {
-    setImmediate(resolve);
+    setTimeout(resolve, 200);
   });
-  await new Promise<void>((resolve) => {
-    setTimeout(resolve, 50);
-  });
+}
+
+async function waitForAiAnalysis(
+  prisma: PrismaService,
+  incidentId: string | null | undefined,
+  timeoutMs = 10_000
+) {
+  if (!incidentId) {
+    return null;
+  }
+  const deadline = Date.now() + timeoutMs;
+  while (Date.now() < deadline) {
+    const analysis = await prisma.aiAnalysis.findFirst({ where: { incidentId } });
+    if (analysis) {
+      return analysis;
+    }
+    await new Promise<void>((resolve) => {
+      setTimeout(resolve, 25);
+    });
+  }
+  return null;
 }
 
 class FailingMetaProvider implements MetaProvider {
@@ -290,9 +313,11 @@ describe('AI worker (async, post-ingest)', () => {
       const message = await localApp.get(PrismaService).sosMessage.findUnique({
         where: { messageId: String(body.sosMessage.id) },
       });
-      const analysis = await localApp.get(PrismaService).aiAnalysis.findFirst({
-        where: { incidentId: message?.incidentId },
-      });
+      expect(message?.incidentId).toBeDefined();
+      const analysis = await waitForAiAnalysis(
+        localApp.get(PrismaService),
+        message?.incidentId
+      );
       expect(analysis?.status).toBe(AI_ANALYSIS_STATUS.SKIPPED_COST_CAP);
     } finally {
       localApp.restoreEnv();

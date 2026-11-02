@@ -1683,12 +1683,22 @@
       ],
       "deliverables": "tests/load, perf-report, dashboards",
       "pass_criteria": "Ölçülen limitler yayınlanır; kapasiteyi kanıtsız “ölçeklenebilir” diye yazma.",
-      "status": "NOT_STARTED",
-      "attempts": 0,
-      "commit": null,
-      "evidence": [],
-      "blockers": [],
-      "last_checked_at": null,
+      "status": "PARTIAL",
+      "attempts": 1,
+      "commit": "2e9bded",
+      "evidence": [
+        "tests/load/k6 + ci-k6-smoke.sh (profile 100 CI; 1000/10000 ERTELENDİ manual)",
+        "apps/api/test/perf-adim47.spec.ts (EXPLAIN indexes, restart cursor, 429 backpressure, AI off)",
+        "apps/api/prisma/migrations/20261101220000_adim47_perf_indexes",
+        "docs/perf/perf-report.md",
+        "infra/monitoring/grafana/dashboard-sosmesh-perf.json",
+        "Android OutboxAdim47CapacityTest + Swift TransportOutboxTests 1k/TTL"
+      ],
+      "blockers": [
+        "k6 profile 1000/10000: ERTELENDİ (CI runner/VM kapasitesi üretimi temsil etmez)",
+        "Grafana panelleri yalnızca şablon; metrik export ADIM 48 ile tamamlanacak"
+      ],
+      "last_checked_at": "2026-11-01T22:30:00+00:00",
       "goal": "Afet sırasında ani burst ve bağlantı kopmasını karşılamak için sınırları ölç.",
       "cursor_tasks": [
         "k6/Artillery API: 100, 1000, 10000 synthetic SOS scenarios; gerçek altyapı maliyet limitine uy.",
@@ -1716,12 +1726,18 @@
       ],
       "deliverables": "infra/monitoring, docs/runbooks/*.md, audit interface",
       "pass_criteria": "Her kritik hata ölçülür; dashboard PII içermez.",
-      "status": "NOT_STARTED",
-      "attempts": 0,
-      "commit": null,
-      "evidence": [],
+      "status": "PASS",
+      "attempts": 2,
+      "commit": "6bb9c93",
+      "evidence": [
+        "apps/api/src/observability/* OTEL (varsayılan kapalı), /metrics Bearer METRICS_SCRAPE_AUTH, structured redacted events",
+        "apps/api/test/observability-adim48.spec.ts — log spy redaction, metrics auth, HTTP 500→alert, RBAC summary/audit, queue depth",
+        "infra/monitoring/prometheus/alerts.yml SosmeshAiWorkerStuck sosmesh_ai_worker_stuck_seconds ile hizalı",
+        "docs/runbooks/*.md + web operator health/audit (RBAC)",
+        "Bağımsız denetim PR #58: pnpm -r build/test, verify.sh 24/24, mutation redaction test kırmızı kanıtı"
+      ],
       "blockers": [],
-      "last_checked_at": null,
+      "last_checked_at": "2026-11-02T05:12:00+00:00",
       "goal": "Hataları kişisel verileri açığa çıkarmadan takip et.",
       "cursor_tasks": [
         "OpenTelemetry tracing with correlation ids; structured redacted event logs.",
@@ -1815,12 +1831,26 @@
       ],
       "deliverables": "apps/android release artifacts, docs/release/android.md",
       "pass_criteria": "APK gerçek cihazda M0+M1 akışını çalıştırır; store acceptance ayrı gate.",
-      "status": "NOT_STARTED",
-      "attempts": 0,
-      "commit": null,
-      "evidence": [],
-      "blockers": [],
-      "last_checked_at": null,
+      "status": "PARTIAL",
+      "attempts": 1,
+      "commit": "1b6bccea7c7372faf779908dc91aad74d4db0e98",
+      "evidence": [
+        "apps/android/app/build.gradle.kts: demo/staging/prod flavors, R8 release, env/property signing, releaseProdArtifacts",
+        "apps/android/app/proguard-rules.pro + mapping prodRelease path (docs/release/android.md)",
+        "AppReleaseModule: BuildConfig INGEST_BASE_URL → RelayIngestConfig (no embedded secrets)",
+        "RedactedLocalCrashReporter + CrashLogRedactor (local files only, no external SDK)",
+        "ReleaseBuildConfigGuardTest + android-release-buildconfig-scan.sh",
+        "docs/release/android.md, play-console-declarations-draft.md, android-device-smoke-template.md",
+        "scripts/android-device-release-smoke-adim51.sh → NOT_TESTED without adb/2 devices",
+        "Gerçek cihaz BLE/Doze/24h smoke + Play upload: NOT_TESTED / BLOCKED_APPROVAL",
+        "ANDROID_HOME yok: Gradle release assemble bu VM'de koşulmadı (CI android-gradle job doğrular)"
+      ],
+      "blockers": [
+        "Fiziksel 2 cihaz smoke kanıtı NOT_TESTED",
+        "Play Console track yükleme BLOCKED_APPROVAL",
+        "Production ingest URL + receipt key dağıtımı BLOCKED_APPROVAL"
+      ],
+      "last_checked_at": "2026-11-02T05:30:00+00:00",
       "goal": "Android build’ini teslim edilebilir artifact haline getir.",
       "cursor_tasks": [
         "Signed build flavors demo/staging/prod; Android App Bundle/APK; play store privacy declarations review.",
@@ -1829,8 +1859,9 @@
         "Release notes and rollback/install guide; izinle Test track publish."
       ],
       "verification_evidence": "APK install and end-to-end evidence + hash, Play review blockers.",
-      "risk_note": "",
-      "gate_raw": "KAPI: TAM ÜRÜN    •    BAĞIMLILIK: 29–30,40,43,50"
+      "risk_note": "Store submission and upload keystore require explicit user approval.",
+      "gate_raw": "KAPI: TAM ÜRÜN    •    BAĞIMLILIK: 29–30,40,43,50",
+      "notes": "Yapılandırma hazır; GEÇTİ için fiziksel M0+M1 kanıtı gerekir"
     },
     {
       "id": "52",

@@ -25,6 +25,7 @@ jobs:
         run: |
           set -euo pipefail
           JWT_SECRET=$(openssl rand -base64 32)
+          METRICS_SCRAPE_AUTH=$(openssl rand -base64 24)
           POSTGRES_PASSWORD=$(openssl rand -hex 16)
           SIGN_KEY=$(node - <<'NODE'
           const { generateKeyPairSync } = require('node:crypto');
@@ -36,11 +37,13 @@ jobs:
           )
           DATABASE_URL="postgresql://sosmesh:${POSTGRES_PASSWORD}@postgres:5432/sosmesh_staging"
           echo "::add-mask::${JWT_SECRET}"
+          echo "::add-mask::${METRICS_SCRAPE_AUTH}"
           echo "::add-mask::${POSTGRES_PASSWORD}"
           echo "::add-mask::${SIGN_KEY}"
           echo "::add-mask::${DATABASE_URL}"
           {
             echo "JWT_SECRET=${JWT_SECRET}"
+            echo "METRICS_SCRAPE_AUTH=${METRICS_SCRAPE_AUTH}"
             echo "POSTGRES_PASSWORD=${POSTGRES_PASSWORD}"
             echo "POSTGRES_USER=sosmesh"
             echo "POSTGRES_DB=sosmesh_staging"

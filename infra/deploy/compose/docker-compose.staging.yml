@@ -41,6 +41,7 @@ services:
       PORT: '3001'
       DATABASE_URL: ${DATABASE_URL:?set DATABASE_URL from secret manager}
       JWT_SECRET: ${JWT_SECRET:?set JWT_SECRET from secret manager}
+      METRICS_SCRAPE_AUTH: ${METRICS_SCRAPE_AUTH:?set METRICS_SCRAPE_AUTH from secret manager}
       INGEST_RECEIPT_SIGNING_PRIVATE_KEY: ${INGEST_RECEIPT_SIGNING_PRIVATE_KEY:?from secret manager}
       CORS_ORIGINS: ${CORS_ORIGINS:-http://localhost:3000}
       AI_ENABLED: ${AI_ENABLED:-false}
@@ -72,6 +73,7 @@ services:
       SOSMESH_ENV: staging
       DATABASE_URL: ${DATABASE_URL:?set DATABASE_URL from secret manager}
       JWT_SECRET: ${JWT_SECRET:?set JWT_SECRET from secret manager}
+      METRICS_SCRAPE_AUTH: ${METRICS_SCRAPE_AUTH:?set METRICS_SCRAPE_AUTH from secret manager}
       INGEST_RECEIPT_SIGNING_PRIVATE_KEY: ${INGEST_RECEIPT_SIGNING_PRIVATE_KEY:?from secret manager}
       RETENTION_JOB_ENABLED: ${RETENTION_JOB_ENABLED:-false}
       RETENTION_SOS_MESSAGE_MAX_AGE_SECONDS: ${RETENTION_SOS_MESSAGE_MAX_AGE_SECONDS:-}

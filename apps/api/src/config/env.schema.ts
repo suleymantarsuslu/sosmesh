@@ -30,6 +30,12 @@ export const envValidationSchema = Joi.object({
   AI_RECOMMENDATION_RATIONALE_ENABLED: Joi.string().valid('true', 'false').default('false'),
   RETENTION_JOB_ENABLED: Joi.string().valid('true', 'false').default('false'),
   RETENTION_SOS_MESSAGE_MAX_AGE_SECONDS: Joi.string().allow('').optional(),
+  OTEL_EXPORTER_OTLP_ENABLED: Joi.string().valid('true', 'false').default('false'),
+  OTEL_EXPORTER_OTLP_ENDPOINT: Joi.string()
+    .uri({ scheme: ['http', 'https'] })
+    .default('http://127.0.0.1:4318/v1/traces'),
+  OTEL_CONSOLE_EXPORT: Joi.string().valid('true', 'false').default('false'),
+  METRICS_SCRAPE_AUTH: Joi.string().min(16).required(),
 });
 
 export type AppEnv = {

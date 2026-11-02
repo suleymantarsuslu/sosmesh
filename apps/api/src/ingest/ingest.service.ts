@@ -16,6 +16,8 @@ import { parseEnvelopeGeo } from './envelope-location';
 import { IngestPacketService } from './ingest-packet.service';
 import { IngestRateLimitService } from './ingest-rate-limit.service';
 import { ReceiptSignerService } from './receipt-signer.service';
+import { SosMeshMetricsService } from '../observability/sosmesh-metrics.service';
+import { StructuredEventLogger } from '../observability/structured-event-logger.service';
 
 type RelayWindow = { count: number; windowStartMs: number };
 
@@ -29,7 +31,9 @@ export class IngestService {
     private readonly rateLimit: IngestRateLimitService,
     private readonly receiptSigner: ReceiptSignerService,
     private readonly operatorFeed: OperatorFeedService,
-    private readonly aiJobs: AiJobService
+    private readonly aiJobs: AiJobService,
+    private readonly metrics: SosMeshMetricsService,
+    private readonly events: StructuredEventLogger
   ) {}
 
   async processIngest(
@@ -40,14 +44,19 @@ export class IngestService {
     this.rateLimit.assertAllowed(clientKey);
     this.packetService.assertWithinSizeLimit(rawBodyBytes);
     const { messageId, sosMessage } = this.packetService.validateRequest(dto);
+    this.metrics.recordIngestValid();
     const packetHash = dto.transport.packetHash;
 
     const existing = await this.prisma.sosMessage.findUnique({
       where: { messageId },
     });
     if (existing) {
+      this.metrics.recordIngestDedup();
       await this.ensureSamePacketHash(existing, packetHash, dto);
       await this.recordRelayReceipt(existing.id, dto);
+      this.metrics.recordRadioAck();
+      this.recordPeerLagFromRelay(dto);
+      this.events.emit('ingest_dedup_server_receipt', { messageId, relayHopCount: dto.relayInfo.hopCount });
       return this.buildReceipt(existing);
     }
 
@@ -73,6 +82,9 @@ export class IngestService {
         }
         await this.ensureSamePacketHash(raced, packetHash, dto);
         await this.recordRelayReceipt(raced.id, dto);
+        this.metrics.recordIngestDedup();
+        this.metrics.recordRadioAck();
+        this.recordPeerLagFromRelay(dto);
         return this.buildReceipt(raced);
       }
       throw error;
@@ -128,6 +140,9 @@ export class IngestService {
     const encryptedPayload = String(sosMessage.encryptedPayload ?? '');
     const payloadRef = createHash('sha256').update(encryptedPayload, 'utf8').digest('hex');
     const needsHumanReview = this.markRelayAnomaly(dto.relayInfo.relayId, clientKey);
+    if (needsHumanReview) {
+      this.metrics.recordGpsAnomaly();
+    }
     const receiptAt = new Date();
 
     return this.prisma.$transaction(async (tx) => {
@@ -178,6 +193,15 @@ export class IngestService {
 
       return { message, incidentId: incident.id };
     }).then(({ message, incidentId }) => {
+      this.metrics.recordIngestAccepted();
+      this.metrics.recordServerAck();
+      this.metrics.recordRadioAck();
+      this.recordServerLagFromRelay(dto, receiptAt);
+      this.events.emit('ingest_first_accept', {
+        messageId,
+        incidentId,
+        needsHumanReview,
+      });
       this.aiJobs.enqueueAfterIngest({
         incidentId,
         messageId,
@@ -246,5 +270,23 @@ export class IngestService {
     }
     existing.count += 1;
     return existing.count > RELAY_ANOMALY_THRESHOLD;
+  }
+
+  private recordServerLagFromRelay(dto: IngestRequestDto, receiptAt: Date): void {
+    const relayMs = Date.parse(dto.relayInfo.relayTimestamp);
+    if (Number.isNaN(relayMs)) {
+      return;
+    }
+    const seconds = Math.max(0, (receiptAt.getTime() - relayMs) / 1000);
+    this.metrics.observeUserLagServer(seconds);
+  }
+
+  private recordPeerLagFromRelay(dto: IngestRequestDto): void {
+    const relayMs = Date.parse(dto.relayInfo.relayTimestamp);
+    if (Number.isNaN(relayMs)) {
+      return;
+    }
+    const seconds = Math.max(0, (Date.now() - relayMs) / 1000);
+    this.metrics.observeUserLagPeer(seconds);
   }
 }

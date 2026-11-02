@@ -1,17 +1,22 @@
 import {
+  ArgumentsHost,
   BadRequestException,
   Catch,
+  ConflictException,
   ExceptionFilter,
-  ArgumentsHost,
   HttpException,
   HttpStatus,
-  ConflictException,
+  Injectable,
 } from '@nestjs/common';
 import { Prisma } from '@prisma/client';
 import { Response } from 'express';
 
+import { SosMeshMetricsService } from '../../observability/sosmesh-metrics.service';
+
+@Injectable()
 @Catch()
 export class HttpExceptionFilter implements ExceptionFilter {
+  constructor(private readonly metrics: SosMeshMetricsService) {}
   catch(exception: unknown, host: ArgumentsHost): void {
     const ctx = host.switchToHttp();
     const response = ctx.getResponse<Response>();
@@ -31,11 +36,13 @@ export class HttpExceptionFilter implements ExceptionFilter {
 
     if (exception instanceof HttpException) {
       const status = exception.getStatus();
+      this.metrics.recordHttpStatus(status);
       const body = exception.getResponse();
       response.status(status).json(body);
       return;
     }
 
+    this.metrics.recordHttpStatus(HttpStatus.INTERNAL_SERVER_ERROR);
     response.status(HttpStatus.INTERNAL_SERVER_ERROR).json({
       code: 'INTERNAL_ERROR',
       message: 'Unexpected error',

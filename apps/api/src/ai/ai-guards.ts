@@ -45,7 +45,11 @@ export class AiCostGuard {
   private spentUsd = 0;
   private utcDayKey = '';
 
-  constructor(private readonly maxUsdPerDay: number) {}
+  constructor(private readonly maxUsdPerDay: number | (() => number)) {}
+
+  private resolveMaxUsd(): number {
+    return typeof this.maxUsdPerDay === 'function' ? this.maxUsdPerDay() : this.maxUsdPerDay;
+  }
 
   private utcDayKeyFor(nowMs: number): string {
     return new Date(nowMs).toISOString().slice(0, 10);
@@ -57,7 +61,8 @@ export class AiCostGuard {
       this.utcDayKey = dayKey;
       this.spentUsd = 0;
     }
-    if (this.spentUsd + estimatedUsd > this.maxUsdPerDay) {
+    const maxUsd = this.resolveMaxUsd();
+    if (this.spentUsd + estimatedUsd > maxUsd) {
       return false;
     }
     this.spentUsd += estimatedUsd;

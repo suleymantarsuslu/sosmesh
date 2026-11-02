@@ -51,6 +51,7 @@ module.exports = {
       typescript: true,
       node: true,
     },
+    'import/core-modules': ['k6', 'k6/http', 'k6/metrics'],
   },
   overrides: [
     {
@@ -66,6 +67,12 @@ module.exports = {
         '@typescript-eslint/no-require-imports': 'off',
         'no-console': 'off',
         'no-undef': 'off',
+      },
+    },
+    {
+      files: ['tests/load/k6/**/*.js'],
+      parserOptions: {
+        sourceType: 'module',
       },
     },
   ],

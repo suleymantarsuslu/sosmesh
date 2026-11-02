@@ -53,10 +53,13 @@ class BleChunkCodecGoldenTest {
     private fun fixtureRoot() = Json.parseToJsonElement(fixtureText()).jsonObject
 
     private fun fixtureText(): String {
-        val fromClasspath = javaClass.classLoader.getResourceAsStream("test-vectors.json")?.bufferedReader()?.readText()
-        if (fromClasspath != null) return fromClasspath
+        val loader = requireNotNull(javaClass.classLoader)
+        loader.getResourceAsStream("test-vectors.json")?.bufferedReader()?.use { reader ->
+            return reader.readText()
+        }
         val moduleDir = java.io.File(System.getProperty("user.dir"))
-        val repoFixture = moduleDir.resolve("../../../../packages/fixtures/ble/test-vectors.json").canonicalFile
+        val repoFixture =
+            moduleDir.resolve("../../../../packages/fixtures/ble/test-vectors.json").canonicalFile
         check(repoFixture.exists()) { "Missing fixture at ${repoFixture.absolutePath}" }
         return repoFixture.readText()
     }

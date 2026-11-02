@@ -94,6 +94,12 @@ jobs:
             echo "SOSMESH_CI_DATABASE_URL=${SOSMESH_CI_DATABASE_URL}"
           } >> "$GITHUB_ENV"
 
+      - name: Bootstrap PostgreSQL client (no sudo, server-major aware)
+        shell: bash
+        env:
+          RUNNER_TEMP: ${{ runner.temp }}
+        run: bash scripts/ci/bootstrap-pgclient.sh
+
       - name: Run verification script
         run: bash scripts/verify.sh
       

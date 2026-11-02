@@ -15,7 +15,7 @@ Yerel geliştirme ve CI için sınırlı depolama; gerçek bulut veya ücretli s
 
 ## Otomatik restore drill
 
-CI ve `scripts/verify.sh` içinde `scripts/backup-restore-drill.sh` çalışır: sentetik şema, `pg_dump` → şifreleme → temiz hedef şema → satır sayısı/checksum doğrulama. Log: `reports/backup-restore-drill.log`.
+CI ve `scripts/verify.sh` içinde `scripts/backup-restore-drill.sh` çalışır: sentetik şema, `pg_dump -Fc` → AES-256 şifreleme → kaynak şema DROP → `pg_restore` → satır sayısı/checksum doğrulama. Log: `reports/backup-restore-drill.log`. Yerelde `SOSMESH_CI_DATABASE_URL` yoksa verify adımı **NOT_TESTED** yazar; Jest embedded Postgres üzerinde aynı drill'i koşar (`postgresql-client` gerekir).
 
 ## Docker Compose
 

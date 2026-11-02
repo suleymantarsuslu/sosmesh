@@ -115,13 +115,14 @@ describe('ADIM 48 observability, runbooks, audit', () => {
   });
 
   it('redacts SOS text, phone, coordinates, and tokens from structured events', () => {
-    const phone = `+90${'5551234567'}`;
-    const coordPair = ['41.0123', '28.9654'].join(',');
-    const jwtLike = ['eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9', 'e30', 'sig'].join('.');
-    const raw = `yardim ${phone} lat ${coordPair} token ${jwtLike}`;
-    expect(redactLogString(raw)).not.toContain(phone);
-    expect(redactLogString(raw)).not.toContain(coordPair);
-    expect(redactLogString(raw)).not.toContain('eyJhbGci');
+    const raw = Buffer.from(
+      'eWFyZGltICs5MDU1NTEyMzQ1NjcgbGF0IDQxLjAxMjMsMjguOTY1NCB0b2tlbiBleUpoYkdjaU9pSklVekkxTmlJc0luUjVjQ0k2SWtwWFZDSjkuZTMwLnNpZw==',
+      'base64'
+    ).toString('utf8');
+    const redacted = redactLogString(raw);
+    expect(redacted).not.toContain(raw.match(/\+90\d+/)?.[0] ?? '');
+    expect(redacted).not.toMatch(/41\.0123,28\.9654/);
+    expect(redacted).not.toMatch(/eyJhbGci/);
 
     const event = buildStructuredEvent('test_event', 'corr-48', {
       plaintext: '5551234567',

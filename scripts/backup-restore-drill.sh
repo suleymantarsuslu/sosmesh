@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Automated backup → restore drill (ADIM 49). Delegates to Prisma-based helper (no cloud).
+# Automated backup → restore drill (ADIM 49). Real pg_dump/pg_restore via Prisma helper (no cloud).
 
 set -euo pipefail
 

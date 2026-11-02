@@ -367,14 +367,21 @@ fi
 echo "30/30: bash scripts/backup-restore-drill.sh"
 if [ -n "${SOSMESH_CI_DATABASE_URL:-}" ]; then
   export DATABASE_URL="$SOSMESH_CI_DATABASE_URL"
-  if bash "$SCRIPT_DIR/backup-restore-drill.sh" >> "$REPORTS_DIR/backup-restore-drill.log" 2>&1; then
+  mkdir -p "$REPORTS_DIR"
+  if ! command -v pg_dump >/dev/null 2>&1 || ! command -v pg_restore >/dev/null 2>&1; then
+    {
+      echo "FAIL: SOSMESH_CI_DATABASE_URL is set but pg_dump/pg_restore are not on PATH"
+      echo "Hint: run scripts/ci/bootstrap-pgclient.sh (uses server major from SOSMESH_CI_DATABASE_URL)"
+    } >> "$REPORTS_DIR/backup-restore-drill.log"
+    check_exit "backup-restore-drill" 1 "backup-restore-drill.log"
+  elif bash "$SCRIPT_DIR/backup-restore-drill.sh" >> "$REPORTS_DIR/backup-restore-drill.log" 2>&1; then
     check_exit "backup-restore-drill" 0 "backup-restore-drill.log"
   else
     EXIT_CODE=$?
     check_exit "backup-restore-drill" $EXIT_CODE "backup-restore-drill.log"
   fi
 else
-  echo -e "${YELLOW}backup-restore-drill: covered by apps/api/test/backup-adim49.spec.ts (embedded)${NC}"
+  echo -e "${YELLOW}backup-restore-drill: NOT_TESTED (SOSMESH_CI_DATABASE_URL unset; CI verify job runs pg_dump drill)${NC}"
 fi
 
 # Summary

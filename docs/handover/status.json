@@ -1970,13 +1970,14 @@
       "pass_criteria": "Kullanıcı bağlantı düzeyini ve başarısız iletimi anlıyor.",
       "status": "PARTIAL",
       "attempts": 1,
-      "commit": "a84b0e94d95723c58490b88d8c6bee8847418740",
+      "commit": "1a8a52f7f991d54cbf474f0e60f7f39de938429d",
       "evidence": [
         "docs/user/kullanici-rehberi-tr.md",
         "docs/user/user-guide-en.md",
         "docs/user/platform-destek-matrisi.md",
         "apps/web/app/(operator)/operator/(panel)/help/page.tsx",
-        "apps/web/features/help/help-content.test.ts",
+        "apps/web/features/help/ios-localizable-parity.test.ts",
+        "scripts/check-ios-localizable-parity.js",
         "tests/ux/operator-help.spec.js",
         "SECURITY.md",
         "docs/tests/first-time-user-guided-tr.md",
@@ -1987,7 +1988,7 @@
         "Destek formu prod e-posta TODO_APPROVAL / BLOCKED_APPROVAL",
         "Mağaza/prod deploy BLOCKED_APPROVAL"
       ],
-      "last_checked_at": "2026-11-02T05:30:00+00:00",
+      "last_checked_at": "2026-11-02T05:36:30+00:00",
       "goal": "Gerçek kullanıcıya güvenilir rehberlik ve denetim kabiliyeti ver.",
       "cursor_tasks": [
         "TR/EN offline usage, permissions, relay opt-in, watch paired phone guide, troubleshooting.",

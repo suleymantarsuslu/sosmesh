@@ -1707,7 +1707,7 @@
       "pass_criteria": "Yedekten geri dönüş en az bir defa başarıyla kanıtlı.",
       "status": "PASS",
       "attempts": 2,
-      "commit": null,
+      "commit": "8aa55ae",
       "evidence": [
         "infra/backup/* WAL archive + base-backup + rotation (AES-256; key via SOSMESH_BACKUP_ENCRYPTION_KEY only)",
         "scripts/backup-restore-drill.sh + apps/api/test/helpers/backup-restore-drill.ts — pg_dump -Fc → AES encrypt → DROP source schema → pg_restore + row/checksum verify",
@@ -1718,7 +1718,7 @@
         "packages/contracts/src/protocol-version-rollout.test.ts + Kotlin/Swift mixed-version tests"
       ],
       "blockers": [],
-      "last_checked_at": "2026-11-02T05:10:00+00:00",
+      "last_checked_at": "2026-11-02T05:18:00+00:00",
       "goal": "Sistem arızasında veriyi korumak ve geri dönebilmek.",
       "cursor_tasks": [
         "Database PITR/backups, encryption, restricted storage and rotation.",

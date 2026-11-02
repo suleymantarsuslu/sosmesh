@@ -1,0 +1,3 @@
+"NSBluetoothAlwaysUsageDescription" = "Bluetooth: SOSMesh, internet olmadan yakındaki cihazlara SOS iletmek için Bluetooth Low Energy kullanır.";
+"NSBluetoothPeripheralUsageDescription" = "Bluetooth: SOSMesh relay modunda yakın cihazlara hizmet sunmak için BLE kullanır.";
+"NSLocationWhenInUseUsageDescription" = "Konum: SOS zarfına yaklaşık konum eklemek isteğe bağlıdır; reddedebilirsiniz.";

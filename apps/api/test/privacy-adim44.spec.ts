@@ -470,6 +470,17 @@ describe('ADIM 44 retention job', () => {
   });
 
   it('deletes expired incident when retention job runs', async () => {
+    const prisma = app.get(PrismaService);
+    const maxAgeSeconds = Number(process.env.RETENTION_SOS_MESSAGE_MAX_AGE_SECONDS ?? '60');
+    const cutoff = new Date(Date.now() - maxAgeSeconds * 1000);
+    const staleMessages = await prisma.sosMessage.findMany({
+      where: { receivedAt: { lt: cutoff } },
+      select: { incidentId: true },
+    });
+    const expectedDeletedIncidents = new Set(staleMessages.map((row) => row.incidentId)).size;
+    expect(expectedDeletedIncidents).toBeGreaterThanOrEqual(1);
+    expect(staleMessages.some((row) => row.incidentId === incidentId)).toBe(true);
+
     const login = await request(app.getHttpServer())
       .post('/v1/auth/login')
       .set('Origin', allowedOrigin)
@@ -481,8 +492,7 @@ describe('ADIM 44 retention job', () => {
       .set('Cookie', cookie)
       .set('Origin', allowedOrigin);
     expect(run.status).toBe(201);
-    expect(run.body.deletedIncidents).toBe(1);
-    const prisma = app.get(PrismaService);
+    expect(run.body.deletedIncidents).toBe(expectedDeletedIncidents);
     const incident = await prisma.incident.findUnique({ where: { id: incidentId } });
     expect(incident).toBeNull();
     const feed = await prisma.operatorFeedEvent.findUnique({ where: { messageId } });

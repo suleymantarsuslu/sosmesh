@@ -3,6 +3,7 @@ import {
   DEFAULT_META_MODEL,
   DEFAULT_META_MAX_TOKENS,
 } from '../ai.constants';
+import { deidentifySosPlaintextForPrompt } from '../deidentify-plaintext';
 import { SOS_AI_SYSTEM_PROMPT } from '../system-prompt';
 import {
   validateSosAiOutput,
@@ -167,7 +168,7 @@ export class MetaHttpProvider implements MetaProvider {
               content: JSON.stringify({
                 task: 'classify_sos',
                 language_hint: input.languageHint ?? null,
-                message: input.plaintext,
+                message: deidentifySosPlaintextForPrompt(input.plaintext),
                 response_schema: {
                   categories: 'string[]',
                   persons_estimate: 'number|null',
@@ -243,6 +244,7 @@ export type MockMetaFixture = {
   locale: string;
   input: string;
   output: SosAiOutput;
+  tags?: string[];
 };
 
 export class MockMetaProvider implements MetaProvider {

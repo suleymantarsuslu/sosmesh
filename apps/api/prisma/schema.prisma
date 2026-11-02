@@ -69,6 +69,17 @@ enum WorkTaskSource {
   AI
 }
 
+enum AssignmentRecommendationStatus {
+  PROPOSED
+  REJECTED
+  CONFIRMED
+}
+
+enum RecommendationFeedbackRating {
+  HELPFUL
+  NOT_HELPFUL
+}
+
 enum NotificationDeliveryState {
   PENDING
   DELIVERED
@@ -94,7 +105,8 @@ model Incident {
   assignments Assignment[]
   aiAnalyses  AiAnalysis[]
   auditLogs   AuditLog[]
-  workTasks   WorkTask[]
+  workTasks                 WorkTask[]
+  assignmentRecommendations AssignmentRecommendation[]
 
   @@map("incidents")
 }
@@ -192,6 +204,7 @@ model Team {
   resources      Resource[]
   workTasks      WorkTask[]
   locationShares LocationShareGrant[]
+  assignmentRecommendations AssignmentRecommendation[]
 
   @@index([organizationId])
   @@map("teams")
@@ -212,7 +225,8 @@ model User {
   workTasksOwned  WorkTask[]             @relation("WorkTaskAssignee")
   locationShares  LocationShareGrant[]
   notifications   OperatorNotification[]
-  notifyPrefs     NotificationPreference?
+  notifyPrefs              NotificationPreference?
+  recommendationFeedback   RecommendationFeedback[]
 
   @@map("users")
 }
@@ -250,6 +264,7 @@ model Resource {
   createdAt      DateTime     @default(now()) @map("created_at")
   updatedAt      DateTime     @updatedAt @map("updated_at")
   workTasks      WorkTask[]
+  assignmentRecommendations AssignmentRecommendation[]
 
   @@index([organizationId])
   @@index([teamId])
@@ -273,6 +288,7 @@ model WorkTask {
   version     Int            @default(0)
   createdAt   DateTime       @default(now()) @map("created_at")
   updatedAt   DateTime       @updatedAt @map("updated_at")
+  confirmedRecommendation AssignmentRecommendation?
 
   @@index([incidentId])
   @@index([teamId])
@@ -368,4 +384,47 @@ model AuditLog {
   @@index([incidentId])
   @@index([createdAt])
   @@map("audit_logs")
+}
+
+/// ADIM 46: deterministic resource matching draft; commit only via coordinator confirm.
+model AssignmentRecommendation {
+  id                 String                         @id @default(uuid()) @db.Uuid
+  incidentId         String                         @map("incident_id") @db.Uuid
+  incident           Incident                       @relation(fields: [incidentId], references: [id], onDelete: Cascade)
+  teamId             String                         @map("team_id") @db.Uuid
+  team               Team                           @relation(fields: [teamId], references: [id])
+  resourceId         String?                        @map("resource_id") @db.Uuid
+  resource           Resource?                      @relation(fields: [resourceId], references: [id])
+  rank               Int                            @default(0)
+  distanceKm         Float?                         @map("distance_km")
+  available          Boolean                        @default(false)
+  status             AssignmentRecommendationStatus @default(PROPOSED)
+  deterministicNote  String                         @map("deterministic_note") @db.Text
+  aiRationale        String?                        @map("ai_rationale") @db.Text
+  missingInfoJson    Json                           @map("missing_info_json")
+  dataFreshnessJson  Json                           @map("data_freshness_json")
+  workTaskId         String?                        @unique @map("work_task_id") @db.Uuid
+  workTask           WorkTask?                      @relation(fields: [workTaskId], references: [id])
+  createdAt          DateTime                       @default(now()) @map("created_at")
+  updatedAt          DateTime                       @updatedAt @map("updated_at")
+  feedback           RecommendationFeedback[]
+
+  @@index([incidentId, status])
+  @@index([teamId])
+  @@map("assignment_recommendations")
+}
+
+model RecommendationFeedback {
+  id               String                       @id @default(uuid()) @db.Uuid
+  recommendationId String                       @map("recommendation_id") @db.Uuid
+  recommendation   AssignmentRecommendation     @relation(fields: [recommendationId], references: [id], onDelete: Cascade)
+  actorId          String                       @map("actor_id") @db.Uuid
+  actor            User                         @relation(fields: [actorId], references: [id])
+  rating           RecommendationFeedbackRating
+  note             String?                      @db.Text
+  capturedForScoring Boolean                    @default(true) @map("captured_for_scoring")
+  createdAt        DateTime                     @default(now()) @map("created_at")
+
+  @@index([recommendationId])
+  @@map("recommendation_feedback")
 }

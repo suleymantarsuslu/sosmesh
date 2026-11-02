@@ -2,8 +2,8 @@ import { redirect } from 'next/navigation';
 
 import { readSession } from '../../../../../lib/session';
 
-export default function OperatorAdminPage() {
-  const session = readSession();
+export default async function OperatorAdminPage() {
+  const session = await readSession();
   if (!session) {
     redirect('/operator/login?next=/operator/admin');
   }

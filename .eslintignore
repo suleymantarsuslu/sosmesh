@@ -1,2 +1,3 @@
 tools/mesh-simulator/.eslintrc.js
 tests/chaos/.eslintrc.js
+apps/web/next-env.d.ts

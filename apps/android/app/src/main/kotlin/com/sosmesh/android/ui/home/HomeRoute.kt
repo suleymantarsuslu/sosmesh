@@ -59,6 +59,7 @@ fun HomeRoute(
             style = MaterialTheme.typography.bodyMedium,
         )
         PlatformSelfRepairCard(hint = state.platformHint, onOpenPermissions = onOpenPermissions)
+        CrossPlatformFaultCard(hint = state.crossPlatformFault, onOpenPermissions = onOpenPermissions)
         ExpressSosButton(onClick = { viewModel.expressSaveSos() })
         state.expressSavedMessageId?.let {
             Text(

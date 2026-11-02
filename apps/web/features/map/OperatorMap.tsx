@@ -2,7 +2,7 @@
 
 import { useMemo } from 'react';
 import Map, { Marker } from 'react-map-gl/maplibre';
-import maplibregl from 'maplibre-gl';
+import * as maplibregl from 'maplibre-gl';
 import Supercluster from 'supercluster';
 import 'maplibre-gl/dist/maplibre-gl.css';
 

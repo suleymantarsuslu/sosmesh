@@ -1,6 +1,7 @@
 package com.sosmesh.android.platform
 
 import android.content.Context
+import android.location.LocationManager
 import android.net.ConnectivityManager
 import android.net.NetworkCapabilities
 import android.os.Build
@@ -32,6 +33,33 @@ class MeshPlatformSignalBridge
         private val bluetoothEnabled: () -> Boolean,
     ) {
         private val machine = MeshPlatformStateMachine()
+
+        @Volatile private var lastTransferCorrupt: Boolean = false
+
+        @Volatile private var lastApiUploadFailed: Boolean = false
+
+        fun noteTransferCorrupt() {
+            lastTransferCorrupt = true
+        }
+
+        fun noteApiUploadFailed() {
+            lastApiUploadFailed = true
+        }
+
+        fun clearCrossPlatformFaultFlags() {
+            lastTransferCorrupt = false
+            lastApiUploadFailed = false
+        }
+
+        fun lastTransferCorruptFlag(): Boolean = lastTransferCorrupt
+
+        fun lastApiUploadFailedFlag(): Boolean = lastApiUploadFailed
+
+        fun locationServicesAvailable(): Boolean {
+            val lm = context.getSystemService(Context.LOCATION_SERVICE) as LocationManager
+            return lm.isProviderEnabled(LocationManager.GPS_PROVIDER) ||
+                lm.isProviderEnabled(LocationManager.NETWORK_PROVIDER)
+        }
 
         fun refresh(nowMs: Long = System.currentTimeMillis()): MeshPlatformEvaluation {
             val snapshot = readSnapshot()

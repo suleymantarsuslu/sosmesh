@@ -15,7 +15,7 @@ export async function GET(request: NextRequest) {
     const { mockEventsPoll } = await import('../../../../lib/e2e-mock-cases');
     return mockEventsPoll(afterRaw);
   }
-  const token = getSessionToken();
+  const token = await getSessionToken();
   if (!token) {
     return NextResponse.json({ code: 'UNAUTHORIZED' }, { status: 401 });
   }

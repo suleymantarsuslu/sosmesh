@@ -16,6 +16,39 @@ android {
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
 
+    signingConfigs {
+        create("wearRelease") {
+            val storePath =
+                System.getenv("SOSMESH_WEAR_RELEASE_STORE_FILE")
+                    ?: (project.findProperty("SOSMESH_WEAR_RELEASE_STORE_FILE") as String?)
+            if (!storePath.isNullOrBlank()) {
+                storeFile = file(storePath)
+                storePassword =
+                    System.getenv("SOSMESH_WEAR_RELEASE_STORE_PASSWORD")
+                        ?: (project.findProperty("SOSMESH_WEAR_RELEASE_STORE_PASSWORD") as String?)
+                keyAlias =
+                    System.getenv("SOSMESH_WEAR_RELEASE_KEY_ALIAS")
+                        ?: (project.findProperty("SOSMESH_WEAR_RELEASE_KEY_ALIAS") as String?)
+                keyPassword =
+                    System.getenv("SOSMESH_WEAR_RELEASE_KEY_PASSWORD")
+                        ?: (project.findProperty("SOSMESH_WEAR_RELEASE_KEY_PASSWORD") as String?)
+            }
+        }
+    }
+
+    buildTypes {
+        release {
+            isMinifyEnabled = false
+            val wearSigning = signingConfigs.getByName("wearRelease")
+            signingConfig =
+                if (wearSigning.storeFile != null) {
+                    wearSigning
+                } else {
+                    null
+                }
+        }
+    }
+
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_17
         targetCompatibility = JavaVersion.VERSION_17
@@ -35,6 +68,7 @@ android {
 
     lint {
         abortOnError = true
+        checkReleaseBuilds = true
     }
 
     testOptions {
@@ -53,6 +87,7 @@ dependencies {
     implementation("androidx.compose.ui:ui-tooling-preview")
     implementation("androidx.wear.compose:compose-material:1.2.1")
     implementation("androidx.wear.compose:compose-foundation:1.2.1")
+    implementation("androidx.wear:wear:1.3.0")
     implementation("androidx.wear:wear-tooling-preview:1.0.0")
     implementation("com.google.android.gms:play-services-wearable:18.1.0")
     implementation("androidx.lifecycle:lifecycle-viewmodel-compose:2.7.0")
@@ -61,4 +96,7 @@ dependencies {
 
     testImplementation("junit:junit:4.13.2")
     testImplementation("org.jetbrains.kotlinx:kotlinx-coroutines-test:1.7.3")
+    testImplementation("org.robolectric:robolectric:4.11.1")
+    testImplementation("androidx.test:core:1.5.0")
+    testImplementation("androidx.compose.ui:ui-test-junit4")
 }

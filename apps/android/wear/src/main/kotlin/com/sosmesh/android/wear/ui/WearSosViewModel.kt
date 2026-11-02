@@ -26,6 +26,13 @@ class WearSosViewModel(
     var statusDetail by mutableStateOf("Acil durumda iki adımda onaylayın.")
         private set
 
+    var isAmbientMode by mutableStateOf(false)
+        private set
+
+    fun setAmbientMode(enabled: Boolean) {
+        isAmbientMode = enabled
+    }
+
     fun onSosPressStart() {
         if (confirmStep == WearConfirmStep.IDLE) {
             confirmStep = WearConfirmStep.FIRST_ARMED

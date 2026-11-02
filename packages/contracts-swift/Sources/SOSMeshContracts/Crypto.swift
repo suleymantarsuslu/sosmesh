@@ -250,15 +250,19 @@ public struct SOSMeshCrypto {
      * AAD binds envelope metadata to the ciphertext.
      */
     static func createAAD(envelope: [String: Any], keyId: String) throws -> Data {
-        let sorted = sortKeys(envelope)
-        let aadObject: [String: Any] = [
-            "envelope": sorted,
+        guard let aadObject = sortKeys([
+            "envelope": envelope,
             "keyId": keyId,
-            "protocol": protocolVersion
-        ]
-        
+            "protocol": protocolVersion,
+        ]) as? [String: Any] else {
+            throw CryptoError.encryptionFailed
+        }
+
         let canonicalJSON = try toCanonicalJSON(aadObject)
-        return canonicalJSON.data(using: .utf8)!
+        guard let data = canonicalJSON.data(using: .utf8) else {
+            throw CryptoError.encryptionFailed
+        }
+        return data
     }
     
     /**
@@ -291,6 +295,16 @@ public struct SOSMeshCrypto {
                 .replacingOccurrences(of: "\\", with: "\\\\")
                 .replacingOccurrences(of: "\"", with: "\\\"")
             return "\"\(escaped)\""
+        case let value as NSNumber:
+            if CFGetTypeID(value) == CFBooleanGetTypeID() {
+                return value.boolValue ? "true" : "false"
+            }
+            let doubleValue = value.doubleValue
+            if doubleValue.rounded() == doubleValue,
+               abs(doubleValue) <= Double(Int64.max) {
+                return String(Int64(doubleValue))
+            }
+            return formatJSONNumber(doubleValue)
         case let value as Bool:
             return value ? "true" : "false"
         case let value as Int:
@@ -299,13 +313,6 @@ public struct SOSMeshCrypto {
             return String(value)
         case let value as Double:
             return formatJSONNumber(value)
-        case let value as NSNumber:
-            let doubleValue = value.doubleValue
-            if doubleValue.rounded() == doubleValue,
-               abs(doubleValue) <= Double(Int64.max) {
-                return String(Int64(doubleValue))
-            }
-            return formatJSONNumber(doubleValue)
         case let dict as [String: Any]:
             let parts = try dict.keys.sorted().map { key in
                 let encoded = try toCanonicalJSON(dict[key]!)

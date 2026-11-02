@@ -1818,7 +1818,7 @@
       "pass_criteria": "iOS ve watchOS gerçek cihaz iş akışı kanıtlı; mağaza yayınına otomatik geçilmez.",
       "status": "PARTIAL",
       "attempts": 1,
-      "commit": null,
+      "commit": "49a43f9",
       "evidence": [
         "docs/release/ios.md (test plan, BLOCKED_APPROVAL TestFlight, TR/EN metadata)",
         "docs/release/evidence/ios-field-test-record-template.csv (result=NOT_TESTED)",

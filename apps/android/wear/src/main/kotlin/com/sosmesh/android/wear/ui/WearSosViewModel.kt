@@ -26,6 +26,19 @@ class WearSosViewModel(
     var statusDetail by mutableStateOf("Acil durumda iki adımda onaylayın.")
         private set
 
+    var isAmbientMode by mutableStateOf(false)
+        private set
+
+    var userFacingPhase by mutableStateOf(WearUserFacingPhase.IDLE)
+        private set
+
+    var showsFalseSuccess by mutableStateOf(false)
+        private set
+
+    fun applyAmbientMode(enabled: Boolean) {
+        isAmbientMode = enabled
+    }
+
     fun onSosPressStart() {
         if (confirmStep == WearConfirmStep.IDLE) {
             confirmStep = WearConfirmStep.FIRST_ARMED
@@ -53,6 +66,8 @@ class WearSosViewModel(
 
     fun refreshStatus(nowMs: Long = System.currentTimeMillis()) {
         val display = coordinator.displayState(nowMs)
+        userFacingPhase = display.phase
+        showsFalseSuccess = display.showsFalseSuccess
         statusHeadline = display.headlineTr
         statusDetail = display.detailTr
         if (display.phase == WearUserFacingPhase.PHONE_UNREACHABLE) {

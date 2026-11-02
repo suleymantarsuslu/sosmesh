@@ -1,6 +1,6 @@
 # SOSMesh iOS / watchOS
 
-**Status:** ADIM 31–33 iskelet; ADIM 34 çapraz UX/sözleşme; ADIM 41 deneysel multi-hop (varsayılan kapalı)
+**Status:** ADIM 31–33 iskelet; ADIM 34 çapraz UX; ADIM 41 multi-hop; **ADIM 52** release/TestFlight hazırlığı (fiziksel **NOT_TESTED**, TestFlight **BLOCKED_APPROVAL**)
 
 ## Overview
 
@@ -52,3 +52,5 @@ swiftlint lint --strict
 - `CoreBLE/` — CBCentralManager / CBPeripheralManager adapters
 
 Physical BLE and background behavior: **NOT_TESTED** on this repo snapshot; see `docs/compat/ios-background-matrix.csv`.
+
+Release archive, privacy manifests, TestFlight gate: **`docs/release/ios.md`** (ADIM 52).

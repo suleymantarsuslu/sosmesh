@@ -13,8 +13,10 @@ final class CrossPlatformAckGateFixtureTests: XCTestCase {
         XCTAssertGreaterThan(cases?.count ?? 0, 0)
 
         for caseObj in cases ?? [] {
+            let caseId = caseObj["id"] as? String ?? "unknown"
             guard let input = caseObj["input"] as? [String: Any],
                   let expect = caseObj["expect"] as? [String: Any] else {
+                XCTFail("Fixture case \(caseId) missing input or expect")
                 continue
             }
             if let crcValid = input["crcValid"] as? Bool {

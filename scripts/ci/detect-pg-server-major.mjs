@@ -8,7 +8,8 @@ const scriptDir = dirname(fileURLToPath(import.meta.url));
 const repoRoot = join(scriptDir, '..', '..');
 
 function loadPgClient() {
-  const searchRoots = [repoRoot, join(repoRoot, 'apps', 'api')];
+  const apiRoot = join(repoRoot, 'apps', 'api');
+  const searchRoots = [repoRoot, apiRoot];
   for (const root of searchRoots) {
     try {
       const pgPath = require.resolve('pg', { paths: [root] });
@@ -16,6 +17,16 @@ function loadPgClient() {
     } catch {
       continue;
     }
+  }
+  // pnpm: `pg` is often only linked under embedded-postgres (apps/api devDependency).
+  try {
+    const apiRequire = createRequire(join(apiRoot, 'package.json'));
+    const embeddedEntry = apiRequire.resolve('embedded-postgres');
+    const embeddedRequire = createRequire(embeddedEntry);
+    const pgPath = embeddedRequire.resolve('pg');
+    return require(pgPath);
+  } catch {
+    // fall through
   }
   throw new Error(
     'pg module not found under node_modules; run pnpm install --frozen-lockfile before bootstrap-pgclient'

@@ -145,8 +145,8 @@ enum CanonicalJSON {
     private static func scientificString(_ value: Double) -> String {
         let negative = value < 0
         let absValue = abs(value)
-        var exponent = Int(floor(log10(absValue)))
-        var mantissa = absValue / pow(10.0, Double(exponent))
+        let exponent = Int(floor(log10(absValue)))
+        let mantissa = absValue / pow(10.0, Double(exponent))
 
         var mantissaText = String(mantissa)
         if mantissaText.contains("e") || mantissaText.contains("E") {

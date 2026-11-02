@@ -4,8 +4,8 @@ import * as path from 'path';
 import {
   buildCanonicalJsonVectorCases,
   type CanonicalJsonVectorCase,
-} from '../scripts/generate-canonical-json-vectors';
-import { canonicalJSON } from './canonical-json';
+} from './canonical-json-fixture.js';
+import { canonicalJSON } from './canonical-json.js';
 
 const fixturePath = path.join(__dirname, '../test-vectors/canonical-json-001.json');
 

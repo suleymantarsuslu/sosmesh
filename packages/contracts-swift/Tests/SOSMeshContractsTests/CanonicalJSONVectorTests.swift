@@ -3,6 +3,17 @@ import Foundation
 @testable import SOSMeshContracts
 
 final class CanonicalJSONVectorTests: XCTestCase {
+    private func parseFixtureInput(_ value: Any) throws -> Any {
+        let wrapData = try JSONSerialization.data(withJSONObject: [value], options: [])
+        guard var wrapped = String(data: wrapData, encoding: .utf8), wrapped.count >= 2 else {
+            throw NSError(domain: "CanonicalJSONVectorTests", code: 1, userInfo: nil)
+        }
+        wrapped.removeFirst()
+        wrapped.removeLast()
+        let fragmentData = Data(wrapped.utf8)
+        return try JSONSerialization.jsonObject(with: fragmentData, options: [.fragmentsAllowed])
+    }
+
     func testBundledCanonicalJsonBytesMatchWorkspaceCopy() throws {
         let bundledURL = try BundledGolden.canonicalJson001URL()
         let workspaceCopy = URL(fileURLWithPath: #filePath)
@@ -13,13 +24,11 @@ final class CanonicalJSONVectorTests: XCTestCase {
 
     func testCanonicalJson001MatchesFixture() throws {
         let cases = try BundledGolden.canonicalJson001Cases()
-        let options: JSONSerialization.ReadingOptions = [.fragmentsAllowed]
 
         for entry in cases {
             let name = try XCTUnwrap(entry["name"] as? String)
             let inputAny = entry["input"] ?? NSNull()
-            let inputData = try JSONSerialization.data(withJSONObject: inputAny, options: [])
-            let parsed = try JSONSerialization.jsonObject(with: inputData, options: options)
+            let parsed = try parseFixtureInput(inputAny)
             let expected = try XCTUnwrap(entry["expected"] as? String)
             let encoded = try CanonicalJSON.encode(parsed)
             XCTAssertEqual(encoded, expected, "[\(name)] CanonicalJSON.encode mismatch")

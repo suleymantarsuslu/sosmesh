@@ -84,11 +84,19 @@ android {
                 "proguard-rules.pro",
             )
             val releaseSigning = signingConfigs.getByName("release")
+            val allowDebugSignedRelease =
+                (findProperty("sosmesh.allowDebugSignedRelease") as String?) == "true"
             signingConfig =
-                if (releaseSigning.storeFile != null && releaseSigning.storeFile!!.exists()) {
-                    releaseSigning
-                } else {
-                    signingConfigs.getByName("debug")
+                when {
+                    releaseSigning.storeFile != null && releaseSigning.storeFile!!.exists() -> {
+                        releaseSigning
+                    }
+                    allowDebugSignedRelease -> {
+                        signingConfigs.getByName("debug")
+                    }
+                    else -> {
+                        null
+                    }
                 }
         }
     }
@@ -157,6 +165,7 @@ dependencies {
 
     testImplementation("junit:junit:4.13.2")
     testImplementation("org.robolectric:robolectric:4.11.1")
+    testImplementation("androidx.test:core:1.5.0")
 }
 
 kapt {

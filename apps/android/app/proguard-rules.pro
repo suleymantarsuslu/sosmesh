@@ -28,3 +28,22 @@
 -keepclassmembers class com.sosmesh.** {
     public static final ** Companion;
 }
+
+# Room (relay queue / local persistence)
+-keep class * extends androidx.room.RoomDatabase
+-keep @androidx.room.Entity class *
+-keepclassmembers class * {
+    @androidx.room.* <methods>;
+}
+
+# kotlinx.serialization (wear companion + protocol JSON)
+-keepattributes *Annotation*, InnerClasses
+-dontnote kotlinx.serialization.**
+-keepclassmembers class kotlinx.serialization.json.** {
+    *** Companion;
+}
+-keepclasseswithmembers class * {
+    kotlinx.serialization.KSerializer serializer(...);
+}
+-keep,includedescriptorclasses class *$$serializer { *; }
+-keep @kotlinx.serialization.Serializable class * { *; }

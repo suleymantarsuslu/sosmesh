@@ -61,9 +61,30 @@ class RedactedLocalCrashReporter
                     )
             val file = File(dir, "crash-${System.currentTimeMillis()}.json")
             file.writeText(payload.toString())
+            pruneOldReports(dir)
+        }
+
+        private fun pruneOldReports(dir: File) {
+            val files =
+                dir
+                    .listFiles()
+                    ?.filter { it.isFile && it.name.startsWith("crash-") && it.name.endsWith(".json") }
+                    ?.sortedByDescending { it.lastModified() }
+                    ?: return
+            var totalBytes = files.sumOf { it.length() }
+            files.forEachIndexed { index, crashFile ->
+                val overFileCount = index >= MAX_CRASH_FILES
+                val overDirBytes = totalBytes > MAX_CRASH_DIR_BYTES
+                if (overFileCount || overDirBytes) {
+                    totalBytes -= crashFile.length()
+                    crashFile.delete()
+                }
+            }
         }
 
         companion object {
             private const val MAX_STACK_CHARS = 16_384
+            private const val MAX_CRASH_FILES = 20
+            private const val MAX_CRASH_DIR_BYTES = 512 * 1024L
         }
     }

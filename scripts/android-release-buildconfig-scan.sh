@@ -32,5 +32,10 @@ if grep -qE '\.(jks|keystore)' "$GRADLE"; then
   exit 1
 fi
 
+if grep -q 'signingConfigs.getByName("debug")' "$GRADLE" && ! grep -q 'sosmesh.allowDebugSignedRelease' "$GRADLE"; then
+  echo "FAIL: release must not silently sign with debug key (use env keystore, unsigned, or -Psosmesh.allowDebugSignedRelease=true)"
+  exit 1
+fi
+
 echo "android-release-buildconfig-scan: OK"
 exit 0

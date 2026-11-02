@@ -47,8 +47,56 @@ function parsePgUrl(databaseUrl: string): PgConn {
   };
 }
 
-function pgEnv(password: string): NodeJS.ProcessEnv {
-  return { ...process.env, PGPASSWORD: password, LC_ALL: 'C', LANG: 'C' };
+function pgEnv(password: string, libDir?: string): NodeJS.ProcessEnv {
+  const ld = libDir ?? process.env.LD_LIBRARY_PATH;
+  return {
+    ...process.env,
+    PGPASSWORD: password,
+    LC_ALL: 'C',
+    LANG: 'C',
+    ...(ld ? { LD_LIBRARY_PATH: ld } : {}),
+  };
+}
+
+function findPgToolUnderRoot(root: string, tool: string): string | undefined {
+  const located = spawnSync('find', [root, '-name', tool, '-type', 'f'], { encoding: 'utf8' });
+  const candidate = located.stdout
+    .trim()
+    .split('\n')
+    .map((line) => line.trim())
+    .find(Boolean);
+  return candidate;
+}
+
+function findLibDirUnderRoot(root: string): string {
+  const located = spawnSync('find', [root, '-name', 'libpq.so.5*'], { encoding: 'utf8' });
+  const lib = located.stdout
+    .trim()
+    .split('\n')
+    .map((line) => line.trim())
+    .find(Boolean);
+  return lib ? path.dirname(lib) : '';
+}
+
+function bootstrapPgClient(databaseUrl: string): { dump: string; restore: string; libDir: string } {
+  const repoRoot = path.join(__dirname, '..', '..', '..', '..');
+  const bootstrapScript = path.join(repoRoot, 'scripts', 'ci', 'bootstrap-pgclient.sh');
+  const runnerTemp = process.env.RUNNER_TEMP ?? tmpdir();
+  execFileSync('bash', [bootstrapScript], {
+    env: {
+      ...process.env,
+      DATABASE_URL: databaseUrl,
+      RUNNER_TEMP: runnerTemp,
+    },
+    stdio: 'pipe',
+  });
+  const clientRoot = process.env.SOSMESH_PGCLIENT_ROOT ?? path.join(runnerTemp, 'pgclient');
+  const dump = findPgToolUnderRoot(clientRoot, 'pg_dump');
+  const restore = findPgToolUnderRoot(clientRoot, 'pg_restore');
+  if (!dump || !restore) {
+    throw new Error(`bootstrap-pgclient did not produce pg_dump/pg_restore under ${clientRoot}`);
+  }
+  return { dump, restore, libDir: findLibDirUnderRoot(clientRoot) };
 }
 
 function resolvePgBinary(tool: 'pg_dump' | 'pg_restore'): string {
@@ -59,12 +107,37 @@ function resolvePgBinary(tool: 'pg_dump' | 'pg_restore'): string {
   }
   const located = spawnSync('bash', ['-lc', `command -v ${tool}`], { encoding: 'utf8' });
   const bin = located.stdout.trim();
-  if (located.status !== 0 || !bin) {
-    throw new Error(
-      `${tool} not found in PATH; install postgresql-client (e.g. postgresql-client-16) or set ${envKey}`
-    );
+  if (located.status === 0 && bin) {
+    return bin;
   }
-  return bin;
+  throw new Error(
+    `${tool} not found in PATH; install postgresql-client (e.g. postgresql-client-16) or set ${envKey}`
+  );
+}
+
+function resolvePgBinaries(databaseUrl: string): {
+  pgDump: string;
+  pgRestore: string;
+  libDir?: string;
+} {
+  try {
+    return {
+      pgDump: resolvePgBinary('pg_dump'),
+      pgRestore: resolvePgBinary('pg_restore'),
+    };
+  } catch {
+    const bootstrapped = bootstrapPgClient(databaseUrl);
+    process.env.SOSMESH_PG_DUMP_PATH = bootstrapped.dump;
+    process.env.SOSMESH_PG_RESTORE_PATH = bootstrapped.restore;
+    if (bootstrapped.libDir) {
+      process.env.LD_LIBRARY_PATH = bootstrapped.libDir;
+    }
+    return {
+      pgDump: bootstrapped.dump,
+      pgRestore: bootstrapped.restore,
+      libDir: bootstrapped.libDir,
+    };
+  }
 }
 
 function parsePgToolMajor(versionOutput: string): number {
@@ -79,7 +152,8 @@ function parsePgToolMajor(versionOutput: string): number {
 async function assertPgClientMajorGteServer(
   prisma: PrismaClient,
   pgDumpPath: string,
-  pgRestorePath: string
+  pgRestorePath: string,
+  libDir?: string
 ): Promise<void> {
   const serverRows = await prisma.$queryRawUnsafe<{ major: number }[]>(
     `SELECT current_setting('server_version_num')::int / 10000 AS major`
@@ -88,11 +162,12 @@ async function assertPgClientMajorGteServer(
   if (serverMajor <= 0) {
     throw new Error('unable to read PostgreSQL server major version');
   }
+  const toolEnv = pgEnv('', libDir);
   const dumpMajor = parsePgToolMajor(
-    execFileSync(pgDumpPath, ['--version'], { encoding: 'utf8' })
+    execFileSync(pgDumpPath, ['--version'], { encoding: 'utf8', env: toolEnv })
   );
   const restoreMajor = parsePgToolMajor(
-    execFileSync(pgRestorePath, ['--version'], { encoding: 'utf8' })
+    execFileSync(pgRestorePath, ['--version'], { encoding: 'utf8', env: toolEnv })
   );
   if (dumpMajor < serverMajor) {
     throw new Error(
@@ -110,7 +185,8 @@ function runPgDump(
   conn: PgConn,
   schema: string,
   dumpPath: string,
-  pgDump: string
+  pgDump: string,
+  libDir?: string
 ): void {
   execFileSync(
     pgDump,
@@ -129,11 +205,16 @@ function runPgDump(
       '-f',
       dumpPath,
     ],
-    { env: pgEnv(conn.password), stdio: 'pipe' }
+    { env: pgEnv(conn.password, libDir), stdio: 'pipe' }
   );
 }
 
-function runPgRestore(conn: PgConn, dumpPath: string, pgRestore: string): void {
+function runPgRestore(
+  conn: PgConn,
+  dumpPath: string,
+  pgRestore: string,
+  libDir?: string
+): void {
   execFileSync(
     pgRestore,
     [
@@ -150,7 +231,7 @@ function runPgRestore(conn: PgConn, dumpPath: string, pgRestore: string): void {
       '--single-transaction',
       dumpPath,
     ],
-    { env: pgEnv(conn.password), stdio: 'pipe' }
+    { env: pgEnv(conn.password, libDir), stdio: 'pipe' }
   );
 }
 
@@ -167,8 +248,7 @@ export async function runBackupRestoreDrill(databaseUrl: string): Promise<Backup
   const schema = `sosmesh_drill_${Date.now()}_${process.pid}`;
   const prisma = new PrismaClient({ datasources: { db: { url: databaseUrl } } });
   const conn = parsePgUrl(databaseUrl);
-  const pgDump = resolvePgBinary('pg_dump');
-  const pgRestore = resolvePgBinary('pg_restore');
+  const { pgDump, pgRestore, libDir } = resolvePgBinaries(databaseUrl);
   const workDir = mkdtempSync(path.join(tmpdir(), 'sosmesh-drill-'));
   const dumpPath = path.join(workDir, 'source.custom');
   const encryptedPath = path.join(workDir, 'source.custom.enc');
@@ -203,10 +283,10 @@ export async function runBackupRestoreDrill(databaseUrl: string): Promise<Backup
     );
     const checksum = checksumResult[0]?.sum ?? '';
 
-    await assertPgClientMajorGteServer(prisma, pgDump, pgRestore);
+    await assertPgClientMajorGteServer(prisma, pgDump, pgRestore, libDir);
 
     log(`pg_dump path=${pgDump} schema=${schema}`);
-    runPgDump(conn, schema, dumpPath, pgDump);
+    runPgDump(conn, schema, dumpPath, pgDump, libDir);
     const dumpBytes = readFileSync(dumpPath);
     if (dumpBytes.length < 64) {
       throw new Error('pg_dump produced unexpectedly small output');
@@ -232,7 +312,7 @@ export async function runBackupRestoreDrill(databaseUrl: string): Promise<Backup
     const decrypted = decryptBuffer(key, readFileSync(encryptedPath));
     writeFileSync(dumpPath, decrypted);
     log(`pg_restore path=${pgRestore} target_db=${conn.database}`);
-    runPgRestore(conn, dumpPath, pgRestore);
+    runPgRestore(conn, dumpPath, pgRestore, libDir);
 
     const restoreCountResult = await prisma.$queryRawUnsafe<{ count: string }[]>(
       `SELECT COUNT(*)::text AS count FROM "${schema}".synthetic_rows`

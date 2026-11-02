@@ -20,6 +20,17 @@ describe('Auth and operator RBAC', () => {
   const password = 'test-password-16chars';
   const allowedOrigin = 'http://localhost:3000';
 
+  async function afterSeqForFixtureFeed(prisma: PrismaService): Promise<string> {
+    const rows = await prisma.operatorFeedEvent.findMany({
+      where: { messageId: { in: ['feed-msg-team-a', 'feed-msg-team-b'] } },
+      select: { seq: true },
+      orderBy: { seq: 'asc' },
+      take: 1,
+    });
+    const first = rows[0]?.seq ?? 1n;
+    return (first - 1n).toString();
+  }
+
   beforeAll(async () => {
     applyTestAuthEnv();
     app = await createTestApp(getTestDatabaseUrl());
@@ -161,8 +172,10 @@ describe('Auth and operator RBAC', () => {
 
   it('scopes operator feed polling to team assignments', async () => {
     const token = await loginToken();
+    const prisma = app.get(PrismaService);
+    const after = await afterSeqForFixtureFeed(prisma);
     const response = await request(app.getHttpServer())
-      .get('/v1/operator/events?after=0')
+      .get(`/v1/operator/events?after=${after}`)
       .set('Authorization', `Bearer ${token}`);
     expect(response.status).toBe(200);
     const events = response.body.events as { incidentId: string }[];
@@ -184,8 +197,10 @@ describe('Auth and operator RBAC', () => {
 
   it('allows ADMIN bearer on operator events', async () => {
     const token = operatorBearerToken({ role: UserRole.ADMIN });
+    const prisma = app.get(PrismaService);
+    const after = await afterSeqForFixtureFeed(prisma);
     const response = await request(app.getHttpServer())
-      .get('/v1/operator/events?after=0')
+      .get(`/v1/operator/events?after=${after}`)
       .set('Authorization', `Bearer ${token}`);
     expect(response.status).toBe(200);
     const events = response.body.events as { incidentId: string }[];

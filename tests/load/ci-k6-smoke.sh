@@ -23,12 +23,17 @@ ensure_pnpm
 mkdir -p "$ROOT/tests/load/.generated"
 BUILD_LOG="$ROOT/tests/load/.generated/api-build.log"
 
+echo "== load-smoke: pnpm install =="
 pnpm install --frozen-lockfile
 export NODE_OPTIONS="${NODE_OPTIONS:-} --max-old-space-size=6144"
+export PRISMA_HIDE_UPDATE_MESSAGE=1
+
+echo "== load-smoke: prisma generate =="
 pnpm --filter @sosmesh/api exec prisma generate
-if ! pnpm --filter @sosmesh/api... run build >"$BUILD_LOG" 2>&1; then
-  echo "@sosmesh/api dependency build failed; last 120 lines:" >&2
-  tail -120 "$BUILD_LOG" >&2
+
+echo "== load-smoke: build contracts + api =="
+if ! pnpm --filter '@sosmesh/api...' run build 2>&1 | tee "$BUILD_LOG"; then
+  echo "@sosmesh/api dependency build failed; see $BUILD_LOG" >&2
   exit 1
 fi
 
@@ -55,14 +60,24 @@ export INGEST_RECEIPT_SIGNING_PRIVATE_KEY="$SIGNING_KEY"
 
 release_port() {
   if command -v lsof >/dev/null 2>&1; then
-    lsof -ti:"${PORT}" | xargs -r kill -9 2>/dev/null
+    local pids=""
+    if lsof -ti:"${PORT}" >/dev/null 2>&1; then
+      pids=$(lsof -ti:"${PORT}")
+    fi
+    if [[ -n "$pids" ]]; then
+      # shellcheck disable=SC2086
+      kill -9 $pids 2>/dev/null
+    fi
   elif command -v fuser >/dev/null 2>&1; then
-    fuser -k "${PORT}/tcp" 2>/dev/null
+    if fuser "${PORT}/tcp" >/dev/null 2>&1; then
+      fuser -k "${PORT}/tcp" 2>/dev/null
+    fi
   fi
   sleep 1
 }
 release_port
 
+echo "== load-smoke: prisma migrate + seed =="
 pnpm --filter @sosmesh/api exec prisma migrate deploy
 pnpm --filter @sosmesh/api exec prisma db seed
 
@@ -88,6 +103,7 @@ cleanup() {
 }
 trap cleanup EXIT
 
+echo "== load-smoke: wait for /health/ready =="
 ready=0
 for _ in $(seq 1 90); do
   if curl -fsS "http://127.0.0.1:${PORT}/health/ready" >/dev/null 2>&1; then
@@ -137,4 +153,5 @@ if ! command -v k6 >/dev/null 2>&1; then
 fi
 
 export K6_VUS=1
+echo "== load-smoke: k6 profile 100 =="
 BASE_URL="http://127.0.0.1:${PORT}" bash "$ROOT/tests/load/run-profile.sh" 100

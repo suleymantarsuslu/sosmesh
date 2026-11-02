@@ -1,6 +1,6 @@
 {
   "schema_version": "1.0.0",
-  "generated_at": "2026-11-02T17:49:53.335Z",
+  "generated_at": "2026-11-02T21:53:39.295Z",
   "source_of_truth": "docs/handover/status.json",
   "item_count": 88,
   "items": [
@@ -1428,9 +1428,11 @@
       "kind": "master_plan_step",
       "title": "Yedekleme, veri kurtarma ve güvenli güncelleme",
       "pass_criteria": "Yedekten geri dönüş en az bir defa başarıyla kanıtlı.",
-      "verification_status": "NOT_STARTED",
+      "verification_status": "PENDING_MERGE",
       "tier": "P",
-      "tests": [],
+      "tests": [
+        "https://github.com/suleymantarsuslu/sosmesh/pull/59 (PENDING_MERGE — yedekleme/restore; raporda içerik özeti yok)"
+      ],
       "evidence": {
         "ci_jobs": [
           "Verify Quality Gates"
@@ -1440,7 +1442,10 @@
           "reports/*.log"
         ],
         "document_paths": [],
-        "status_json_blockers": []
+        "status_json_blockers": [
+          "PR #59 merge bekliyor",
+          "Restore drill kanıtı yok"
+        ]
       }
     },
     {

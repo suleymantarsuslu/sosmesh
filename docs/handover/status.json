@@ -3,8 +3,8 @@
   "generated_note": "Parsed from master.txt; status values: PASS|FAIL|BLOCKED_DEVICE|BLOCKED_SECRET|BLOCKED_APPROVAL|NOT_TESTED|NOT_STARTED|PENDING_MERGE|ACCEPTED_WITH_DEBT|PARTIAL",
   "project_completion": {
     "status": "NOT_COMPLETE",
-    "reason": "ADIM 24 NOT_TESTED; ADIM 49–50 NOT_STARTED; ADIM 55 NOT_STARTED; staging/prod deploy BLOCKED_APPROVAL; mağaza/imza/hukuk/cihaz kapıları PASS değil; qa-summary npm high audit açık.",
-    "last_updated_at": "2026-11-02T16:15:00+00:00",
+    "reason": "NOT_TESTED (ADIM 24); NOT_STARTED (ADIM 55); PENDING_MERGE (ADIM 49); PARTIAL (ADIM 12,13,14,15,16,17,19,20,21,22,23,25,26,27,28,29,30,31,32,33,34,35,36,37,38,39,40,41,42,43,44,45,46,47,50,51,52,53,54,56,57,58); ACCEPTED_WITH_DEBT (ADIM 04); staging/prod deploy BLOCKED_APPROVAL; mağaza/imza/hukuk/fiziksel BLE kanıtı PASS değil; qa-summary npm high audit açık",
+    "last_updated_at": "2026-11-02T21:53:21.180Z",
     "handover_report": "docs/handover/final-report.md"
   },
   "gates": {
@@ -1765,11 +1765,16 @@
       ],
       "deliverables": "infra/backup scripts, docs/runbooks/restore.md",
       "pass_criteria": "Yedekten geri dönüş en az bir defa başarıyla kanıtlı.",
-      "status": "NOT_STARTED",
+      "status": "PENDING_MERGE",
       "attempts": 0,
       "commit": null,
-      "evidence": [],
-      "blockers": [],
+      "evidence": [
+        "https://github.com/suleymantarsuslu/sosmesh/pull/59 (PENDING_MERGE — yedekleme/restore; raporda içerik özeti yok)"
+      ],
+      "blockers": [
+        "PR #59 merge bekliyor",
+        "Restore drill kanıtı yok"
+      ],
       "last_checked_at": null,
       "goal": "Sistem arızasında veriyi korumak ve geri dönebilmek.",
       "cursor_tasks": [
@@ -1796,7 +1801,7 @@
       "pass_criteria": "Kritik akışlarda blocker düzeyi a11y defect = 0.",
       "status": "PARTIAL",
       "attempts": 2,
-      "commit": "0cfd3ca3bd28d3bc79bd3f82064a71c3c0b521c4",
+      "commit": "c0c6681db2f8cecc9b405b61a94bd48db225f7d4",
       "evidence": [
         "tests/ux/adim50-web-closure.spec.js (axe WCAG2.2 AA 7 akış, klavye, 320-1920, zoom 200%, hydration, slow 3G, offline banner, RBAC UI + Nest 403 guard)",
         "tests/ux/adim50-cross-browser.spec.js + firefox/webkit Playwright projeleri",
@@ -2053,7 +2058,7 @@
       "pass_criteria": "BLOCKED/NOT_TESTED hiçbir required kalemde PASS gösterilmiyor.",
       "status": "PARTIAL",
       "attempts": 1,
-      "commit": "98e4e0c0fafa8c6b582ffb3040c2bd8b4d0f74ac",
+      "commit": "07dc3d2dd38a7f0b5967b81a75a8997adfce50ca",
       "evidence": [
         "docs/release/traceability.md",
         "docs/release/traceability.json",
@@ -2101,7 +2106,7 @@
       "pass_criteria": "Kullanıcı bağlantı düzeyini ve başarısız iletimi anlıyor.",
       "status": "PARTIAL",
       "attempts": 2,
-      "commit": "3c504e64e97f6394edf0894f9136045cf7752be4",
+      "commit": "d0dde07728c149d00738b37e89c6e0f68fa22d74",
       "evidence": [
         "docs/user/kullanici-rehberi-tr.md",
         "docs/user/user-guide-en.md",

@@ -41,9 +41,18 @@ function readJson(path) {
   return JSON.parse(readFileSync(path, 'utf8'));
 }
 
+function normalizeEvidenceList(evidence) {
+  if (!evidence) {
+    return [];
+  }
+  if (Array.isArray(evidence)) {
+    return evidence;
+  }
+  return [String(evidence)];
+}
+
 function firstEvidencePath(step) {
-  const ev = step.evidence;
-  const list = Array.isArray(ev) ? ev : ev ? [String(ev)] : [];
+  const list = normalizeEvidenceList(step.evidence);
   for (const item of list) {
     const s = String(item);
     if (/\.(ts|tsx|js|jsx|md|feature|sh|yaml|yml|json|csv|txt|png|log)$/i.test(s) || s.includes('/')) {
@@ -141,6 +150,74 @@ function projectClaimsComplete(reportText) {
   return forbidden.some((re) => re.test(reportText));
 }
 
+const REASON_STATUS_ORDER = [
+  'NOT_TESTED',
+  'NOT_STARTED',
+  'PENDING_MERGE',
+  'FAIL',
+  'BLOCKED_DEVICE',
+  'BLOCKED_SECRET',
+  'BLOCKED_APPROVAL',
+  'PARTIAL',
+  'ACCEPTED_WITH_DEBT',
+];
+
+/** Derive NOT_COMPLETE reason text from step statuses (must match steps table). */
+export function buildProjectCompletionReason(steps) {
+  const nonPass = steps.filter((s) => s.status !== 'PASS');
+  const groups = new Map();
+  for (const s of nonPass) {
+    if (!groups.has(s.status)) {
+      groups.set(s.status, []);
+    }
+    groups.get(s.status).push(s.id);
+  }
+  const sortIds = (ids) => [...ids].sort((a, b) => Number(a) - Number(b));
+  const parts = [];
+  for (const st of REASON_STATUS_ORDER) {
+    if (!groups.has(st)) {
+      continue;
+    }
+    parts.push(`${st} (ADIM ${sortIds(groups.get(st)).join(',')})`);
+  }
+  parts.push(
+    'staging/prod deploy BLOCKED_APPROVAL; mağaza/imza/hukuk/fiziksel BLE kanıtı PASS değil; qa-summary npm high audit açık',
+  );
+  return parts.join('; ');
+}
+
+function expandAdimRange(start, end) {
+  const ids = [];
+  for (let n = Number(start); n <= Number(end); n += 1) {
+    ids.push(String(n).padStart(2, '0'));
+  }
+  return ids;
+}
+
+/** Find ADIM xx STATUS claims in reason text that contradict status.json. */
+export function findReasonStatusContradictions(reason, steps) {
+  const byId = new Map(steps.map((s) => [s.id, s.status]));
+  const errors = [];
+  const re =
+    /ADIM\s+(\d{1,2})(?:[–—-](\d{1,2}))?\s+(PASS|PARTIAL|NOT_STARTED|NOT_TESTED|PENDING_MERGE|FAIL|BLOCKED_DEVICE|BLOCKED_SECRET|BLOCKED_APPROVAL|ACCEPTED_WITH_DEBT)/gi;
+  let m;
+  while ((m = re.exec(reason)) !== null) {
+    const claimed = m[3].toUpperCase();
+    const ids = m[2]
+      ? expandAdimRange(m[1], m[2])
+      : [String(Number(m[1])).padStart(2, '0')];
+    for (const id of ids) {
+      const actual = byId.get(id);
+      if (actual && actual !== claimed) {
+        errors.push(
+          `project_completion.reason claims ADIM ${id} ${claimed} but status.json is ${actual}`,
+        );
+      }
+    }
+  }
+  return errors;
+}
+
 /**
  * @param {{ repoRoot?: string, reportPath?: string, statusPath?: string }} opts
  * @returns {{ ok: boolean, errors: string[] }}
@@ -169,6 +246,26 @@ export function verifyHandover(opts = {}) {
   const completion = status.project_completion;
   if (!completion || completion.status !== 'NOT_COMPLETE') {
     errors.push('status.json must set project_completion.status to NOT_COMPLETE');
+  } else if (completion.reason) {
+    errors.push(...findReasonStatusContradictions(completion.reason, steps));
+    const expectedReason = buildProjectCompletionReason(steps);
+    if (completion.reason !== expectedReason) {
+      errors.push('project_completion.reason must match buildProjectCompletionReason(steps) exactly');
+    }
+  } else {
+    errors.push('project_completion.reason is required');
+  }
+
+  const adim49 = steps.find((s) => s.id === '49');
+  if (adim49?.status === 'PENDING_MERGE') {
+    const ev = normalizeEvidenceList(adim49.evidence);
+    const hasPr59 = ev.some((e) => String(e).includes('/pull/59'));
+    if (!hasPr59) {
+      errors.push('ADIM 49 PENDING_MERGE must reference PR #59 in evidence');
+    }
+    if (!report.includes('PENDING_MERGE') || !report.includes('/pull/59')) {
+      errors.push('final-report must document ADIM 49 PENDING_MERGE with PR #59 link');
+    }
   }
 
   const adim58 = steps.find((s) => s.id === '58');

@@ -57,13 +57,21 @@ ${table}
 
 | ADIM | PR | Not |
 |------|-----|-----|
-| 49 | [PR #59](https://github.com/suleymantarsuslu/sosmesh/pull/59) | Yedekleme / geri yükleme — \`status.json\` **NOT_STARTED**; içerik bu raporda özetlenmez |
+| 49 | [PR #59](https://github.com/suleymantarsuslu/sosmesh/pull/59) | Yedekleme / geri yükleme — \`status.json\` **PENDING_MERGE**; içerik bu raporda özetlenmez |
 
-**Main’e merge edildi:** ADIM 56 ← PR #66 (\`54f25c80\`); ADIM 50 ← PR #53; ADIM 57 ← PR #65.
+**Main’e merge edildi (PR head SHA → merge commit):**
 
-### CI / runner notu (Zulal self-hosted)
+| ADIM | PR | PR head (merged) | Merge commit (main) |
+|------|-----|------------------|---------------------|
+| 50 | [#53](https://github.com/suleymantarsuslu/sosmesh/pull/53) | \`c0c6681db2f8\` | \`70594b3a037e\` |
+| 56 | [#66](https://github.com/suleymantarsuslu/sosmesh/pull/66) | \`07dc3d2dd38a\` | \`54f25c8029ef\` |
+| 57 | [#65](https://github.com/suleymantarsuslu/sosmesh/pull/65) | \`d0dde07728c1\` | \`17bbab7bed7d\` |
 
-GitHub Actions **Zulal self-hosted** runner’larında koşar; **Swift / Android Gradle / iOS archive / \`docker compose\` smoke** bu fazda **NOT_TESTED** — MacBook ve kullanıcı onayı sonrası ayrı kapı.
+### CI / runner notu
+
+- Varsayılan CI: GitHub Actions **GitHub-hosted** runner (\`SOSMESH_CI_RUNNER=github\`, repo değişkeni).
+- Swift / Android Gradle / iOS archive: yalnızca \`SOSMESH_MAC_RUNNER=on\` iken **self-hosted MacBook** runner’da — [PR #68](https://github.com/suleymantarsuslu/sosmesh/pull/68) (**henüz merge değil**); **mobil CI PASS iddiası yok**.
+- **NOT_TESTED (handover):** \`docker compose\` smoke, Firefox/WebKit tam matrix (CI kapsamı sınırlı), fiziksel cihaz / BLE saha kanıtı.
 
 ---
 
@@ -75,14 +83,14 @@ GitHub Actions **Zulal self-hosted** runner’larında koşar; **Swift / Android
 - Android 12–16 saha / Doze / arka plan (ADIM 12–16, 42, 51 **PARTIAL**)
 - iPhone / MacBook Xcode archive (B-03, B-13; ADIM 52 **PARTIAL**)
 - watchOS / Wear OS gerçek saat (B-04; ADIM 35–39, 53 **PARTIAL**)
-- TalkBack / VoiceOver tam akış (ADIM 13, 50 **NOT_STARTED**)
+- TalkBack / VoiceOver tam akış (ADIM 13 **PARTIAL**; ADIM 50 manuel ekran okuyucu **NOT_TESTED**)
 - Ekran okuyucu manuel rapor: **NOT_TESTED**
 
 ### Sır / yapılandırma (BLOCKED_SECRET)
 
 - \`MODEL_API_KEY\` prod doğrulama (B-05)
 - \`METRICS_SCRAPE_AUTH\` prod değeri (ADIM 48)
-- Yedekleme şifreleme anahtarı / secret manager (ADIM 49 **NOT_STARTED**, PR #59 PENDING_MERGE)
+- Yedekleme şifreleme anahtarı / secret manager (ADIM 49 **PENDING_MERGE**, PR #59)
 - Prod ingest / receipt anahtarları dağıtımı
 
 ### Onay / hukuk / mağaza (BLOCKED_APPROVAL)

@@ -1,6 +1,6 @@
 {
   "schema_version": "1.0.0",
-  "generated_at": "2026-11-02T17:50:00.814Z",
+  "generated_at": "2026-11-02T21:53:47.029Z",
   "release_candidate": "v1.0.0-rc.1",
   "defect_inventory": {
     "todo_fixme_scan": [
@@ -9,7 +9,7 @@
         "severity": "high",
         "owner": "TBD",
         "file": "docs/handover/final-report.md",
-        "line": 127,
+        "line": 135,
         "summary": "- Destek iletişim kanalı prod (`TODO_APPROVAL`, `DESTEK_*_TBD`)",
         "release_note": "Requires user approval before prod",
         "workaround": "Placeholder until operator configures prod contact/secrets"
@@ -19,7 +19,7 @@
         "severity": "high",
         "owner": "TBD",
         "file": "docs/handover/final-report.md",
-        "line": 169,
+        "line": 177,
         "summary": "5. Destek: **TODO_APPROVAL** — kullanıcı yapılandırmalı",
         "release_note": "Requires user approval before prod",
         "workaround": "Placeholder until operator configures prod contact/secrets"
@@ -71,7 +71,7 @@
         "severity": "high",
         "owner": "TBD",
         "file": "docs/handover/final-report.md",
-        "line": 127,
+        "line": 135,
         "summary": "- Destek iletişim kanalı prod (`TODO_APPROVAL`, `DESTEK_*_TBD`)",
         "release_note": "Requires user approval before prod",
         "workaround": "Placeholder until operator configures prod contact/secrets"
@@ -81,7 +81,7 @@
         "severity": "high",
         "owner": "TBD",
         "file": "docs/handover/final-report.md",
-        "line": 169,
+        "line": 177,
         "summary": "5. Destek: **TODO_APPROVAL** — kullanıcı yapılandırmalı",
         "release_note": "Requires user approval before prod",
         "workaround": "Placeholder until operator configures prod contact/secrets"

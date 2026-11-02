@@ -198,11 +198,14 @@ jobs:
 
   android-gradle:
     name: Android Gradle Build
-    runs-on: ${{ vars.SOSMESH_CI_RUNNER == 'zulal' && fromJSON('["self-hosted","linux","ARM64","zulal"]') || 'ubuntu-latest' }}
+    runs-on: ${{ vars.SOSMESH_MAC_RUNNER == 'on' && fromJSON('["self-hosted","macOS","ARM64","macbook"]') || (vars.SOSMESH_CI_RUNNER == 'zulal' && fromJSON('["self-hosted","linux","ARM64","zulal"]') || 'ubuntu-latest') }}
     needs: detect-mobile
-    if: vars.SOSMESH_CI_RUNNER != 'zulal' && needs.detect-mobile.outputs.android == 'true'
+    if: (vars.SOSMESH_MAC_RUNNER == 'on' || vars.SOSMESH_CI_RUNNER != 'zulal') && needs.detect-mobile.outputs.android == 'true'
     timeout-minutes: 25
-    
+    concurrency:
+      group: sosmesh-mobile-${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+      cancel-in-progress: true
+
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -211,12 +214,47 @@ jobs:
         uses: gradle/wrapper-validation-action@v2
       
       - name: Setup JDK 21
+        if: vars.SOSMESH_MAC_RUNNER != 'on'
         uses: actions/setup-java@v4
         with:
           java-version: '21'
           distribution: 'temurin'
+
+      - name: Verify Java and Android SDK (Mac self-hosted)
+        if: vars.SOSMESH_MAC_RUNNER == 'on'
+        shell: bash
+        run: |
+          set -euo pipefail
+          if [ -z "${JAVA_HOME:-}" ]; then
+            echo "JAVA_HOME is not set on the Mac runner (expected Temurin 17)"
+            exit 1
+          fi
+          if [ -z "${ANDROID_HOME:-}" ] && [ -z "${ANDROID_SDK_ROOT:-}" ]; then
+            echo "ANDROID_HOME or ANDROID_SDK_ROOT must be set on the Mac runner"
+            exit 1
+          fi
+          SDK_ROOT="${ANDROID_HOME:-${ANDROID_SDK_ROOT}}"
+          echo "JAVA_HOME=${JAVA_HOME}"
+          java -version
+          echo "ANDROID_SDK_ROOT=${SDK_ROOT}"
+          if [ ! -d "${SDK_ROOT}/platforms/android-35" ]; then
+            echo "Missing Android SDK platform android-35 under ${SDK_ROOT} (install locally; CI will not run sdkmanager)"
+            exit 1
+          fi
+          if [ ! -d "${SDK_ROOT}/build-tools/35.0.0" ]; then
+            echo "Missing Android SDK build-tools 35.0.0 under ${SDK_ROOT} (install locally; CI will not run sdkmanager)"
+            exit 1
+          fi
+          echo "sdk.dir=${SDK_ROOT}" >> apps/android/local.properties
+
+      - name: Configure isolated Gradle home (Mac self-hosted)
+        if: vars.SOSMESH_MAC_RUNNER == 'on'
+        shell: bash
+        run: |
+          echo "GRADLE_USER_HOME=${{ runner.temp }}/gradle-${{ github.job }}" >> "$GITHUB_ENV"
       
       - name: Setup Android SDK components
+        if: vars.SOSMESH_MAC_RUNNER != 'on'
         run: |
           echo "sdk.dir=${ANDROID_HOME}" >> apps/android/local.properties
           SDKMANAGER="${ANDROID_HOME}/cmdline-tools/latest/bin/sdkmanager"
@@ -227,6 +265,7 @@ jobs:
           "$SDKMANAGER" "platforms;android-35" "build-tools;35.0.0"
       
       - name: Setup Gradle cache
+        if: vars.SOSMESH_MAC_RUNNER != 'on'
         uses: gradle/actions/setup-gradle@v3
       
       - name: Gradle assemble, unit tests, lint
@@ -257,22 +296,31 @@ jobs:
 
   ios-xcode:
     name: iOS Xcode Build
-    runs-on: macos-latest
+    runs-on: ${{ vars.SOSMESH_MAC_RUNNER == 'on' && fromJSON('["self-hosted","macOS","ARM64","macbook"]') || 'macos-latest' }}
     needs: detect-mobile
-    if: vars.SOSMESH_CI_RUNNER != 'zulal' && needs.detect-mobile.outputs.ios == 'true'
+    if: (vars.SOSMESH_MAC_RUNNER == 'on' || vars.SOSMESH_CI_RUNNER != 'zulal') && needs.detect-mobile.outputs.ios == 'true'
     timeout-minutes: 30
-    
+    concurrency:
+      group: sosmesh-mobile-${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+      cancel-in-progress: true
+
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
       
       - name: Setup Xcode
+        if: vars.SOSMESH_MAC_RUNNER != 'on'
         uses: maxim-lobanov/setup-xcode@v1
         with:
           xcode-version: latest-stable
       
-      - name: Show Xcode version
-        run: xcodebuild -version
+      - name: Show Xcode and Swift versions
+        shell: bash
+        run: |
+          set -euo pipefail
+          xcodebuild -version
+          swift --version
+          xcode-select -p
       
       - name: Lint Swift
         run: |
@@ -433,18 +481,31 @@ jobs:
 
   swift-package-tests:
     name: Swift Package Tests
-    runs-on: ${{ vars.SOSMESH_CI_RUNNER == 'zulal' && fromJSON('["self-hosted","linux","ARM64","zulal"]') || 'ubuntu-latest' }}
+    runs-on: ${{ vars.SOSMESH_MAC_RUNNER == 'on' && fromJSON('["self-hosted","macOS","ARM64","macbook"]') || (vars.SOSMESH_CI_RUNNER == 'zulal' && fromJSON('["self-hosted","linux","ARM64","zulal"]') || 'ubuntu-latest') }}
     timeout-minutes: 25
-    if: vars.SOSMESH_CI_RUNNER != 'zulal' && (github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository)
+    if: (vars.SOSMESH_MAC_RUNNER == 'on' || vars.SOSMESH_CI_RUNNER != 'zulal') && (github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository)
+    concurrency:
+      group: sosmesh-mobile-${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+      cancel-in-progress: true
 
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
 
       - name: Setup Swift
+        if: vars.SOSMESH_MAC_RUNNER != 'on'
         uses: swift-actions/setup-swift@v2
         with:
           swift-version: "5.10"
+
+      - name: Show Swift toolchain (Mac self-hosted)
+        if: vars.SOSMESH_MAC_RUNNER == 'on'
+        shell: bash
+        run: |
+          set -euo pipefail
+          xcodebuild -version
+          swift --version
+          which swift
 
       - name: Run Swift contract tests
         run: |
@@ -500,16 +561,80 @@ jobs:
   zulal-deferred-summary:
     name: Mobile verification deferred (MacBook phase)
     runs-on: ${{ vars.SOSMESH_CI_RUNNER == 'zulal' && fromJSON('["self-hosted","linux","ARM64","zulal"]') || 'ubuntu-latest' }}
-    if: vars.SOSMESH_CI_RUNNER == 'zulal' && (github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository)
+    needs:
+      - detect-mobile
+      - swift-package-tests
+      - android-gradle
+      - ios-xcode
+    if: |
+      always() &&
+      (vars.SOSMESH_CI_RUNNER == 'zulal' || vars.SOSMESH_MAC_RUNNER == 'on') &&
+      (github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository)
     timeout-minutes: 2
     steps:
-      - name: Record deferred checks (NOT_TESTED)
+      - name: Record deferred mobile checks (NOT_TESTED)
+        if: vars.SOSMESH_MAC_RUNNER != 'on' && vars.SOSMESH_CI_RUNNER == 'zulal'
         shell: bash
         run: |
           {
             echo 'Swift/Android/iOS: NOT_TESTED — deferred to MacBook phase (user decision 2026-11-02)'
             echo 'Compose smoke: NOT_TESTED on Zulal (no Docker for ghrunner; needs approval)'
             echo 'Firefox/WebKit axe smoke: NOT_TESTED on Zulal (playwright system deps need sudo)'
+          } >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Report mobile job results (Mac runner)
+        if: vars.SOSMESH_MAC_RUNNER == 'on'
+        shell: bash
+        run: |
+          set -euo pipefail
+          fail=0
+          line() {
+            echo "$1"
+            echo "$1" >> "$GITHUB_STEP_SUMMARY"
+          }
+          swift_result='${{ needs.swift-package-tests.result }}'
+          line "Swift Package Tests: ${swift_result}"
+          case "$swift_result" in
+            success) ;;
+            skipped)
+              line "ERROR: Swift Package Tests was skipped while SOSMESH_MAC_RUNNER=on"
+              fail=1
+              ;;
+            *)
+              fail=1
+              ;;
+          esac
+          if [ "${{ needs.detect-mobile.outputs.android }}" = "true" ]; then
+            android_result='${{ needs.android-gradle.result }}'
+            line "Android Gradle Build: ${android_result}"
+            if [ "$android_result" != "success" ]; then
+              fail=1
+            fi
+          else
+            line "Android Gradle Build: skipped (no Android project)"
+          fi
+          if [ "${{ needs.detect-mobile.outputs.ios }}" = "true" ]; then
+            ios_result='${{ needs.ios-xcode.result }}'
+            line "iOS Xcode Build: ${ios_result}"
+            if [ "$ios_result" != "success" ]; then
+              fail=1
+            fi
+          else
+            line "iOS Xcode Build: skipped (no iOS project)"
+          fi
+          if [ "$fail" -ne 0 ]; then
+            exit 1
+          fi
+
+      - name: Zulal non-mobile deferred notes
+        if: vars.SOSMESH_CI_RUNNER == 'zulal'
+        shell: bash
+        run: |
+          {
+            if [ "${{ vars.SOSMESH_MAC_RUNNER }}" = "on" ]; then
+              echo 'Compose smoke: NOT_TESTED on Zulal (no Docker for ghrunner; needs approval)'
+              echo 'Firefox/WebKit axe smoke: NOT_TESTED on Zulal (playwright system deps need sudo)'
+            fi
           } >> "$GITHUB_STEP_SUMMARY"
 
   load-smoke:

@@ -4,7 +4,7 @@ export function pickActivePreview(
   items: AssignmentRecommendationRow[],
   caseCoordinates: { latitude: number; longitude: number } | null
 ): AssignmentPreviewRoute | null {
-  const proposed = items.find((row) => row.status === 'PROPOSED' && row.available && false);
+  const proposed = items.find((row) => row.status === 'PROPOSED' && row.available);
   if (!proposed) {
     return null;
   }

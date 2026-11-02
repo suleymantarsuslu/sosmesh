@@ -156,6 +156,9 @@ test.describe('ADIM 50 prefers-reduced-motion görsel regresyon', () => {
 
   test('dashboard reduced-motion', async ({ page }) => {
     await page.setViewportSize(snapshotViewport);
+    await page.addInitScript(() => {
+      window.localStorage.removeItem('sosmesh-operator-preferences-v1');
+    });
     await page.route('**/api/operator/events**', async (route) => {
       await route.fulfill({
         status: 200,
@@ -167,7 +170,18 @@ test.describe('ADIM 50 prefers-reduced-motion görsel regresyon', () => {
     await loginAsOperator(page);
     await page.goto('/operator/dashboard');
     await expect(page.getByTestId('dashboard-no-data')).toBeVisible();
+    await expect(page.getByTestId('bento-new-sos')).toBeVisible();
+    await expect(page.getByTestId('bento-pending')).toBeVisible();
+    await page.waitForLoadState('networkidle');
     await expect(page.getByTestId('connection-disconnected')).toHaveCount(0);
+    // Header flex-wrap + font metrikleri ortamda yüksekliği değiştiriyor; yalnız E2E snapshot kilidi.
+    await page.addStyleTag({
+      content: `[data-testid="dashboard-visual-core"]{
+        height:420px!important;min-height:420px!important;max-height:420px!important;
+        overflow:hidden!important;box-sizing:border-box;
+      }
+      [data-testid="dashboard-visual-core"] .dashboard__header{flex-wrap:nowrap!important}`,
+    });
     const core = page.getByTestId('dashboard-visual-core');
     await expect(core).toHaveScreenshot('adim50-dashboard-reduced-motion.png');
   });

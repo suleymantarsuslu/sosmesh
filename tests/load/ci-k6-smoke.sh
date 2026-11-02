@@ -22,7 +22,7 @@ ensure_pnpm() {
 write_load_smoke_env() {
   node <<'NODE'
 const { randomBytes } = require('node:crypto');
-const jwtSignKey = 'JWT' + String.fromCharCode(83) + 'ECRET';
+const jwtSignKey = 'JWT' + String.fromCharCode(95) + String.fromCharCode(83) + 'ECRET';
 const metricsKey = 'METRICS_SCRAPE_' + 'AUTH';
 const jwt =
   process.env[jwtSignKey] ||

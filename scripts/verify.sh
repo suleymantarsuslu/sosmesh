@@ -329,7 +329,7 @@ if [ -n "${SOSMESH_CI_DATABASE_URL:-}" ]; then
     check_exit "backup-restore-drill" $EXIT_CODE "backup-restore-drill.log"
   fi
 else
-  echo -e "${YELLOW}backup-restore-drill: covered by apps/api/test/backup-adim49.spec.ts (embedded)${NC}"
+  echo -e "${YELLOW}backup-restore-drill: NOT_TESTED (SOSMESH_CI_DATABASE_URL unset; CI verify job runs pg_dump drill)${NC}"
 fi
 
 # Summary

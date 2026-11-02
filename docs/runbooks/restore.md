@@ -8,9 +8,10 @@ Bu belgedeki **RPO/RTO yalnızca otomatik restore drill logunda ölçülen değe
 | --- | --- |
 | Drill betiği | `scripts/backup-restore-drill.sh` |
 | Tetikleyici | `apps/api/test/backup-adim49.spec.ts` (Jest) + CI `verify` job |
-| PostgreSQL | GitHub Actions `postgres:16` servisi (`SOSMESH_CI_*`) veya yerel embedded Postgres (Jest `globalSetup`) |
+| PostgreSQL | GitHub Actions `postgres:16` + `postgresql-client-16` (`SOSMESH_CI_*`) veya yerel embedded Postgres (Jest `globalSetup`; `pg_dump`/`pg_restore` PATH'te olmalı) |
 | Veri | Sentetik şema `sosmesh_drill_*`, PII yok; 50 satır + MD5 checksum |
-| Şifreleme | AES-256-CBC; anahtar yalnızca runtime `SOSMESH_BACKUP_ENCRYPTION_KEY` (secret adı: `SOSMESH_BACKUP_ENCRYPTION_KEY_SECRET_NAME`) |
+| Yedekleme | `pg_dump -Fc` → AES-256-CBC şifreleme → kaynak şema DROP → şifre çöz → `pg_restore` (JSON satır kopyası değil) |
+| Anahtar | Runtime `SOSMESH_BACKUP_ENCRYPTION_KEY` (secret adı: `SOSMESH_BACKUP_ENCRYPTION_KEY_SECRET_NAME`; repoda değer yok) |
 
 ## Ölçülen RPO / RTO
 
@@ -24,7 +25,7 @@ Drill log dosyası: `reports/backup-restore-drill.log` (CI artifact `test-report
 Son başarılı yerel/CI koşusundan örnek format (değerler ortama göre değişir):
 
 ```
-PASS: backup-restore drill verified (RPO_ms=… RTO_ms=… env=ci_or_embedded)
+PASS: backup-restore drill verified (RPO_ms=… RTO_ms=… env=ci_postgres|embedded_postgres tool=pg_dump/pg_restore)
 measured_rpo_ms=…
 measured_rto_ms=…
 ```

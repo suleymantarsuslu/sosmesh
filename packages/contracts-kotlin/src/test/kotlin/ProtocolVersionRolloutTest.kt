@@ -1,10 +1,10 @@
-package meshv2
+package com.sosmesh.contracts.meshv2
 
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Test
 
 class ProtocolVersionRolloutTest {
-    private val engine = MeshRelayEngine(lruCapacity = 128)
+    private val engine = MeshRelayEngine(MeshRelayEngineConfig(lruCapacity = 128))
     private val relayId = "a".repeat(64)
 
     private fun sampleEnvelope(messageId: String = "rollout-msg"): MeshRelayEnvelopeV2 =

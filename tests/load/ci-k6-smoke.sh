@@ -5,11 +5,36 @@ set -euo pipefail
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
 cd "$ROOT"
 
-DB_URL="${SOSMESH_CI_DATABASE_URL:-${DATABASE_URL:-}}"
-if [[ -z "$DB_URL" ]]; then
-  echo "SOSMESH_CI_DATABASE_URL or DATABASE_URL must be set" >&2
-  exit 1
-fi
+DB_URL=""
+LOAD_SMOKE_PG_STATE=""
+
+drop_load_smoke_ci_db() {
+  if [[ -n "$LOAD_SMOKE_PG_STATE" ]] && [[ -f "$LOAD_SMOKE_PG_STATE" ]]; then
+    set +e
+    node "$ROOT/apps/api/test/helpers/smoke-ci-db.mjs" drop "$LOAD_SMOKE_PG_STATE"
+    set -e
+    LOAD_SMOKE_PG_STATE=""
+  fi
+}
+
+resolve_load_smoke_db_url() {
+  if [[ -n "${SOSMESH_CI_PG_ADMIN_URL:-}" ]] && [[ -n "${SOSMESH_CI_DATABASE_URL:-}" ]]; then
+    LOAD_SMOKE_PG_STATE="$(mktemp "${RUNNER_TEMP:-/tmp}/sosmesh-load-smoke-pg-XXXXXX.json")"
+    rm -f "$LOAD_SMOKE_PG_STATE"
+    echo "== load-smoke: provision isolated CI PostgreSQL =="
+    node "$ROOT/apps/api/test/helpers/smoke-ci-db.mjs" create "$LOAD_SMOKE_PG_STATE"
+    DB_URL="$(
+      node -e "console.log(JSON.parse(require('node:fs').readFileSync(process.argv[1], 'utf8')).databaseUrl)" \
+        "$LOAD_SMOKE_PG_STATE"
+    )"
+  else
+    DB_URL="${SOSMESH_CI_DATABASE_URL:-${DATABASE_URL:-}}"
+  fi
+  if [[ -z "$DB_URL" ]]; then
+    echo "SOSMESH_CI_DATABASE_URL or DATABASE_URL must be set" >&2
+    exit 1
+  fi
+}
 
 ensure_pnpm() {
   if command -v pnpm >/dev/null 2>&1; then
@@ -49,6 +74,8 @@ export PRISMA_HIDE_UPDATE_MESSAGE=1
 
 echo "== load-smoke: prisma generate =="
 pnpm --filter @sosmesh/api exec prisma generate
+
+resolve_load_smoke_db_url
 
 echo "== load-smoke: build contracts + api =="
 if ! pnpm --filter '@sosmesh/api...' run build 2>&1 | tee "$BUILD_LOG"; then
@@ -143,6 +170,7 @@ stop_api_only() {
 on_smoke_exit() {
   local trap_ec=$?
   stop_api_only
+  drop_load_smoke_ci_db
   if [[ -n "$SMOKE_FINAL_EXIT" ]]; then
     exit "$SMOKE_FINAL_EXIT"
   fi
@@ -187,10 +215,26 @@ if [[ "$PREFLIGHT_CODE" != "200" ]]; then
   exit 1
 fi
 
+install_k6_linux_arm64_runner_temp() {
+  local k6_version="0.55.0"
+  local k6_sha256="de505b57f0de37f715f598178c43dc856a19fb90d6d549a65ea730bb3b6c9216"
+  local k6_dir="${RUNNER_TEMP:-/tmp}/k6-v${k6_version}-linux-arm64"
+  local archive="${k6_dir}/k6-v${k6_version}-linux-arm64.tar.gz"
+  mkdir -p "$k6_dir"
+  if [[ ! -x "${k6_dir}/k6" ]]; then
+    echo "Downloading k6 v${k6_version} (linux-arm64) to ${k6_dir}" >&2
+    curl -fsSL -o "$archive" \
+      "https://github.com/grafana/k6/releases/download/v${k6_version}/k6-v${k6_version}-linux-arm64.tar.gz"
+    echo "${k6_sha256}  ${archive}" | sha256sum -c -
+    tar -xzf "$archive" -C "$k6_dir" --strip-components=1
+  fi
+  export PATH="${k6_dir}:${PATH}"
+}
+
 if ! command -v k6 >/dev/null 2>&1; then
   if [ -x /tmp/k6bin/k6 ]; then
     export PATH="/tmp/k6bin:${PATH}"
-  elif [ -n "${GITHUB_ACTIONS:-}" ]; then
+  elif [ -n "${GITHUB_ACTIONS:-}" ] && [ "$(uname -m)" = "x86_64" ] && command -v sudo >/dev/null 2>&1; then
     echo "Installing k6 via apt (GitHub Actions ubuntu-latest only)." >&2
     sudo gpg -k >/dev/null 2>&1
     sudo gpg --no-default-keyring --keyring /usr/share/keyrings/k6-archive-keyring.gpg \
@@ -200,6 +244,8 @@ if ! command -v k6 >/dev/null 2>&1; then
       | sudo tee /etc/apt/sources.list.d/k6.list >/dev/null
     sudo apt-get update
     sudo apt-get install -y k6
+  elif [ -n "${GITHUB_ACTIONS:-}" ] && [ "$(uname -m)" = "aarch64" ]; then
+    install_k6_linux_arm64_runner_temp
   else
     echo "k6 not found; install k6 or place binary at /tmp/k6bin/k6" >&2
     exit 1

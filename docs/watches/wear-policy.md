@@ -37,7 +37,7 @@ Telefon alıcısı: `WearCompanionListenerService` → `PhoneWearSosIngress` →
 | Konu | Durum |
 |------|--------|
 | Gerçek Wear OS cihazı / emulator UI | NOT_TESTED |
-| Tile / complication | ERTELENDİ (launcher + iki adımlı onay) |
+| Tile / complication | ERTELENDİ (launcher + iki adımlı onay); ADIM 53 gözden geçirme: hâlâ yok — bilinçli |
 | Saat reboot kalıcılığı | Bellek içi store (cihaz testi sonrası DataStore) |
 | Telefon kapalıyken saat → sunucu direct path | Kapsam dışı |
 
@@ -45,3 +45,5 @@ Telefon alıcısı: `WearCompanionListenerService` → `PhoneWearSosIngress` →
 
 - `WearOfflineQueueTest`, `WearRetryPolicyTest`, `WearStateSyncEngine` (kuyruk testleri içinde)
 - `PhoneWearSosIngressIdempotencyTest` (Robolectric + Room outbox)
+- ADIM 53: `WearManifestReleaseGateTest`, `WearRootScreen*RobolectricTest`, `WearSosViewModelPhoneUnreachableTest`, `WearPowerRetryPolicyTest`
+- Release belgesi: `docs/release/wearos.md`; scriptler: `scripts/wear-release-bundle.sh`, `scripts/wear-unit-tests.sh`

@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Generate a minimal SOSMesh.xcodeproj for CI xcodebuild (ADIM 31)."""
+"""Generate a minimal SOSMesh.xcodeproj for CI xcodebuild (ADIM 31, release ADIM 52)."""
 from pathlib import Path
 import textwrap
 
@@ -38,12 +38,30 @@ WATCH_WIDGET_SOURCES = [
 
 WATCH_RESOURCES = [
     "../watchos/SOSMeshWatch/Info.plist",
+    "../watchos/SOSMeshWatch/PrivacyInfo.xcprivacy",
+]
+
+WATCH_WIDGET_RESOURCES = [
+    "../watchos/SOSMeshWatchWidgets/PrivacyInfo.xcprivacy",
 ]
 
 RESOURCES = [
     "SOSMesh/Info.plist",
+    "SOSMesh/SOSMesh.entitlements",
+    "SOSMesh/PrivacyInfo.xcprivacy",
     "SOSMesh/tr.lproj/Localizable.strings",
     "SOSMesh/en.lproj/Localizable.strings",
+    "SOSMesh/tr.lproj/InfoPlist.strings",
+    "SOSMesh/en.lproj/InfoPlist.strings",
+    "SOSMesh/Assets.xcassets",
+]
+
+IOS_COPY_RESOURCES = [
+    "SOSMesh/PrivacyInfo.xcprivacy",
+    "SOSMesh/tr.lproj/Localizable.strings",
+    "SOSMesh/en.lproj/Localizable.strings",
+    "SOSMesh/tr.lproj/InfoPlist.strings",
+    "SOSMesh/en.lproj/InfoPlist.strings",
     "SOSMesh/Assets.xcassets",
 ]
 
@@ -70,7 +88,9 @@ lines.append("\tobjects = {")
 # File references
 all_source_paths = APP_SOURCES + TEST_SOURCES + WATCH_APP_SOURCES + WATCH_WIDGET_SOURCES
 file_refs = {}
-for i, path in enumerate(all_source_paths + RESOURCES + WATCH_RESOURCES, start=1):
+for i, path in enumerate(
+    all_source_paths + RESOURCES + WATCH_RESOURCES + WATCH_WIDGET_RESOURCES, start=1
+):
     ref = uid(i)
     file_refs[path] = ref
     isa = "PBXFileReference"
@@ -94,9 +114,29 @@ for i, path in enumerate(all_source_paths + RESOURCES + WATCH_RESOURCES, start=1
                 f"\t\t{ref} /* {last} */ = {{isa = {isa}; lastKnownFileType = text.plist.xml; path = {last}; sourceTree = \"<group>\"; }};"
             )
     elif path.endswith(".strings"):
-        lines.append(f"\t\t{ref} /* {last} */ = {{isa = {isa}; lastKnownFileType = text.plist.strings; path = {last}; sourceTree = \"<group>\"; }};")
+        if ".lproj/" in path:
+            lines.append(
+                f"\t\t{ref} /* {last} */ = {{isa = {isa}; lastKnownFileType = text.plist.strings; path = {path}; sourceTree = SOURCE_ROOT; }};"
+            )
+        else:
+            lines.append(
+                f"\t\t{ref} /* {last} */ = {{isa = {isa}; lastKnownFileType = text.plist.strings; path = {last}; sourceTree = \"<group>\"; }};"
+            )
     elif path.endswith(".xcassets"):
         lines.append(f"\t\t{ref} /* {last} */ = {{isa = {isa}; lastKnownFileType = folder.assetcatalog; path = {last}; sourceTree = \"<group>\"; }};")
+    elif path.endswith(".xcprivacy"):
+        if path.startswith("../"):
+            lines.append(
+                f"\t\t{ref} /* {last} */ = {{isa = {isa}; lastKnownFileType = text.xml; path = {path}; sourceTree = SOURCE_ROOT; }};"
+            )
+        else:
+            lines.append(
+                f"\t\t{ref} /* {last} */ = {{isa = {isa}; lastKnownFileType = text.xml; path = {last}; sourceTree = \"<group>\"; }};"
+            )
+    elif path.endswith(".entitlements"):
+        lines.append(
+            f"\t\t{ref} /* {last} */ = {{isa = {isa}; lastKnownFileType = text.plist.entitlements; path = {last}; sourceTree = \"<group>\"; }};"
+        )
 
 prod_ref = uid(9001)
 lines.append(f"\t\t{prod_ref} /* SOSMesh.app */ = {{isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = SOSMesh.app; sourceTree = BUILT_PRODUCTS_DIR; }};")
@@ -153,6 +193,8 @@ app_children.append(f"{file_refs['SOSMesh/tr.lproj/Localizable.strings']} /* Loc
 app_children.append(f"{file_refs['SOSMesh/en.lproj/Localizable.strings']} /* Localizable.strings */")
 app_children.append(f"{file_refs['SOSMesh/Assets.xcassets']} /* Assets.xcassets */")
 app_children.append(f"{file_refs['SOSMesh/Info.plist']} /* Info.plist */")
+app_children.append(f"{file_refs['SOSMesh/SOSMesh.entitlements']} /* SOSMesh.entitlements */")
+app_children.append(f"{file_refs['SOSMesh/PrivacyInfo.xcprivacy']} /* PrivacyInfo.xcprivacy */")
 lines.append(f"\t\t{app_group} = {{isa = PBXGroup; children = ({', '.join(app_children)}); path = SOSMesh; sourceTree = \"<group>\"; }};")
 
 test_children = ", ".join(file_refs[p] + f" /* {p.split('/')[-1]} */" for p in TEST_SOURCES)
@@ -173,6 +215,7 @@ watch_resources_phase = uid37(7002)
 watch_frameworks_phase = uid37(7003)
 watch_widget_sources_phase = uid37(7004)
 watch_widget_frameworks_phase = uid37(7005)
+watch_widget_resources_phase = uid37(7006)
 
 app_build_files = []
 for p in APP_SOURCES:
@@ -253,10 +296,33 @@ lines.append(
 )
 
 res_build_files = []
-for p in ["SOSMesh/Assets.xcassets"]:
-    bf = uid(6600)
-    lines.append(f"\t\t{bf} /* Assets in Resources */ = {{isa = PBXBuildFile; fileRef = {file_refs[p]} /* Assets.xcassets */; }};")
+for idx, p in enumerate(IOS_COPY_RESOURCES):
+    bf = uid(6600 + idx)
+    label = p.split("/")[-1]
+    lines.append(
+        f"\t\t{bf} /* {label} in Resources */ = {{isa = PBXBuildFile; fileRef = {file_refs[p]} /* {label} */; }};"
+    )
     res_build_files.append(bf)
+
+watch_res_build_files = []
+for idx, p in enumerate(WATCH_RESOURCES):
+    if not p.endswith(".xcprivacy"):
+        continue
+    bf = uid37(6600 + idx)
+    label = p.split("/")[-1]
+    lines.append(
+        f"\t\t{bf} /* {label} in Resources */ = {{isa = PBXBuildFile; fileRef = {file_refs[p]} /* {label} */; }};"
+    )
+    watch_res_build_files.append(bf)
+
+watch_widget_res_build_files = []
+for idx, p in enumerate(WATCH_WIDGET_RESOURCES):
+    bf = uid37(6650 + idx)
+    label = p.split("/")[-1]
+    lines.append(
+        f"\t\t{bf} /* {label} in Resources */ = {{isa = PBXBuildFile; fileRef = {file_refs[p]} /* {label} */; }};"
+    )
+    watch_widget_res_build_files.append(bf)
 
 lines.append(
     f"\t\t{app_sources_phase} /* Sources */ = {{isa = PBXSourcesBuildPhase; buildActionMask = 2147483647; files = ({', '.join(f'{b} /* in Sources */' for b in app_build_files)}); runOnlyForDeploymentPostprocessing = 0; }};"
@@ -280,6 +346,12 @@ lines.append(
 )
 lines.append(
     f"\t\t{watch_widget_frameworks_phase} /* Frameworks */ = {{isa = PBXFrameworksBuildPhase; buildActionMask = 2147483647; files = ({wk_bf} /* WidgetKit in Frameworks */); runOnlyForDeploymentPostprocessing = 0; }};"
+)
+lines.append(
+    f"\t\t{watch_resources_phase} /* Resources */ = {{isa = PBXResourcesBuildPhase; buildActionMask = 2147483647; files = ({', '.join(f'{b} /* in Resources */' for b in watch_res_build_files) if watch_res_build_files else ''}); runOnlyForDeploymentPostprocessing = 0; }};"
+)
+lines.append(
+    f"\t\t{watch_widget_resources_phase} /* Resources */ = {{isa = PBXResourcesBuildPhase; buildActionMask = 2147483647; files = ({', '.join(f'{b} /* in Resources */' for b in watch_widget_res_build_files) if watch_widget_res_build_files else ''}); runOnlyForDeploymentPostprocessing = 0; }};"
 )
 
 # Targets
@@ -331,7 +403,7 @@ lines.append(
 \t\t{watch_target} /* SOSMesh-Watch */ = {{
 \t\t\tisa = PBXNativeTarget;
 \t\t\tbuildConfigurationList = {uid37(4001)} /* Build configuration list for PBXNativeTarget "SOSMesh-Watch" */;
-\t\t\tbuildPhases = ({watch_sources_phase} /* Sources */, {watch_frameworks_phase} /* Frameworks */);
+\t\t\tbuildPhases = ({watch_sources_phase} /* Sources */, {watch_frameworks_phase} /* Frameworks */, {watch_resources_phase} /* Resources */);
 \t\t\tbuildRules = ();
 \t\t\tdependencies = ();
 \t\t\tname = "SOSMesh-Watch";
@@ -350,7 +422,7 @@ lines.append(
 \t\t{watch_widget_target} /* SOSMeshWatchWidgets */ = {{
 \t\t\tisa = PBXNativeTarget;
 \t\t\tbuildConfigurationList = {uid37(4002)} /* Build configuration list for PBXNativeTarget "SOSMeshWatchWidgets" */;
-\t\t\tbuildPhases = ({watch_widget_sources_phase} /* Sources */, {watch_widget_frameworks_phase} /* Frameworks */);
+\t\t\tbuildPhases = ({watch_widget_sources_phase} /* Sources */, {watch_widget_frameworks_phase} /* Frameworks */, {watch_widget_resources_phase} /* Resources */);
 \t\t\tbuildRules = ();
 \t\t\tdependencies = ();
 \t\t\tname = "SOSMeshWatchWidgets";
@@ -392,7 +464,13 @@ lines.append(
 )
 
 # Configurations
-def build_settings(target_name: str, bundle_id: str, info_plist: str | None = None, test: bool = False) -> str:
+def build_settings(
+    target_name: str,
+    bundle_id: str,
+    info_plist: str | None = None,
+    test: bool = False,
+    release: bool = False,
+) -> str:
     settings = [
         "SDKROOT = iphoneos;",
         "SWIFT_VERSION = 5.0;",
@@ -406,6 +484,8 @@ def build_settings(target_name: str, bundle_id: str, info_plist: str | None = No
         "PRODUCT_BUNDLE_IDENTIFIER = " + bundle_id + ";",
         "CODE_SIGNING_ALLOWED = NO;",
         "CODE_SIGNING_REQUIRED = NO;",
+        "MARKETING_VERSION = 1.0.0;",
+        "CURRENT_PROJECT_VERSION = 1;",
     ]
     if test:
         settings.append("GENERATE_INFOPLIST_FILE = YES;")
@@ -415,8 +495,13 @@ def build_settings(target_name: str, bundle_id: str, info_plist: str | None = No
         )
     else:
         settings.append(f"INFOPLIST_FILE = {info_plist};")
+        settings.append("CODE_SIGN_ENTITLEMENTS = SOSMesh/SOSMesh.entitlements;")
         settings.append("ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;")
         settings.append("LD_RUNPATH_SEARCH_PATHS = \"$(inherited) @executable_path/Frameworks\";")
+    if release and not test:
+        settings.append("SWIFT_OPTIMIZATION_LEVEL = -O;")
+        settings.append("DEBUG_INFORMATION_FORMAT = dwarf-with-dsym;")
+        settings.append("ENABLE_NS_ASSERTIONS = NO;")
     return "\n\t\t\t\t" + "\n\t\t\t\t".join(settings)
 
 
@@ -470,9 +555,9 @@ config_list(uid(4000), 'PBXProject "SOSMesh"', proj_debug, proj_release)
 
 app_debug = uid(4210)
 app_release = uid(4211)
-for cfg_id, cfg_name in [(app_debug, "Debug"), (app_release, "Release")]:
+for cfg_id, cfg_name, rel in [(app_debug, "Debug", False), (app_release, "Release", True)]:
     lines.append(
-        f"\t\t{cfg_id} /* {cfg_name} */ = {{isa = XCBuildConfiguration; buildSettings = {{{build_settings('SOSMesh-iOS', 'com.sosmesh.ios', 'SOSMesh/Info.plist')}\n\t\t\t}}; name = {cfg_name}; }};"
+        f"\t\t{cfg_id} /* {cfg_name} */ = {{isa = XCBuildConfiguration; buildSettings = {{{build_settings('SOSMesh-iOS', 'com.sosmesh.ios', 'SOSMesh/Info.plist', release=rel)}\n\t\t\t}}; name = {cfg_name}; }};"
     )
 config_list(uid(4001), 'PBXNativeTarget "SOSMesh-iOS"', app_debug, app_release)
 

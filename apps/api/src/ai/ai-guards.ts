@@ -22,6 +22,25 @@ export class TenantAiRateLimiter {
   }
 }
 
+export class IncidentTokenBudgetGuard {
+  private readonly spentByIncident = new Map<string, number>();
+
+  constructor(private readonly maxTokensPerIncident: number) {}
+
+  tryConsume(incidentId: string, estimatedTokens: number): boolean {
+    const spent = this.spentByIncident.get(incidentId) ?? 0;
+    if (spent + estimatedTokens > this.maxTokensPerIncident) {
+      return false;
+    }
+    this.spentByIncident.set(incidentId, spent + estimatedTokens);
+    return true;
+  }
+
+  reset(): void {
+    this.spentByIncident.clear();
+  }
+}
+
 export class AiCostGuard {
   private spentUsd = 0;
   private utcDayKey = '';

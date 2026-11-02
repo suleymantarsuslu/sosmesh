@@ -524,7 +524,7 @@ jobs:
           swift test 2>&1 | tee "${GITHUB_WORKSPACE}/swift-contracts-test.log"
           swift_status=${PIPESTATUS[0]}
           set -e
-          passed_count=$(grep -c 'Test Case.*passed' "${GITHUB_WORKSPACE}/swift-contracts-test.log" 2>/dev/null)
+          passed_count=$(awk '/Test Case.*passed/{c++} END{print c+0}' "${GITHUB_WORKSPACE}/swift-contracts-test.log")
           echo "Swift contracts test lines: ${passed_count:-0}"
           if [ "$swift_status" -ne 0 ]; then
             {
@@ -542,7 +542,7 @@ jobs:
           cd apps/ios/SOSMeshCore
           export SOURCE_ROOT="${GITHUB_WORKSPACE}"
           swift test 2>&1 | tee "${GITHUB_WORKSPACE}/swift-sosmeshcore-test.log"
-          passed_count=$(grep -c 'Test Case.*passed' "${GITHUB_WORKSPACE}/swift-sosmeshcore-test.log" 2>/dev/null)
+          passed_count=$(awk '/Test Case.*passed/{c++} END{print c+0}' "${GITHUB_WORKSPACE}/swift-sosmeshcore-test.log")
           echo "SOSMeshCore test lines: ${passed_count:-0}"
 
       - name: Compare Swift golden vector with master

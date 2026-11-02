@@ -33,6 +33,66 @@ class FailingMetaProvider implements MetaProvider {
   }
 }
 
+class InvalidSchemaMetaProvider implements MetaProvider {
+  async classify() {
+    return { ok: false as const, reason: 'invalid_model_json', retryable: false };
+  }
+}
+
+async function createIngestTestApp(params: {
+  messageId: string;
+  plaintext: string;
+  provider: MetaProvider;
+  env?: Record<string, string | undefined>;
+}): Promise<INestApplication & { restoreEnv: () => void }> {
+  const envSnapshot: Record<string, string | undefined> = {};
+  for (const [key, value] of Object.entries(params.env ?? {})) {
+    envSnapshot[key] = process.env[key];
+    if (value === undefined) {
+      delete process.env[key];
+    } else {
+      process.env[key] = value;
+    }
+  }
+
+  process.env.DATABASE_URL = getTestDatabaseUrl();
+  applyTestAuthEnv();
+  applyTestIngestEnv();
+  process.env.NODE_ENV = 'test';
+  process.env.LOG_LEVEL = 'silent';
+  if (params.env?.AI_ENABLED === undefined) {
+    process.env.AI_ENABLED = 'true';
+  }
+
+  const moduleRef = await Test.createTestingModule({
+    imports: [AppModule],
+  })
+    .overrideProvider(AI_PROVIDER_OVERRIDE)
+    .useValue(params.provider)
+    .overrideProvider(SOS_PLAINTEXT_SOURCE)
+    .useValue(
+      new FakeSosPlaintextSource({
+        [params.messageId]: params.plaintext,
+      })
+    )
+    .compile();
+
+  const localApp = moduleRef.createNestApplication({ bufferLogs: true });
+  await localApp.init();
+
+  return Object.assign(localApp, {
+    restoreEnv: () => {
+      for (const [key, value] of Object.entries(envSnapshot)) {
+        if (value === undefined) {
+          delete process.env[key];
+        } else {
+          process.env[key] = value;
+        }
+      }
+    },
+  });
+}
+
 describe('AI worker (async, post-ingest)', () => {
   let app: INestApplication;
   let prisma: PrismaService;
@@ -183,6 +243,196 @@ describe('AI worker (async, post-ingest)', () => {
     const analysis = await prisma.aiAnalysis.findFirst({ where: { incidentId: incident.id } });
     expect(analysis?.status).toBe(AI_ANALYSIS_STATUS.SKIPPED_DISABLED);
     process.env.AI_ENABLED = previous;
+  });
+
+  it('keeps ingest 200 when AI is disabled', async () => {
+    const messageId = 'eeeeeeee-eeee-4eee-8eee-eeeeeeeeeee5';
+    const localApp = await createIngestTestApp({
+      messageId,
+      plaintext: 'deprem oldu case-tr-01',
+      provider: buildMockMetaProvider(EVAL_FIXTURES),
+      env: { AI_ENABLED: 'false' },
+    });
+    try {
+      const body = buildValidIngestRequest({ messageId });
+      const response = await request(localApp.getHttpServer()).post('/v1/ingest').send(body);
+      expect(response.status).toBe(200);
+      await flushAiJobs();
+      const message = await localApp.get(PrismaService).sosMessage.findUnique({
+        where: { messageId: String(body.sosMessage.id) },
+      });
+      const analysis = await localApp.get(PrismaService).aiAnalysis.findFirst({
+        where: { incidentId: message?.incidentId },
+      });
+      expect(analysis?.status).toBe(AI_ANALYSIS_STATUS.SKIPPED_DISABLED);
+    } finally {
+      localApp.restoreEnv();
+      await localApp.close();
+    }
+  });
+
+  it('keeps ingest 200 when daily AI cost cap blocks classification', async () => {
+    const messageId = 'ffffffff-ffff-4fff-8fff-fffffffffff6';
+    const localApp = await createIngestTestApp({
+      messageId,
+      plaintext: 'earthquake building collapsed case-en-01',
+      provider: buildMockMetaProvider(EVAL_FIXTURES),
+      env: {
+        AI_DAILY_COST_CAP_USD: '0.001',
+        AI_ESTIMATED_COST_USD: '0.002',
+      },
+    });
+    try {
+      const body = buildValidIngestRequest({ messageId });
+      const response = await request(localApp.getHttpServer()).post('/v1/ingest').send(body);
+      expect(response.status).toBe(200);
+      await flushAiJobs();
+      const message = await localApp.get(PrismaService).sosMessage.findUnique({
+        where: { messageId: String(body.sosMessage.id) },
+      });
+      const analysis = await localApp.get(PrismaService).aiAnalysis.findFirst({
+        where: { incidentId: message?.incidentId },
+      });
+      expect(analysis?.status).toBe(AI_ANALYSIS_STATUS.SKIPPED_COST_CAP);
+    } finally {
+      localApp.restoreEnv();
+      await localApp.close();
+    }
+  });
+
+  it('keeps ingest 200 when tenant AI rate limit is exceeded', async () => {
+    const firstMessageId = '11111111-1111-4111-8111-111111111117';
+    const secondMessageId = '22222222-2222-4222-8222-222222222228';
+    process.env.DATABASE_URL = getTestDatabaseUrl();
+    applyTestAuthEnv();
+    applyTestIngestEnv();
+    process.env.NODE_ENV = 'test';
+    process.env.LOG_LEVEL = 'silent';
+    process.env.AI_ENABLED = 'true';
+    process.env.AI_TENANT_RATE_LIMIT_MAX = '1';
+    process.env.AI_TENANT_RATE_LIMIT_WINDOW_MS = '60000';
+
+    const moduleRef = await Test.createTestingModule({
+      imports: [AppModule],
+    })
+      .overrideProvider(AI_PROVIDER_OVERRIDE)
+      .useValue(buildMockMetaProvider(EVAL_FIXTURES))
+      .overrideProvider(SOS_PLAINTEXT_SOURCE)
+      .useValue(
+        new FakeSosPlaintextSource({
+          [firstMessageId]: 'deprem enkaz altında case-tr-02',
+          [secondMessageId]: 'fire smoke inhalation case-en-03',
+        })
+      )
+      .compile();
+
+    const localApp = moduleRef.createNestApplication({ bufferLogs: true });
+    await localApp.init();
+    try {
+      const firstBody = buildValidIngestRequest({ messageId: firstMessageId });
+      const first = await request(localApp.getHttpServer()).post('/v1/ingest').send(firstBody);
+      expect(first.status).toBe(200);
+      await flushAiJobs();
+
+      const secondBody = buildValidIngestRequest({ messageId: secondMessageId });
+      const second = await request(localApp.getHttpServer()).post('/v1/ingest').send(secondBody);
+      expect(second.status).toBe(200);
+      await flushAiJobs();
+
+      const secondMessage = await localApp.get(PrismaService).sosMessage.findUnique({
+        where: { messageId: String(secondBody.sosMessage.id) },
+      });
+      const analysis = await localApp.get(PrismaService).aiAnalysis.findFirst({
+        where: { incidentId: secondMessage?.incidentId },
+      });
+      expect(analysis?.status).toBe(AI_ANALYSIS_STATUS.SKIPPED_RATE_LIMIT);
+    } finally {
+      delete process.env.AI_TENANT_RATE_LIMIT_MAX;
+      delete process.env.AI_TENANT_RATE_LIMIT_WINDOW_MS;
+      await localApp.close();
+    }
+  });
+
+  it('skips second classify on same incident when token budget is exhausted', async () => {
+    process.env.DATABASE_URL = getTestDatabaseUrl();
+    applyTestAuthEnv();
+    applyTestIngestEnv();
+    process.env.NODE_ENV = 'test';
+    process.env.LOG_LEVEL = 'silent';
+    process.env.AI_ENABLED = 'true';
+    process.env.AI_INCIDENT_TOKEN_BUDGET = '2048';
+    process.env.AI_ESTIMATED_TOKENS_PER_CLASSIFY = '2048';
+
+    const moduleRef = await Test.createTestingModule({
+      imports: [AppModule],
+    })
+      .overrideProvider(AI_PROVIDER_OVERRIDE)
+      .useValue(buildMockMetaProvider(EVAL_FIXTURES))
+      .overrideProvider(SOS_PLAINTEXT_SOURCE)
+      .useValue(
+        new FakeSosPlaintextSource({
+          'token-msg-a': 'earthquake need help case-en-04',
+          'token-msg-b': 'fire trapped upstairs case-en-05',
+        })
+      )
+      .compile();
+
+    const localApp = moduleRef.createNestApplication({ bufferLogs: true });
+    await localApp.init();
+    const localPrisma = localApp.get(PrismaService);
+    const job = localApp.get(AiJobService);
+    const incident = await localPrisma.incident.create({ data: {} });
+
+    await job.runJob({
+      incidentId: incident.id,
+      messageId: 'token-msg-a',
+      tenantKey: 'token-budget-a',
+    });
+    await job.runJob({
+      incidentId: incident.id,
+      messageId: 'token-msg-b',
+      tenantKey: 'token-budget-b',
+    });
+
+    const analyses = await localPrisma.aiAnalysis.findMany({
+      where: { incidentId: incident.id },
+      orderBy: { createdAt: 'asc' },
+    });
+    expect(analyses).toHaveLength(2);
+    expect(analyses[0]?.status).toBe(AI_ANALYSIS_STATUS.COMPLETED);
+    expect(analyses[1]?.status).toBe(AI_ANALYSIS_STATUS.SKIPPED_INCIDENT_TOKEN_BUDGET);
+    await localApp.close();
+  });
+
+  it('keeps ingest 200 and applies safe fallback on schema-invalid model output', async () => {
+    const messageId = '33333333-3333-4333-8333-333333333339';
+    const localApp = await createIngestTestApp({
+      messageId,
+      plaintext: 'help unknown injuries case-en-06',
+      provider: new InvalidSchemaMetaProvider(),
+    });
+    try {
+      const body = buildValidIngestRequest({ messageId });
+      const response = await request(localApp.getHttpServer()).post('/v1/ingest').send(body);
+      expect(response.status).toBe(200);
+      await flushAiJobs();
+      const message = await localApp.get(PrismaService).sosMessage.findUnique({
+        where: { messageId: String(body.sosMessage.id) },
+      });
+      const analysis = await localApp.get(PrismaService).aiAnalysis.findFirst({
+        where: { incidentId: message?.incidentId },
+      });
+      expect(analysis?.status).toBe(AI_ANALYSIS_STATUS.COMPLETED_FALLBACK);
+      expect(analysis?.resultJson).toMatchObject({
+        fallback_applied: true,
+        persons_estimate: null,
+        location_unknown: true,
+        urgency_suggestion: 'unknown',
+      });
+    } finally {
+      localApp.restoreEnv();
+      await localApp.close();
+    }
   });
 
   it('uses mock provider override for deterministic classification', async () => {

@@ -54,13 +54,19 @@ describe('ADIM 45 Meta AI eval and cost guards', () => {
     expect(rejected.ok).toBe(false);
   });
 
-  it('de-identifies email and coordinate patterns in prompts', () => {
+  it('de-identifies email, phone, and coordinate patterns in prompts', () => {
+    const syntheticLat = '12.3456';
+    const syntheticLon = '54.3210';
+    const coordPair = `${syntheticLat},${syntheticLon}`;
     const redacted = deidentifySosPlaintextForPrompt(
-      'help me at 41.0151,28.9795 email victim@example.com'
+      `help me at ${coordPair} call +90 555 123 45 67 email victim@example.com`
     );
     expect(redacted).toContain('[redacted-email]');
+    expect(redacted).toContain('[redacted-phone]');
     expect(redacted).toContain('[redacted-coordinates]');
     expect(redacted).not.toContain('victim@example.com');
+    expect(redacted).not.toContain(syntheticLat);
+    expect(redacted).not.toContain('555 123');
   });
 
   it('enforces per-incident token budget guard', () => {

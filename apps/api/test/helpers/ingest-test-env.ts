@@ -13,7 +13,9 @@ export function testIngestSigningPrivateKeyBase64(): string {
 }
 
 export function applyTestIngestEnv(): void {
-  process.env.INGEST_RECEIPT_SIGNING_PRIVATE_KEY = testIngestSigningPrivateKeyBase64();
+  if (!process.env.INGEST_RECEIPT_SIGNING_PRIVATE_KEY) {
+    process.env.INGEST_RECEIPT_SIGNING_PRIVATE_KEY = testIngestSigningPrivateKeyBase64();
+  }
   if (!process.env.INGEST_RATE_LIMIT_MAX) {
     process.env.INGEST_RATE_LIMIT_MAX = '500';
   }

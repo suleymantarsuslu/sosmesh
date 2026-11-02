@@ -356,7 +356,8 @@ describe('Operator case detail and actions (ADIM 23)', () => {
     ]);
     const statuses = [first.status, second.status].sort();
     expect(statuses).toEqual([200, 409]);
-    expect(first.status === 500 || second.status === 500).toBe(false);
+    expect(first.status).not.toBe(500);
+    expect(second.status).not.toBe(500);
   });
 
   it('records metadata correction audit with before/after', async () => {

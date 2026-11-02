@@ -24,48 +24,17 @@ async function lockDashboardVisualCoreForSnapshot(page) {
   });
 }
 
-const LOGIN_FORM_SNAPSHOT_FRAME_TEST_ID = 'login-form-snapshot-frame';
-
 async function lockLoginFormForSnapshot(page) {
   await page.addStyleTag({
     content: `[data-testid="login-form"]{
       width:420px!important;max-width:420px!important;
-      box-sizing:border-box!important;margin:0!important;border:0!important;
-      gap:12px!important;padding:0!important;
-      flex-shrink:0!important;
-    }
-    [data-testid="login-form"] label,
-    [data-testid="login-form"] input,
-    [data-testid="login-form"] button,
-    [data-testid="login-form"] .login-form__error{
-      flex-shrink:0!important;margin:0!important;
+      height:190px!important;min-height:190px!important;max-height:190px!important;
+      box-sizing:border-box;overflow:hidden;
     }`,
   });
-  await page.evaluate((frameTestId) => {
-    const form = document.querySelector('[data-testid="login-form"]');
-    if (!form) {
-      return;
-    }
-    if (document.querySelector(`[data-testid="${frameTestId}"]`)) {
-      return;
-    }
-    const frame = document.createElement('div');
-    frame.setAttribute('data-testid', frameTestId);
-    frame.style.width = '420px';
-    frame.style.height = '191px';
-    frame.style.overflow = 'hidden';
-    frame.style.boxSizing = 'border-box';
-    const parent = form.parentNode;
-    if (!parent) {
-      return;
-    }
-    parent.insertBefore(frame, form);
-    frame.appendChild(form);
-  }, LOGIN_FORM_SNAPSHOT_FRAME_TEST_ID);
 }
 
 module.exports = {
-  LOGIN_FORM_SNAPSHOT_FRAME_TEST_ID,
   applyCiSnapshotFontLock,
   lockDashboardVisualCoreForSnapshot,
   lockLoginFormForSnapshot,

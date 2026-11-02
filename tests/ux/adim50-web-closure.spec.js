@@ -8,7 +8,6 @@ const {
   applyCiSnapshotFontLock,
   lockDashboardVisualCoreForSnapshot,
   lockLoginFormForSnapshot,
-  LOGIN_FORM_SNAPSHOT_FRAME_TEST_ID,
 } = require('./helpers/snapshot-determinism');
 const {
   E2E_CASE_GPS_ID,
@@ -158,7 +157,7 @@ test.describe('ADIM 50 prefers-reduced-motion görsel regresyon', () => {
     await page.waitForLoadState('networkidle');
     await applyCiSnapshotFontLock(page);
     await lockLoginFormForSnapshot(page);
-    await expect(page.getByTestId(LOGIN_FORM_SNAPSHOT_FRAME_TEST_ID)).toHaveScreenshot(
+    await expect(page.getByTestId('login-form')).toHaveScreenshot(
       'adim50-login-reduced-motion.png'
     );
   });

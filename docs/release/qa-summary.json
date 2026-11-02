@@ -1,6 +1,6 @@
 {
   "schema_version": "1.0.0",
-  "generated_at": "2026-11-02T13:47:01.428Z",
+  "generated_at": "2026-11-02T15:21:20.443Z",
   "release_candidate": "v1.0.0-rc.1",
   "defect_inventory": {
     "todo_fixme_scan": [
@@ -8,94 +8,14 @@
         "id": "SCAN-TODO_APPROVAL-1",
         "severity": "high",
         "owner": "TBD",
-        "file": "SECURITY.md",
-        "line": 11,
-        "summary": "| **Durum** | `TODO_APPROVAL` — prod iletişim kanalı henüz onaylanmadı |",
+        "file": "docs/legal/privacy-review-checklist.md",
+        "line": 27,
+        "summary": "| 8 | Güvenlik açığı yolu (yer tutucu) | `SECURITY.md` (`GUVENLIK_BILDIRIM_TBD`) | Yer tutucu — TODO_APPROVAL workflow |",
         "release_note": "Requires user approval before prod",
         "workaround": "Placeholder until operator configures prod contact/secrets"
       },
       {
-        "id": "SCAN-TODO_APPROVAL-2",
-        "severity": "high",
-        "owner": "TBD",
-        "file": "SECURITY.md",
-        "line": 12,
-        "summary": "| **E-posta (yer tutucu)** | `security-report@TODO_APPROVAL.example` |",
-        "release_note": "Requires user approval before prod",
-        "workaround": "Placeholder until operator configures prod contact/secrets"
-      },
-      {
-        "id": "SCAN-TODO_APPROVAL-3",
-        "severity": "high",
-        "owner": "TBD",
-        "file": "apps/web/app/api/support/contact/route.ts",
-        "line": 11,
-        "summary": "'Destek kanalı yapılandırılmadı (BLOCKED_APPROVAL). TODO_APPROVAL: prod e-posta onayı sonrası etkinleştirilecek.',",
-        "release_note": "Requires user approval before prod",
-        "workaround": "Placeholder until operator configures prod contact/secrets"
-      },
-      {
-        "id": "SCAN-TODO_APPROVAL-4",
-        "severity": "high",
-        "owner": "TBD",
-        "file": "docs/legal/privacy-policy-draft.md",
-        "line": 28,
-        "summary": "Güvenlik açığı bildirimi: [`SECURITY.md`](../../SECURITY.md) (`TODO_APPROVAL` e-posta yer tutucusu).",
-        "release_note": "Requires user approval before prod",
-        "workaround": "Placeholder until operator configures prod contact/secrets"
-      },
-      {
-        "id": "SCAN-TODO_APPROVAL-5",
-        "severity": "high",
-        "owner": "TBD",
-        "file": "docs/legal/terms-of-use-draft.md",
-        "line": 28,
-        "summary": "Operatör paneli yardım sayfası ve destek formu: prod e-posta yapılandırması `TODO_APPROVAL` / `BLOCKED_APPROVAL`.",
-        "release_note": "Requires user approval before prod",
-        "workaround": "Placeholder until operator configures prod contact/secrets"
-      },
-      {
-        "id": "SCAN-TODO_APPROVAL-6",
-        "severity": "high",
-        "owner": "TBD",
-        "file": "docs/user/kullanici-rehberi-tr.md",
-        "line": 106,
-        "summary": "- Güvenlik açığı: [`SECURITY.md`](../../SECURITY.md) (`TODO_APPROVAL` e-posta)",
-        "release_note": "Requires user approval before prod",
-        "workaround": "Placeholder until operator configures prod contact/secrets"
-      },
-      {
-        "id": "SCAN-TODO_APPROVAL-7",
-        "severity": "high",
-        "owner": "TBD",
-        "file": "docs/user/mobile-help-strings.md",
-        "line": 23,
-        "summary": "| `help_support_title` / `help_support_body` | Destek (`TODO_APPROVAL`) |",
-        "release_note": "Requires user approval before prod",
-        "workaround": "Placeholder until operator configures prod contact/secrets"
-      },
-      {
-        "id": "SCAN-TODO_APPROVAL-8",
-        "severity": "high",
-        "owner": "TBD",
-        "file": "docs/user/platform-destek-matrisi.md",
-        "line": 49,
-        "summary": "| Destek e-posta / telefon | `TODO_APPROVAL` |",
-        "release_note": "Requires user approval before prod",
-        "workaround": "Placeholder until operator configures prod contact/secrets"
-      },
-      {
-        "id": "SCAN-TODO_APPROVAL-9",
-        "severity": "high",
-        "owner": "TBD",
-        "file": "docs/user/user-guide-en.md",
-        "line": 106,
-        "summary": "- Security reports: [`SECURITY.md`](../../SECURITY.md) (`TODO_APPROVAL` email placeholder)",
-        "release_note": "Requires user approval before prod",
-        "workaround": "Placeholder until operator configures prod contact/secrets"
-      },
-      {
-        "id": "SCAN-TODO-10",
+        "id": "SCAN-TODO-2",
         "severity": "medium",
         "owner": "TBD",
         "file": "packages/contracts-kotlin/src/main/kotlin/Crypto.kt",
@@ -105,7 +25,7 @@
         "workaround": "Track in tech-debt; non-blocking for rc.1 CI"
       },
       {
-        "id": "SCAN-TODO-11",
+        "id": "SCAN-TODO-3",
         "severity": "medium",
         "owner": "TBD",
         "file": "packages/contracts-kotlin/src/main/kotlin/Crypto.kt",
@@ -115,7 +35,7 @@
         "workaround": "Track in tech-debt; non-blocking for rc.1 CI"
       },
       {
-        "id": "SCAN-TODO-12",
+        "id": "SCAN-TODO-4",
         "severity": "medium",
         "owner": "TBD",
         "file": "packages/contracts-kotlin/src/main/kotlin/Crypto.kt",
@@ -130,89 +50,9 @@
         "id": "SCAN-TODO_APPROVAL-1",
         "severity": "high",
         "owner": "TBD",
-        "file": "SECURITY.md",
-        "line": 11,
-        "summary": "| **Durum** | `TODO_APPROVAL` — prod iletişim kanalı henüz onaylanmadı |",
-        "release_note": "Requires user approval before prod",
-        "workaround": "Placeholder until operator configures prod contact/secrets"
-      },
-      {
-        "id": "SCAN-TODO_APPROVAL-2",
-        "severity": "high",
-        "owner": "TBD",
-        "file": "SECURITY.md",
-        "line": 12,
-        "summary": "| **E-posta (yer tutucu)** | `security-report@TODO_APPROVAL.example` |",
-        "release_note": "Requires user approval before prod",
-        "workaround": "Placeholder until operator configures prod contact/secrets"
-      },
-      {
-        "id": "SCAN-TODO_APPROVAL-3",
-        "severity": "high",
-        "owner": "TBD",
-        "file": "apps/web/app/api/support/contact/route.ts",
-        "line": 11,
-        "summary": "'Destek kanalı yapılandırılmadı (BLOCKED_APPROVAL). TODO_APPROVAL: prod e-posta onayı sonrası etkinleştirilecek.',",
-        "release_note": "Requires user approval before prod",
-        "workaround": "Placeholder until operator configures prod contact/secrets"
-      },
-      {
-        "id": "SCAN-TODO_APPROVAL-4",
-        "severity": "high",
-        "owner": "TBD",
-        "file": "docs/legal/privacy-policy-draft.md",
-        "line": 28,
-        "summary": "Güvenlik açığı bildirimi: [`SECURITY.md`](../../SECURITY.md) (`TODO_APPROVAL` e-posta yer tutucusu).",
-        "release_note": "Requires user approval before prod",
-        "workaround": "Placeholder until operator configures prod contact/secrets"
-      },
-      {
-        "id": "SCAN-TODO_APPROVAL-5",
-        "severity": "high",
-        "owner": "TBD",
-        "file": "docs/legal/terms-of-use-draft.md",
-        "line": 28,
-        "summary": "Operatör paneli yardım sayfası ve destek formu: prod e-posta yapılandırması `TODO_APPROVAL` / `BLOCKED_APPROVAL`.",
-        "release_note": "Requires user approval before prod",
-        "workaround": "Placeholder until operator configures prod contact/secrets"
-      },
-      {
-        "id": "SCAN-TODO_APPROVAL-6",
-        "severity": "high",
-        "owner": "TBD",
-        "file": "docs/user/kullanici-rehberi-tr.md",
-        "line": 106,
-        "summary": "- Güvenlik açığı: [`SECURITY.md`](../../SECURITY.md) (`TODO_APPROVAL` e-posta)",
-        "release_note": "Requires user approval before prod",
-        "workaround": "Placeholder until operator configures prod contact/secrets"
-      },
-      {
-        "id": "SCAN-TODO_APPROVAL-7",
-        "severity": "high",
-        "owner": "TBD",
-        "file": "docs/user/mobile-help-strings.md",
-        "line": 23,
-        "summary": "| `help_support_title` / `help_support_body` | Destek (`TODO_APPROVAL`) |",
-        "release_note": "Requires user approval before prod",
-        "workaround": "Placeholder until operator configures prod contact/secrets"
-      },
-      {
-        "id": "SCAN-TODO_APPROVAL-8",
-        "severity": "high",
-        "owner": "TBD",
-        "file": "docs/user/platform-destek-matrisi.md",
-        "line": 49,
-        "summary": "| Destek e-posta / telefon | `TODO_APPROVAL` |",
-        "release_note": "Requires user approval before prod",
-        "workaround": "Placeholder until operator configures prod contact/secrets"
-      },
-      {
-        "id": "SCAN-TODO_APPROVAL-9",
-        "severity": "high",
-        "owner": "TBD",
-        "file": "docs/user/user-guide-en.md",
-        "line": 106,
-        "summary": "- Security reports: [`SECURITY.md`](../../SECURITY.md) (`TODO_APPROVAL` email placeholder)",
+        "file": "docs/legal/privacy-review-checklist.md",
+        "line": 27,
+        "summary": "| 8 | Güvenlik açığı yolu (yer tutucu) | `SECURITY.md` (`GUVENLIK_BILDIRIM_TBD`) | Yer tutucu — TODO_APPROVAL workflow |",
         "release_note": "Requires user approval before prod",
         "workaround": "Placeholder until operator configures prod contact/secrets"
       },
@@ -247,7 +87,7 @@
     ],
     "medium_with_workaround": [
       {
-        "id": "SCAN-TODO-10",
+        "id": "SCAN-TODO-2",
         "severity": "medium",
         "owner": "TBD",
         "file": "packages/contracts-kotlin/src/main/kotlin/Crypto.kt",
@@ -257,7 +97,7 @@
         "workaround": "Track in tech-debt; non-blocking for rc.1 CI"
       },
       {
-        "id": "SCAN-TODO-11",
+        "id": "SCAN-TODO-3",
         "severity": "medium",
         "owner": "TBD",
         "file": "packages/contracts-kotlin/src/main/kotlin/Crypto.kt",
@@ -267,7 +107,7 @@
         "workaround": "Track in tech-debt; non-blocking for rc.1 CI"
       },
       {
-        "id": "SCAN-TODO-12",
+        "id": "SCAN-TODO-4",
         "severity": "medium",
         "owner": "TBD",
         "file": "packages/contracts-kotlin/src/main/kotlin/Crypto.kt",

@@ -1,6 +1,6 @@
 {
   "schema_version": "1.0.0",
-  "generated_at": "2026-11-02T13:46:53.766Z",
+  "generated_at": "2026-11-02T15:21:12.388Z",
   "source_of_truth": "docs/handover/status.json",
   "item_count": 88,
   "items": [
@@ -1448,10 +1448,17 @@
       "kind": "master_plan_step",
       "title": "Web güvenlik, erişilebilirlik ve responsive kapanış",
       "pass_criteria": "Kritik akışlarda blocker düzeyi a11y defect = 0.",
-      "verification_status": "NOT_STARTED",
+      "verification_status": "PARTIAL",
       "tier": "P",
       "tests": [
+        "Bağımsız denetim: merge origin/main 97d0eee; ADIM 43 zinciri main'de",
+        "MobileNavDrawer dialog/aria-modal; mobil menü E2E 390px",
+        "apps/web/lib/login-route-production-guard.test.ts (production mock kapalı)",
         "apps/web/lib/operator-health-access.test.ts",
+        "docs/ux/a11y-report.md (manuel ekran okuyucu: NOT_TESTED)",
+        "tests/ux/adim50-cross-browser.spec.js + firefox/webkit Playwright projeleri",
+        "tests/ux/adim50-web-closure.spec.js (axe WCAG2.2 AA 7 akış, klavye, 320-1920, zoom 200%, hydration, slow 3G, offline banner, RBAC UI + Nest 403 guard)",
+        "tests/ux/helpers/web-e2e.js",
         "tests/ux/operator-responsive.spec.js"
       ],
       "evidence": {
@@ -1462,8 +1469,13 @@
           "reports/verify-summary (local)",
           "reports/*.log"
         ],
-        "document_paths": [],
-        "status_json_blockers": []
+        "document_paths": [
+          "CaseDetailView aria-labelledby; OperatorShell skip-target tabIndex; mobil overflow CSS"
+        ],
+        "status_json_blockers": [
+          "Manuel NVDA/JAWS/VoiceOver NOT_TESTED",
+          "Yerel VM: JDK 17 yok — contracts-kotlin Gradle CI doğrular"
+        ]
       }
     },
     {
@@ -1685,10 +1697,14 @@
       "tests": [
         "SECURITY.md",
         "apps/web/app/(operator)/operator/(panel)/help/page.tsx",
+        "apps/web/features/help/help-content.test.ts",
         "apps/web/features/help/ios-localizable-parity.test.ts",
         "docs/legal/kvkk-gdpr-legal-review-checklist.md (hukuki inceleme NOT_TESTED)",
+        "docs/legal/privacy-review-checklist.md (hukuki inceleme BLOCKED)",
         "docs/tests/first-time-user-guided-tr.md",
+        "docs/user/first-time-user-script.md",
         "docs/user/kullanici-rehberi-tr.md",
+        "docs/user/mobile-help-strings.md",
         "docs/user/platform-destek-matrisi.md",
         "docs/user/user-guide-en.md",
         "scripts/check-ios-localizable-parity.js",
@@ -1706,12 +1722,16 @@
           "docs/user/kullanici-rehberi-tr.md",
           "docs/user/user-guide-en.md",
           "docs/user/platform-destek-matrisi.md",
+          "docs/user/first-time-user-script.md",
+          "docs/user/mobile-help-strings.md",
           "SECURITY.md",
           "docs/tests/first-time-user-guided-tr.md"
         ],
         "status_json_blockers": [
           "First-time user fiziksel senaryo NOT_TESTED",
-          "Destek formu prod e-posta TODO_APPROVAL / BLOCKED_APPROVAL",
+          "Hukuki gizlilik incelemesi BLOCKED (privacy-review-checklist)",
+          "Destek iletişimi DESTEK_ILETISIM_TBD / BLOCKED_APPROVAL",
+          "Mobil tam ekran yardım UI NOT_TESTED (MacBook fazı)",
           "Mağaza/prod deploy BLOCKED_APPROVAL"
         ]
       }

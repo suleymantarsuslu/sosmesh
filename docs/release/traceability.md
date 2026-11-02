@@ -4,7 +4,7 @@
 
 **Kural:** Fiziksel cihaz, MacBook/Xcode, mağaza veya hukuki inceleme kanıtı gerektiren maddeler **asla PASS sayılmaz**; `verification_status` status.json ile uyumludur.
 
-**Üretim:** `node scripts/release/generate-traceability.mjs` — 2026-11-02T13:46:53.766Z
+**Üretim:** `node scripts/release/generate-traceability.mjs` — 2026-11-02T15:21:12.388Z
 
 **Kayıt sayısı:** 88 (58 ADIM + M0 senaryoları + GEÇTİ ölçütleri)
 
@@ -65,7 +65,7 @@
 | ADIM-47 | **PARTIAL** | Android OutboxAdim47CapacityTest + Swift TransportOutboxTests 1k/TTL, apps/api/prisma/migrations/20261101220000_adim47_perf_indexes |
 | ADIM-48 | **PASS** | Bağımsız denetim PR #58: pnpm -r build/test, verify.sh 24/24, mutation redaction test kırmızı kanıtı, apps/api/src/observability/* OTEL (varsayılan kapalı), /metrics Bearer METRICS_SCRAPE_AUTH, structured redacted events |
 | ADIM-49 | **NOT_STARTED** | (doküman kanıtı) |
-| ADIM-50 | **NOT_STARTED** | apps/web/lib/operator-health-access.test.ts, tests/ux/operator-responsive.spec.js |
+| ADIM-50 | **PARTIAL** | Bağımsız denetim: merge origin/main 97d0eee; ADIM 43 zinciri main'de, MobileNavDrawer dialog/aria-modal; mobil menü E2E 390px |
 | ADIM-51 | **PARTIAL** | Gerçek cihaz BLE/Doze/24h smoke + Play upload: NOT_TESTED / BLOCKED_APPROVAL, ReleaseBuildConfigGuardTest + android-release-buildconfig-scan.sh |
 | ADIM-52 | **PARTIAL** | Fiziksel iPhone/Watch + TestFlight kurulum: NOT_TESTED, apps/ios/Config/Release-{Demo,Staging,Prod}.xcconfig |
 | ADIM-53 | **PARTIAL** | Play upload / imzalı artifact: BLOCKED_APPROVAL (B-06), Tile/complication: yok (bilinçli; wearos.md) |

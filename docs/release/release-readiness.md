@@ -27,7 +27,7 @@ node scripts/release/generate-qa-summary.mjs
 
 | Script | Output | CI hook |
 | --- | --- | --- |
-| `bash scripts/release/sbom.sh` | `docs/release/sbom.cdx.json` (CycloneDX via `@cyclonedx/cyclonedx-npm`) | `scripts/verify.sh` step **release-sbom** |
+| `bash scripts/release/sbom.sh` | `docs/release/sbom.cdx.json` (CycloneDX from `pnpm-lock.yaml` production closure) | `scripts/verify.sh` steps **release-sbom-test**, **release-sbom** |
 | `bash scripts/release/checksums.sh` | `docs/release/SHA256SUMS` (post `pnpm -r build`) | `scripts/verify.sh` step **release-checksums** |
 
 Verify checksums locally:

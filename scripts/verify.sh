@@ -381,7 +381,15 @@ else
 fi
 
 # 32. CycloneDX SBOM (no signing, no secrets)
-echo "32/33: bash scripts/release/sbom.sh"
+echo "32/34: node scripts/release/build-sbom.test.mjs"
+if node "$SCRIPT_DIR/release/build-sbom.test.mjs" > "$REPORTS_DIR/release-sbom-test.log" 2>&1; then
+  check_exit "release-sbom-test" 0
+else
+  EXIT_CODE=$?
+  check_exit "release-sbom-test" $EXIT_CODE
+fi
+
+echo "33/34: bash scripts/release/sbom.sh"
 if bash "$SCRIPT_DIR/release/sbom.sh" > "$REPORTS_DIR/release-sbom.log" 2>&1; then
   check_exit "release-sbom" 0
 else
@@ -390,7 +398,7 @@ else
 fi
 
 # 33. SHA256 checksums of build artifacts
-echo "33/33: bash scripts/release/checksums.sh"
+echo "34/34: bash scripts/release/checksums.sh"
 if bash "$SCRIPT_DIR/release/checksums.sh" > "$REPORTS_DIR/release-checksums.log" 2>&1; then
   check_exit "release-checksums" 0
 else

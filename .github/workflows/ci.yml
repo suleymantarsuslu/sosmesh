@@ -29,6 +29,7 @@ jobs:
           --health-retries 5
 
     env:
+      SOSMESH_CI_RUNNER: ${{ vars.SOSMESH_CI_RUNNER }}
       SOSMESH_CI_PG_ADMIN_URL: postgresql://postgres:postgres@localhost:5432/postgres
       SOSMESH_CI_DATABASE_URL: postgresql://postgres:postgres@localhost:5432/postgres
 
@@ -96,6 +97,17 @@ jobs:
 
       - name: Run verification script
         run: bash scripts/verify.sh
+
+      - name: Upload Playwright snapshot actuals on failure
+        if: failure() && vars.SOSMESH_CI_RUNNER == 'zulal'
+        uses: actions/upload-artifact@v4
+        with:
+          name: zulal-playwright-snapshot-debug
+          path: |
+            test-results/**/*-actual.png
+            test-results/**/*-diff.png
+          if-no-files-found: ignore
+          retention-days: 7
       
       - name: Upload test reports
         if: always()
@@ -186,9 +198,9 @@ jobs:
 
   android-gradle:
     name: Android Gradle Build
-    runs-on: ubuntu-latest
+    runs-on: ${{ vars.SOSMESH_CI_RUNNER == 'zulal' && fromJSON('["self-hosted","linux","ARM64","zulal"]') || 'ubuntu-latest' }}
     needs: detect-mobile
-    if: needs.detect-mobile.outputs.android == 'true'
+    if: vars.SOSMESH_CI_RUNNER != 'zulal' && needs.detect-mobile.outputs.android == 'true'
     timeout-minutes: 25
     
     steps:
@@ -247,7 +259,7 @@ jobs:
     name: iOS Xcode Build
     runs-on: macos-latest
     needs: detect-mobile
-    if: needs.detect-mobile.outputs.ios == 'true'
+    if: vars.SOSMESH_CI_RUNNER != 'zulal' && needs.detect-mobile.outputs.ios == 'true'
     timeout-minutes: 30
     
     steps:
@@ -421,9 +433,9 @@ jobs:
 
   swift-package-tests:
     name: Swift Package Tests
-    runs-on: ubuntu-latest
+    runs-on: ${{ vars.SOSMESH_CI_RUNNER == 'zulal' && fromJSON('["self-hosted","linux","ARM64","zulal"]') || 'ubuntu-latest' }}
     timeout-minutes: 25
-    if: github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository
+    if: vars.SOSMESH_CI_RUNNER != 'zulal' && (github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository)
 
     steps:
       - name: Checkout code
@@ -485,15 +497,30 @@ jobs:
       - name: Test secret scan
         run: bash scripts/test-secret-scan.sh
 
+  zulal-deferred-summary:
+    name: Mobile verification deferred (MacBook phase)
+    runs-on: ${{ vars.SOSMESH_CI_RUNNER == 'zulal' && fromJSON('["self-hosted","linux","ARM64","zulal"]') || 'ubuntu-latest' }}
+    if: vars.SOSMESH_CI_RUNNER == 'zulal' && (github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository)
+    timeout-minutes: 2
+    steps:
+      - name: Record deferred checks (NOT_TESTED)
+        shell: bash
+        run: |
+          {
+            echo 'Swift/Android/iOS: NOT_TESTED — deferred to MacBook phase (user decision 2026-11-02)'
+            echo 'Compose smoke: NOT_TESTED on Zulal (no Docker for ghrunner; needs approval)'
+            echo 'Firefox/WebKit axe smoke: NOT_TESTED on Zulal (playwright system deps need sudo)'
+          } >> "$GITHUB_STEP_SUMMARY"
+
   load-smoke:
     name: Load smoke (k6 profile 100)
-    runs-on: ubuntu-latest
+    runs-on: ${{ vars.SOSMESH_CI_RUNNER == 'zulal' && fromJSON('["self-hosted","linux","ARM64","zulal"]') || 'ubuntu-latest' }}
     timeout-minutes: 20
     if: github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository
 
     services:
       postgres:
-        image: postgres:16
+        image: ${{ vars.SOSMESH_CI_RUNNER != 'zulal' && 'postgres:16' || '' }}
         env:
           POSTGRES_USER: postgres
           POSTGRES_PASSWORD: postgres
@@ -507,6 +534,7 @@ jobs:
           --health-retries 5
 
     env:
+      SOSMESH_CI_PG_ADMIN_URL: postgresql://postgres:postgres@localhost:5432/postgres
       SOSMESH_CI_DATABASE_URL: postgresql://postgres:postgres@localhost:5432/postgres
 
     steps:
@@ -523,6 +551,37 @@ jobs:
         with:
           version: 9
           dest: ${{ runner.temp }}/pnpm-${{ github.job }}
+
+      - name: Configure isolated pnpm store (self-hosted parallel jobs)
+        shell: bash
+        run: |
+          STORE_PATH="${{ runner.temp }}/pnpm-store-${{ github.job }}"
+          echo "STORE_PATH=${STORE_PATH}" >> "$GITHUB_ENV"
+          echo "npm_config_store_dir=${STORE_PATH}" >> "$GITHUB_ENV"
+
+      - name: Load CI PostgreSQL credentials
+        if: vars.SOSMESH_CI_RUNNER == 'zulal'
+        shell: bash
+        run: |
+          PG_ENV=/etc/sosmesh-ci/pg.env
+          if [ ! -f "$PG_ENV" ]; then
+            echo "Missing ${PG_ENV} on self-hosted runner (required for load-smoke DB)"
+            exit 1
+          fi
+          set -a
+          # shellcheck disable=SC1090
+          source "$PG_ENV"
+          set +a
+          if [ -z "${SOSMESH_CI_PG_ADMIN_URL:-}" ] || [ -z "${SOSMESH_CI_DATABASE_URL:-}" ]; then
+            echo "pg.env must define SOSMESH_CI_PG_ADMIN_URL and SOSMESH_CI_DATABASE_URL"
+            exit 1
+          fi
+          echo "::add-mask::${SOSMESH_CI_PG_ADMIN_URL}"
+          echo "::add-mask::${SOSMESH_CI_DATABASE_URL}"
+          {
+            echo "SOSMESH_CI_PG_ADMIN_URL=${SOSMESH_CI_PG_ADMIN_URL}"
+            echo "SOSMESH_CI_DATABASE_URL=${SOSMESH_CI_DATABASE_URL}"
+          } >> "$GITHUB_ENV"
 
       - name: Run k6 ingest smoke
         run: bash tests/load/ci-k6-smoke.sh

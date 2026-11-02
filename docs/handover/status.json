@@ -1707,7 +1707,7 @@
       "pass_criteria": "Yedekten geri dönüş en az bir defa başarıyla kanıtlı.",
       "status": "PASS",
       "attempts": 1,
-      "commit": null,
+      "commit": "f341e51",
       "evidence": [
         "infra/backup/* WAL archive + base-backup + rotation (AES-256; key via SOSMESH_BACKUP_ENCRYPTION_KEY only)",
         "scripts/backup-restore-drill.sh + apps/api/test/helpers/backup-restore-drill.ts",

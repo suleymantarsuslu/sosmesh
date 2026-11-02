@@ -649,6 +649,26 @@ paths:
           description: ""
       tags: *a11
       security: *a12
+  /v1/operator/observability/summary:
+    get:
+      operationId: OperatorObservabilityController_summary
+      parameters: []
+      responses:
+        "200":
+          description: ""
+      tags: &a13
+        - operator
+      security: &a14
+        - bearer: []
+  /v1/operator/observability/audit:
+    get:
+      operationId: OperatorObservabilityController_auditTrail
+      parameters: []
+      responses:
+        "200":
+          description: ""
+      tags: *a13
+      security: *a14
 info:
   title: SOSMesh API
   description: Emergency mesh network API — public and operator surfaces

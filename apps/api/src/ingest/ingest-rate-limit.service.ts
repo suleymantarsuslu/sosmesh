@@ -5,6 +5,7 @@ import {
   DEFAULT_RATE_LIMIT_MAX,
   DEFAULT_RATE_LIMIT_WINDOW_MS,
 } from './ingest.constants';
+import { SosMeshMetricsService } from '../observability/sosmesh-metrics.service';
 
 type WindowCounter = {
   count: number;
@@ -17,7 +18,10 @@ export class IngestRateLimitService {
   private readonly windowMs: number;
   private readonly counters = new Map<string, WindowCounter>();
 
-  constructor(config: ConfigService) {
+  constructor(
+    config: ConfigService,
+    private readonly metrics: SosMeshMetricsService
+  ) {
     this.maxRequests = config.get<number>(
       'INGEST_RATE_LIMIT_MAX',
       DEFAULT_RATE_LIMIT_MAX
@@ -43,6 +47,7 @@ export class IngestRateLimitService {
     }
     existing.count += 1;
     if (existing.count > maxRequests) {
+      this.metrics.recordIngestRateLimited();
       throw new HttpException(
         {
           code: 'RATE_LIMIT_EXCEEDED',

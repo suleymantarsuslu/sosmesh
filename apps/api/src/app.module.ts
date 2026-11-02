@@ -26,6 +26,7 @@ import { NotificationsModule } from './notifications/notifications.module';
 import { PrismaModule } from './prisma/prisma.module';
 import { PublicModule } from './public/public.module';
 import { PrivacyModule } from './privacy/privacy.module';
+import { ObservabilityModule } from './observability/observability.module';
 
 @Module({
   imports: [
@@ -79,8 +80,10 @@ import { PrivacyModule } from './privacy/privacy.module';
     CoordinationModule,
     NotificationsModule,
     PrivacyModule,
+    ObservabilityModule,
   ],
   providers: [
+    HttpExceptionFilter,
     {
       provide: APP_PIPE,
       useValue: new ValidationPipe({

@@ -160,6 +160,8 @@
         "teams": "Teams",
         "tasks": "Tasks",
         "activity": "Activity",
+        "health": "System health",
+        "audit": "Audit",
         "admin": "Admin"
       },
       "orgHeader": "Organization"

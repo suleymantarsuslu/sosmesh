@@ -160,6 +160,8 @@
         "teams": "Ekipler",
         "tasks": "Görevler",
         "activity": "İşlem geçmişi",
+        "health": "Sistem sağlığı",
+        "audit": "Denetim",
         "admin": "Yönetim"
       },
       "orgHeader": "Kuruluş"

@@ -7,6 +7,10 @@ import {
   DEFAULT_META_MODEL,
 } from './ai.constants';
 import { getAiRunMetrics } from './ai-metrics';
+import { runWithCorrelation } from '../observability/correlation-context.util';
+import { SosMeshMetricsService } from '../observability/sosmesh-metrics.service';
+import { StructuredEventLogger } from '../observability/structured-event-logger.service';
+import { withWorkerSpan } from '../observability/otel-tracing';
 import { AiCostGuard, IncidentTokenBudgetGuard, TenantAiRateLimiter } from './ai-guards';
 import { deidentifySosPlaintextForPrompt } from './deidentify-plaintext';
 import {
@@ -45,9 +49,13 @@ export class AiJobService {
   private readonly incidentTokenBudget: IncidentTokenBudgetGuard;
   private readonly providerOverride: MetaProvider | null;
   private readonly plaintextSource: SosPlaintextSource;
+  private pendingJobs = 0;
+  private lastQueueProgressMs = Date.now();
 
   constructor(
     private readonly prisma: PrismaService,
+    private readonly metrics: SosMeshMetricsService,
+    private readonly events: StructuredEventLogger,
     @Optional() @Inject(AI_PROVIDER_OVERRIDE) providerOverride: MetaProvider | null = null,
     @Optional() @Inject(SOS_PLAINTEXT_SOURCE) plaintextSource: SosPlaintextSource | null = null
   ) {
@@ -68,17 +76,45 @@ export class AiJobService {
     messageId: string;
     tenantKey: string;
   }): void {
+    this.pendingJobs += 1;
+    this.metrics.setAiQueueDepth(this.pendingJobs);
     setImmediate(() => {
-      void this.runJob(params).catch((error) => {
-        this.logger.error(
-          { incidentId: params.incidentId, err: error instanceof Error ? error.message : 'job_failed' },
-          'AI job failed'
-        );
-      });
+      void this.runJob(params)
+        .catch((error) => {
+          this.metrics.recordAiFailure();
+          this.logger.error(
+            { incidentId: params.incidentId, err: error instanceof Error ? error.message : 'job_failed' },
+            'AI job failed'
+          );
+        })
+        .finally(() => {
+          this.pendingJobs = Math.max(0, this.pendingJobs - 1);
+          this.lastQueueProgressMs = Date.now();
+          this.metrics.setAiQueueDepth(this.pendingJobs);
+        });
     });
   }
 
+  getWorkerStuckSecondsForAlerts(): number {
+    if (this.pendingJobs <= 0) {
+      return 0;
+    }
+    return Math.floor((Date.now() - this.lastQueueProgressMs) / 1000);
+  }
+
   async runJob(params: {
+    incidentId: string;
+    messageId: string;
+    tenantKey: string;
+  }): Promise<void> {
+    return runWithCorrelation(params.messageId, () =>
+      withWorkerSpan('ai.classify', params.messageId, async () => {
+        await this.runJobInner(params);
+      })
+    );
+  }
+
+  private async runJobInner(params: {
     incidentId: string;
     messageId: string;
     tenantKey: string;
@@ -177,6 +213,7 @@ export class AiJobService {
       }
 
       metrics.recordFailed();
+      this.metrics.recordAiFailure();
       await this.prisma.aiAnalysis.update({
         where: { id: pending.id },
         data: {

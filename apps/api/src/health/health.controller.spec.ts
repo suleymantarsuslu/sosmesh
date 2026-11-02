@@ -2,6 +2,7 @@ import { Test, TestingModule } from '@nestjs/testing';
 
 import { HealthController } from './health.controller';
 import { PrismaService } from '../prisma/prisma.service';
+import { SosMeshMetricsService } from '../observability/sosmesh-metrics.service';
 
 describe('HealthController', () => {
   let controller: HealthController;
@@ -14,6 +15,12 @@ describe('HealthController', () => {
           provide: PrismaService,
           useValue: {
             $queryRaw: jest.fn().mockResolvedValue([{ '?column?': 1 }]),
+          },
+        },
+        {
+          provide: SosMeshMetricsService,
+          useValue: {
+            setDatabaseUp: jest.fn(),
           },
         },
       ],

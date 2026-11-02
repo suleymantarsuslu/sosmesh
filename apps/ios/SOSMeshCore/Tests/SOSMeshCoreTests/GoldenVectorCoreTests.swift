@@ -41,6 +41,16 @@ final class GoldenVectorCoreTests: XCTestCase {
         XCTAssertEqual(bundled, master, "iOS bundled golden-001 must byte-match TypeScript master vector")
     }
 
+    func testGoldenAADUsesSharedContractsCanonicalization() throws {
+        let inputs = try XCTUnwrap(goldenVector["inputs"] as? [String: Any])
+        let expected = try XCTUnwrap(goldenVector["expected"] as? [String: Any])
+        let envelope = try XCTUnwrap(inputs["envelope"] as? [String: Any])
+        let keyId = try XCTUnwrap(inputs["keyId"] as? String)
+        let expectedAAD = try XCTUnwrap(expected["aadCanonical"] as? String)
+        let aad = try SOSMeshCrypto.createAAD(envelope: envelope, keyId: keyId)
+        XCTAssertEqual(String(data: aad, encoding: .utf8), expectedAAD)
+    }
+
     func testGoldenEncryptMatchesContractsPackage() throws {
         let inputs = try XCTUnwrap(goldenVector["inputs"] as? [String: Any])
         let expected = try XCTUnwrap(goldenVector["expected"] as? [String: Any])

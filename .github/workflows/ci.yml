@@ -202,6 +202,7 @@ jobs:
     needs:
       - detect-mobile
       - swift-package-tests
+    # Mac: Android is skipped (not cancelled) when Swift fails; concurrency uses github.sha to avoid cross-run cancels on one MacBook.
     if: (vars.SOSMESH_MAC_RUNNER == 'on' || vars.SOSMESH_CI_RUNNER != 'zulal') && needs.detect-mobile.outputs.android == 'true' && (vars.SOSMESH_MAC_RUNNER != 'on' || needs.swift-package-tests.result == 'success')
     timeout-minutes: 25
     concurrency:

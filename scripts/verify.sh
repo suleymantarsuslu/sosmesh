@@ -318,6 +318,20 @@ else
   check_exit "android-relay-no-android-id" $EXIT_CODE
 fi
 
+# 25. Backup restore drill log (ADIM 49; CI postgres — Jest covers embedded)
+echo "25/25: bash scripts/backup-restore-drill.sh"
+if [ -n "${SOSMESH_CI_DATABASE_URL:-}" ]; then
+  export DATABASE_URL="$SOSMESH_CI_DATABASE_URL"
+  if bash "$SCRIPT_DIR/backup-restore-drill.sh" >> "$REPORTS_DIR/backup-restore-drill.log" 2>&1; then
+    check_exit "backup-restore-drill" 0 "backup-restore-drill.log"
+  else
+    EXIT_CODE=$?
+    check_exit "backup-restore-drill" $EXIT_CODE "backup-restore-drill.log"
+  fi
+else
+  echo -e "${YELLOW}backup-restore-drill: covered by apps/api/test/backup-adim49.spec.ts (embedded)${NC}"
+fi
+
 # Summary
 echo "============================================"
 echo "Finished: $(date -u +%Y-%m-%dT%H:%M:%SZ)"

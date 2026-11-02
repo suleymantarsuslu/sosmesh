@@ -1705,12 +1705,19 @@
       ],
       "deliverables": "infra/backup scripts, docs/runbooks/restore.md",
       "pass_criteria": "Yedekten geri dönüş en az bir defa başarıyla kanıtlı.",
-      "status": "NOT_STARTED",
-      "attempts": 0,
+      "status": "PASS",
+      "attempts": 1,
       "commit": null,
-      "evidence": [],
+      "evidence": [
+        "infra/backup/* WAL archive + base-backup + rotation (AES-256; key via SOSMESH_BACKUP_ENCRYPTION_KEY only)",
+        "scripts/backup-restore-drill.sh + apps/api/test/helpers/backup-restore-drill.ts",
+        "apps/api/test/backup-adim49.spec.ts — encrypted drill, migration down after failed DDL, disaster read-only 503",
+        "apps/api/src/disaster/disaster-readonly.middleware.ts",
+        "docs/runbooks/restore.md — RPO/RTO from measured drill log only",
+        "packages/contracts/src/protocol-version-rollout.test.ts + Kotlin/Swift mixed-version tests"
+      ],
       "blockers": [],
-      "last_checked_at": null,
+      "last_checked_at": "2026-11-02T05:00:00+00:00",
       "goal": "Sistem arızasında veriyi korumak ve geri dönebilmek.",
       "cursor_tasks": [
         "Database PITR/backups, encryption, restricted storage and rotation.",

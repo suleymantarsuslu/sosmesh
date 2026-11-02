@@ -34,6 +34,12 @@ export const envValidationSchema = Joi.object({
     .uri({ scheme: ['http', 'https'] })
     .default('http://127.0.0.1:4318/v1/traces'),
   OTEL_CONSOLE_EXPORT: Joi.string().valid('true', 'false').default('false'),
+  SOSMESH_DISASTER_READ_ONLY_MODE: Joi.string()
+    .valid('true', 'false')
+    .default('false'),
+  SOSMESH_BACKUP_ENCRYPTION_KEY_SECRET_NAME: Joi.string().default(
+    'sosmesh-backup-aes256'
+  ),
 });
 
 export type AppEnv = {

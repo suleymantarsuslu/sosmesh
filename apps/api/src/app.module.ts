@@ -13,6 +13,7 @@ import {
   ValidationExceptionFilter,
 } from './common/filters/http-exception.filter';
 import { RequestIdMiddleware } from './common/middleware/request-id.middleware';
+import { disasterReadOnlyMiddleware } from './disaster/disaster-readonly.middleware';
 import { envValidationSchema } from './config/env.schema';
 import { AuthModule } from './auth/auth.module';
 import { HealthModule } from './health/health.module';
@@ -100,5 +101,6 @@ import { ObservabilityModule } from './observability/observability.module';
 export class AppModule implements NestModule {
   configure(consumer: MiddlewareConsumer): void {
     consumer.apply(RequestIdMiddleware).forRoutes('*');
+    consumer.apply(disasterReadOnlyMiddleware).forRoutes('*');
   }
 }

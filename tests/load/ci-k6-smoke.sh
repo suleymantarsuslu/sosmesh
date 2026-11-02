@@ -20,9 +20,17 @@ ensure_pnpm() {
 }
 
 ensure_pnpm
+mkdir -p "$ROOT/tests/load/.generated"
+BUILD_LOG="$ROOT/tests/load/.generated/api-build.log"
+
 pnpm install --frozen-lockfile
-pnpm --filter @sosmesh/contracts build
-pnpm --filter @sosmesh/api build
+export NODE_OPTIONS="${NODE_OPTIONS:-} --max-old-space-size=6144"
+pnpm --filter @sosmesh/api exec prisma generate
+if ! pnpm --filter @sosmesh/api... run build >"$BUILD_LOG" 2>&1; then
+  echo "@sosmesh/api dependency build failed; last 120 lines:" >&2
+  tail -120 "$BUILD_LOG" >&2
+  exit 1
+fi
 
 export DATABASE_URL="$DB_URL"
 node -e "const k='JWT'+'_SECRET'; process.env[k]=process.env[k]||'ci-load-jwt-secret-min-16'; require('fs').writeFileSync('/tmp/sosmesh-load-smoke.env', k+'='+JSON.stringify(process.env[k])+'\n');"
@@ -59,7 +67,6 @@ pnpm --filter @sosmesh/api exec prisma migrate deploy
 pnpm --filter @sosmesh/api exec prisma db seed
 
 API_LOG="$ROOT/tests/load/.generated/api-smoke.log"
-mkdir -p "$ROOT/tests/load/.generated"
 : >"$API_LOG"
 release_port
 set -a
@@ -90,11 +97,12 @@ for _ in $(seq 1 90); do
   sleep 2
 done
 if [[ "$ready" -ne 1 ]]; then
-  echo "API failed to become healthy; log:" >&2
+  echo "API failed /health/ready within timeout; log:" >&2
   tail -80 "$API_LOG" >&2
   exit 1
 fi
 
+export INGEST_RECEIPT_SIGNING_PRIVATE_KEY="$SIGNING_KEY"
 bash "$ROOT/tests/load/scripts/generate-ingest-payloads.sh" 100 \
   "$ROOT/tests/load/.generated/payloads-100.json"
 PREFLIGHT_BODY=$(node -e "console.log(JSON.stringify(require('$ROOT/tests/load/.generated/payloads-100.json')[0]))")

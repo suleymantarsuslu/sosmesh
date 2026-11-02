@@ -3,6 +3,11 @@ import { UserRole } from '@prisma/client';
 
 const OPERATOR_JWT_SIGNING_KEY = 'test-operator-jwt-signing-key-16';
 
+function testJwtSecret(): string {
+  const jwtEnvKey = ['JWT', 'SECRET'].join('_');
+  return process.env[jwtEnvKey] ?? OPERATOR_JWT_SIGNING_KEY;
+}
+
 export type OperatorTokenOptions = {
   sub?: string;
   role?: UserRole | 'OPERATOR' | 'ADMIN' | 'COORDINATOR';
@@ -17,14 +22,12 @@ export function operatorBearerToken(options: OperatorTokenOptions = {}): string 
     ...(options.teamId ? { teamId: options.teamId } : {}),
     ...(options.organizationId ? { organizationId: options.organizationId } : {}),
   };
-  return sign(payload, OPERATOR_JWT_SIGNING_KEY, { algorithm: 'HS256' });
+  return sign(payload, testJwtSecret(), { algorithm: 'HS256' });
 }
 
 export function applyTestAuthEnv(): void {
   const jwtEnvKey = ['JWT', 'SECRET'].join('_');
-  if (!process.env[jwtEnvKey]) {
-    process.env[jwtEnvKey] = OPERATOR_JWT_SIGNING_KEY;
-  }
+  process.env[jwtEnvKey] = OPERATOR_JWT_SIGNING_KEY;
   if (!process.env.CORS_ORIGINS) {
     process.env.CORS_ORIGINS = 'http://localhost:3000';
   }

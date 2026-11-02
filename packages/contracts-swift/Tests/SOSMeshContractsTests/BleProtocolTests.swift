@@ -6,36 +6,33 @@ final class BleProtocolTests: XCTestCase {
     
     private var testVectors: [String: Any]?
     
-    override func setUp() async throws {
-        // Use #filePath to get absolute path to this test file
-        // Real location: packages/fixtures/ble/test-vectors.json (from git ls-files)
+    override func setUpWithError() throws {
+        try super.setUpWithError()
         let testFileURL = URL(fileURLWithPath: #filePath)
-        // From Tests/SOSMeshContractsTests/BleProtocolTests.swift
-        // Go up: BleProtocolTests.swift -> SOSMeshContractsTests -> Tests -> contracts-swift -> packages
         let packagesDir = testFileURL
-            .deletingLastPathComponent()  // -> SOSMeshContractsTests/
-            .deletingLastPathComponent()  // -> Tests/
-            .deletingLastPathComponent()  // -> contracts-swift/
-            .deletingLastPathComponent()  // -> packages/
-        
+            .deletingLastPathComponent()
+            .deletingLastPathComponent()
+            .deletingLastPathComponent()
+            .deletingLastPathComponent()
+
         let fixturesURL = packagesDir
             .appendingPathComponent("fixtures")
             .appendingPathComponent("ble")
             .appendingPathComponent("test-vectors.json")
-        
+
         guard FileManager.default.fileExists(atPath: fixturesURL.path) else {
             throw NSError(domain: "TestError", code: 1, userInfo: [
                 NSLocalizedDescriptionKey: "test-vectors.json not found at: \(fixturesURL.path)"
             ])
         }
-        
+
         let data = try Data(contentsOf: fixturesURL)
         guard let vectors = try JSONSerialization.jsonObject(with: data) as? [String: Any] else {
             throw NSError(domain: "TestError", code: 2, userInfo: [
                 NSLocalizedDescriptionKey: "Invalid test-vectors.json format"
             ])
         }
-        
+
         testVectors = vectors
     }
     
@@ -52,10 +49,10 @@ final class BleProtocolTests: XCTestCase {
             return
         }
         
-        let inputHex = crcVector["input_hex"] as! String
-        let expectedCRC = UInt32(crcVector["expected_crc32"] as! Int)
+        let inputHex = try XCTUnwrap(crcVector["input_hex"] as? String)
+        let expectedCRC = UInt32(try XCTUnwrap(crcVector["expected_crc32"] as? Int))
         
-        let input = Data(hex: inputHex)!
+        let input = try XCTUnwrap(Data(hex: inputHex))
         let actualCRC = BleProtocol.calculateCRC32(input)
         
         XCTAssertEqual(actualCRC, expectedCRC, "CRC32 mismatch for 'Hello World'")
@@ -75,10 +72,10 @@ final class BleProtocolTests: XCTestCase {
             return
         }
         
-        let inputHex = shaVector["input_hex"] as! String
-        let expectedSHA = shaVector["expected_sha256"] as! String
+        let inputHex = try XCTUnwrap(shaVector["input_hex"] as? String)
+        let expectedSHA = try XCTUnwrap(shaVector["expected_sha256"] as? String)
         
-        let input = Data(hex: inputHex)!
+        let input = try XCTUnwrap(Data(hex: inputHex))
         let actualSHA = BleProtocol.calculateSHA256(input)
         let actualSHAHex = actualSHA.hexString
         

@@ -7,18 +7,15 @@ final class GoldenVectorTests: XCTestCase {
 
     override func setUpWithError() throws {
         try super.setUpWithError()
-        let url = try XCTUnwrap(
-            Self.bundledGoldenURL(),
-            "Failed to locate golden-001.json in Bundle.module"
-        )
-        let data = try Data(contentsOf: url)
-        goldenVector = try XCTUnwrap(JSONSerialization.jsonObject(with: data) as? [String: Any])
+        goldenVector = try BundledGolden.golden001Dictionary()
     }
 
-    /// Bundled by Package.swift via `.copy("Resources/golden-001.json")` at the test resource bundle root.
-    private static func bundledGoldenURL() -> URL? {
-        Bundle.module.url(forResource: "golden-001", withExtension: "json", subdirectory: "Resources")
-            ?? Bundle.module.url(forResource: "golden-001", withExtension: "json")
+    func testBundledGoldenBytesMatchWorkspaceCopy() throws {
+        let bundledURL = try BundledGolden.golden001URL()
+        let workspaceCopy = URL(fileURLWithPath: #filePath)
+            .deletingLastPathComponent()
+            .appendingPathComponent("Resources/golden-001.json")
+        XCTAssertEqual(try Data(contentsOf: bundledURL), try Data(contentsOf: workspaceCopy))
     }
 
     private func inputsAndExpected() throws -> (inputs: [String: Any], expected: [String: Any]) {

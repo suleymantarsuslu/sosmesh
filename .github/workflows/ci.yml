@@ -199,8 +199,10 @@ jobs:
   android-gradle:
     name: Android Gradle Build
     runs-on: ${{ vars.SOSMESH_MAC_RUNNER == 'on' && fromJSON('["self-hosted","macOS","ARM64","macbook"]') || (vars.SOSMESH_CI_RUNNER == 'zulal' && fromJSON('["self-hosted","linux","ARM64","zulal"]') || 'ubuntu-latest') }}
-    needs: detect-mobile
-    if: (vars.SOSMESH_MAC_RUNNER == 'on' || vars.SOSMESH_CI_RUNNER != 'zulal') && needs.detect-mobile.outputs.android == 'true'
+    needs:
+      - detect-mobile
+      - swift-package-tests
+    if: (vars.SOSMESH_MAC_RUNNER == 'on' || vars.SOSMESH_CI_RUNNER != 'zulal') && needs.detect-mobile.outputs.android == 'true' && (vars.SOSMESH_MAC_RUNNER != 'on' || needs.swift-package-tests.result == 'success')
     timeout-minutes: 25
     concurrency:
       group: sosmesh-mobile-${{ github.job }}-${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
@@ -297,8 +299,10 @@ jobs:
   ios-xcode:
     name: iOS Xcode Build
     runs-on: ${{ vars.SOSMESH_MAC_RUNNER == 'on' && fromJSON('["self-hosted","macOS","ARM64","macbook"]') || 'macos-latest' }}
-    needs: detect-mobile
-    if: (vars.SOSMESH_MAC_RUNNER == 'on' || vars.SOSMESH_CI_RUNNER != 'zulal') && needs.detect-mobile.outputs.ios == 'true'
+    needs:
+      - detect-mobile
+      - swift-package-tests
+    if: (vars.SOSMESH_MAC_RUNNER == 'on' || vars.SOSMESH_CI_RUNNER != 'zulal') && needs.detect-mobile.outputs.ios == 'true' && (vars.SOSMESH_MAC_RUNNER != 'on' || needs.swift-package-tests.result == 'success')
     timeout-minutes: 30
     concurrency:
       group: sosmesh-mobile-${{ github.job }}-${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
@@ -508,6 +512,7 @@ jobs:
           which swift
 
       - name: Run Swift contract tests
+        id: swift_contracts
         run: |
           set -euo pipefail
           echo "=== Swift Contract Tests ==="
@@ -515,9 +520,21 @@ jobs:
           swift --version
           cd packages/contracts-swift
           export SOURCE_ROOT="${GITHUB_WORKSPACE}"
+          set +e
           swift test 2>&1 | tee "${GITHUB_WORKSPACE}/swift-contracts-test.log"
+          swift_status=${PIPESTATUS[0]}
+          set -e
           passed_count=$(grep -c 'Test Case.*passed' "${GITHUB_WORKSPACE}/swift-contracts-test.log" 2>/dev/null)
           echo "Swift contracts test lines: ${passed_count:-0}"
+          if [ "$swift_status" -ne 0 ]; then
+            {
+              echo "### Swift contract tests failed (exit ${swift_status})"
+              echo '```'
+              tail -n 120 "${GITHUB_WORKSPACE}/swift-contracts-test.log"
+              echo '```'
+            } >> "$GITHUB_STEP_SUMMARY"
+            exit "$swift_status"
+          fi
 
       - name: Run SOSMeshCore Swift tests
         run: |

@@ -1875,7 +1875,7 @@
       "pass_criteria": "Staging çalışır; production yalnızca kullanıcı onayıyla.",
       "status": "PARTIAL",
       "attempts": 1,
-      "commit": null,
+      "commit": "4a3fe13",
       "evidence": [
         "infra/deploy/docker (api, web, worker, migrate multi-stage non-root)",
         "infra/deploy/compose/docker-compose.staging.yml",

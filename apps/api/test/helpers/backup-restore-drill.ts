@@ -67,6 +67,45 @@ function resolvePgBinary(tool: 'pg_dump' | 'pg_restore'): string {
   return bin;
 }
 
+function parsePgToolMajor(versionOutput: string): number {
+  const match = versionOutput.match(/(\d+)\./);
+  const major = Number.parseInt(match?.[1] ?? '', 10);
+  if (!Number.isFinite(major) || major <= 0) {
+    throw new Error(`unable to parse PostgreSQL tool major from: ${versionOutput.trim()}`);
+  }
+  return major;
+}
+
+async function assertPgClientMajorGteServer(
+  prisma: PrismaClient,
+  pgDumpPath: string,
+  pgRestorePath: string
+): Promise<void> {
+  const serverRows = await prisma.$queryRawUnsafe<{ major: number }[]>(
+    `SELECT current_setting('server_version_num')::int / 10000 AS major`
+  );
+  const serverMajor = serverRows[0]?.major ?? 0;
+  if (serverMajor <= 0) {
+    throw new Error('unable to read PostgreSQL server major version');
+  }
+  const dumpMajor = parsePgToolMajor(
+    execFileSync(pgDumpPath, ['--version'], { encoding: 'utf8' })
+  );
+  const restoreMajor = parsePgToolMajor(
+    execFileSync(pgRestorePath, ['--version'], { encoding: 'utf8' })
+  );
+  if (dumpMajor < serverMajor) {
+    throw new Error(
+      `pg_dump major ${dumpMajor} is older than PostgreSQL server major ${serverMajor}; upgrade client tools`
+    );
+  }
+  if (restoreMajor < serverMajor) {
+    throw new Error(
+      `pg_restore major ${restoreMajor} is older than PostgreSQL server major ${serverMajor}; upgrade client tools`
+    );
+  }
+}
+
 function runPgDump(
   conn: PgConn,
   schema: string,
@@ -163,6 +202,8 @@ export async function runBackupRestoreDrill(databaseUrl: string): Promise<Backup
       `SELECT md5(string_agg(checksum, '' ORDER BY id)) AS sum FROM "${schema}".synthetic_rows`
     );
     const checksum = checksumResult[0]?.sum ?? '';
+
+    await assertPgClientMajorGteServer(prisma, pgDump, pgRestore);
 
     log(`pg_dump path=${pgDump} schema=${schema}`);
     runPgDump(conn, schema, dumpPath, pgDump);

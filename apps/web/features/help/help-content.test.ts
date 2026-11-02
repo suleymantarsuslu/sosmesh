@@ -49,4 +49,32 @@ describe('operator help i18n', () => {
       /without ai|no ai/
     );
   });
+
+  it('uses DESTEK placeholders for support contact copy', () => {
+    expect(translate('tr', 'web.help.contactEmailPlaceholder')).toBe(
+      'DESTEK_EPOSTA_TBD'
+    );
+    expect(translate('en', 'web.help.contactEmailPlaceholder')).toBe(
+      'DESTEK_EPOSTA_TBD'
+    );
+    expect(translate('tr', 'web.help.supportNote')).toContain(
+      'DESTEK_ILETISIM_TBD'
+    );
+    expect(translate('en', 'web.help.supportNote')).toContain(
+      'DESTEK_ILETISIM_TBD'
+    );
+  });
+
+  it('ack help names five delivery stages', () => {
+    const trAck = translate('tr', 'web.help.ackBody');
+    const enAck = translate('en', 'web.help.ackBody');
+    expect(trAck).toContain('cihaz');
+    expect(trAck).toContain('peer');
+    expect(trAck).toContain('sunucu');
+    expect(trAck).toContain('operatör');
+    expect(enAck.toLowerCase()).toContain('device');
+    expect(enAck.toLowerCase()).toContain('peer');
+    expect(enAck.toLowerCase()).toContain('server');
+    expect(enAck.toLowerCase()).toContain('operator');
+  });
 });

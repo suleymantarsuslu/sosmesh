@@ -214,7 +214,7 @@
       "matrixTitle": "Platform desteği",
       "matrixBody": "Android min API 26, iOS 17+, watch companion. Ayrıntı: docs/user/platform-destek-matrisi.md",
       "supportTitle": "Destek talebi",
-      "supportNote": "Form gönderimi prod e-posta onayı bekliyor (TODO_APPROVAL). Gerçek iletişim bilgisi repoda yoktur.",
+      "supportNote": "Form gönderimi prod iletişim onayı bekliyor (BLOCKED_APPROVAL). Yer tutucu: DESTEK_ILETISIM_TBD — gerçek e-posta/telefon repoda yoktur.",
       "supportName": "Ad",
       "supportEmail": "E-posta",
       "supportSubject": "Konu",
@@ -226,8 +226,8 @@
       "linkSecurity": "Güvenlik açığı bildirimi (SECURITY.md)",
       "linkGuideTr": "Kullanıcı rehberi TR (docs/user/kullanici-rehberi-tr.md)",
       "linkGuideEn": "User guide EN (docs/user/user-guide-en.md)",
-      "contactEmailPlaceholder": "destek@TODO_APPROVAL.example",
-      "contactPhonePlaceholder": "+90 TODO_APPROVAL"
+      "contactEmailPlaceholder": "DESTEK_EPOSTA_TBD",
+      "contactPhonePlaceholder": "DESTEK_TELEFON_TBD"
     }
   },
   "watch": {

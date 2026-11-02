@@ -60,4 +60,4 @@
 "help.watch.body" = "Saat bağımsız mesh garantisi yoktur.";
 "help.failed.title" = "Başarısız iletim";
 "help.failed.body" = "Önce 112'yi arayın; Bluetooth ve izinleri kontrol edin.";
-"help.support.body" = "Destek: TODO_APPROVAL (prod e-posta onayı bekleniyor).";
+"help.support.body" = "Destek: DESTEK_ILETISIM_TBD (BLOCKED_APPROVAL).";

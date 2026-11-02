@@ -25,7 +25,7 @@ SOSMesh **resmî acil servis (112) yerine geçmez**. Acil durumda yerel acil num
 
 ## Destek iletişimi
 
-Operatör paneli yardım sayfası ve destek formu: prod e-posta yapılandırması `TODO_APPROVAL` / `BLOCKED_APPROVAL`.
+Operatör paneli yardım sayfası ve destek formu: iletişim `DESTEK_ILETISIM_TBD` / `BLOCKED_APPROVAL`.
 
 ## Sorumluluk sınırı
 

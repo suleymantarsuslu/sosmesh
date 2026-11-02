@@ -45,8 +45,8 @@ Aşağıdaki uyarılar **her major sürümde** kullanıcıya gösterilir veya ka
 
 | Kontrol | Durum |
 | --- | --- |
-| Hukuki metin onayı | `NOT_TESTED` — [`docs/legal/kvkk-gdpr-legal-review-checklist.md`](../legal/kvkk-gdpr-legal-review-checklist.md) |
-| Destek e-posta / telefon | `TODO_APPROVAL` |
+| Hukuki metin onayı | `NOT_TESTED` — [`docs/legal/privacy-review-checklist.md`](../legal/privacy-review-checklist.md), [`kvkk-gdpr-legal-review-checklist.md`](../legal/kvkk-gdpr-legal-review-checklist.md) |
+| Destek e-posta / telefon | `DESTEK_EPOSTA_TBD` / `DESTEK_TELEFON_TBD` (`DESTEK_ILETISIM_TBD`) |
 | Mağaza listeleme metinleri | `BLOCKED_APPROVAL` |
 
 ---

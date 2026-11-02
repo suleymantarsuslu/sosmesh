@@ -75,5 +75,5 @@
     <string name="help_limitations_title">Known limitations</string>
     <string name="help_limitations_body">Apple background limits; physical device tests NOT_TESTED; store rollout BLOCKED_APPROVAL.</string>
     <string name="help_support_title">Support</string>
-    <string name="help_support_body">Contact: TODO_APPROVAL — prod support email not approved yet.</string>
+    <string name="help_support_body">Support contact: DESTEK_ILETISIM_TBD (BLOCKED_APPROVAL).</string>
 </resources>

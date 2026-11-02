@@ -20,7 +20,7 @@ Yardım **tam ekran** henüz yok; string’ler ADIM 57 ile eklendi ve Settings /
 | `help_failed_delivery_title` / `help_failed_delivery_body` | Başarısız iletim |
 | `help_troubleshooting_title` / `help_troubleshooting_body` | Sorun giderme özeti |
 | `help_limitations_title` / `help_limitations_body` | Bilinen sınırlamalar |
-| `help_support_title` / `help_support_body` | Destek (`TODO_APPROVAL`) |
+| `help_support_title` / `help_support_body` | Destek (`DESTEK_ILETISIM_TBD`, `BLOCKED_APPROVAL`) |
 | `home_help_cta` | Ana ekran CTA (ekran bağlantısı sonraki UI adımı) |
 
 Parity tests:

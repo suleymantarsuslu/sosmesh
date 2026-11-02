@@ -214,7 +214,7 @@
       "matrixTitle": "Platform support",
       "matrixBody": "Android min API 26, iOS 17+, watch companion. See docs/user/platform-destek-matrisi.md",
       "supportTitle": "Support request",
-      "supportNote": "Form submission awaits prod email approval (TODO_APPROVAL). No real contact details are stored in the repo.",
+      "supportNote": "Form submission awaits prod contact approval (BLOCKED_APPROVAL). Placeholder: DESTEK_ILETISIM_TBD — no real email or phone in the repo.",
       "supportName": "Name",
       "supportEmail": "Email",
       "supportSubject": "Subject",
@@ -226,8 +226,8 @@
       "linkSecurity": "Security disclosure (SECURITY.md)",
       "linkGuideTr": "User guide TR (docs/user/kullanici-rehberi-tr.md)",
       "linkGuideEn": "User guide EN (docs/user/user-guide-en.md)",
-      "contactEmailPlaceholder": "support@TODO_APPROVAL.example",
-      "contactPhonePlaceholder": "+1 TODO_APPROVAL"
+      "contactEmailPlaceholder": "DESTEK_EPOSTA_TBD",
+      "contactPhonePlaceholder": "DESTEK_TELEFON_TBD"
     }
   },
   "watch": {

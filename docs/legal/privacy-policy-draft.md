@@ -25,4 +25,4 @@ Koordinatör veya yönetici rolüne sahip kurum temsilcileri, vaka bazında expo
 
 ## İletişim
 
-Güvenlik açığı bildirimi: [`SECURITY.md`](../../SECURITY.md) (`TODO_APPROVAL` e-posta yer tutucusu).
+Güvenlik açığı bildirimi: [`SECURITY.md`](../../SECURITY.md) (`GUVENLIK_BILDIRIM_TBD` yer tutucusu).

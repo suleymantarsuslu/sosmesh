@@ -2034,7 +2034,7 @@
       "pass_criteria": "BLOCKED/NOT_TESTED hiçbir required kalemde PASS gösterilmiyor.",
       "status": "PARTIAL",
       "attempts": 1,
-      "commit": null,
+      "commit": "PLACEHOLDER_SHA",
       "evidence": [
         "docs/release/traceability.md",
         "docs/release/traceability.json",

@@ -99,25 +99,21 @@ test.describe('AI Panel WP-E Screenshots', () => {
     const conceptLabel = page.locator('[data-testid="ai-photo-card"]').locator('text=/person|debris/i');
     await expect(conceptLabel.first()).toBeVisible({ timeout: 5000 });
     
-    // Wait for image to fully load and canvas to be drawn
-    await page.waitForTimeout(1000);
-    
-    // Check that canvas has actual content (not blank)
-    const hasContent = await canvas.evaluate((el) => {
-      const ctx = (el as HTMLCanvasElement).getContext('2d');
+    // Wait for canvas to be drawn (retry until content appears)
+    await page.waitForFunction(() => {
+      const canvas = document.querySelector('[data-testid="ai-photo-canvas"]');
+      if (!canvas) return false;
+      const ctx = canvas.getContext('2d');
       if (!ctx) return false;
-      const imageData = ctx.getImageData(0, 0, el.width, el.height);
+      const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
       const data = imageData.data;
       let nonZeroPixels = 0;
       for (let i = 0; i < data.length; i += 4) {
-        // Check if pixel is not fully transparent
         if (data[i + 3] > 0) nonZeroPixels++;
       }
-      const nonZeroRatio = nonZeroPixels / (el.width * el.height);
-      return nonZeroRatio > 0.05; // At least 5% non-transparent pixels
-    });
-    
-    expect(hasContent).toBe(true);
+      const nonZeroRatio = nonZeroPixels / (canvas.width * canvas.height);
+      return nonZeroRatio > 0.05;
+    }, { timeout: 10000 });
     
     // Screenshot just the photo card element
     await page.getByTestId('ai-photo-card').screenshot({
@@ -143,24 +139,21 @@ test.describe('AI Panel WP-E Screenshots', () => {
     const conceptLabel = page.locator('[data-testid="ai-photo-card"]').locator('text=/person|debris/i');
     await expect(conceptLabel.first()).toBeVisible({ timeout: 5000 });
     
-    // Wait for image to fully load
-    await page.waitForTimeout(1000);
-    
-    // Check canvas has content
-    const hasContent = await canvas.evaluate((el) => {
-      const ctx = (el as HTMLCanvasElement).getContext('2d');
+    // Wait for canvas to be drawn
+    await page.waitForFunction(() => {
+      const canvas = document.querySelector('[data-testid="ai-photo-canvas"]');
+      if (!canvas) return false;
+      const ctx = canvas.getContext('2d');
       if (!ctx) return false;
-      const imageData = ctx.getImageData(0, 0, el.width, el.height);
+      const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
       const data = imageData.data;
       let nonZeroPixels = 0;
       for (let i = 0; i < data.length; i += 4) {
         if (data[i + 3] > 0) nonZeroPixels++;
       }
-      const nonZeroRatio = nonZeroPixels / (el.width * el.height);
+      const nonZeroRatio = nonZeroPixels / (canvas.width * canvas.height);
       return nonZeroRatio > 0.05;
-    });
-    
-    expect(hasContent).toBe(true);
+    }, { timeout: 10000 });
     
     // Screenshot just the photo card element
     await page.getByTestId('ai-photo-card').screenshot({

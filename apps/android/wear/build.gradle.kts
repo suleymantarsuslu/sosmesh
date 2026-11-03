@@ -77,7 +77,10 @@ android {
 }
 
 dependencies {
+    implementation(project(":core:design"))
     implementation(project(":core:wear-companion"))
+
+    implementation("androidx.core:core-splashscreen:1.0.1")
 
     implementation("androidx.core:core-ktx:1.12.0")
     implementation("androidx.lifecycle:lifecycle-runtime-ktx:2.7.0")
@@ -85,7 +88,7 @@ dependencies {
     implementation(platform("androidx.compose:compose-bom:2024.02.00"))
     implementation("androidx.compose.ui:ui")
     implementation("androidx.compose.ui:ui-tooling-preview")
-    implementation("androidx.wear.compose:compose-material:1.2.1")
+    implementation("androidx.compose.material3:material3")
     implementation("androidx.wear.compose:compose-foundation:1.2.1")
     implementation("androidx.wear:wear:1.3.0")
     implementation("androidx.wear:wear-tooling-preview:1.0.0")

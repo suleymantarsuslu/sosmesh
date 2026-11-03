@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="design_logo_content_description">SOSMesh logosu</string>
+    <string name="design_call_112_button">112\'yi ara</string>
+    <string name="design_call_112_content_description">Acil durumda 112\'yi ara</string>
+    <string name="design_nav_back">Geri</string>
+</resources>

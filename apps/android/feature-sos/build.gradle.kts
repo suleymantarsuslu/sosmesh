@@ -44,6 +44,7 @@ android {
 
 dependencies {
     implementation(project(":contracts-kotlin"))
+    implementation(project(":core:design"))
     implementation(project(":core:model"))
     implementation(project(":core:data"))
 

@@ -95,5 +95,6 @@ fun PermissionsRoute(onBack: () -> Unit) {
         onOpenSettings = {
             context.startActivity(AppSettingsIntents.applicationDetails(context))
         },
+        onNavigateBack = onBack,
     )
 }

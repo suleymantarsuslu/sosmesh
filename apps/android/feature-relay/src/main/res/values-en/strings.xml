@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
+    <string name="relay_not112_disclaimer">SOSMesh does not replace 112. Call emergency services in an emergency.</string>
     <string name="relay_title">Volunteer relay mode</string>
     <string name="relay_intro">You can opt in to carry encrypted SOS packets from nearby devices to the internet. You cannot read packet contents; only counts and status are shown.</string>
     <string name="relay_toggle_label">Enable relay mode</string>

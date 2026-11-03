@@ -32,6 +32,7 @@ dependencyResolutionManagement {
 rootProject.name = "SOSMeshAndroid"
 
 include(":app")
+include(":core:design")
 include(":core:model")
 include(":core:data")
 include(":core:permissions")

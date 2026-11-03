@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
+    <string name="relay_not112_disclaimer">SOSMesh 112\'nin yerine geçmez. Acil durumda 112\'yi arayın.</string>
     <string name="relay_title">Gönüllü röle modu</string>
     <string name="relay_intro">Yakındaki cihazlardan gelen şifreli SOS paketlerini internete taşımayı seçebilirsiniz. Paket içeriğini göremezsiniz; yalnızca sayı ve durum görünür.</string>
     <string name="relay_toggle_label">Röle modunu etkinleştir</string>

@@ -44,6 +44,7 @@ android {
 }
 
 dependencies {
+    implementation(project(":core:design"))
     implementation(project(":core:protocol"))
     implementation(project(":core:data"))
     implementation(project(":core:ble"))

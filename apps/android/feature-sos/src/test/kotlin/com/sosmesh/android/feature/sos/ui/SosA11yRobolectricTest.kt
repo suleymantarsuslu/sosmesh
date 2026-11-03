@@ -6,6 +6,7 @@ import androidx.compose.ui.test.junit4.createAndroidComposeRule
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.performScrollTo
 import com.sosmesh.android.core.data.sos.LocationSnapshot
+import com.sosmesh.android.core.design.theme.SosMeshTheme
 import com.sosmesh.android.feature.sos.SosFormUiState
 import org.junit.Rule
 import org.junit.Test
@@ -22,20 +23,24 @@ class SosA11yRobolectricTest {
     @Test
     fun continueButton_isVisibleOnGuidedForm() {
         composeRule.setContent {
-            SosFlowScreen(
-                state = SosFormUiState(gpsLocation = LocationSnapshot.unknown()),
-                onSelectType = {},
-                onPersonCountChange = {},
-                onPersonUnknownChange = {},
-                onNoteChange = {},
-                onManualToggle = {},
-                onManualLat = {},
-                onManualLng = {},
-                onContinue = {},
-                onBackFromPreview = {},
-                onConfirm = {},
-            )
+            SosMeshTheme {
+                SosFlowScreen(
+                    state = SosFormUiState(gpsLocation = LocationSnapshot.unknown()),
+                    onSelectType = {},
+                    onPersonCountChange = {},
+                    onPersonUnknownChange = {},
+                    onNoteChange = {},
+                    onManualToggle = {},
+                    onManualLat = {},
+                    onManualLng = {},
+                    onContinue = {},
+                    onBackFromPreview = {},
+                    onConfirm = {},
+                )
+            }
         }
+        composeRule.onNodeWithTag("sosmesh_logo").assertIsDisplayed()
+        composeRule.onNodeWithTag("sos_call_112_button").assertIsDisplayed()
         composeRule.onNodeWithTag("sos_continue_button").performScrollTo().assertIsDisplayed()
     }
 }
@@ -49,19 +54,21 @@ class SosLargeFontRobolectricTest {
     @Test
     fun continueButton_visibleAtFontScale2() {
         composeRule.setContent {
-            SosFlowScreen(
-                state = SosFormUiState(canContinue = true),
-                onSelectType = {},
-                onPersonCountChange = {},
-                onPersonUnknownChange = {},
-                onNoteChange = {},
-                onManualToggle = {},
-                onManualLat = {},
-                onManualLng = {},
-                onContinue = {},
-                onBackFromPreview = {},
-                onConfirm = {},
-            )
+            SosMeshTheme {
+                SosFlowScreen(
+                    state = SosFormUiState(canContinue = true),
+                    onSelectType = {},
+                    onPersonCountChange = {},
+                    onPersonUnknownChange = {},
+                    onNoteChange = {},
+                    onManualToggle = {},
+                    onManualLat = {},
+                    onManualLng = {},
+                    onContinue = {},
+                    onBackFromPreview = {},
+                    onConfirm = {},
+                )
+            }
         }
         composeRule.onNodeWithTag("sos_continue_button").performScrollTo().assertIsDisplayed()
     }

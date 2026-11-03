@@ -237,6 +237,8 @@
     },
     "ai": {
       "title": "AI Intelligence Panel",
+      "collapsePanel": "Collapse AI panel",
+      "expandPanel": "Expand AI panel",
       "disclaimer": "SOSMesh is not a replacement for 112. AI is a suggestion tool; the operator decides.",
       "unavailable": "AI unavailable",
       "pending": "AI analysis pending",

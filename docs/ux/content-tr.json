@@ -237,6 +237,8 @@
     },
     "ai": {
       "title": "AI İstihbarat Paneli",
+      "collapsePanel": "AI panelini daralt",
+      "expandPanel": "AI panelini genişlet",
       "disclaimer": "SOSMesh 112'nin yerine geçmez. AI öneri aracıdır; operatör karar verir.",
       "unavailable": "AI kullanılamıyor",
       "pending": "AI analizi bekliyor",

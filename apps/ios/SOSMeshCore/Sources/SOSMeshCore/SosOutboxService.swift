@@ -70,8 +70,15 @@ public final class SosOutboxService: OutboxQueueUpdating, @unchecked Sendable {
         fromState: String,
         nowMs: Int64
     ) throws -> String {
-        let next = try stateMachine.transition(from: fromState, to: "SERVER_ACCEPTED")
-        _ = try updateState(
+        // A verified server receipt for a direct online upload may arrive while the entry is still
+        // LOCAL_SAVED (no peer ACK happened). That is a real server acceptance, not a peer ACK.
+        let next: String
+        if fromState == "LOCAL_SAVED" {
+            next = "SERVER_ACCEPTED"
+        } else {
+            next = try stateMachine.transition(from: fromState, to: "SERVER_ACCEPTED")
+        }
+        _ = try queue.updateState(
             sosId: sosId,
             digest: digest,
             state: next,

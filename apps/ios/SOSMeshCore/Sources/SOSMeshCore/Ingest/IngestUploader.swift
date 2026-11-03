@@ -21,18 +21,38 @@ public struct IngestConfig {
         self.ttlSeconds = ttlSeconds
     }
     
+    private static let installRelayIdDefaultsKey = "sosmesh.ingest.installRelayIdHex"
+
+    /// 64 lowercase hex chars (32 random bytes), stable per install; not derived from device ids.
+    /// The ingest API requires /^[a-f0-9]{64}$/ for relayId.
+    static func installRelayIdHex(defaults: UserDefaults = .standard) -> String {
+        if let existing = defaults.string(forKey: installRelayIdDefaultsKey),
+           existing.count == 64,
+           existing.allSatisfy({ ("0"..."9").contains($0) || ("a"..."f").contains($0) }) {
+            return existing
+        }
+        var bytes = [UInt8](repeating: 0, count: 32)
+        let status = SecRandomCopyBytes(kSecRandomDefault, bytes.count, &bytes)
+        if status != errSecSuccess {
+            for i in bytes.indices { bytes[i] = UInt8.random(in: 0...255) }
+        }
+        let hex = bytes.map { String(format: "%02x", $0) }.joined()
+        defaults.set(hex, forKey: installRelayIdDefaultsKey)
+        return hex
+    }
+
     public static func production(deviceId: String) -> IngestConfig {
         #if DEBUG
         return IngestConfig(
             baseURL: "http://localhost:3001",
             receiptVerifyPublicKeySpkiBase64: "",
-            relayIdHex: deviceId
+            relayIdHex: installRelayIdHex()
         )
         #else
         return IngestConfig(
             baseURL: "https://sosmesh.antiosoft.com",
             receiptVerifyPublicKeySpkiBase64: "MCowBQYDK2VwAyEAJgWsM1ZMJK9D9uPkDS/08DL/sOHrBlcCS/ETcKQ2OEs=",
-            relayIdHex: deviceId
+            relayIdHex: installRelayIdHex()
         )
         #endif
     }

@@ -39,6 +39,7 @@ final class AppModel: ObservableObject {
     private var meshRadio: BleMeshRadioPort?
     private var meshTickTimer: Timer?
     private var ingestUploader: IngestUploader?
+    private var uploadsInFlight = Set<String>()
 
     init(
         permissionProbe: AppPermissionProbing? = nil,
@@ -76,6 +77,7 @@ final class AppModel: ObservableObject {
     }
 
     func refreshPermissionGate() async {
+        Task { await retryPendingServerUploads() }
         var snapshot = await permissionProbe.captureSnapshot()
         #if DEBUG
         if useFaultSimulationOverrides {
@@ -224,6 +226,25 @@ final class AppModel: ObservableObject {
         return outboxService
     }
     
+    /// Re-attempts the online upload for own SOS entries still waiting in LOCAL_SAVED (launch / foreground).
+    private func retryPendingServerUploads() async {
+        guard let service = try? requireOutbox(),
+              let entries = try? service.listEntries() else { return }
+        for entry in entries where entry.state == "LOCAL_SAVED" && entry.origin == "ios" {
+            guard !uploadsInFlight.contains(entry.sosId),
+                  let data = Data(base64Encoded: entry.encryptedBlobBase64),
+                  let object = try? JSONSerialization.jsonObject(with: data) as? [String: Any] else { continue }
+            uploadsInFlight.insert(entry.sosId)
+            await attemptServerUpload(
+                sosId: entry.sosId,
+                digest: entry.digest,
+                encryptedBlobBase64: entry.encryptedBlobBase64,
+                sosMessage: object
+            )
+            uploadsInFlight.remove(entry.sosId)
+        }
+    }
+
     private func attemptServerUpload(
         sosId: String,
         digest: String,

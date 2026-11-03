@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { useOperatorPreferences } from '../../components/operator/OperatorPreferencesProvider';
 import { Card } from '../../components/ui/Card';
 import { DeliveryStateBadge } from '../../components/cases/DeliveryStateBadge';
+import { Timeline } from '../../components/timeline/Timeline';
 
 import type { OperatorCaseRow } from './types';
 
@@ -97,24 +98,14 @@ export function CaseDetailPanel({
               <dd>{t(`web.locationStatuses.${row.locationStatus}`) || row.locationStatus}</dd>
             </div>
           </dl>
-          <h3>{t('web.caseDetail.timelineTitle')}</h3>
-          <ol className="cases-detail-panel__timeline">
-            {timeline.length === 0 ? (
-              <li>{t('web.caseDetail.timelineEmpty')}</li>
-            ) : (
-              timeline.map((entry) => (
-                <li key={entry.id}>
-                  <DeliveryStateBadge state={entry.deliveryState} /> · {entry.source}
-                </li>
-              ))
-            )}
-          </ol>
           <Link 
             href={`/operator/cases/${row.incidentId}`}
             className="cases-detail-panel__open-button"
           >
             {t('web.cases.openFullCaseDetail')}
           </Link>
+          <h3>{t('web.caseDetail.timelineTitle')}</h3>
+          <Timeline entries={timeline} emptyMessage={t('web.caseDetail.timelineEmpty')} />
         </div>
       )}
     </div>

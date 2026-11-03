@@ -21,12 +21,15 @@ const TRANSLATION_SCHEMA = {
       },
       detected_language: {
         type: 'string',
+        description: 'ISO 639-1 language code (e.g. "tr", "en", "ar")',
       },
     },
     required: ['translated_text', 'detected_language'],
     additionalProperties: false,
   },
 };
+
+const CACHE_VERSION = 'v2';
 
 type TranslationResult = {
   translatedText: string;
@@ -57,12 +60,7 @@ export class MessageTranslationService {
       return null;
     }
 
-    const detectedLang = this.detectLanguage(originalText);
-    const sourceLanguage = detectedLang === 'turkish' ? 'tr' : 'en';
-
-    if (sourceLanguage === targetLocale) {
-      return null;
-    }
+    const heuristicLang = this.detectLanguageHeuristic(originalText);
 
     const cached = await this.getCachedTranslation('sos_message', messageId, 'noteText', targetLocale);
     if (cached) {
@@ -88,13 +86,15 @@ export class MessageTranslationService {
     try {
       const targetLanguageName = targetLocale === 'tr' ? 'Turkish' : 'English';
       
-      const systemPrompt = `You are a professional translator for emergency services. Translate the following SOS message accurately and naturally to ${targetLanguageName}. Preserve urgency, emotion, and specific details. Do not add explanations or interpretations.`;
+      const systemPrompt = `You are a professional translator for emergency services. Translate the following SOS message accurately and naturally to ${targetLanguageName}. Preserve urgency, emotion, and specific details. Do not add explanations or interpretations. You must respond with valid JSON containing "translated_text" and "detected_language" (ISO 639-1 code like "tr", "en", "ar").`;
 
       const prompt = `Translate this emergency message to ${targetLanguageName}:
 
 ${originalText}
 
-Provide the translation and the detected source language.`;
+Provide:
+1. "translated_text": The translated message in ${targetLanguageName}
+2. "detected_language": The ISO 639-1 language code of the original message (e.g., "tr" for Turkish, "en" for English, "ar" for Arabic)`;
 
       const response = await this.metaClient.chatJson({
         schema: TRANSLATION_SCHEMA,
@@ -109,6 +109,38 @@ Provide the translation and the detected source language.`;
       }
 
       const result = response.json;
+      let detectedLang = (result.detected_language as string || '').toLowerCase();
+      const translatedText = result.translated_text as string;
+
+      if (heuristicLang === 'tr' && detectedLang !== 'tr') {
+        this.logger.warn({
+          msg: 'Language detection mismatch, overriding with heuristic',
+          messageId,
+          modelDetected: detectedLang,
+          heuristicDetected: 'tr',
+        });
+        detectedLang = 'tr';
+      }
+
+      if (detectedLang === targetLocale) {
+        this.logger.log({
+          msg: 'Source equals target language, no translation needed',
+          messageId,
+          language: detectedLang,
+        });
+        return null;
+      }
+
+      if (translatedText === originalText && heuristicLang !== 'unknown' && heuristicLang !== targetLocale) {
+        this.logger.warn({
+          msg: 'Translation equals source despite language difference, treating as failure',
+          messageId,
+          detectedLang,
+          heuristicLang,
+        });
+        return null;
+      }
+
       const actualCost = this.metaClient.computeCost(
         response.model,
         response.usage.inputTokens,
@@ -128,23 +160,23 @@ Provide the translation and the detected source language.`;
         sourceType: 'sos_message',
         sourceId: messageId,
         sourceField: 'noteText',
-        sourceLanguage,
+        sourceLanguage: detectedLang,
         targetLanguage: targetLocale,
-        translatedText: result.translated_text as string,
+        translatedText,
         modelVersion: response.model,
       });
 
       this.logger.log({
         msg: 'Message translated',
         messageId,
-        from: sourceLanguage,
+        from: detectedLang,
         to: targetLocale,
         costUsd: actualCost,
       });
 
       return {
-        translatedText: result.translated_text as string,
-        detectedLanguage: result.detected_language as string,
+        translatedText,
+        detectedLanguage: detectedLang,
         cached: false,
       };
     } catch (error) {
@@ -169,12 +201,7 @@ Provide the translation and the detected source language.`;
       return null;
     }
 
-    const detectedLang = this.detectLanguage(originalText);
-    const sourceLanguage = detectedLang === 'turkish' ? 'tr' : 'en';
-
-    if (sourceLanguage === targetLocale) {
-      return null;
-    }
+    const heuristicLang = this.detectLanguageHeuristic(originalText);
 
     const cached = await this.getCachedTranslation('ai_transcript', transcriptId, 'transcript', targetLocale);
     if (cached) {
@@ -200,13 +227,15 @@ Provide the translation and the detected source language.`;
     try {
       const targetLanguageName = targetLocale === 'tr' ? 'Turkish' : 'English';
       
-      const systemPrompt = `You are a professional translator for emergency services. Translate the following voice transcript accurately and naturally to ${targetLanguageName}. Preserve the conversational tone and urgency.`;
+      const systemPrompt = `You are a professional translator for emergency services. Translate the following voice transcript accurately and naturally to ${targetLanguageName}. Preserve the conversational tone and urgency. You must respond with valid JSON containing "translated_text" and "detected_language" (ISO 639-1 code like "tr", "en", "ar").`;
 
       const prompt = `Translate this emergency voice transcript to ${targetLanguageName}:
 
 ${originalText}
 
-Provide the translation and the detected source language.`;
+Provide:
+1. "translated_text": The translated transcript in ${targetLanguageName}
+2. "detected_language": The ISO 639-1 language code of the original transcript (e.g., "tr" for Turkish, "en" for English, "ar" for Arabic)`;
 
       const response = await this.metaClient.chatJson({
         schema: TRANSLATION_SCHEMA,
@@ -221,6 +250,38 @@ Provide the translation and the detected source language.`;
       }
 
       const result = response.json;
+      let detectedLang = (result.detected_language as string || '').toLowerCase();
+      const translatedText = result.translated_text as string;
+
+      if (heuristicLang === 'tr' && detectedLang !== 'tr') {
+        this.logger.warn({
+          msg: 'Language detection mismatch, overriding with heuristic',
+          transcriptId,
+          modelDetected: detectedLang,
+          heuristicDetected: 'tr',
+        });
+        detectedLang = 'tr';
+      }
+
+      if (detectedLang === targetLocale) {
+        this.logger.log({
+          msg: 'Source equals target language, no translation needed',
+          transcriptId,
+          language: detectedLang,
+        });
+        return null;
+      }
+
+      if (translatedText === originalText && heuristicLang !== 'unknown' && heuristicLang !== targetLocale) {
+        this.logger.warn({
+          msg: 'Translation equals source despite language difference, treating as failure',
+          transcriptId,
+          detectedLang,
+          heuristicLang,
+        });
+        return null;
+      }
+
       const actualCost = this.metaClient.computeCost(
         response.model,
         response.usage.inputTokens,
@@ -240,23 +301,23 @@ Provide the translation and the detected source language.`;
         sourceType: 'ai_transcript',
         sourceId: transcriptId,
         sourceField: 'transcript',
-        sourceLanguage,
+        sourceLanguage: detectedLang,
         targetLanguage: targetLocale,
-        translatedText: result.translated_text as string,
+        translatedText,
         modelVersion: response.model,
       });
 
       this.logger.log({
         msg: 'Transcript translated',
         transcriptId,
-        from: sourceLanguage,
+        from: detectedLang,
         to: targetLocale,
         costUsd: actualCost,
       });
 
       return {
-        translatedText: result.translated_text as string,
-        detectedLanguage: result.detected_language as string,
+        translatedText,
+        detectedLanguage: detectedLang,
         cached: false,
       };
     } catch (error) {
@@ -269,12 +330,20 @@ Provide the translation and the detected source language.`;
     }
   }
 
-  private detectLanguage(text: string): 'turkish' | 'english' {
+  /**
+   * Heuristic language detection using Turkish-specific characters and common words
+   * Returns ISO 639-1 code: 'tr' for Turkish, 'en' for English, or 'unknown'
+   */
+  private detectLanguageHeuristic(text: string): 'tr' | 'en' | 'unknown' {
+    const turkishChars = /[çğıöşüÇĞİÖŞÜ]/;
+    const hasTurkishChars = turkishChars.test(text);
+    
     const lower = text.toLowerCase();
     const turkishMarkers = [
       'deprem', 'yangın', 'yardım', 'enkaz', 'lütfen', 'bilmiyoruz',
       'mahsur', 'kaldık', 'var', 'yok', 'çok', 'için', 'ile', 'bir',
-      'şu', 'bu', 'biz', 'siz', 'onlar', 've', 'veya', 'ama',
+      'şu', 'bu', 'biz', 'siz', 'onlar', 've', 'veya', 'ama', 'kişi',
+      'bina', 'çöken', 'katta', 'iki',
     ];
     
     let turkishCount = 0;
@@ -282,7 +351,21 @@ Provide the translation and the detected source language.`;
       if (lower.includes(marker)) turkishCount++;
     }
     
-    return turkishCount >= 2 ? 'turkish' : 'english';
+    if (hasTurkishChars || turkishCount >= 3) {
+      return 'tr';
+    }
+    
+    const englishMarkers = ['help', 'please', 'emergency', 'building', 'people', 'trapped', 'need'];
+    let englishCount = 0;
+    for (const marker of englishMarkers) {
+      if (lower.includes(marker)) englishCount++;
+    }
+    
+    if (englishCount >= 2) {
+      return 'en';
+    }
+    
+    return 'unknown';
   }
 
   private async getCachedTranslation(
@@ -291,15 +374,15 @@ Provide the translation and the detected source language.`;
     sourceField: string,
     targetLanguage: string
   ): Promise<{ translatedText: string; sourceLanguage: string } | null> {
-    const cached = await this.prisma.aiTranslationCache.findUnique({
+    const cached = await this.prisma.aiTranslationCache.findFirst({
       where: {
-        sourceType_sourceId_sourceField_targetLanguage: {
-          sourceType,
-          sourceId,
-          sourceField,
-          targetLanguage,
-        },
+        sourceType,
+        sourceId,
+        sourceField,
+        targetLanguage,
+        modelVersion: { contains: CACHE_VERSION },
       },
+      orderBy: { createdAt: 'desc' },
     });
 
     if (!cached) return null;
@@ -327,7 +410,7 @@ Provide the translation and the detected source language.`;
         sourceLanguage: data.sourceLanguage,
         targetLanguage: data.targetLanguage,
         translatedText: data.translatedText,
-        modelVersion: data.modelVersion,
+        modelVersion: `${CACHE_VERSION}:${data.modelVersion}`,
       },
     });
   }

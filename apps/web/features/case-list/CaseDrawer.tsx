@@ -3,6 +3,7 @@
 import { useEffect, useRef } from 'react';
 import { useOperatorPreferences } from '../../components/operator/OperatorPreferencesProvider';
 import { DeliveryStateBadge } from '../../components/cases/DeliveryStateBadge';
+import { Timeline } from '../../components/timeline/Timeline';
 import type { OperatorCaseRow } from './types';
 
 type TimelineEntry = {
@@ -106,21 +107,7 @@ export function CaseDrawer({ open, row, timeline, onClose }: Props) {
       </dl>
       <section aria-label={t('web.caseDetail.timelineTitle')}>
         <h3>{t('web.caseDetail.timelineTitle')}</h3>
-        <ol className="case-drawer__timeline" data-testid="case-drawer-timeline">
-          {timeline.length === 0 ? (
-            <li>{t('web.caseDetail.timelineEmpty')}</li>
-          ) : (
-            timeline.map((entry) => (
-              <li key={entry.id}>
-                <DeliveryStateBadge state={entry.deliveryState} />
-                <span>{entry.source}</span>
-                <time dateTime={entry.createdAt}>
-                  {new Date(entry.createdAt).toLocaleString(dateLocale)}
-                </time>
-              </li>
-            ))
-          )}
-        </ol>
+        <Timeline entries={timeline} emptyMessage={t('web.caseDetail.timelineEmpty')} />
       </section>
     </aside>
   );

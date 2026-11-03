@@ -207,12 +207,6 @@ export function CasesView({ initialCases }: { initialCases: OperatorCaseRow[] })
 
       <CasesAccessibleTable rows={filtered} selectedId={selectedId} onSelect={openDrawer} />
 
-      {selectedId ? (
-        <p className="cases-view__detail-link">
-          <Link href={`/operator/cases/${selectedId}`}>{t('web.cases.openDetailLink')}</Link>
-        </p>
-      ) : null}
-
       <CaseDrawer
         open={selectedId !== null}
         row={selectedRow}

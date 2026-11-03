@@ -46,7 +46,12 @@ export class OperatorCaseActionsService {
   async recordOperatorSeen(
     user: OperatorRequestUser,
     incidentId: string
-  ): Promise<{ created: boolean; messageEventId: string | null }> {
+  ): Promise<{
+    created: boolean;
+    messageEventId: string | null;
+    version?: number;
+    reviewStatus?: string;
+  }> {
     const allowed = await this.scope.canAccessIncident(user, incidentId, this.prisma);
     if (!allowed) {
       throw new NotFoundException({ code: 'NOT_FOUND', message: 'Case not found' });
@@ -74,7 +79,16 @@ export class OperatorCaseActionsService {
           select: { id: true },
         });
         if (existingSeen) {
-          return { created: false, messageEventId: existingSeen.id };
+          const currentIncident = await tx.incident.findUnique({
+            where: { id: incidentId },
+            select: { version: true, reviewStatus: true },
+          });
+          return {
+            created: false,
+            messageEventId: existingSeen.id,
+            version: currentIncident?.version,
+            reviewStatus: currentIncident?.reviewStatus,
+          };
         }
 
         const incident = await tx.incident.findUnique({
@@ -108,11 +122,15 @@ export class OperatorCaseActionsService {
             ? OperatorReviewStatus.SEEN
             : incident.reviewStatus;
 
-        await tx.incident.update({
+        const updatedIncident = await tx.incident.update({
           where: { id: incidentId },
           data: {
             reviewStatus: nextReview,
             version: { increment: 1 },
+          },
+          select: {
+            version: true,
+            reviewStatus: true,
           },
         });
 
@@ -128,7 +146,12 @@ export class OperatorCaseActionsService {
           },
         });
 
-        return { created: true, messageEventId: event.id };
+        return {
+          created: true,
+          messageEventId: event.id,
+          version: updatedIncident.version,
+          reviewStatus: updatedIncident.reviewStatus,
+        };
       });
     } catch (error) {
       if (
@@ -143,7 +166,18 @@ export class OperatorCaseActionsService {
           },
           select: { id: true },
         });
-        return { created: false, messageEventId: existing?.id ?? null };
+        
+        const currentIncident = await this.prisma.incident.findUnique({
+          where: { id: incidentId },
+          select: { version: true, reviewStatus: true },
+        });
+        
+        return {
+          created: false,
+          messageEventId: existing?.id ?? null,
+          version: currentIncident?.version,
+          reviewStatus: currentIncident?.reviewStatus,
+        };
       }
       throw error;
     }

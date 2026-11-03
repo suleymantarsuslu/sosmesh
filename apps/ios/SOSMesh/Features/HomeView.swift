@@ -1,5 +1,7 @@
 import SwiftUI
 import UIKit
+import PhotosUI
+import SOSMeshCore
 
 struct HomeView: View {
     @EnvironmentObject private var appModel: AppModel
@@ -161,11 +163,11 @@ struct SosSendView: View {
     @State private var selectedPhoto: UIImage?
     @State private var showPhotoPicker = false
     @State private var showCamera = false
-    @State private var isRecording = false
-    @State private var recordingDuration: TimeInterval = 0
-    @State private var recordedAudio: Data?
-    @State private var uploadToken: String?
-    @State private var attachmentStatus: AttachmentStatus = .none
+    @State private var showCameraPicker = false
+    @StateObject private var voiceRecorder = VoiceRecorder()
+    @StateObject private var audioPlayer = AudioPlayer()
+    @State private var attachmentStatuses: [String: AttachmentUploadStatus] = [:]
+    @State private var attachmentIds: [String] = []
     @Environment(\.dismiss) private var dismiss
 
     var body: some View {
@@ -199,60 +201,117 @@ struct SosSendView: View {
                     }
                 }
                 
-                if selectedPhoto != nil || recordedAudio != nil {
+                if selectedPhoto != nil || voiceRecorder.recordedURL != nil {
                     SOSCard {
                         VStack(alignment: .leading, spacing: DesignSystem.Spacing.sm) {
                             if let photo = selectedPhoto {
-                                HStack {
-                                    Image(systemName: "photo")
-                                        .foregroundStyle(DesignSystem.Colors.accentBlue)
-                                    Text("Photo attached")
-                                        .font(DesignSystem.Typography.callout)
+                                HStack(spacing: DesignSystem.Spacing.sm) {
+                                    Image(uiImage: photo)
+                                        .resizable()
+                                        .scaledToFill()
+                                        .frame(width: 60, height: 60)
+                                        .clipShape(RoundedRectangle(cornerRadius: 8))
+                                    VStack(alignment: .leading) {
+                                        Text("Photo")
+                                            .font(DesignSystem.Typography.callout)
+                                        statusText(for: "photo")
+                                            .font(DesignSystem.Typography.caption1)
+                                            .foregroundStyle(DesignSystem.Colors.textSecondary)
+                                    }
                                     Spacer()
-                                    statusIcon
+                                    Button {
+                                        selectedPhoto = nil
+                                    } label: {
+                                        Image(systemName: "xmark.circle.fill")
+                                            .foregroundStyle(.gray)
+                                    }
+                                    .buttonStyle(.plain)
                                 }
                             }
-                            if recordedAudio != nil {
-                                HStack {
-                                    Image(systemName: "mic.fill")
+                            if voiceRecorder.recordedURL != nil {
+                                HStack(spacing: DesignSystem.Spacing.sm) {
+                                    Image(systemName: "waveform")
+                                        .font(.system(size: 32))
                                         .foregroundStyle(DesignSystem.Colors.accentBlue)
-                                    Text(String(format: "sos.voice.duration", formatDuration(recordingDuration)))
-                                        .font(DesignSystem.Typography.callout)
+                                        .frame(width: 60, height: 60)
+                                    VStack(alignment: .leading) {
+                                        Text(String(format: NSLocalizedString("sos.voice.duration", comment: ""), formatDuration(voiceRecorder.duration)))
+                                            .font(DesignSystem.Typography.callout)
+                                        statusText(for: "audio")
+                                            .font(DesignSystem.Typography.caption1)
+                                            .foregroundStyle(DesignSystem.Colors.textSecondary)
+                                    }
                                     Spacer()
-                                    statusIcon
+                                    Button {
+                                        if audioPlayer.isPlaying {
+                                            audioPlayer.stop()
+                                        } else if let url = voiceRecorder.recordedURL {
+                                            try? audioPlayer.play(url: url)
+                                        }
+                                    } label: {
+                                        Image(systemName: audioPlayer.isPlaying ? "stop.circle.fill" : "play.circle.fill")
+                                            .font(.system(size: 24))
+                                            .foregroundStyle(DesignSystem.Colors.accentBlue)
+                                    }
+                                    .buttonStyle(.plain)
+                                    Button {
+                                        voiceRecorder.deleteRecording()
+                                    } label: {
+                                        Image(systemName: "trash.circle.fill")
+                                            .foregroundStyle(.red)
+                                    }
+                                    .buttonStyle(.plain)
                                 }
                             }
                         }
                     }
                 }
                 
-                if !isRecording {
-                    HStack(spacing: DesignSystem.Spacing.sm) {
-                        Button {
-                            showPhotoPicker = true
-                        } label: {
-                            HStack {
-                                Image(systemName: "photo")
-                                Text("sos.attach.photo")
+                if !voiceRecorder.isRecording {
+                    VStack(spacing: DesignSystem.Spacing.xs) {
+                        HStack(spacing: DesignSystem.Spacing.sm) {
+                            Menu {
+                                Button {
+                                    showPhotoPicker = true
+                                } label: {
+                                    Label("Gallery", systemImage: "photo.on.rectangle")
+                                }
+                                Button {
+                                    showCameraPicker = true
+                                } label: {
+                                    Label("Camera", systemImage: "camera")
+                                }
+                            } label: {
+                                HStack {
+                                    Image(systemName: "photo")
+                                    Text("sos.attach.photo")
+                                }
+                                .font(DesignSystem.Typography.callout)
+                                .frame(maxWidth: .infinity)
                             }
-                            .font(DesignSystem.Typography.callout)
-                            .frame(maxWidth: .infinity)
-                        }
-                        .buttonStyle(.bordered)
-                        .disabled(sending)
-                        
-                        Button {
-                            startRecording()
-                        } label: {
-                            HStack {
-                                Image(systemName: "mic")
-                                Text("sos.attach.voice")
+                            .buttonStyle(.bordered)
+                            .disabled(sending || selectedPhoto != nil)
+                            
+                            Button {
+                                Task {
+                                    let granted = await voiceRecorder.requestPermission()
+                                    if granted {
+                                        try? voiceRecorder.startRecording()
+                                    } else {
+                                        errorMessage = "Microphone permission required"
+                                    }
+                                }
+                            } label: {
+                                HStack {
+                                    Image(systemName: "mic")
+                                    Text("sos.attach.voice")
+                                }
+                                .font(DesignSystem.Typography.callout)
+                                .frame(maxWidth: .infinity)
                             }
-                            .font(DesignSystem.Typography.callout)
-                            .frame(maxWidth: .infinity)
+                            .buttonStyle(.bordered)
+                            .disabled(sending || voiceRecorder.recordedURL != nil)
                         }
-                        .buttonStyle(.bordered)
-                        .disabled(sending || recordedAudio != nil)
                     }
                 } else {
                     SOSCard(highlighted: true) {
@@ -263,13 +322,13 @@ struct SosSendView: View {
                                 Text("sos.voice.recording")
                                     .font(DesignSystem.Typography.headline)
                                 Spacer()
-                                Text(formatDuration(recordingDuration))
+                                Text(formatDuration(voiceRecorder.duration))
                                     .font(DesignSystem.Typography.callout)
                                     .foregroundStyle(DesignSystem.Colors.textSecondary)
                             }
                             HStack(spacing: DesignSystem.Spacing.sm) {
                                 Button {
-                                    stopRecording(save: true)
+                                    voiceRecorder.stopRecording(save: true)
                                 } label: {
                                     Text("sos.voice.stop")
                                         .frame(maxWidth: .infinity)
@@ -277,7 +336,7 @@ struct SosSendView: View {
                                 .buttonStyle(.bordered)
                                 
                                 Button {
-                                    stopRecording(save: false)
+                                    voiceRecorder.stopRecording(save: false)
                                 } label: {
                                     Text("sos.voice.delete")
                                         .frame(maxWidth: .infinity)
@@ -293,7 +352,7 @@ struct SosSendView: View {
                     PrimaryButton("sos.confirm.yes", icon: "paperplane.fill", isDestructive: true) {
                         Task { await send() }
                     }
-                    .disabled(sending || isRecording)
+                    .disabled(sending || voiceRecorder.isRecording)
                     
                     if sending {
                         HStack(spacing: DesignSystem.Spacing.xs) {
@@ -324,27 +383,61 @@ struct SosSendView: View {
         .background(DesignSystem.Colors.cardBackgroundSecondary.ignoresSafeArea())
         .navigationTitle("sos.confirm.title")
         .navigationBarTitleDisplayMode(.inline)
-        .sheet(isPresented: $showPhotoPicker) {
-            PhotoPickerView(selectedImage: $selectedPhoto)
+        .photosPicker(isPresented: $showPhotoPicker, selection: Binding(
+            get: { nil },
+            set: { item in
+                Task {
+                    if let item = item,
+                       let data = try? await item.loadTransferable(type: Data.self),
+                       let image = UIImage(data: data) {
+                        selectedPhoto = compressImage(image)
+                    }
+                }
+            }
+        ))
+        .sheet(isPresented: $showCameraPicker) {
+            CameraPickerView(selectedImage: Binding(
+                get: { selectedPhoto },
+                set: { image in
+                    if let image = image {
+                        selectedPhoto = compressImage(image)
+                    }
+                }
+            ))
         }
     }
     
-    private var statusIcon: some View {
-        Group {
-            switch attachmentStatus {
-            case .none:
-                EmptyView()
+    private func compressImage(_ image: UIImage) -> UIImage {
+        let maxBytes = 15_000_000
+        var compression: CGFloat = 0.9
+        var data = image.jpegData(compressionQuality: compression)
+        
+        while let imageData = data, imageData.count > maxBytes && compression > 0.1 {
+            compression -= 0.1
+            data = image.jpegData(compressionQuality: compression)
+        }
+        
+        if let data = data, data.count <= maxBytes, let compressed = UIImage(data: data) {
+            return compressed
+        }
+        
+        return image
+    }
+    
+    private func statusText(for kind: String) -> Text {
+        if let status = attachmentStatuses[kind] {
+            switch status {
+            case .waiting:
+                return Text("sos.attach.uploading")
             case .uploading:
-                ProgressView()
-                    .scaleEffect(0.7)
-            case .uploaded:
-                Image(systemName: "checkmark.circle.fill")
-                    .foregroundStyle(.green)
+                return Text("sos.attach.uploading")
+            case .sent:
+                return Text("sos.attach.uploaded")
             case .failed:
-                Image(systemName: "exclamationmark.triangle.fill")
-                    .foregroundStyle(.red)
+                return Text("sos.attach.failed")
             }
         }
+        return Text("")
     }
 
     private func send() async {
@@ -355,9 +448,8 @@ struct SosSendView: View {
             let lang = Locale.current.language.languageCode?.identifier ?? "en"
             try await appModel.submitSos(note: note, languageTag: lang)
             
-            if let token = appModel.lastUploadToken, (selectedPhoto != nil || recordedAudio != nil) {
-                uploadToken = token
-                await uploadAttachments()
+            if let token = appModel.lastUploadToken {
+                await queueAttachments(uploadToken: token)
             }
             
             dismiss()
@@ -366,108 +458,66 @@ struct SosSendView: View {
         }
     }
     
-    private func uploadAttachments() async {
-        guard let token = uploadToken else { return }
-        attachmentStatus = .uploading
+    private func queueAttachments(uploadToken: String) async {
+        guard let baseDir = try? FileManager.default.url(
+            for: .applicationSupportDirectory,
+            in: .userDomainMask,
+            appropriateFor: nil,
+            create: true
+        ).appendingPathComponent("sosmesh") else {
+            return
+        }
+        
+        guard let queue = try? AttachmentQueue(baseDir: baseDir) else {
+            return
+        }
+        
+        let sosMessageId = uploadToken.split(separator: ":").first.map(String.init) ?? ""
+        
+        if let photo = selectedPhoto, let imageData = photo.jpegData(compressionQuality: 0.9) {
+            if let queued = try? queue.enqueue(
+                sosMessageId: sosMessageId,
+                uploadToken: uploadToken,
+                kind: .image,
+                data: imageData,
+                mimeType: "image/jpeg"
+            ) {
+                attachmentIds.append(queued.id)
+                attachmentStatuses["photo"] = .waiting
+            }
+        }
+        
+        if let audioURL = voiceRecorder.recordedURL,
+           let audioData = try? Data(contentsOf: audioURL) {
+            if let queued = try? queue.enqueue(
+                sosMessageId: sosMessageId,
+                uploadToken: uploadToken,
+                kind: .audio,
+                data: audioData,
+                mimeType: "audio/aac"
+            ) {
+                attachmentIds.append(queued.id)
+                attachmentStatuses["audio"] = .waiting
+            }
+        }
         
         let baseURL = IngestConfig.production(deviceId: "").baseURL
-        let config = AttachmentUploadConfig(baseURL: baseURL, uploadToken: token)
-        let uploader = AttachmentUploader(config: config)
-        
-        if let photo = selectedPhoto, let imageData = photo.jpegData(compressionQuality: 0.8) {
-            let result = await uploader.upload(kind: .image, data: imageData, mimeType: "image/jpeg")
-            switch result {
-            case .success:
-                attachmentStatus = .uploaded
-            case .noNetwork, .httpError, .error:
-                attachmentStatus = .failed
-            }
-        }
-        
-        if let audioData = recordedAudio {
-            let result = await uploader.upload(kind: .audio, data: audioData, mimeType: "audio/aac")
-            switch result {
-            case .success:
-                attachmentStatus = .uploaded
-            case .noNetwork, .httpError, .error:
-                attachmentStatus = .failed
-            }
-        }
-    }
-    
-    private func startRecording() {
-        isRecording = true
-        recordingDuration = 0
-        Timer.scheduledTimer(withTimeInterval: 1.0, repeats: true) { timer in
-            if isRecording {
-                recordingDuration += 1
-                if recordingDuration >= 600 {
-                    timer.invalidate()
-                    stopRecording(save: true)
+        let coordinator = AttachmentUploadCoordinator(queue: queue, baseURL: baseURL)
+        coordinator.onStatusChange = { [weak self] id, status in
+            if self?.attachmentIds.contains(id) == true {
+                if id.contains("jpg") {
+                    self?.attachmentStatuses["photo"] = status
+                } else {
+                    self?.attachmentStatuses["audio"] = status
                 }
-            } else {
-                timer.invalidate()
             }
         }
-    }
-    
-    private func stopRecording(save: Bool) {
-        isRecording = false
-        if save {
-            recordedAudio = Data()
-        } else {
-            recordingDuration = 0
-        }
+        await coordinator.processQueue()
     }
     
     private func formatDuration(_ seconds: TimeInterval) -> String {
         let minutes = Int(seconds) / 60
         let secs = Int(seconds) % 60
         return String(format: "%d:%02d", minutes, secs)
-    }
-}
-
-enum AttachmentStatus {
-    case none
-    case uploading
-    case uploaded
-    case failed
-}
-
-struct PhotoPickerView: UIViewControllerRepresentable {
-    @Binding var selectedImage: UIImage?
-    @Environment(\.dismiss) private var dismiss
-    
-    func makeUIViewController(context: Context) -> UIImagePickerController {
-        let picker = UIImagePickerController()
-        picker.delegate = context.coordinator
-        picker.sourceType = .photoLibrary
-        return picker
-    }
-    
-    func updateUIViewController(_ uiViewController: UIImagePickerController, context: Context) {
-    }
-    
-    func makeCoordinator() -> Coordinator {
-        Coordinator(self)
-    }
-    
-    class Coordinator: NSObject, UIImagePickerControllerDelegate, UINavigationControllerDelegate {
-        let parent: PhotoPickerView
-        
-        init(_ parent: PhotoPickerView) {
-            self.parent = parent
-        }
-        
-        func imagePickerController(_ picker: UIImagePickerController, didFinishPickingMediaWithInfo info: [UIImagePickerController.InfoKey : Any]) {
-            if let image = info[.originalImage] as? UIImage {
-                parent.selectedImage = image
-            }
-            parent.dismiss()
-        }
-        
-        func imagePickerControllerDidCancel(_ picker: UIImagePickerController) {
-            parent.dismiss()
-        }
     }
 }

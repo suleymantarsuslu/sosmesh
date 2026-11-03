@@ -4,7 +4,7 @@ import SOSMeshCore
 
 @MainActor
 final class AppModelPermissionGateTests: XCTestCase {
-    func testBootstrapDoesNotPrimeBluetooth() {
+    func testBootstrapDoesNotPrimeBluetoothWhenNotDetermined() {
         let probe = RecordingAppPermissionProbe(
             snapshot: PermissionGateSnapshot(
                 bluetoothAuthorization: .notDetermined,
@@ -16,6 +16,20 @@ final class AppModelPermissionGateTests: XCTestCase {
         model.bootstrap()
         XCTAssertEqual(probe.primeBluetoothCount, 0)
         XCTAssertEqual(probe.primeIfAuthorizedCount, 0)
+    }
+    
+    func testBootstrapPrimesBluetoothWhenAlreadyAuthorized() {
+        let probe = RecordingAppPermissionProbe(
+            snapshot: PermissionGateSnapshot(
+                bluetoothAuthorization: .allowed,
+                bluetoothPoweredOn: true,
+                notificationAuthorization: .authorized
+            )
+        )
+        let model = AppModel(permissionProbe: probe)
+        model.bootstrap()
+        XCTAssertEqual(probe.primeBluetoothCount, 1)
+        XCTAssertEqual(probe.primeIfAuthorizedCount, 1)
     }
 
     func testRefreshPermissionGateDoesNotPrimeBluetooth() async {

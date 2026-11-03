@@ -66,6 +66,7 @@ final class AppModel: ObservableObject {
             try? restorationMachine.apply(.appLaunched)
             restorationPhase = restorationMachine.phase
         }
+        permissionProbe.primeBluetoothAuthorizationIfAlreadyAuthorized()
         Task { await refreshPermissionGate() }
     }
 

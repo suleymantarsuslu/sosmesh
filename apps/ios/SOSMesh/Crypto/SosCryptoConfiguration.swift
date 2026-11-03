@@ -1,5 +1,6 @@
 import Foundation
 import SOSMeshContracts
+import SOSMeshCore
 
 #if DEBUG
 enum DevTestCryptoConfig {
@@ -17,7 +18,7 @@ enum SosCryptoConfiguration {
         #if DEBUG
         return DevTestCryptoConfig.config()
         #else
-        throw SosCryptoConfigurationError.releaseEncryptionNotConfigured
+        return CryptoConfigProvider.makeConfig()
         #endif
     }
 }

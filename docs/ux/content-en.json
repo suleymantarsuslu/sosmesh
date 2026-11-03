@@ -329,8 +329,6 @@
       "brand": "SOSMesh",
       "defaultUser": "Operator",
       "commandPalette": "Command palette",
-      "commandPlaceholder": "Search pages…",
-      "commandShortcut": "Search commands (Ctrl+K)",
       "logout": "Sign out",
       "themeLight": "Light theme",
       "themeDark": "Dark theme",

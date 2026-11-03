@@ -307,10 +307,6 @@ html[data-theme='dark'] .operator-user-menu__panel {
     align-items: center;
   }
 
-  .operator-topbar__search-wrap {
-    display: none;
-  }
-
   .operator-topbar__cluster--desktop {
     display: none;
   }

@@ -329,8 +329,6 @@
       "brand": "SOSMesh",
       "defaultUser": "Operatör",
       "commandPalette": "Komut paleti",
-      "commandPlaceholder": "Sayfa ara…",
-      "commandShortcut": "Komut ara (Ctrl+K)",
       "logout": "Çıkış",
       "themeLight": "Açık tema",
       "themeDark": "Koyu tema",

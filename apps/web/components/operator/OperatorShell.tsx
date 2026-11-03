@@ -207,17 +207,6 @@ export function OperatorShell({
           <div className="operator-topbar__brand-mobile" data-topbar-item="logo">
             <SosMeshLogo size={32} />
           </div>
-          <div className="operator-topbar__search-wrap" data-topbar-item="search">
-            <input
-              type="search"
-              className="operator-topbar__search"
-              placeholder={t('web.shell.commandPlaceholder')}
-              aria-label={t('web.shell.commandPlaceholder')}
-              onFocus={() => setPaletteOpen(true)}
-              onClick={() => setPaletteOpen(true)}
-              readOnly
-            />
-          </div>
           <OperatorLiveStatus />
           <div className="operator-topbar__cluster operator-topbar__cluster--desktop">
             <IncidentSwitcher incidents={context?.incidents ?? []} />

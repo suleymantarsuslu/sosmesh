@@ -41,6 +41,16 @@ test.describe('Web Skeleton Accessibility', () => {
     expect(content).toContain('112');
     console.log(`  Contains '112' warning: true`);
 
+    expect(content).not.toContain('Implementation pending');
+
+    await expect(page.getByTestId('marketing-home')).toBeVisible();
+    await expect(page.getByTestId('marketing-not112-banner')).toBeVisible();
+    await expect(page.getByTestId('sosmesh-logo')).toBeVisible();
+    const operatorLogin = page.getByTestId('marketing-operator-login');
+    await expect(operatorLogin).toBeVisible();
+    await expect(operatorLogin).toHaveAttribute('href', '/operator/login');
+    await expect(operatorLogin).toHaveText('Operatör paneline giriş');
+
     // Expect 0 serious/critical violations
     expect(serious).toHaveLength(0);
   });

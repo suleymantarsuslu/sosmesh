@@ -12,16 +12,40 @@ body {
   padding: var(--space-4, 1rem);
 }
 
+.marketing-home {
+  min-height: 100vh;
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  max-width: 42rem;
+}
+
 .marketing-home__header {
   display: flex;
   align-items: center;
   gap: var(--space-4, 1rem);
-  margin-bottom: var(--space-4, 1rem);
+  margin-bottom: var(--space-5, 1.25rem);
 }
 
-.marketing-home__lead {
-  font-size: var(--type-fontSize-lg, 1.125rem);
+.marketing-home__titles h1 {
+  margin: 0 0 var(--space-1, 0.25rem);
+  font-size: var(--type-fontSize-3xl, 1.875rem);
+  color: var(--color-brand-navy, #070d1d);
+}
+
+html[data-theme='dark'] .marketing-home__titles h1 {
+  color: var(--color-text-primary);
+}
+
+.marketing-home__tagline {
+  margin: 0;
+  font-size: var(--type-fontSize-base, 1rem);
   color: var(--color-text-secondary);
+}
+
+.marketing-home__not112 {
+  margin-bottom: var(--space-5, 1.25rem);
 }
 
 .marketing-home__actions {

@@ -9,7 +9,10 @@
  * - Uses AI job queue's built-in idempotency (will skip if job already pending/processing)
  * - Does not delete any data
  * 
- * Usage:
+ * Usage (in production container):
+ *   node dist/scripts/requeue-failed-triage.js [--dry-run]
+ * 
+ * Or via npm (development):
  *   npm run requeue-failed-triage [--dry-run]
  * 
  * Options:
@@ -30,9 +33,10 @@ async function main() {
       where: {
         kind: 'triage',
         status: 'requires_review',
-        lastError: {
-          contains: 'plaintext',
-        },
+        OR: [
+          { lastError: { contains: 'No plaintext or transcript available' } },
+          { lastError: { contains: 'DECRYPTION_FAILED' } },
+        ],
       },
       select: {
         id: true,

@@ -11,7 +11,7 @@ import { PrismaService } from '../src/prisma/prisma.service';
 import { OperatorModule } from '../src/operator/operator.module';
 import { AiModule } from '../src/ai/ai.module';
 import { PrismaModule } from '../src/prisma/prisma.module';
-import * as request from 'supertest';
+import request from 'supertest';
 
 describe('Fusion - Confirm Does Not Auto-Merge', () => {
   let app: INestApplication;
@@ -122,18 +122,22 @@ describe('Fusion - Confirm Does Not Auto-Merge', () => {
 
     const auditLogs = await prisma.auditLog.findMany({
       where: {
-        entityType: 'incident_link_suggestion',
-        entityId: suggestion.id,
+        action: 'link_suggestion_confirmed',
+        incidentId: incidentA.id,
       },
     });
 
     expect(auditLogs.length).toBeGreaterThan(0);
-    expect(auditLogs.some((log) => log.action === 'link_suggestion_confirmed')).toBe(
-      true
-    );
+    expect(auditLogs.some((log) => {
+      const details = log.detailsJson as any;
+      return details?.suggestionId === suggestion.id;
+    })).toBe(true);
 
     await prisma.auditLog.deleteMany({
-      where: { entityType: 'incident_link_suggestion', entityId: suggestion.id },
+      where: {
+        action: 'link_suggestion_confirmed',
+        incidentId: incidentA.id,
+      },
     });
     await prisma.incidentLinkSuggestion.delete({ where: { id: suggestion.id } });
     await prisma.incident.delete({ where: { id: incidentA.id } });

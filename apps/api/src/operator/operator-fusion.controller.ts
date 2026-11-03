@@ -48,19 +48,18 @@ export class OperatorFusionController {
       where: { id: suggestionId },
       data: {
         status: 'confirmed',
-        decidedByUserId: user.id,
+        decidedByUserId: user.sub,
         decidedAt: new Date(),
       },
     });
 
     await this.prisma.auditLog.create({
       data: {
+        actorId: user.sub,
         action: 'link_suggestion_confirmed',
-        userId: user.id,
-        entityType: 'incident_link_suggestion',
-        entityId: suggestionId,
-        metadataJson: {
-          incidentAId: suggestion.incidentAId,
+        incidentId: suggestion.incidentAId,
+        detailsJson: {
+          suggestionId,
           incidentBId: suggestion.incidentBId,
         },
       },
@@ -92,19 +91,18 @@ export class OperatorFusionController {
       where: { id: suggestionId },
       data: {
         status: 'rejected',
-        decidedByUserId: user.id,
+        decidedByUserId: user.sub,
         decidedAt: new Date(),
       },
     });
 
     await this.prisma.auditLog.create({
       data: {
+        actorId: user.sub,
         action: 'link_suggestion_rejected',
-        userId: user.id,
-        entityType: 'incident_link_suggestion',
-        entityId: suggestionId,
-        metadataJson: {
-          incidentAId: suggestion.incidentAId,
+        incidentId: suggestion.incidentAId,
+        detailsJson: {
+          suggestionId,
           incidentBId: suggestion.incidentBId,
         },
       },

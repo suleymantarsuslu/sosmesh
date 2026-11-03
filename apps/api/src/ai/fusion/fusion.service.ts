@@ -410,7 +410,7 @@ Write a brief rationale (2-3 sentences) explaining why these may be the same eve
       reasoningEffort: 'minimal',
     });
 
-    if (!response.ok) {
+    if (response.ok === false) {
       this.logger.warn({ msg: 'Spark rationale failed', error: response.error });
       await this.budget.reconcile({
         reservationId: reservation.reservationId,

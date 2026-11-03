@@ -181,7 +181,6 @@ export class AiJobRunnerService {
       await this.queue.enqueue({
         kind: 'fusion',
         incidentId,
-        idempotencyKey: `fusion:${incidentId}`,
       });
       this.logger.log({ msg: 'Enqueued fusion job', incidentId });
     } catch (error) {

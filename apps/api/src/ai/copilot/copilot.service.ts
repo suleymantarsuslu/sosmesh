@@ -60,7 +60,7 @@ export class CopilotService {
    */
   async ask(request: CopilotAskRequest): Promise<CopilotAskResponse> {
     const budgetCheck = await this.budget.check();
-    if (!budgetCheck.allowed) {
+    if (budgetCheck.allowed === false) {
       throw new Error(`AI unavailable: ${budgetCheck.reason}`);
     }
 
@@ -182,7 +182,7 @@ Remember: You are an advisor. The operator makes all decisions.`;
       reasoningEffort: 'low',
     });
 
-    if (!response.ok) {
+    if (response.ok === false) {
       await this.budget.reconcile({
         reservationId: reservation.reservationId,
         actualUsd: 0,

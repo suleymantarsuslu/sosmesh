@@ -47,6 +47,9 @@ class OutboxDaoOwnUploadTest {
                     last_error = null,
                     created_at = 1_000L,
                     updated_at = 1_000L,
+                    upload_retry_at = null,
+                    upload_last_error = null,
+                    upload_attempts = 0,
                 ),
             )
             val due = dao.listDueOwnUpload(nowMs = 2_000L)
@@ -69,6 +72,9 @@ class OutboxDaoOwnUploadTest {
                     last_error = null,
                     created_at = 1_000L,
                     updated_at = 1_000L,
+                    upload_retry_at = null,
+                    upload_last_error = null,
+                    upload_attempts = 0,
                 ),
             )
             val due = dao.listDueOwnUpload(nowMs = 2_000L)
@@ -91,6 +97,9 @@ class OutboxDaoOwnUploadTest {
                     last_error = null,
                     created_at = 1_000L,
                     updated_at = 1_000L,
+                    upload_retry_at = null,
+                    upload_last_error = null,
+                    upload_attempts = 0,
                 ),
             )
             val due = dao.listDueOwnUpload(nowMs = 2_000L)
@@ -109,12 +118,67 @@ class OutboxDaoOwnUploadTest {
                     state = "LOCAL_SAVED",
                     retry_at = 1_000L,
                     expires_at = 99_999L,
-                    last_error = "needs_review",
+                    last_error = null,
                     created_at = 1_000L,
                     updated_at = 1_000L,
+                    upload_retry_at = null,
+                    upload_last_error = "needs_review",
+                    upload_attempts = 0,
                 ),
             )
             val due = dao.listDueOwnUpload(nowMs = 2_000L)
             assertEquals(0, due.size)
+        }
+
+    @Test
+    fun listDueOwnUpload_includesPeerReceived() =
+        runBlocking {
+            dao.insert(
+                OutboxEntity(
+                    sos_id = "peer-received",
+                    digest = "d5",
+                    origin = "android",
+                    encrypted_blob = "YQ==",
+                    state = "PEER_RECEIVED",
+                    retry_at = 1_000L,
+                    expires_at = 99_999L,
+                    last_error = null,
+                    created_at = 1_000L,
+                    updated_at = 1_000L,
+                    upload_retry_at = null,
+                    upload_last_error = null,
+                    upload_attempts = 0,
+                ),
+            )
+            val due = dao.listDueOwnUpload(nowMs = 2_000L)
+            assertEquals(1, due.size)
+            assertEquals("peer-received", due[0].sos_id)
+        }
+
+    @Test
+    fun listDueOwnUpload_respectsUploadRetryAt() =
+        runBlocking {
+            dao.insert(
+                OutboxEntity(
+                    sos_id = "future-retry",
+                    digest = "d6",
+                    origin = "android",
+                    encrypted_blob = "YQ==",
+                    state = "LOCAL_SAVED",
+                    retry_at = 1_000L,
+                    expires_at = 99_999L,
+                    last_error = null,
+                    created_at = 1_000L,
+                    updated_at = 1_000L,
+                    upload_retry_at = 5_000L,
+                    upload_last_error = "no_network",
+                    upload_attempts = 2,
+                ),
+            )
+            val dueBefore = dao.listDueOwnUpload(nowMs = 2_000L)
+            assertEquals(0, dueBefore.size)
+            val dueAfter = dao.listDueOwnUpload(nowMs = 6_000L)
+            assertEquals(1, dueAfter.size)
+            assertEquals("future-retry", dueAfter[0].sos_id)
         }
 }

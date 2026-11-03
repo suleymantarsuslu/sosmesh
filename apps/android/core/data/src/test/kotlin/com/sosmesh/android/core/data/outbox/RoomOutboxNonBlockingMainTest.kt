@@ -233,6 +233,18 @@ private class LatchBlockingOutboxDao(
         lastError: String?,
     ): Int = delegate.setRetryAtFields(sosId, digest, retryAtMs, lastError)
 
+    override fun setUploadRetryAtFields(
+        sosId: String,
+        digest: String,
+        retryAtMs: Long,
+        lastError: String?,
+    ): Int = delegate.setUploadRetryAtFields(sosId, digest, retryAtMs, lastError)
+
+    override fun clearUploadRetryFields(
+        sosId: String,
+        digest: String,
+    ): Int = delegate.clearUploadRetryFields(sosId, digest)
+
     override fun deleteExpired(nowMs: Long): Int = delegate.deleteExpired(nowMs)
 
     override fun countDueForSend(nowMs: Long): Int = delegate.countDueForSend(nowMs)

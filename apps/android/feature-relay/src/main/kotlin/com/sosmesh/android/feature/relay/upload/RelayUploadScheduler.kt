@@ -1,7 +1,9 @@
 package com.sosmesh.android.feature.relay.upload
 
 import android.content.Context
+import androidx.work.Constraints
 import androidx.work.ExistingWorkPolicy
+import androidx.work.NetworkType
 import androidx.work.OneTimeWorkRequestBuilder
 import androidx.work.WorkManager
 import dagger.hilt.android.qualifiers.ApplicationContext
@@ -19,9 +21,14 @@ class RelayUploadScheduler
             nowMs: Long,
             delayMs: Long,
         ) {
+            val constraints =
+                Constraints.Builder()
+                    .setRequiredNetworkType(NetworkType.CONNECTED)
+                    .build()
             val request =
                 OneTimeWorkRequestBuilder<RelayUploadWorker>()
                     .setInitialDelay(delayMs, TimeUnit.MILLISECONDS)
+                    .setConstraints(constraints)
                     .addTag(WORK_TAG)
                     .build()
             WorkManager.getInstance(context).enqueueUniqueWork(

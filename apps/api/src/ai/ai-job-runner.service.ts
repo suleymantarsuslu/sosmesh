@@ -285,7 +285,7 @@ export class AiJobRunnerService {
       return;
     }
 
-    if (attachment.kind !== 'photo') {
+    if (attachment.kind !== 'photo' && attachment.kind !== 'image') {
       await this.queue.fail(job.id, `Not a photo: kind=${attachment.kind}`);
       return;
     }

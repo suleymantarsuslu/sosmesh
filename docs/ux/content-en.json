@@ -518,6 +518,83 @@
       "OPERATOR_SEEN": "Operator seen",
       "CASE_IN_PROGRESS": "Case in progress",
       "unknown": "Delivery step"
+    },
+    "filters": {
+      "legend": "Filters",
+      "search": "Search",
+      "searchPlaceholder": "Search cases",
+      "searchAriaLabel": "Search case",
+      "category": "Category",
+      "categoryAriaLabel": "Category filter",
+      "incidentState": "Case state",
+      "incidentStateAriaLabel": "Case state filter",
+      "deliveryState": "Delivery state",
+      "deliveryStateAriaLabel": "Delivery state filter",
+      "locationStatus": "Location",
+      "locationStatusAriaLabel": "Location status filter",
+      "accuracyMax": "Accuracy ≤ (m)",
+      "accuracyMaxAriaLabel": "Maximum accuracy meters",
+      "all": "All"
+    },
+    "categoryTypes": {
+      "GENERAL": "General",
+      "MEDICAL": "Medical",
+      "TRAPPED": "Trapped",
+      "FIRE": "Fire",
+      "OTHER": "Other"
+    },
+    "incidentStates": {
+      "PENDING": "Pending",
+      "ASSIGNED": "Assigned",
+      "IN_PROGRESS": "In Progress",
+      "RESOLVED": "Resolved"
+    },
+    "locationStatuses": {
+      "GPS": "GPS",
+      "MANUAL": "Manual",
+      "UNKNOWN": "Unknown"
+    },
+    "caseDetail": {
+      "title": "Case detail",
+      "emptyMessage": "Select a case from list or map.",
+      "priority": "Priority",
+      "state": "State",
+      "location": "Location",
+      "timelineTitle": "Timeline",
+      "timelineEmpty": "No records yet",
+      "fullCaseLink": "Full case page"
+    },
+    "aiSuggestionPanel": {
+      "title": "AI assistance suggestion",
+      "draftBadge": "draft/suggestion, not verified",
+      "loadError": "AI suggestion could not be loaded; case can still be processed.",
+      "empty": "No AI suggestion yet or could not be generated.",
+      "uncertainty": "Uncertainty",
+      "yes": "Yes",
+      "no": "No",
+      "evidenceQuote": "Evidence quote",
+      "summaryNeeds": "Summary needs",
+      "urgencyDraft": "Urgency (draft)",
+      "disclaimer": "AI does not make decisions on behalf of the operator; suggestions are drafts only and must be verified."
+    },
+    "eventTypes": {
+      "building_collapse": "Building collapse",
+      "fire": "Fire",
+      "flood": "Flood",
+      "trapped": "Trapped",
+      "medical_emergency": "Medical emergency",
+      "need_supplies": "Need supplies",
+      "communication": "Communication",
+      "evacuation": "Evacuation",
+      "other": "Other",
+      "unknown": "Unknown"
+    },
+    "translation": {
+      "machineTranslation": "Machine translation (AI)",
+      "original": "Original",
+      "notTranslated": "Not translated (AI unavailable)",
+      "toggle": "Show original",
+      "hideOriginal": "Hide original"
     }
   },
   "watch": {

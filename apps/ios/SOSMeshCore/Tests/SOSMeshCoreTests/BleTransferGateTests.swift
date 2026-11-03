@@ -108,7 +108,7 @@ final class BleTransferGateTests: XCTestCase {
         receiver.setListener(receiverListener)
         sender.startTransfer(Data("PAYLOAD".utf8))
         for _ in 0 ..< 5_000 {
-            if sender.getState() == .completed, received != nil { break }
+            if sender.getState() == .completed { break }
             clock.advance(5)
         }
         XCTAssertEqual(sender.getState(), .completed)

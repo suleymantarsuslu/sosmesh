@@ -52,6 +52,7 @@ dependencies {
     implementation(project(":core:permissions"))
     implementation(project(":mesh-v2"))
     implementation(project(":contracts-kotlin"))
+    implementation(project(":feature-sos"))
     implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.6.2")
     implementation("com.google.dagger:hilt-android:2.50")
     kapt("com.google.dagger:hilt-compiler:2.50")

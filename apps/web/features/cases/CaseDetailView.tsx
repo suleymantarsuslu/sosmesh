@@ -6,6 +6,7 @@ import Link from 'next/link';
 import { DeliveryStateBadge } from '../../components/cases/DeliveryStateBadge';
 import { useOperatorPreferences } from '../../components/operator/OperatorPreferencesProvider';
 import { AiIntelligencePanel } from '../ai/AiIntelligencePanel';
+import { TranslatedMessageDisplay } from './TranslatedMessageDisplay';
 import type {
   AiTriageView,
   TranscriptView,

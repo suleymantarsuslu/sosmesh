@@ -140,7 +140,7 @@ describe('FusionService - Deterministic Scoring', () => {
       personCountB: 4,
     };
 
-    const { score, signals } = service.computeDeterministicScore(params);
+    const { signals } = service.computeDeterministicScore(params);
 
     expect(signals.distanceMeters).toBeNull();
     expect(signals.locationProximity).toBe(false);

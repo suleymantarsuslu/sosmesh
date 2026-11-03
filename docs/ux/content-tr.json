@@ -11,7 +11,9 @@
     "close": "Kapat",
     "save": "Kaydet",
     "loading": "Yükleniyor...",
-    "error": "Hata oluştu"
+    "error": "Hata oluştu",
+    "saving": "Kaydediliyor",
+    "refresh": "Yenile"
   },
   "nav": {
     "home": "Ana Sayfa",
@@ -746,5 +748,15 @@
     "OPERATOR_SEEN": "Operatör gördü",
     "CASE_IN_PROGRESS": "Vaka işlemde",
     "unknown": "Etkinlik"
+  },
+  "reviewStatuses": {
+    "NEW": "Yeni",
+    "SEEN": "Görüldü",
+    "UNDER_REVIEW": "İncelemede",
+    "COORDINATING": "Koordine ediliyor"
+  },
+  "cases": {
+    "statusLabel": "Durum",
+    "conflictActualChange": "Başka bir operatör bu vakayı güncelledi. Lütfen değişiklikleri inceleyin ve tekrar deneyin."
   }
 }

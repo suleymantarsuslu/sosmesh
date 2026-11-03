@@ -11,7 +11,9 @@
     "close": "Close",
     "save": "Save",
     "loading": "Loading...",
-    "error": "An error occurred"
+    "error": "An error occurred",
+    "saving": "Saving",
+    "refresh": "Refresh"
   },
   "nav": {
     "home": "Home",
@@ -746,5 +748,15 @@
     "OPERATOR_SEEN": "Operator seen",
     "CASE_IN_PROGRESS": "Case in progress",
     "unknown": "Event"
+  },
+  "reviewStatuses": {
+    "NEW": "New",
+    "SEEN": "Seen",
+    "UNDER_REVIEW": "Under Review",
+    "COORDINATING": "Coordinating"
+  },
+  "cases": {
+    "statusLabel": "Status",
+    "conflictActualChange": "Another operator updated this case. Please review the changes before retrying."
   }
 }

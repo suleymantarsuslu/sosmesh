@@ -16,7 +16,7 @@ import type {
   IncidentLinkSuggestionView,
 } from '../ai/types';
 import { AssignmentPreviewPanel } from '../assignment/AssignmentPreviewPanel';
-import { getReviewStatusOptions, type OperatorCaseDetail } from './types';
+import { getReviewStatusLabel, getValidTransitions, type OperatorCaseDetail } from './types';
 
 type AiData = {
   triage: AiTriageView | null;
@@ -63,6 +63,7 @@ export function CaseDetailView({ detail, aiData, onRefresh }: Props) {
   );
   const [conflictMessage, setConflictMessage] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
+  const [hasAttemptedRefresh, setHasAttemptedRefresh] = useState(false);
 
   const caseCoordinates =
     detail.verifiedMetadata.latitude !== null && detail.verifiedMetadata.longitude !== null
@@ -84,15 +85,26 @@ export function CaseDetailView({ detail, aiData, onRefresh }: Props) {
       }),
     });
     setBusy(false);
+    
     if (res.status === 409) {
-      setConflictMessage(t('web.cases.conflictMessage'));
+      if (!hasAttemptedRefresh) {
+        setHasAttemptedRefresh(true);
+        await onRefresh();
+        setVersion(detail.version);
+        setConflictMessage(t('web.cases.conflictActualChange'));
+        return;
+      }
+      setConflictMessage(t('web.cases.conflictActualChange'));
       return;
     }
+    
     if (!res.ok) {
       return;
     }
+    
     const body = (await res.json()) as { version: number };
     setVersion(body.version);
+    setHasAttemptedRefresh(false);
     await onRefresh();
   };
 
@@ -105,16 +117,45 @@ export function CaseDetailView({ detail, aiData, onRefresh }: Props) {
       body: JSON.stringify({ expectedVersion: version, reviewStatus: target }),
     });
     setBusy(false);
+    
     if (res.status === 409) {
-      setConflictMessage(t('web.cases.conflictMessage'));
+      if (!hasAttemptedRefresh) {
+        setHasAttemptedRefresh(true);
+        await onRefresh();
+        const refreshedVersion = detail.version;
+        const refreshedStatus = detail.reviewStatus;
+        
+        if (refreshedStatus !== reviewStatus) {
+          setConflictMessage(t('web.cases.conflictActualChange'));
+        } else {
+          setVersion(refreshedVersion);
+          const retryRes = await fetch(`/api/operator/cases/${detail.incidentId}/review-status`, {
+            method: 'PATCH',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ expectedVersion: refreshedVersion, reviewStatus: target }),
+          });
+          if (retryRes.ok) {
+            const retryBody = (await retryRes.json()) as { version: number; reviewStatus: string };
+            setVersion(retryBody.version);
+            setReviewStatus(retryBody.reviewStatus);
+            await onRefresh();
+          }
+        }
+        setBusy(false);
+        return;
+      }
+      setConflictMessage(t('web.cases.conflictActualChange'));
       return;
     }
+    
     if (!res.ok) {
       return;
     }
+    
     const body = (await res.json()) as { version: number; reviewStatus: string };
     setVersion(body.version);
     setReviewStatus(body.reviewStatus);
+    setHasAttemptedRefresh(false);
     await onRefresh();
   };
 
@@ -130,9 +171,23 @@ export function CaseDetailView({ detail, aiData, onRefresh }: Props) {
             ← {t('web.cases.backToCases')}
           </Link>
           {conflictMessage && (
-            <p className="case-detail-modern__conflict" role="alert" data-testid="case-version-conflict">
-              ⚠️ {conflictMessage}
-            </p>
+            <div className="case-detail-modern__conflict" role="alert" data-testid="case-version-conflict">
+              <span className="case-detail-modern__conflict-icon">⚠️</span>
+              <span className="case-detail-modern__conflict-message">{conflictMessage}</span>
+              <button
+                type="button"
+                className="case-detail-modern__conflict-refresh"
+                onClick={async () => {
+                  setConflictMessage(null);
+                  setHasAttemptedRefresh(false);
+                  await onRefresh();
+                  setVersion(detail.version);
+                  setReviewStatus(detail.reviewStatus);
+                }}
+              >
+                {t('web.common.refresh')}
+              </button>
+            </div>
           )}
         </div>
 
@@ -166,22 +221,32 @@ export function CaseDetailView({ detail, aiData, onRefresh }: Props) {
           </div>
 
           <div className="case-detail-modern__header-actions">
-            {getReviewStatusOptions(t).map((option) => (
-              <button
-                key={option.value}
-                type="button"
-                className={
-                  reviewStatus === option.value
-                    ? 'case-detail-modern__action-btn case-detail-modern__action-btn--active'
-                    : 'case-detail-modern__action-btn'
-                }
+            <label className="case-detail-modern__status-label">
+              <span className="case-detail-modern__status-label-text">
+                {t('web.cases.statusLabel')}:
+              </span>
+              <select
+                value={reviewStatus}
+                onChange={(e) => changeReviewStatus(e.target.value)}
                 disabled={busy}
-                onClick={() => changeReviewStatus(option.value)}
-                data-testid={`case-review-${option.value}`}
+                className="case-detail-modern__status-select"
+                data-testid="case-review-status-select"
               >
-                {option.label}
-              </button>
-            ))}
+                <option value={reviewStatus}>
+                  {getReviewStatusLabel(reviewStatus, t)}
+                </option>
+                {getValidTransitions(reviewStatus).map((status) => (
+                  <option key={status} value={status}>
+                    {getReviewStatusLabel(status, t)}
+                  </option>
+                ))}
+              </select>
+            </label>
+            {busy && (
+              <span className="case-detail-modern__status-saving" data-testid="status-saving">
+                {t('web.common.saving')}...
+              </span>
+            )}
           </div>
         </div>
       </header>

@@ -57,8 +57,19 @@ export function CaseDetailClient({ incidentId }: { incidentId: string }) {
   }, [incidentId]);
 
   const recordSeen = useCallback(async () => {
-    await fetch(`/api/operator/cases/${incidentId}/seen`, { method: 'POST' });
-  }, [incidentId]);
+    const res = await fetch(`/api/operator/cases/${incidentId}/seen`, { method: 'POST' });
+    if (res.ok) {
+      const body = (await res.json()) as {
+        created: boolean;
+        messageEventId: string | null;
+        version?: number;
+        reviewStatus?: string;
+      };
+      if (body.version !== undefined && detail) {
+        setDetail({ ...detail, version: body.version, reviewStatus: body.reviewStatus || detail.reviewStatus });
+      }
+    }
+  }, [incidentId, detail]);
 
   const refresh = useCallback(async () => {
     await loadDetail();

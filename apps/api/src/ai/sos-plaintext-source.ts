@@ -1,6 +1,7 @@
 import { Injectable, Logger } from '@nestjs/common';
 import type { EncryptedPayload, ServerCryptoConfig } from '@sosmesh/contracts';
 import { PrismaService } from '../prisma/prisma.service';
+import { extractClientAadFromLegacy, isLegacyWholeEnvelopeAad } from '../ingest/envelope-aad-builder';
 
 // Lazy-load crypto to avoid ESM import issues in Jest
 let decryptPayloadFn: typeof import('@sosmesh/contracts').decryptPayload | null = null;
@@ -136,7 +137,23 @@ export class ServerKeyPlaintextSource implements SosPlaintextSource {
       let envelope: any;
       if (sosMessage.originalEnvelopeAad) {
         try {
-          envelope = JSON.parse(sosMessage.originalEnvelopeAad);
+          // Check if this is a legacy whole-envelope AAD (contains ackLevel/relayCount)
+          if (isLegacyWholeEnvelopeAad(sosMessage.originalEnvelopeAad)) {
+            // Extract client AAD fields from legacy format
+            const extracted = extractClientAadFromLegacy(sosMessage.originalEnvelopeAad);
+            if (extracted) {
+              envelope = extracted;
+            } else {
+              this.logger.error({
+                code: 'INVALID_LEGACY_ENVELOPE_AAD',
+                messageId: request.messageId,
+              });
+              return null;
+            }
+          } else {
+            // New format: already contains only client AAD fields
+            envelope = JSON.parse(sosMessage.originalEnvelopeAad);
+          }
         } catch {
           this.logger.error({
             code: 'INVALID_ENVELOPE_AAD',

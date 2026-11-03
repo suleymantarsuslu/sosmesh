@@ -5,10 +5,10 @@
  * Stores media files in MEDIA_STORAGE_DIR with content-addressed keys
  */
 
-import { Injectable, Logger } from '@nestjs/common';
+import { Injectable, Logger, OnModuleInit, ServiceUnavailableException } from '@nestjs/common';
 import { createHash } from 'node:crypto';
-import { mkdir, readFile, writeFile, unlink, access, stat, readdir } from 'node:fs/promises';
-import { join } from 'node:path';
+import { mkdir, readFile, writeFile, unlink, access, stat, readdir, constants } from 'node:fs/promises';
+import { dirname, join } from 'node:path';
 import type {
   MediaStorage,
   StoreMediaRequest,
@@ -16,13 +16,62 @@ import type {
   MediaMetadata,
 } from './media-storage.interface';
 
+export class MediaStorageUnavailableError extends ServiceUnavailableException {
+  constructor(message: string, cause?: Error) {
+    super({
+      code: 'MEDIA_STORAGE_UNAVAILABLE',
+      message,
+    });
+    if (cause) {
+      this.cause = cause;
+    }
+  }
+}
+
 @Injectable()
-export class LocalDiskStorageService implements MediaStorage {
+export class LocalDiskStorageService implements MediaStorage, OnModuleInit {
   private readonly logger = new Logger(LocalDiskStorageService.name);
   private readonly storageDir: string;
+  private storageHealthy = false;
+  private storageHealthError: { code: string; path: string; message: string } | null = null;
 
   constructor() {
     this.storageDir = process.env.MEDIA_STORAGE_DIR ?? '/tmp/sosmesh-media';
+  }
+
+  async onModuleInit(): Promise<void> {
+    await this.verifyStorageHealth();
+  }
+
+  getStorageHealth(): { healthy: boolean; error: { code: string; path: string; message: string } | null } {
+    return {
+      healthy: this.storageHealthy,
+      error: this.storageHealthError,
+    };
+  }
+
+  private async verifyStorageHealth(): Promise<void> {
+    try {
+      await mkdir(this.storageDir, { recursive: true });
+      await access(this.storageDir, constants.W_OK);
+      this.storageHealthy = true;
+      this.storageHealthError = null;
+      this.logger.log({ msg: 'Media storage verified', path: this.storageDir });
+    } catch (error) {
+      const err = error as NodeJS.ErrnoException;
+      this.storageHealthy = false;
+      this.storageHealthError = {
+        code: err.code ?? 'UNKNOWN',
+        path: this.storageDir,
+        message: `Media storage unavailable: ${err.code ?? 'UNKNOWN'} at ${this.storageDir}`,
+      };
+      this.logger.error({
+        msg: 'Media storage verification failed',
+        code: err.code,
+        path: this.storageDir,
+        error: err.message,
+      });
+    }
   }
 
   async store(request: StoreMediaRequest): Promise<StoreMediaResult> {
@@ -32,7 +81,22 @@ export class LocalDiskStorageService implements MediaStorage {
     const storageKey = this.buildStorageKey(sha256, request.mimeType);
     const filePath = this.resolveFilePath(storageKey);
 
-    await writeFile(filePath, request.buffer);
+    try {
+      await mkdir(dirname(filePath), { recursive: true });
+      await writeFile(filePath, request.buffer);
+    } catch (error) {
+      const err = error as NodeJS.ErrnoException;
+      this.logger.error({
+        msg: 'Failed to write media file',
+        code: err.code,
+        path: filePath,
+        error: err.message,
+      });
+      throw new MediaStorageUnavailableError(
+        `Failed to write media file: ${err.code ?? 'UNKNOWN'}`,
+        err
+      );
+    }
 
     this.logger.log({
       msg: 'Media stored',

@@ -54,7 +54,7 @@ export function AiIntelligencePanel({
 
       {!hasAnyData && (
         <div className="ai-intelligence-panel__empty" role="status">
-          <AiStatusBadge status={triage?.status || 'unavailable'} />
+          <AiStatusBadge status={triage ? triage.status : 'unavailable'} />
           <p>{t('web.ai.unavailable')}</p>
         </div>
       )}

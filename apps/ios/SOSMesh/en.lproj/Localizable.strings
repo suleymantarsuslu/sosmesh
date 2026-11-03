@@ -17,6 +17,7 @@
 "status.empty" = "No SOS sent yet";
 "status.timeline.1" = "SAVED ON DEVICE";
 "status.timeline.2" = "DELIVERED TO NEARBY PEER";
+"status.timeline.3" = "DELIVERED TO SOSMESH SERVER";
 "status.disclaimer" = "Status is informational only; not a rescue guarantee.";
 "relay.title" = "Relay mode";
 "relay.toggle.on" = "Relay";

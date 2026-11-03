@@ -63,6 +63,24 @@ public final class SosOutboxService: OutboxQueueUpdating, @unchecked Sendable {
         return next
     }
 
+    @discardableResult
+    public func markServerAccepted(
+        sosId: String,
+        digest: String,
+        fromState: String,
+        nowMs: Int64
+    ) throws -> String {
+        let next = try stateMachine.transition(from: fromState, to: "SERVER_ACCEPTED")
+        _ = try updateState(
+            sosId: sosId,
+            digest: digest,
+            state: next,
+            nowMs: nowMs,
+            lastError: nil
+        )
+        return next
+    }
+
     /// Peer ACK must not be treated as operator/server acceptance (ADIM 10 contract).
     public func validatePeerAckSemantics(_ state: String) {
         precondition(state == "PEER_RECEIVED")

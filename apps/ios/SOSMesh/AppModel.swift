@@ -1,4 +1,5 @@
 import SwiftUI
+import UIKit
 import SOSMeshCore
 import SOSMeshContracts
 
@@ -36,6 +37,7 @@ final class AppModel: ObservableObject {
     private let receivedInboxStore = ReceivedSosInbox()
     private var meshRadio: BleMeshRadioPort?
     private var meshTickTimer: Timer?
+    private var ingestUploader: IngestUploader?
 
     init(
         permissionProbe: AppPermissionProbing? = nil,
@@ -123,6 +125,16 @@ final class AppModel: ObservableObject {
             nowMs: nowMs
         )
         await reloadOutbox()
+        
+        Task.detached { [weak self] in
+            await self?.attemptServerUpload(
+                sosId: composed.message.id,
+                digest: composed.digest,
+                encryptedBlobBase64: composed.encryptedBlobBase64,
+                sosMessage: composed.message.rawMessage
+            )
+        }
+        
         _ = try? meshRadio?.connectFirstPeerIfNeeded()
         meshRadio?.tick(nowMs: nowMs)
     }
@@ -202,6 +214,47 @@ final class AppModel: ObservableObject {
             throw NSError(domain: "AppModel", code: 1, userInfo: nil)
         }
         return outboxService
+    }
+    
+    private func attemptServerUpload(
+        sosId: String,
+        digest: String,
+        encryptedBlobBase64: String,
+        sosMessage: [String: Any]
+    ) async {
+        if ingestUploader == nil {
+            let deviceId = UIDevice.current.identifierForVendor?.uuidString ?? UUID().uuidString
+            let config = IngestConfig.production(deviceId: deviceId)
+            ingestUploader = IngestUploader(config: config)
+        }
+        
+        guard let uploader = ingestUploader else { return }
+        
+        let result = await uploader.upload(
+            sosId: sosId,
+            digest: digest,
+            encryptedBlobBase64: encryptedBlobBase64,
+            sosMessageJson: sosMessage
+        )
+        
+        switch result {
+        case .success:
+            let nowMs = Int64(Date().timeIntervalSince1970 * 1000)
+            if let service = try? requireOutbox(),
+               let entry = try? service.listEntries().first(where: { $0.sosId == sosId && $0.digest == digest }) {
+                _ = try? service.markServerAccepted(
+                    sosId: sosId,
+                    digest: digest,
+                    fromState: entry.state,
+                    nowMs: nowMs
+                )
+                await MainActor.run {
+                    Task { await self.reloadOutbox() }
+                }
+            }
+        case .noNetwork, .httpError, .invalidReceipt, .error:
+            break
+        }
     }
 
     private func sourceRoot() -> String {

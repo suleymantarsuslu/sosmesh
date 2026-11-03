@@ -17,9 +17,11 @@ import { PrismaService } from '../../prisma/prisma.service';
 import { MetaModelClient } from '../meta-model-client';
 import { BudgetGuardService } from '../budget-guard.service';
 import { AudioConversionService } from '../../media/audio-conversion.service';
+import { AudioChunkingService } from '../../media/audio-chunking.service';
 import { MediaStorage, MEDIA_STORAGE } from '../../media/media-storage.interface';
 import { AiJobQueueService } from '../ai-job-queue.service';
 import { Inject } from '@nestjs/common';
+import { ASR_CHUNK_MAX_SECONDS } from '../../media/media.constants';
 
 const KEYWORDS_TR = ['enkaz', 'yaralı', 'yangın', 'sel', 'yardım', 'mahsur', 'acil'];
 const KEYWORDS_EN = ['trapped', 'injured', 'fire', 'flood', 'help', 'emergency', 'rescue'];
@@ -44,6 +46,7 @@ export class VoiceTranscriptionService {
     private readonly metaClient: MetaModelClient,
     private readonly budgetGuard: BudgetGuardService,
     private readonly conversion: AudioConversionService,
+    private readonly chunking: AudioChunkingService,
     @Inject(MEDIA_STORAGE) private readonly storage: MediaStorage,
     private readonly jobQueue: AiJobQueueService
   ) {}
@@ -71,7 +74,7 @@ export class VoiceTranscriptionService {
       this.logger.warn({
         msg: 'Budget exceeded for ASR',
         attachmentId,
-        reason: reservation.reason,
+        reason: !('reservationId' in reservation) && 'reason' in reservation ? reservation.reason : 'unknown',
       });
       return { success: false, reason: 'budget_exceeded' };
     }
@@ -136,21 +139,87 @@ export class VoiceTranscriptionService {
       const languageBias = detectedLanguage === 'tr' ? ['Turkish', 'English'] : ['English', 'Turkish'];
       const keywords = detectedLanguage === 'tr' ? KEYWORDS_TR : KEYWORDS_EN;
 
-      const asrRequest = {
-        wavBuffer,
-        languageBias,
-        keywords,
-        mode: 'PUSH_TO_TALK' as const,
-      };
+      // Handle long audio by chunking
+      let fullTranscript = '';
+      let totalAudioDurationMs = durationMs;
 
-      const asrResponse = await this.metaClient.transcribe(asrRequest);
+      if (durationMs > ASR_CHUNK_MAX_SECONDS * 1000) {
+        this.logger.log({
+          msg: 'Audio exceeds ASR chunk limit, splitting',
+          durationMs,
+          maxChunkMs: ASR_CHUNK_MAX_SECONDS * 1000,
+        });
+
+        const chunks = await this.chunking.chunkWavFile(wavBuffer, durationMs);
+
+        for (const chunk of chunks) {
+          const chunkResponse = await this.metaClient.transcribe({
+            wavBuffer: chunk.buffer,
+            languageBias,
+            keywords,
+            mode: 'PUSH_TO_TALK',
+          });
+
+          if (!chunkResponse.ok) {
+            this.logger.error({
+              msg: 'ASR chunk failed',
+              attachmentId,
+              chunkIndex: chunk.chunkIndex,
+              error: 'error' in chunkResponse ? chunkResponse.error : 'unknown',
+            });
+
+            await this.budgetGuard.reconcile({
+              reservationId: reservation.reservationId,
+              actualUsd: 0,
+              inputTokens: 0,
+              outputTokens: 0,
+              model: 'muse-voice-transcribe-1.0',
+              requestId: 'chunk_failed',
+            });
+
+            const retryable = 'retryable' in chunkResponse ? chunkResponse.retryable : false;
+            const error = 'error' in chunkResponse ? chunkResponse.error : 'unknown';
+
+            return {
+              success: false,
+              reason: retryable ? 'unavailable' : 'asr_failed',
+              error,
+            };
+          }
+
+          if (fullTranscript && chunkResponse.transcript) {
+            fullTranscript += ' ' + chunkResponse.transcript;
+          } else {
+            fullTranscript = chunkResponse.transcript;
+          }
+        }
+
+        const actualCost = this.metaClient.computeAsrCost(totalAudioDurationMs);
+
+        await this.budgetGuard.reconcile({
+          reservationId: reservation.reservationId,
+          actualUsd: actualCost,
+          inputTokens: 0,
+          outputTokens: 0,
+          model: 'muse-voice-transcribe-1.0',
+          requestId: `chunked_${chunks.length}`,
+        });
+      } else {
+        const asrRequest = {
+          wavBuffer,
+          languageBias,
+          keywords,
+          mode: 'PUSH_TO_TALK' as const,
+        };
+
+        const asrResponse = await this.metaClient.transcribe(asrRequest);
 
       if (!asrResponse.ok) {
         this.logger.error({
           msg: 'ASR failed',
           attachmentId,
-          error: asrResponse.error,
-          retryable: asrResponse.retryable,
+          error: 'error' in asrResponse ? asrResponse.error : 'unknown',
+          retryable: 'retryable' in asrResponse ? asrResponse.retryable : false,
         });
 
         const actualCost = 0;
@@ -163,23 +232,30 @@ export class VoiceTranscriptionService {
           requestId: 'failed',
         });
 
+        const retryable = 'retryable' in asrResponse ? asrResponse.retryable : false;
+        const error = 'error' in asrResponse ? asrResponse.error : 'unknown';
+
         return {
           success: false,
-          reason: asrResponse.retryable ? 'unavailable' : 'asr_failed',
-          error: asrResponse.error,
+          reason: retryable ? 'unavailable' : 'asr_failed',
+          error,
         };
       }
 
-      const actualCost = this.metaClient.computeAsrCost(asrResponse.audioDurationMs);
+        const actualCost = this.metaClient.computeAsrCost(asrResponse.audioDurationMs);
 
-      await this.budgetGuard.reconcile({
-        reservationId: reservation.reservationId,
-        actualUsd: actualCost,
-        inputTokens: 0,
-        outputTokens: 0,
-        model: 'muse-voice-transcribe-1.0',
-        requestId: asrResponse.sessionId,
-      });
+        await this.budgetGuard.reconcile({
+          reservationId: reservation.reservationId,
+          actualUsd: actualCost,
+          inputTokens: 0,
+          outputTokens: 0,
+          model: 'muse-voice-transcribe-1.0',
+          requestId: asrResponse.sessionId,
+        });
+
+        fullTranscript = asrResponse.transcript;
+        totalAudioDurationMs = asrResponse.audioDurationMs;
+      }
 
       const language = detectedLanguage;
 
@@ -187,10 +263,10 @@ export class VoiceTranscriptionService {
         data: {
           attachmentId: attachment.id,
           model: 'muse-voice-transcribe-1.0',
-          transcript: asrResponse.transcript,
-          turns: asrResponse.turns,
+          transcript: fullTranscript,
+          turns: [],
           language,
-          audioDurationMs: asrResponse.audioDurationMs,
+          audioDurationMs: totalAudioDurationMs,
         },
       });
 
@@ -198,22 +274,21 @@ export class VoiceTranscriptionService {
         msg: 'Transcription completed',
         transcriptId: transcript.id,
         attachmentId,
-        transcriptLength: asrResponse.transcript.length,
+        transcriptLength: fullTranscript.length,
         language,
-        durationMs: asrResponse.audioDurationMs,
+        durationMs: totalAudioDurationMs,
       });
 
       const triageJobId = await this.jobQueue.enqueue({
         kind: 'triage',
         incidentId: attachment.incidentId,
         sosMessageId: attachment.sosMessageId ?? undefined,
-        metadata: { transcriptText: asrResponse.transcript },
       });
 
       return {
         success: true,
         transcriptId: transcript.id,
-        transcript: asrResponse.transcript,
+        transcript: fullTranscript,
         triageJobId,
       };
     } catch (error) {

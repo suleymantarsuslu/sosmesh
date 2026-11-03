@@ -361,7 +361,7 @@ export class MetaModelClient {
 
     const formData = new FormData();
     const requestBlob = new Blob([JSON.stringify(requestJson)], { type: 'application/json' });
-    const audioBlob = new Blob([request.wavBuffer], { type: 'audio/wav' });
+    const audioBlob = new Blob([new Uint8Array(request.wavBuffer)], { type: 'audio/wav' });
     
     formData.append('request', requestBlob, 'request.json');
     formData.append('audio', audioBlob, 'audio.wav');

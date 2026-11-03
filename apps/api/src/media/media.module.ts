@@ -9,6 +9,7 @@ import { OrganizationModule } from '../organization/organization.module';
 import { LocalDiskStorageService } from './local-disk-storage.service';
 import { MEDIA_STORAGE } from './media-storage.interface';
 import { AudioConversionService } from './audio-conversion.service';
+import { AudioChunkingService } from './audio-chunking.service';
 import { AudioUploadService } from './audio-upload.service';
 import { AttachmentsController } from './attachments.controller';
 import { AiModule } from '../ai/ai.module';
@@ -21,9 +22,10 @@ import { AiModule } from '../ai/ai.module';
       useClass: LocalDiskStorageService,
     },
     AudioConversionService,
+    AudioChunkingService,
     AudioUploadService,
   ],
   controllers: [AttachmentsController],
-  exports: [MEDIA_STORAGE, AudioConversionService, AudioUploadService],
+  exports: [MEDIA_STORAGE, AudioConversionService, AudioChunkingService, AudioUploadService],
 })
 export class MediaModule {}

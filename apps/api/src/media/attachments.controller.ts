@@ -44,7 +44,9 @@ const ALLOWED_AUDIO_MIMES = [
   'audio/webm',
 ];
 
-const MAX_AUDIO_SIZE = 15 * 1024 * 1024;
+import { MEDIA_ONLINE_MAX_AUDIO_BYTES } from './media.constants';
+
+const MAX_AUDIO_SIZE = MEDIA_ONLINE_MAX_AUDIO_BYTES;
 
 @Controller('v1/operator')
 @UseGuards(OperatorAuthGuard)
@@ -82,7 +84,7 @@ export class AttachmentsController {
   async uploadAudio(
     @Req() req: OperatorRequest,
     @Param('caseId') caseId: string,
-    @UploadedFile() file: Express.Multer.File
+    @UploadedFile() file?: { buffer: Buffer; mimetype: string; size: number }
   ) {
     if (!file) {
       throw new BadRequestException('Audio file is required');
@@ -112,6 +114,7 @@ export class AttachmentsController {
       incidentId: incident.id,
       sosMessageId: incident.sosMessages[0]?.id,
       synthetic: false,
+      source: 'online',
     });
 
     const jobId = await this.jobQueue.enqueue({

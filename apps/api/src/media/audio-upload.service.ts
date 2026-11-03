@@ -12,6 +12,7 @@ import { PrismaService } from '../prisma/prisma.service';
 import { MediaStorage, MEDIA_STORAGE } from './media-storage.interface';
 import { AudioConversionService } from './audio-conversion.service';
 import { Inject } from '@nestjs/common';
+import { type MediaSource, getMediaLimits } from './media.constants';
 
 const ALLOWED_MIMES = new Set([
   'audio/wav',
@@ -27,15 +28,13 @@ const ALLOWED_MIMES = new Set([
   'audio/webm',
 ]);
 
-const MAX_SIZE_BYTES = 10 * 1024 * 1024;
-const MAX_DURATION_MS = 120 * 1000;
-
 export type AudioUploadRequest = {
   buffer: Buffer;
   mimeType: string;
   incidentId: string;
   sosMessageId?: string;
   synthetic?: boolean;
+  source?: MediaSource;
 };
 
 export type AudioUploadResult = {
@@ -56,11 +55,14 @@ export class AudioUploadService {
   ) {}
 
   async upload(request: AudioUploadRequest): Promise<AudioUploadResult> {
+    const source = request.source ?? 'online';
+    const limits = getMediaLimits(source);
+
     this.validateMime(request.mimeType);
-    this.validateSize(request.buffer);
+    this.validateSize(request.buffer, limits.maxAudioBytes);
 
     const durationMs = await this.conversion.validateDuration(request.buffer, request.mimeType);
-    this.validateDuration(durationMs);
+    this.validateDuration(durationMs, limits.maxAudioSeconds * 1000);
 
     const sha256 = createHash('sha256').update(request.buffer).digest('hex');
 
@@ -134,24 +136,24 @@ export class AudioUploadService {
     }
   }
 
-  private validateSize(buffer: Buffer): void {
-    if (buffer.length > MAX_SIZE_BYTES) {
+  private validateSize(buffer: Buffer, maxBytes: number): void {
+    if (buffer.length > maxBytes) {
       throw new BadRequestException({
         error: 'file_too_large',
-        message: `Audio exceeds ${MAX_SIZE_BYTES} bytes`,
+        message: `Audio exceeds ${maxBytes} bytes`,
         sizeBytes: buffer.length,
-        maxBytes: MAX_SIZE_BYTES,
+        maxBytes,
       });
     }
   }
 
-  private validateDuration(durationMs: number): void {
-    if (durationMs > MAX_DURATION_MS) {
+  private validateDuration(durationMs: number, maxDurationMs: number): void {
+    if (durationMs > maxDurationMs) {
       throw new BadRequestException({
         error: 'duration_too_long',
-        message: `Audio exceeds ${MAX_DURATION_MS / 1000}s duration`,
+        message: `Audio exceeds ${maxDurationMs / 1000}s duration`,
         durationMs,
-        maxDurationMs: MAX_DURATION_MS,
+        maxDurationMs,
       });
     }
   }

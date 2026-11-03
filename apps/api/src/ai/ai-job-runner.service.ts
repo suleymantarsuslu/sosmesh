@@ -176,23 +176,25 @@ export class AiJobRunnerService {
 
     const result = await this.voiceTranscription.processTranscription(job.attachmentId);
 
-    if (result.success) {
-      this.logger.log({
-        msg: 'Transcription job completed',
-        jobId: job.id,
-        transcriptId: result.transcriptId,
-        triageJobId: result.triageJobId,
-      });
-      await this.queue.complete(job.id);
-    } else {
-      const errorMsg = result.error ?? result.reason;
+    if (!result.success) {
+      const errorMsg = ('error' in result ? result.error : undefined) ?? ('reason' in result ? result.reason : 'unknown');
+      const reason = 'reason' in result ? result.reason : 'unknown';
       
-      if (result.reason === 'unavailable' || result.reason === 'budget_exceeded') {
+      if (reason === 'unavailable' || reason === 'budget_exceeded') {
         await this.queue.requiresReview(job.id, errorMsg);
       } else {
         await this.queue.fail(job.id, errorMsg);
       }
+      return;
     }
+
+    this.logger.log({
+      msg: 'Transcription job completed',
+      jobId: job.id,
+      transcriptId: result.transcriptId,
+      triageJobId: result.triageJobId,
+    });
+    await this.queue.complete(job.id);
   }
 
   private sleep(ms: number): Promise<void> {

@@ -11,6 +11,7 @@ import { VoiceTranscriptionService } from '../src/ai/voice/voice-transcription.s
 import { MetaModelClient } from '../src/ai/meta-model-client';
 import { BudgetGuardService } from '../src/ai/budget-guard.service';
 import { AudioConversionService } from '../src/media/audio-conversion.service';
+import { AudioChunkingService } from '../src/media/audio-chunking.service';
 import { AiJobQueueService } from '../src/ai/ai-job-queue.service';
 import { MEDIA_STORAGE } from '../src/media/media-storage.interface';
 
@@ -59,6 +60,12 @@ describe('Voice Transcription Failure Handling', () => {
           },
         },
         {
+          provide: AudioChunkingService,
+          useValue: {
+            chunkWavFile: jest.fn(() => [{ buffer: Buffer.from(''), startMs: 0, endMs: 5000, chunkIndex: 0 }]),
+          },
+        },
+        {
           provide: MEDIA_STORAGE,
           useValue: {
             retrieve: jest.fn(() => Buffer.from('')),
@@ -102,16 +109,19 @@ describe('Voice Transcription Failure Handling', () => {
     const result = await voiceService.processTranscription('att-1');
 
     expect(result.success).toBe(false);
-    if (!result.success) {
-      expect(result.reason).toBe('unavailable');
+    if (result.success) {
+      throw new Error('Expected failure but got success');
     }
+    expect((result as { success: false; reason: string }).reason).toBe('unavailable');
   });
 
   it('should handle budget exceeded gracefully', async () => {
-    const budgetGuard = Test.createMock<BudgetGuardService>();
-    budgetGuard.reserve = jest.fn(() => ({ reserved: false, reason: 'daily_limit' }));
+    const budgetGuard = {
+      reserve: jest.fn(() => ({ reserved: false, reason: 'daily_limit' })),
+      reconcile: jest.fn(),
+    };
 
-    const moduleWithBudgetLimit = await Test.createTestingModule({
+    const moduleWithLimit = await Test.createTestingModule({
       providers: [
         VoiceTranscriptionService,
         { provide: PrismaService, useValue: prisma },
@@ -121,9 +131,14 @@ describe('Voice Transcription Failure Handling', () => {
           provide: AudioConversionService,
           useValue: {
             validateDuration: jest.fn(() => 5000),
+            convertToWav: jest.fn(() => ({ wavBuffer: Buffer.from(''), durationMs: 5000 })),
           },
         },
-        { provide: MEDIA_STORAGE, useValue: { retrieve: jest.fn() } },
+        {
+          provide: AudioChunkingService,
+          useValue: { chunkWavFile: jest.fn() },
+        },
+        { provide: MEDIA_STORAGE, useValue: { retrieve: jest.fn(() => Buffer.from('')) } },
         { provide: AiJobQueueService, useValue: { enqueue: jest.fn() } },
       ],
     }).compile();
@@ -133,16 +148,19 @@ describe('Voice Transcription Failure Handling', () => {
     (prisma.attachment.findUnique as jest.Mock).mockResolvedValue({
       id: 'att-2',
       incidentId: 'inc-2',
-      durationMs: 5000,
+      sosMessageId: null,
+      kind: 'audio',
       mime: 'audio/wav',
+      durationMs: 5000,
       storageKey: 'test.wav',
     });
 
     const result = await serviceWithLimit.processTranscription('att-2');
 
     expect(result.success).toBe(false);
-    if (!result.success) {
-      expect(result.reason).toBe('budget_exceeded');
+    if (result.success) {
+      throw new Error('Expected failure but got success');
     }
+    expect((result as { success: false; reason: string }).reason).toBe('budget_exceeded');
   });
 });

@@ -13,6 +13,7 @@ import { AiJobRunnerService } from './ai-job-runner.service';
 import { TriageV2Service } from './triage-v2.service';
 import { VoiceTranscriptionService } from './voice/voice-transcription.service';
 import { AudioConversionService } from '../media/audio-conversion.service';
+import { AudioChunkingService } from '../media/audio-chunking.service';
 import { LocalDiskStorageService } from '../media/local-disk-storage.service';
 import { MEDIA_STORAGE } from '../media/media-storage.interface';
 
@@ -27,6 +28,7 @@ import { MEDIA_STORAGE } from '../media/media-storage.interface';
     TriageV2Service,
     VoiceTranscriptionService,
     AudioConversionService,
+    AudioChunkingService,
     {
       provide: MEDIA_STORAGE,
       useClass: LocalDiskStorageService,

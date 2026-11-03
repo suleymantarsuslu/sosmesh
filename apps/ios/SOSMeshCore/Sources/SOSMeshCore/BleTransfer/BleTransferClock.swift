@@ -12,6 +12,11 @@ public protocol BleTransferRng: AnyObject {
 }
 
 public final class SystemBleTransferClock: BleTransferClock {
+    private final class DispatchTimerHandle: BleTransferTimer {
+        let source: DispatchSourceTimer
+        init(_ source: DispatchSourceTimer) { self.source = source }
+    }
+
     public init() {}
 
     public func schedule(afterMs: Int64, block: @escaping () -> Void) -> BleTransferTimer {
@@ -19,11 +24,11 @@ public final class SystemBleTransferClock: BleTransferClock {
         timer.schedule(deadline: .now() + .milliseconds(Int(afterMs)))
         timer.setEventHandler(handler: block)
         timer.resume()
-        return timer
+        return DispatchTimerHandle(timer)
     }
 
     public func cancel(_ timer: BleTransferTimer?) {
-        (timer as? DispatchSourceTimer)?.cancel()
+        (timer as? DispatchTimerHandle)?.source.cancel()
     }
 }
 

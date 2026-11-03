@@ -1,0 +1,146 @@
+[
+  {
+    "name": "number-zero",
+    "input": 0,
+    "expected": "0"
+  },
+  {
+    "name": "number-one",
+    "input": 1,
+    "expected": "1"
+  },
+  {
+    "name": "number-minus-one",
+    "input": -1,
+    "expected": "-1"
+  },
+  {
+    "name": "number-one-point-five",
+    "input": 1.5,
+    "expected": "1.5"
+  },
+  {
+    "name": "number-zero-point-one",
+    "input": 0.1,
+    "expected": "0.1"
+  },
+  {
+    "name": "number-1e21",
+    "input": 1e+21,
+    "expected": "1e+21"
+  },
+  {
+    "name": "number-1e-7",
+    "input": 1e-7,
+    "expected": "1e-7"
+  },
+  {
+    "name": "number-large-int",
+    "input": 123456789012,
+    "expected": "123456789012"
+  },
+  {
+    "name": "number-negative-zero",
+    "input": 0,
+    "expected": "0"
+  },
+  {
+    "name": "bool-true",
+    "input": true,
+    "expected": "true"
+  },
+  {
+    "name": "bool-false",
+    "input": false,
+    "expected": "false"
+  },
+  {
+    "name": "null",
+    "input": null,
+    "expected": "null"
+  },
+  {
+    "name": "empty-object",
+    "input": {},
+    "expected": "{}"
+  },
+  {
+    "name": "empty-array",
+    "input": [],
+    "expected": "[]"
+  },
+  {
+    "name": "nested-object-array",
+    "input": {
+      "z": [
+        {
+          "nested": true
+        },
+        null
+      ],
+      "a": {
+        "inner": [
+          1,
+          "x"
+        ]
+      }
+    },
+    "expected": "{\"a\":{\"inner\":[1,\"x\"]},\"z\":[{\"nested\":true},null]}"
+  },
+  {
+    "name": "string-escapes",
+    "input": "\" \\ \n \t \r \b \f \u0001 \u001f / ğüşıöçİ 😀",
+    "expected": "\"\\\" \\\\ \\n \\t \\r \\b \\f \\u0001 \\u001f / ğüşıöçİ 😀\""
+  },
+  {
+    "name": "string-lone-surrogate",
+    "input": {
+      "__canonicalJsonUtf16String": [
+        55296
+      ]
+    },
+    "expected": "\"\\ud800\""
+  },
+  {
+    "name": "object-special-keys",
+    "input": {
+      "\"key\"": 1,
+      "back\\slash": 2,
+      "line\nbreak": 3,
+      "ğüşı": 4,
+      "😀key": 5
+    },
+    "expected": "{\"\\\"key\\\"\":1,\"back\\\\slash\":2,\"line\\nbreak\":3,\"ğüşı\":4,\"😀key\":5}"
+  },
+  {
+    "name": "key-order-utf16",
+    "input": {
+      "b": 1,
+      "a": 2,
+      "B": 3,
+      "ä": 4,
+      "Ｚ": 5,
+      "😀": 6
+    },
+    "expected": "{\"B\":3,\"a\":2,\"b\":1,\"ä\":4,\"😀\":6,\"Ｚ\":5}"
+  },
+  {
+    "name": "key-order-ffff-vs-astral",
+    "input": {
+      "￿": 1,
+      "𐀀": 2,
+      "a": 3
+    },
+    "expected": "{\"a\":3,\"𐀀\":2,\"￿\":1}"
+  },
+  {
+    "name": "int-vs-bool-fields",
+    "input": {
+      "version": 1,
+      "enabled": true,
+      "hopCount": 0,
+      "ttl": 300
+    },
+    "expected": "{\"enabled\":true,\"hopCount\":0,\"ttl\":300,\"version\":1}"
+  }
+]

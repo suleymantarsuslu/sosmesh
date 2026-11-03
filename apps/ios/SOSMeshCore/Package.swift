@@ -22,6 +22,9 @@ let package = Package(
                 "SOSMeshCore",
                 .product(name: "SOSMeshContracts", package: "contracts-swift"),
             ],
-            resources: [.copy("Resources")]),
+            resources: [
+                .copy("Resources/golden-001.json"),
+                .copy("Resources/radio-planner-cases.json"),
+            ]),
     ]
 )

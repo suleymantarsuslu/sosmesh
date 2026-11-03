@@ -3,31 +3,55 @@ import Foundation
 @testable import SOSMeshContracts
 
 final class GoldenVectorTests: XCTestCase {
-    let goldenVector: [String: Any] = {
-        guard let url = Bundle.module.url(forResource: "golden-001", withExtension: "json"),
-              let data = try? Data(contentsOf: url),
-              let json = try? JSONSerialization.jsonObject(with: data) as? [String: Any] else {
-            fatalError("Failed to load golden-001.json")
-        }
-        return json
-    }()
-    
+    private var goldenVector: [String: Any]!
+
+    override func setUpWithError() throws {
+        try super.setUpWithError()
+        goldenVector = try BundledGolden.golden001Dictionary()
+    }
+
+    func testBundledGoldenBytesMatchWorkspaceCopy() throws {
+        let bundledURL = try BundledGolden.golden001URL()
+        let workspaceCopy = URL(fileURLWithPath: #filePath)
+            .deletingLastPathComponent()
+            .appendingPathComponent("Resources/golden-001.json")
+        XCTAssertEqual(try Data(contentsOf: bundledURL), try Data(contentsOf: workspaceCopy))
+    }
+
+    func testGoldenAADMatchesExpectedCanonical() throws {
+        let inputs = try XCTUnwrap(goldenVector["inputs"] as? [String: Any])
+        let expected = try XCTUnwrap(goldenVector["expected"] as? [String: Any])
+        let envelope = try XCTUnwrap(inputs["envelope"] as? [String: Any])
+        let keyId = try XCTUnwrap(inputs["keyId"] as? String)
+        let expectedAAD = try XCTUnwrap(expected["aadCanonical"] as? String)
+        let aad = try SOSMeshCrypto.createAAD(envelope: envelope, keyId: keyId)
+        XCTAssertEqual(String(data: aad, encoding: .utf8), expectedAAD)
+    }
+
+    private func inputsAndExpected() throws -> (inputs: [String: Any], expected: [String: Any]) {
+        let inputs = try XCTUnwrap(goldenVector["inputs"] as? [String: Any])
+        let expected = try XCTUnwrap(goldenVector["expected"] as? [String: Any])
+        return (inputs, expected)
+    }
+
     func testGoldenEncryptMatches() throws {
-        let inputs = goldenVector["inputs"] as! [String: Any]
-        let expected = goldenVector["expected"] as! [String: Any]
-        
-        let ephemeralPrivateKeyData = Data(base64Encoded: inputs["ephemeralPrivateKey"] as! String)!
-        let nonceData = Data(base64Encoded: inputs["nonce"] as! String)!
-        let plaintext = (inputs["plaintext"] as! String).data(using: .utf8)!
-        let envelope = inputs["envelope"] as! [String: Any]
-        
+        let (inputs, expected) = try inputsAndExpected()
+
+        let ephemeralPrivateKey = try XCTUnwrap(inputs["ephemeralPrivateKey"] as? String)
+        let nonce = try XCTUnwrap(inputs["nonce"] as? String)
+        let plaintextString = try XCTUnwrap(inputs["plaintext"] as? String)
+        let envelope = try XCTUnwrap(inputs["envelope"] as? [String: Any])
+
+        let ephemeralPrivateKeyData = try XCTUnwrap(Data(base64Encoded: ephemeralPrivateKey))
+        let nonceData = try XCTUnwrap(Data(base64Encoded: nonce))
+        let plaintext = try XCTUnwrap(plaintextString.data(using: .utf8))
+
         let config = CryptoConfig(
-            keyId: inputs["keyId"] as! String,
-            serverPublicKey: inputs["serverPublicKey"] as! String,
-            serverPrivateKey: inputs["serverPrivateKey"] as! String
+            keyId: try XCTUnwrap(inputs["keyId"] as? String),
+            serverPublicKey: try XCTUnwrap(inputs["serverPublicKey"] as? String),
+            serverPrivateKey: try XCTUnwrap(inputs["serverPrivateKey"] as? String)
         )
-        
-        // Encrypt with deterministic inputs
+
         let encrypted = try SOSMeshCrypto.encryptDeterministic(
             plaintext,
             envelope: envelope,
@@ -35,80 +59,71 @@ final class GoldenVectorTests: XCTestCase {
             ephemeralPrivateKeyData: ephemeralPrivateKeyData,
             nonceData: nonceData
         )
-        
-        // Convert to hex
-        let ciphertextData = Data(base64Encoded: encrypted.ciphertext)!
+
+        let ciphertextData = try XCTUnwrap(Data(base64Encoded: encrypted.ciphertext))
         let ciphertextHex = ciphertextData.map { String(format: "%02x", $0) }.joined()
-        
-        // Assert byte-for-byte match
-        XCTAssertEqual(ciphertextHex, expected["ciphertextWithTagHex"] as! String)
-        XCTAssertEqual(encrypted.ephemeralPublicKey, expected["ephemeralPublicKey"] as! String)
-        
+
+        XCTAssertEqual(ciphertextHex, expected["ciphertextWithTagHex"] as? String)
+        XCTAssertEqual(encrypted.ephemeralPublicKey, expected["ephemeralPublicKey"] as? String)
+
         print("✓ Swift: Golden encrypt matches (byte-for-byte)")
     }
-    
+
     func testGoldenDecrypt() throws {
-        let inputs = goldenVector["inputs"] as! [String: Any]
-        let expected = goldenVector["expected"] as! [String: Any]
-        
-        let envelope = inputs["envelope"] as! [String: Any]
+        let (inputs, expected) = try inputsAndExpected()
+
+        let envelope = try XCTUnwrap(inputs["envelope"] as? [String: Any])
         let config = CryptoConfig(
-            keyId: inputs["keyId"] as! String,
-            serverPublicKey: inputs["serverPublicKey"] as! String,
-            serverPrivateKey: inputs["serverPrivateKey"] as! String
+            keyId: try XCTUnwrap(inputs["keyId"] as? String),
+            serverPublicKey: try XCTUnwrap(inputs["serverPublicKey"] as? String),
+            serverPrivateKey: try XCTUnwrap(inputs["serverPrivateKey"] as? String)
         )
-        
+
         let encryptedPayload = EncryptedPayload(
-            ciphertext: expected["ciphertextWithTagBase64"] as! String,
-            nonce: inputs["nonce"] as! String,
-            ephemeralPublicKey: expected["ephemeralPublicKey"] as! String,
-            keyId: inputs["keyId"] as! String
+            ciphertext: try XCTUnwrap(expected["ciphertextWithTagBase64"] as? String),
+            nonce: try XCTUnwrap(inputs["nonce"] as? String),
+            ephemeralPublicKey: try XCTUnwrap(expected["ephemeralPublicKey"] as? String),
+            keyId: try XCTUnwrap(inputs["keyId"] as? String)
         )
-        
-        // Decrypt golden vector
+
         let decrypted = try SOSMeshCrypto.decryptPayload(encryptedPayload, envelope: envelope, config: config)
-        let decryptedStr = String(data: decrypted, encoding: .utf8)!
-        
-        // Should contain expected text
+        let decryptedStr = try XCTUnwrap(String(data: decrypted, encoding: .utf8))
+
         XCTAssertTrue(decryptedStr.contains("Golden test vector"))
-        
+
         print("✓ Swift: Golden decrypt successful")
     }
-    
+
     func testGoldenTamperedRejected() throws {
-        let inputs = goldenVector["inputs"] as! [String: Any]
-        let expected = goldenVector["expected"] as! [String: Any]
-        
-        let envelope = inputs["envelope"] as! [String: Any]
+        let (inputs, expected) = try inputsAndExpected()
+
+        let envelope = try XCTUnwrap(inputs["envelope"] as? [String: Any])
         let config = CryptoConfig(
-            keyId: inputs["keyId"] as! String,
-            serverPublicKey: inputs["serverPublicKey"] as! String,
-            serverPrivateKey: inputs["serverPrivateKey"] as! String
+            keyId: try XCTUnwrap(inputs["keyId"] as? String),
+            serverPublicKey: try XCTUnwrap(inputs["serverPublicKey"] as? String),
+            serverPrivateKey: try XCTUnwrap(inputs["serverPrivateKey"] as? String)
         )
-        
-        // First verify unmodified decrypts successfully
+
         let validPayload = EncryptedPayload(
-            ciphertext: expected["ciphertextWithTagBase64"] as! String,
-            nonce: inputs["nonce"] as! String,
-            ephemeralPublicKey: expected["ephemeralPublicKey"] as! String,
-            keyId: inputs["keyId"] as! String
+            ciphertext: try XCTUnwrap(expected["ciphertextWithTagBase64"] as? String),
+            nonce: try XCTUnwrap(inputs["nonce"] as? String),
+            ephemeralPublicKey: try XCTUnwrap(expected["ephemeralPublicKey"] as? String),
+            keyId: try XCTUnwrap(inputs["keyId"] as? String)
         )
         _ = try SOSMeshCrypto.decryptPayload(validPayload, envelope: envelope, config: config)
-        
-        // Now tamper: flip last byte of tag
-        var ciphertextData = Data(base64Encoded: expected["ciphertextWithTagBase64"] as! String)!
+
+        var ciphertextData = try XCTUnwrap(Data(base64Encoded: try XCTUnwrap(expected["ciphertextWithTagBase64"] as? String)))
         ciphertextData[ciphertextData.count - 1] ^= 0x01
-        
+
         let tamperedPayload = EncryptedPayload(
             ciphertext: ciphertextData.base64EncodedString(),
-            nonce: inputs["nonce"] as! String,
-            ephemeralPublicKey: expected["ephemeralPublicKey"] as! String,
-            keyId: inputs["keyId"] as! String
+            nonce: try XCTUnwrap(inputs["nonce"] as? String),
+            ephemeralPublicKey: try XCTUnwrap(expected["ephemeralPublicKey"] as? String),
+            keyId: try XCTUnwrap(inputs["keyId"] as? String)
         )
-        
-        // Should throw
+
         XCTAssertThrowsError(try SOSMeshCrypto.decryptPayload(tamperedPayload, envelope: envelope, config: config))
-        
+
         print("✓ Swift: Tampered golden rejected")
     }
 }

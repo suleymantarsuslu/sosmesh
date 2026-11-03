@@ -13,22 +13,20 @@ final class AdaptiveRadioPlannerCrossLanguageTests: XCTestCase {
         return url.path
     }
 
+    private static func bundledRadioPlannerURL() -> URL? {
+        Bundle.module.url(forResource: "radio-planner-cases", withExtension: "json", subdirectory: "Resources")
+            ?? Bundle.module.url(forResource: "radio-planner-cases", withExtension: "json")
+    }
+
     func loadCases() throws -> [[String: Any]] {
-        guard let url = Bundle.module.url(forResource: "radio-planner-cases", withExtension: "json"),
-              let data = try? Data(contentsOf: url),
-              let root = try JSONSerialization.jsonObject(with: data) as? [String: Any],
-              let cases = root["cases"] as? [[String: Any]] else {
-            XCTFail("radio-planner-cases.json missing or invalid")
-            return []
-        }
-        return cases
+        let url = try XCTUnwrap(Self.bundledRadioPlannerURL(), "radio-planner-cases.json missing in Bundle.module")
+        let data = try Data(contentsOf: url)
+        let root = try XCTUnwrap(JSONSerialization.jsonObject(with: data) as? [String: Any])
+        return try XCTUnwrap(root["cases"] as? [[String: Any]])
     }
 
     func testBundledVectorsByteMatchMaster() throws {
-        guard let bundledURL = Bundle.module.url(forResource: "radio-planner-cases", withExtension: "json") else {
-            XCTFail("Bundled radio-planner-cases.json missing")
-            return
-        }
+        let bundledURL = try XCTUnwrap(Self.bundledRadioPlannerURL())
         let masterURL = URL(fileURLWithPath: sourceRoot())
             .appendingPathComponent("packages/contracts/radio-planner/vectors/radio-planner-cases.json")
         let bundled = try Data(contentsOf: bundledURL)

@@ -21,6 +21,9 @@ let package = Package(
         .testTarget(
             name: "SOSMeshContractsTests",
             dependencies: ["SOSMeshContracts"],
-            resources: [.copy("Resources")]),
+            resources: [
+                .copy("Resources/golden-001.json"),
+                .copy("Resources/canonical-json-001.json"),
+            ]),
     ]
 )

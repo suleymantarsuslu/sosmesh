@@ -234,14 +234,14 @@ public struct SOSMeshCrypto {
         keyId: String
     ) throws -> Data {
         let info = "SOSMesh-\(protocolVersion)-\(keyId)-encryption".data(using: .utf8)!
-        
-        let derivedKey = HKDF<SHA256>.deriveKey(
-            inputKeyMaterial: SymmetricKey(data: sharedSecret),
+
+        let derivedKey = sharedSecret.hkdfDerivedSymmetricKey(
+            using: SHA256.self,
             salt: salt,
-            info: info,
+            sharedInfo: info,
             outputByteCount: 32
         )
-        
+
         return derivedKey.withUnsafeBytes { Data($0) }
     }
     
@@ -249,45 +249,8 @@ public struct SOSMeshCrypto {
      * Create canonical AAD (Associated Authenticated Data) for authenticated encryption.
      * AAD binds envelope metadata to the ciphertext.
      */
-    private static func createAAD(envelope: [String: Any], keyId: String) throws -> Data {
-        let sorted = sortKeys(envelope)
-        let aadObject: [String: Any] = [
-            "envelope": sorted,
-            "keyId": keyId,
-            "protocol": protocolVersion
-        ]
-        
-        let canonicalJSON = try toCanonicalJSON(aadObject)
-        return canonicalJSON.data(using: .utf8)!
-    }
-    
-    /**
-     * Recursively sort dictionary keys for canonical JSON serialization.
-     */
-    private static func sortKeys(_ obj: Any) -> Any {
-        if let dict = obj as? [String: Any] {
-            var sorted = [String: Any]()
-            for key in dict.keys.sorted() {
-                sorted[key] = sortKeys(dict[key]!)
-            }
-            return sorted
-        } else if let array = obj as? [Any] {
-            return array.map { sortKeys($0) }
-        } else {
-            return obj
-        }
-    }
-    
-    /**
-     * Convert object to canonical JSON string using JSONSerialization.
-     * Ensures cross-platform number formatting compatibility.
-     */
-    private static func toCanonicalJSON(_ obj: Any) throws -> String {
-        let jsonData = try JSONSerialization.data(withJSONObject: obj, options: [.sortedKeys, .withoutEscapingSlashes])
-        guard let jsonString = String(data: jsonData, encoding: .utf8) else {
-            throw CryptoError.encryptionFailed
-        }
-        return jsonString
+    static func createAAD(envelope: [String: Any], keyId: String) throws -> Data {
+        try CanonicalJSON.encodeAAD(envelope: envelope, keyId: keyId, protocolVersion: protocolVersion)
     }
 }
 

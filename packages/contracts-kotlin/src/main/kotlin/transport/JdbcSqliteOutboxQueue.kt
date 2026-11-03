@@ -46,7 +46,6 @@ class JdbcSqliteOutboxQueue(
                 } catch (_: Exception) {
                 }
             }
-            }
         }
 
     override suspend fun enqueue(

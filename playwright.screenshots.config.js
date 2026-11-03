@@ -41,6 +41,7 @@ module.exports = defineConfig({
         HOSTNAME: '127.0.0.1',
         JWT_SECRET: jwtSecret,
         NEXT_PUBLIC_API_URL: 'http://127.0.0.1:3001',
+        API_URL: 'http://127.0.0.1:3001',
       },
     },
   ],

@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useState } from 'react';
 
+import { useOperatorPreferences } from '../../components/operator/OperatorPreferencesProvider';
 import { pickActivePreview } from './pick-active-preview';
 import type { AssignmentPreviewRoute, AssignmentRecommendationRow } from './types';
 
@@ -12,6 +13,7 @@ type Props = {
 };
 
 export function AssignmentPreviewPanel({ incidentId, caseCoordinates, onPreviewChange }: Props) {
+  const { t } = useOperatorPreferences();
   const [items, setItems] = useState<AssignmentRecommendationRow[]>([]);
   const [role, setRole] = useState<'OPERATOR' | 'COORDINATOR' | 'ADMIN'>('OPERATOR');
   const [assigneeId, setAssigneeId] = useState('');
@@ -112,10 +114,9 @@ export function AssignmentPreviewPanel({ incidentId, caseCoordinates, onPreviewC
       aria-labelledby="assignment-preview-title"
       data-testid="assignment-preview-panel"
     >
-      <h2 id="assignment-preview-title">Atama önizlemesi (taslak)</h2>
+      <h2 id="assignment-preview-title">{t('web.cases.assignmentPreviewTitle')}</h2>
       <p className="assignment-preview__disclaimer" data-testid="assignment-preview-disclaimer">
-        Öneri, karar koordinatördedir. AI kurtarma/tedavi/triyaj kararı vermez; otomatik fiziksel
-        sevk yapılmaz.
+        {t('web.cases.assignmentDisclaimer')}
       </p>
       {message ? (
         <p role="status" data-testid="assignment-preview-message">
@@ -123,7 +124,7 @@ export function AssignmentPreviewPanel({ incidentId, caseCoordinates, onPreviewC
         </p>
       ) : null}
       {items.length === 0 ? (
-        <p data-testid="assignment-preview-empty">Onaylı kaynak kataloğunda eşleşme yok.</p>
+        <p data-testid="assignment-preview-empty">{t('web.cases.assignmentEmpty')}</p>
       ) : (
         <ul className="assignment-preview__list">
           {items.map((row) => (
@@ -142,8 +143,8 @@ export function AssignmentPreviewPanel({ incidentId, caseCoordinates, onPreviewC
                 </ul>
               ) : null}
               <p className="assignment-preview__freshness">
-                Veri yaşı: {row.dataFreshness.ageMinutes} dk
-                {row.dataFreshness.stale ? ' · bayat' : ''}
+                {t('web.cases.assignmentDataAge')}: {row.dataFreshness.ageMinutes} dk
+                {row.dataFreshness.stale ? ` · ${t('web.cases.assignmentStale')}` : ''}
               </p>
               <div className="assignment-preview__actions">
                 <button
@@ -153,7 +154,7 @@ export function AssignmentPreviewPanel({ incidentId, caseCoordinates, onPreviewC
                   onClick={() => reject(row.id)}
                   data-testid={`assignment-reject-${row.rank}`}
                 >
-                  Öneriyi reddet
+                  {t('web.cases.assignmentReject')}
                 </button>
                 <button
                   type="button"

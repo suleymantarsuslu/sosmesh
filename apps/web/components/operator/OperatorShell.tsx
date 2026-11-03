@@ -24,6 +24,7 @@ type NavConfig = { href: string; labelKey: string; roles?: string[] };
 const NAV: NavConfig[] = [
   { href: '/operator/dashboard', labelKey: 'web.shell.nav.dashboard' },
   { href: '/operator/cases', labelKey: 'web.shell.nav.cases' },
+  { href: '/operator/ai', labelKey: 'web.shell.nav.ai' },
   { href: '/operator/tasks', labelKey: 'web.shell.nav.tasks' },
   { href: '/operator/teams', labelKey: 'web.shell.nav.teams' },
   { href: '/operator/activity', labelKey: 'web.shell.nav.activity' },
@@ -43,6 +44,7 @@ function navItemsForRole(role: string, t: (key: string) => string) {
 const NAV_ICONS: Record<string, string> = {
   '/operator/dashboard': '▣',
   '/operator/cases': '◎',
+  '/operator/ai': '◈',
   '/operator/tasks': '☑',
   '/operator/teams': '◉',
   '/operator/activity': '↻',

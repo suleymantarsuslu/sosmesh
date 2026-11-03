@@ -42,6 +42,11 @@ export const HELP_REQUIRED_KEYS = [
   'web.help.contactEmailPlaceholder',
   'web.help.contactPhonePlaceholder',
   'web.help.sectionsNav',
+  'web.help.searchPlaceholder',
+  'web.help.allTopics',
+  'web.help.topicsTitle',
+  'web.help.faqTitle',
+  'web.help.contactTitle',
   ...HELP_SECTION_IDS.flatMap((id) => [
     HELP_I18N_KEYS[id].title,
     HELP_I18N_KEYS[id].body,

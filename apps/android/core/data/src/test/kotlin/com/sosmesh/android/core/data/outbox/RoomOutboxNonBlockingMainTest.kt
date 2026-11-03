@@ -240,4 +240,6 @@ private class LatchBlockingOutboxDao(
     override fun listDueRelayUpload(nowMs: Long): List<OutboxEntity> = delegate.listDueRelayUpload(nowMs)
 
     override fun listDueAndroidPeerSend(nowMs: Long): List<OutboxEntity> = delegate.listDueAndroidPeerSend(nowMs)
+
+    override fun listDueOwnUpload(nowMs: Long): List<OutboxEntity> = delegate.listDueOwnUpload(nowMs)
 }

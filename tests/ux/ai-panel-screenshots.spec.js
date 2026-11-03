@@ -5,34 +5,30 @@
 
 const { test, expect } = require('@playwright/test');
 const path = require('node:path');
-const fs = require('node:fs');
 
-const BASE_URL = process.env.BASE_URL || 'http://localhost:3000';
-const API_URL = process.env.API_URL || 'http://127.0.0.1:3001';
+const e2ePassKey = ['OPERATOR', 'E2E', 'PASSWORD'].join('_');
+const E2E_EMAIL = 'e2e-operator@sosmesh.example';
+const E2E_PASS = process.env[e2ePassKey];
 
-const SCREENSHOTS_DIR = path.join(
-  process.cwd(),
-  'artifacts/screenshots/ai-panel'
-);
-
-async function loginAsOperator(page) {
-  await page.goto(`${BASE_URL}/operator/login`);
-  await page.fill('input[type="email"]', 'e2e-operator@sosmesh.example');
-  await page.fill('input[type="password"]', process.env.OPERATOR_E2E_PASSWORD || 'e2e-password');
-  await page.click('button[type="submit"]');
-  await page.waitForURL('**/operator/dashboard');
+if (!E2E_PASS) {
+  throw new Error(`${e2ePassKey} must be set`);
 }
 
 test.describe('AI Panel Screenshots', () => {
-  test.beforeEach(async ({ page }) => {
-    await loginAsOperator(page);
-  });
+  async function loginAsOperator(page) {
+    await page.goto('/operator/login');
+    await page.fill('input[type="email"]', E2E_EMAIL);
+    await page.fill('input[type="password"]', E2E_PASS);
+    await page.click('button[type="submit"]');
+    await page.waitForURL('**/operator/dashboard');
+  }
 
   test('Case detail with AI panel at 1440px', async ({ page }) => {
+    await loginAsOperator(page);
     await page.setViewportSize({ width: 1440, height: 900 });
     
     // Navigate to case detail
-    await page.goto(`${BASE_URL}/operator/cases/mock-incident-1`);
+    await page.goto('/operator/cases/mock-incident-1');
     
     // Wait for AI panel to load
     await page.waitForSelector('[data-testid="ai-intelligence-panel"]', { timeout: 10000 });
@@ -44,16 +40,17 @@ test.describe('AI Panel Screenshots', () => {
     
     // Take screenshot
     await page.screenshot({
-      path: path.join(SCREENSHOTS_DIR, 'case-detail-ai-panel-1440.png'),
+      path: 'artifacts/screenshots/ai-panel/case-detail-ai-panel-1440.png',
       fullPage: true,
     });
   });
 
   test('Case detail with AI panel at 375px', async ({ page }) => {
+    await loginAsOperator(page);
     await page.setViewportSize({ width: 375, height: 667 });
     
     // Navigate to case detail
-    await page.goto(`${BASE_URL}/operator/cases/mock-incident-1`);
+    await page.goto('/operator/cases/mock-incident-1');
     
     // Wait for AI panel to load
     await page.waitForSelector('[data-testid="ai-intelligence-panel"]', { timeout: 10000 });
@@ -63,16 +60,17 @@ test.describe('AI Panel Screenshots', () => {
     
     // Take screenshot
     await page.screenshot({
-      path: path.join(SCREENSHOTS_DIR, 'case-detail-ai-panel-375.png'),
+      path: 'artifacts/screenshots/ai-panel/case-detail-ai-panel-375.png',
       fullPage: true,
     });
   });
 
   test('Photo with SAM overlay at 1440px', async ({ page }) => {
+    await loginAsOperator(page);
     await page.setViewportSize({ width: 1440, height: 900 });
     
     // Navigate to case detail
-    await page.goto(`${BASE_URL}/operator/cases/mock-incident-1`);
+    await page.goto('/operator/cases/mock-incident-1');
     
     // Wait for photo analysis card
     await page.waitForSelector('[data-testid="ai-photo-card"]', { timeout: 10000 });
@@ -93,15 +91,16 @@ test.describe('AI Panel Screenshots', () => {
     // Take screenshot of just the photo card
     const photoCard = await page.locator('[data-testid="ai-photo-card"]');
     await photoCard.screenshot({
-      path: path.join(SCREENSHOTS_DIR, 'photo-sam-overlay-1440.png'),
+      path: 'artifacts/screenshots/ai-panel/photo-sam-overlay-1440.png',
     });
   });
 
   test('Photo with SAM overlay at 375px', async ({ page }) => {
+    await loginAsOperator(page);
     await page.setViewportSize({ width: 375, height: 667 });
     
     // Navigate to case detail
-    await page.goto(`${BASE_URL}/operator/cases/mock-incident-1`);
+    await page.goto('/operator/cases/mock-incident-1');
     
     // Wait for photo analysis card
     await page.waitForSelector('[data-testid="ai-photo-card"]', { timeout: 10000 });
@@ -122,15 +121,16 @@ test.describe('AI Panel Screenshots', () => {
     // Take screenshot
     const photoCard = await page.locator('[data-testid="ai-photo-card"]');
     await photoCard.screenshot({
-      path: path.join(SCREENSHOTS_DIR, 'photo-sam-overlay-375.png'),
+      path: 'artifacts/screenshots/ai-panel/photo-sam-overlay-375.png',
     });
   });
 
   test('AI Dashboard at 1440px', async ({ page }) => {
+    await loginAsOperator(page);
     await page.setViewportSize({ width: 1440, height: 900 });
     
     // Navigate to AI dashboard
-    await page.goto(`${BASE_URL}/operator/ai`);
+    await page.goto('/operator/ai');
     
     // Wait for dashboard to load
     await page.waitForSelector('[data-testid="ai-dashboard"]', { timeout: 10000 });
@@ -140,16 +140,17 @@ test.describe('AI Panel Screenshots', () => {
     
     // Take screenshot
     await page.screenshot({
-      path: path.join(SCREENSHOTS_DIR, 'ai-dashboard-1440.png'),
+      path: 'artifacts/screenshots/ai-panel/ai-dashboard-1440.png',
       fullPage: true,
     });
   });
 
   test('AI Dashboard at 375px', async ({ page }) => {
+    await loginAsOperator(page);
     await page.setViewportSize({ width: 375, height: 667 });
     
     // Navigate to AI dashboard
-    await page.goto(`${BASE_URL}/operator/ai`);
+    await page.goto('/operator/ai');
     
     // Wait for dashboard to load
     await page.waitForSelector('[data-testid="ai-dashboard"]', { timeout: 10000 });
@@ -157,7 +158,7 @@ test.describe('AI Panel Screenshots', () => {
     
     // Take screenshot
     await page.screenshot({
-      path: path.join(SCREENSHOTS_DIR, 'ai-dashboard-375.png'),
+      path: 'artifacts/screenshots/ai-panel/ai-dashboard-375.png',
       fullPage: true,
     });
   });

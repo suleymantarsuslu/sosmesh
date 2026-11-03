@@ -125,6 +125,7 @@ html[data-theme='dark'] .operator-brand {
   backdrop-filter: blur(8px);
   min-height: 3.25rem;
   overflow-x: auto;
+  overflow-y: visible;
   scrollbar-width: thin;
 }
 
@@ -191,6 +192,15 @@ html[data-theme='dark'] .operator-topbar__search {
 .operator-topbar__theme {
   white-space: nowrap;
   font-size: var(--type-fontSize-sm, 0.875rem);
+}
+
+.operator-topbar__theme--icon {
+  width: 2.25rem;
+  height: 2.25rem;
+  padding: var(--space-1, 0.25rem);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
 }
 
 .operator-user-menu {

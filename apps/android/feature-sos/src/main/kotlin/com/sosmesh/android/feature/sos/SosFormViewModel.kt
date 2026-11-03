@@ -52,6 +52,11 @@ data class SosFormUiState(
     val savedMessageId: String? = null,
     val offlineMode: Boolean = true,
     val peerDeliveryHint: SosPeerDeliveryHint = SosPeerDeliveryHint.NONE,
+    val hasPhotoAttachment: Boolean = false,
+    val hasVoiceAttachment: Boolean = false,
+    val isRecording: Boolean = false,
+    val recordingDurationSeconds: Int = 0,
+    val uploadToken: String? = null,
 )
 
 @HiltViewModel
@@ -111,6 +116,28 @@ class SosFormViewModel
 
         fun setManualLng(value: String) {
             _uiState.update { it.copy(manualLng = value) }
+        }
+
+        fun setPhotoAttachment(hasPhoto: Boolean) {
+            _uiState.update { it.copy(hasPhotoAttachment = hasPhoto) }
+        }
+
+        fun startVoiceRecording() {
+            _uiState.update { it.copy(isRecording = true, recordingDurationSeconds = 0) }
+        }
+
+        fun updateRecordingDuration(seconds: Int) {
+            _uiState.update { it.copy(recordingDurationSeconds = seconds) }
+        }
+
+        fun stopVoiceRecording(save: Boolean) {
+            _uiState.update {
+                it.copy(
+                    isRecording = false,
+                    hasVoiceAttachment = save,
+                    recordingDurationSeconds = if (save) it.recordingDurationSeconds else 0
+                )
+            }
         }
 
         fun goToPreview() {

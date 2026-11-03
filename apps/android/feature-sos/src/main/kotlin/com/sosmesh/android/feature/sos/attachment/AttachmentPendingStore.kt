@@ -1,6 +1,7 @@
 package com.sosmesh.android.feature.sos.attachment
 
 import android.content.Context
+import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
@@ -26,7 +27,7 @@ data class PendingAttachmentRecord(
 class AttachmentPendingStore
     @Inject
     constructor(
-        private val context: Context,
+        @ApplicationContext private val context: Context,
     ) {
         private val json = Json { ignoreUnknownKeys = true }
         private val lock = ReentrantReadWriteLock()

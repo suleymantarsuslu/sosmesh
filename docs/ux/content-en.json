@@ -142,6 +142,7 @@
     },
     "shell": {
       "brand": "SOSMesh",
+      "defaultUser": "Operator",
       "commandPalette": "Command palette",
       "commandPlaceholder": "Search pages…",
       "commandShortcut": "Search commands (Ctrl+K)",
@@ -166,6 +167,29 @@
         "help": "Help"
       },
       "orgHeader": "Organization"
+    },
+    "login": {
+      "title": "Operator sign-in",
+      "not112": "SOSMesh does not replace official 112 emergency services.",
+      "email": "Email",
+      "password": "Password",
+      "submit": "Sign in",
+      "submitting": "Signing in…",
+      "errorInvalid": "Invalid email or password"
+    },
+    "marketing": {
+      "metaTitle": "SOSMesh — emergency mesh prototype",
+      "metaDescription": "Experimental offline BLE mesh SOS prototype with an operator coordination panel. Does not replace 112.",
+      "tagline": "Experimental emergency mesh communication prototype",
+      "not112Important": "IMPORTANT:",
+      "not112Body": "SOSMesh does not replace official 112 emergency services. This is an experimental emergency mesh network prototype.",
+      "operatorLoginCta": "Sign in to operator panel",
+      "operatorNavLogin": "Operator sign-in",
+      "help": "Help"
+    },
+    "admin": {
+      "title": "Administration",
+      "intro": "Only users with the admin role can access this area."
     },
     "teams": {
       "title": "Teams and resources",

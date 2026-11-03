@@ -13,11 +13,11 @@ import java.io.File
 @Config(sdk = [33])
 class FeatureRelayI18nParityTest {
     @Test
-    fun trAndEnStringKeys_match() {
+    fun englishAndTurkishStringKeys_match() {
         val moduleRoot = File("src/main/res")
-        val trKeys = readStringKeys(moduleRoot.resolve("values/strings.xml"))
-        val enKeys = readStringKeys(moduleRoot.resolve("values-en/strings.xml"))
-        assertEquals(trKeys, enKeys)
+        val enKeys = readStringKeys(moduleRoot.resolve("values/strings.xml"))
+        val trKeys = readStringKeys(moduleRoot.resolve("values-tr/strings.xml"))
+        assertEquals(enKeys, trKeys)
     }
 
     private fun readStringKeys(file: File): Set<String> {

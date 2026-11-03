@@ -36,6 +36,7 @@ fun PermissionRationaleScreen(
     onOpenSettings: () -> Unit,
     modifier: Modifier = Modifier,
     onNavigateBack: (() -> Unit)? = null,
+    languagePicker: (@Composable () -> Unit)? = null,
 ) {
     SosScreenScaffold(
         title = stringResource(R.string.permission_screen_title),
@@ -81,6 +82,7 @@ fun PermissionRationaleScreen(
                 }
             }
             Spacer(modifier = Modifier.height(SosSpacing.xs))
+            languagePicker?.invoke()
             Text(
                 text = stringResource(R.string.background_no_guarantee),
                 style = MaterialTheme.typography.bodySmall,

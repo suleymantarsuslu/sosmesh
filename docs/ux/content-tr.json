@@ -142,6 +142,7 @@
     },
     "shell": {
       "brand": "SOSMesh",
+      "defaultUser": "Operatör",
       "commandPalette": "Komut paleti",
       "commandPlaceholder": "Sayfa ara…",
       "commandShortcut": "Komut ara (Ctrl+K)",
@@ -166,6 +167,29 @@
         "help": "Yardım"
       },
       "orgHeader": "Kuruluş"
+    },
+    "login": {
+      "title": "Operatör girişi",
+      "not112": "SOSMesh, 112 resmî acil çağrı hizmetinin yerine geçmez.",
+      "email": "E-posta",
+      "password": "Şifre",
+      "submit": "Giriş yap",
+      "submitting": "Giriş yapılıyor…",
+      "errorInvalid": "Geçersiz e-posta veya şifre"
+    },
+    "marketing": {
+      "metaTitle": "SOSMesh — acil durum mesh prototipi",
+      "metaDescription": "112 yerine geçmeyen deneysel BLE mesh SOS prototipi ve operatör koordinasyon paneli.",
+      "tagline": "Deneysel acil durum mesh haberleşme prototipi",
+      "not112Important": "ÖNEMLİ:",
+      "not112Body": "SOSMesh, 112 resmî acil çağrı hizmetinin yerine geçmez. Deneysel bir acil durum haberleşme mesh ağı prototipidir.",
+      "operatorLoginCta": "Operatör paneline giriş",
+      "operatorNavLogin": "Operatör girişi",
+      "help": "Yardım"
+    },
+    "admin": {
+      "title": "Yönetim",
+      "intro": "Yalnızca yönetici rolü bu alana erişebilir."
     },
     "teams": {
       "title": "Ekipler ve kaynaklar",

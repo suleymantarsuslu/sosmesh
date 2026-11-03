@@ -21,6 +21,57 @@ body {
   max-width: 42rem;
 }
 
+.marketing-home__nav {
+  position: sticky;
+  top: 0;
+  z-index: 10;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-3, 0.75rem);
+  padding: var(--space-3, 0.75rem) 0;
+  margin-bottom: var(--space-4, 1rem);
+  background: color-mix(in srgb, var(--color-surface-primary) 92%, transparent);
+  backdrop-filter: blur(8px);
+}
+
+.marketing-home__nav-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-2, 0.5rem);
+}
+
+.marketing-home__locale {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2, 0.5rem);
+  font-size: var(--type-fontSize-sm, 0.875rem);
+}
+
+.locale-switcher__label {
+  clip: rect(0 0 0 0);
+  clip-path: inset(50%);
+  height: 1px;
+  overflow: hidden;
+  position: absolute;
+  white-space: nowrap;
+  width: 1px;
+}
+
+.operator-topbar__locale {
+  display: none;
+  align-items: center;
+  gap: var(--space-2, 0.5rem);
+  font-size: var(--type-fontSize-sm, 0.875rem);
+}
+
+@media (min-width: 1024px) {
+  .operator-topbar__locale {
+    display: flex;
+  }
+}
+
 .marketing-home__header {
   display: flex;
   align-items: center;

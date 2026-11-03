@@ -17,7 +17,9 @@ import com.sosmesh.android.R
 import com.sosmesh.android.core.design.components.SosNot112Banner
 import com.sosmesh.android.core.design.components.SosScreenScaffold
 import com.sosmesh.android.core.design.components.SosScrollableScreenContent
+import com.sosmesh.android.core.design.components.SosLanguagePicker
 import com.sosmesh.android.core.design.theme.SosSpacing
+import com.sosmesh.android.locale.AppLocaleController
 
 @Composable
 fun SettingsRoute(
@@ -25,6 +27,8 @@ fun SettingsRoute(
     viewModel: SettingsViewModel = hiltViewModel(),
 ) {
     val state by viewModel.uiState.collectAsState()
+    val context = androidx.compose.ui.platform.LocalContext.current
+    val languageTag = AppLocaleController.readStoredTag(context)
     SosScreenScaffold(
         title = stringResource(R.string.settings_title),
         onNavigateBack = onBack,
@@ -35,6 +39,12 @@ fun SettingsRoute(
                 showCall112 = true,
             )
             Text(stringResource(R.string.settings_data_control_intro), style = MaterialTheme.typography.bodyMedium)
+            SosLanguagePicker(
+                selectedLanguageTag = languageTag,
+                onLanguageSelected = { tag ->
+                    AppLocaleController.setApplicationLanguage(context.applicationContext, tag)
+                },
+            )
             RowToggle(
                 label = stringResource(R.string.settings_high_contrast),
                 checked = state.highContrast,

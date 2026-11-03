@@ -1,13 +1,16 @@
 import type { Metadata } from 'next';
 
+import { OperatorPreferencesProvider } from '../components/operator/OperatorPreferencesProvider';
 import { ToastProvider } from '../components/ui/ToastProvider';
+import { translate, DEFAULT_LOCALE } from '../lib/i18n/operator-messages';
+
 import './globals.css';
 import './design-system.css';
 import './operator.css';
 
 export const metadata: Metadata = {
-  title: 'SOSMesh Operator Dashboard',
-  description: 'Emergency mesh network operator dashboard',
+  title: translate(DEFAULT_LOCALE, 'web.marketing.metaTitle'),
+  description: translate(DEFAULT_LOCALE, 'web.marketing.metaDescription'),
 };
 
 export default function RootLayout({
@@ -16,12 +19,14 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-    <html lang="tr">
+    <html lang={DEFAULT_LOCALE} suppressHydrationWarning>
       <head>
         <link rel="stylesheet" href="/tokens.css" />
       </head>
       <body>
-        <ToastProvider>{children}</ToastProvider>
+        <OperatorPreferencesProvider>
+          <ToastProvider>{children}</ToastProvider>
+        </OperatorPreferencesProvider>
       </body>
     </html>
   );

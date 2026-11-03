@@ -5,6 +5,7 @@ import { usePathname, useRouter } from 'next/navigation';
 import { Suspense, useEffect, useMemo, useState, type ReactNode } from 'react';
 
 import { SosMeshLogo } from '../brand/SosMeshLogo';
+import { LocaleSwitcher } from '../i18n/LocaleSwitcher';
 import { Button } from '../ui/Button';
 
 import { CommandPalette } from './CommandPalette';
@@ -107,7 +108,7 @@ export function OperatorShell({
         </nav>
         <ThemeLocaleControls />
         <div className="operator-user">
-          <p>{user.displayName || user.email || 'Operatör'}</p>
+          <p>{user.displayName || user.email || t('web.shell.defaultUser')}</p>
           <Button variant="ghost" onClick={logout}>
             {t('web.shell.logout')}
           </Button>
@@ -135,6 +136,7 @@ export function OperatorShell({
           <Button variant="ghost" onClick={() => setPaletteOpen(true)}>
             {t('web.shell.commandShortcut')}
           </Button>
+          <LocaleSwitcher className="operator-topbar__locale" testId="operator-topbar-locale" />
         </header>
         <main id="operator-main" className="operator-main" tabIndex={-1}>
           {children}

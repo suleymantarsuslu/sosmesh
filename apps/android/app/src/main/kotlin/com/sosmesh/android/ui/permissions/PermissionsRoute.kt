@@ -14,6 +14,8 @@ import com.sosmesh.android.core.permissions.AppSettingsIntents
 import com.sosmesh.android.core.permissions.PermissionFlowCoordinator
 import com.sosmesh.android.core.permissions.PermissionRequestOutcome
 import com.sosmesh.android.core.permissions.R
+import com.sosmesh.android.core.design.components.SosLanguagePicker
+import com.sosmesh.android.locale.AppLocaleController
 import com.sosmesh.android.core.permissions.ui.PermissionRationaleScreen
 import com.sosmesh.android.core.permissions.ui.PermissionScreenState
 import dagger.hilt.EntryPoint
@@ -96,5 +98,13 @@ fun PermissionsRoute(onBack: () -> Unit) {
             context.startActivity(AppSettingsIntents.applicationDetails(context))
         },
         onNavigateBack = onBack,
+        languagePicker = {
+            SosLanguagePicker(
+                selectedLanguageTag = AppLocaleController.readStoredTag(context),
+                onLanguageSelected = { tag ->
+                    AppLocaleController.setApplicationLanguage(context.applicationContext, tag)
+                },
+            )
+        },
     )
 }

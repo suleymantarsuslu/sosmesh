@@ -3,11 +3,13 @@
 import { useRouter, useSearchParams } from 'next/navigation';
 import { FormEvent, useState } from 'react';
 
+import { useOperatorPreferences } from '../../../../components/operator/OperatorPreferencesProvider';
 import { Button } from '../../../../components/ui/Button';
 
 export function LoginForm() {
   const router = useRouter();
   const searchParams = useSearchParams();
+  const { t } = useOperatorPreferences();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState<string | null>(null);
@@ -24,7 +26,7 @@ export function LoginForm() {
     });
     setLoading(false);
     if (!res.ok) {
-      setError('Geçersiz e-posta veya şifre');
+      setError(t('web.login.errorInvalid'));
       return;
     }
     const next = searchParams.get('next') ?? '/operator/dashboard';
@@ -34,7 +36,7 @@ export function LoginForm() {
 
   return (
     <form className="login-form" onSubmit={onSubmit} data-testid="login-form">
-      <label htmlFor="email">E-posta</label>
+      <label htmlFor="email">{t('web.login.email')}</label>
       <input
         id="email"
         name="email"
@@ -43,8 +45,9 @@ export function LoginForm() {
         required
         value={email}
         onChange={(e) => setEmail(e.target.value)}
+        data-testid="login-email"
       />
-      <label htmlFor="password">Şifre</label>
+      <label htmlFor="password">{t('web.login.password')}</label>
       <input
         id="password"
         name="password"
@@ -54,14 +57,15 @@ export function LoginForm() {
         minLength={8}
         value={password}
         onChange={(e) => setPassword(e.target.value)}
+        data-testid="login-password"
       />
       {error ? (
         <p className="login-form__error" role="alert">
           {error}
         </p>
       ) : null}
-      <Button type="submit" disabled={loading}>
-        {loading ? 'Giriş yapılıyor…' : 'Giriş yap'}
+      <Button type="submit" disabled={loading} data-testid="login-submit">
+        {loading ? t('web.login.submitting') : t('web.login.submit')}
       </Button>
     </form>
   );

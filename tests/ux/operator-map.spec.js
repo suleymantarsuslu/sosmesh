@@ -14,9 +14,9 @@ if (!E2E_PASS) {
 
 async function login(page) {
   await page.goto('/operator/login');
-  await page.getByLabel('E-posta').fill(E2E_EMAIL);
-  await page.getByLabel('Şifre').fill(E2E_PASS);
-  await page.getByRole('button', { name: 'Giriş yap' }).click();
+  await page.getByTestId('login-email').fill(E2E_EMAIL);
+  await page.getByTestId('login-password').fill(E2E_PASS);
+  await page.getByTestId('login-submit').click();
   await expect(page).toHaveURL(/\/operator\/dashboard/);
 }
 

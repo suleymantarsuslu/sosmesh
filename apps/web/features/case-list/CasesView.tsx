@@ -168,7 +168,7 @@ export function CasesView({ initialCases }: { initialCases: OperatorCaseRow[] })
            feed.mode === 'sse' ? t('web.cases.liveConnected') :
            t('web.cases.livePolling')}
           {feed.connected && feed.lastEventAt && (Date.now() - feed.lastEventAt > 30000) && 
-            ` (${t('web.cases.liveUpdatedAgo', { time: formatTimeAgo(now - feed.lastEventAt) })})`}
+            ` (${t('web.cases.liveUpdatedAgo').replace('{{time}}', formatTimeAgo(now - feed.lastEventAt))})`}
         </div>
         <CaseFilters filters={filters} onChange={setFilters} />
         <button type="button" className="cases-view__refresh-button" onClick={() => refreshCases()} aria-label={t('web.cases.refreshList')}>

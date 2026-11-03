@@ -26,7 +26,8 @@
 | Entitlements | `SOSMesh/SOSMesh.entitlements` (boş sözlük — BLE arka plan **yalnızca** `Info.plist` `UIBackgroundModes`) |
 | iOS gizlilik manifesti | `SOSMesh/PrivacyInfo.xcprivacy` |
 | watchOS gizlilik | `apps/watchos/SOSMeshWatch/PrivacyInfo.xcprivacy`, `SOSMeshWatchWidgets/PrivacyInfo.xcprivacy` |
-| İzin metinleri TR/EN | `SOSMesh/tr.lproj/InfoPlist.strings`, `en.lproj/InfoPlist.strings` + taban `Info.plist` |
+| İzin metinleri TR/EN | `SOSMesh/tr.lproj/InfoPlist.strings`, `en.lproj/InfoPlist.strings` + taban `Info.plist` (`NSBluetoothAlwaysUsageDescription`, `NSLocationWhenInUseUsageDescription`, `NSUserNotificationsUsageDescription` — TR) |
+| Açılış izin kapısı | `PermissionGateView` + `PermissionGateEvaluator` (unit test); fiziksel izin akışı **NOT_TESTED** |
 | Archive + export | `scripts/archive-export.sh`, `scripts/ExportOptions.template.plist` |
 
 ### Capabilities / arka plan gözden geçirmesi

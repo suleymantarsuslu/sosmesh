@@ -282,6 +282,9 @@ export class VoiceTranscriptionService {
         kind: 'triage',
         incidentId: attachment.incidentId,
         sosMessageId: attachment.sosMessageId ?? undefined,
+        // Idempotency key must differ from the ingest-time triage job, otherwise this enqueue
+        // returns the already-completed text-only triage and the transcript is never analysed.
+        metadata: { transcriptId: transcript.id },
       });
 
       return {

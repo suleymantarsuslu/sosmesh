@@ -4,7 +4,6 @@ import android.content.Context
 import androidx.work.ExistingWorkPolicy
 import androidx.work.OneTimeWorkRequestBuilder
 import androidx.work.WorkManager
-import com.sosmesh.android.core.data.outbox.OutboxUploadScheduler
 import dagger.hilt.android.qualifiers.ApplicationContext
 import java.util.concurrent.TimeUnit
 import javax.inject.Inject
@@ -15,7 +14,7 @@ class RelayUploadScheduler
     @Inject
     constructor(
         @ApplicationContext private val context: Context,
-    ) : OutboxUploadScheduler, RelayUploadCommands {
+    ) : RelayUploadCommands {
         override fun scheduleUpload(
             nowMs: Long,
             delayMs: Long,

@@ -9,12 +9,13 @@
 ## Executive Summary
 
 This document provides test evidence for SOSMesh's Meta AI Hackathon submission. Results are categorized as:
-- ✅ **PASS** — Verified with evidence
-- ⚠️ **PENDING** — Not yet run (clearly marked)
+- ✅ **PASS** — Verified with concrete evidence (test file + baseline/CI evidence)
+- ⚠️ **PENDING** — Implementation exists but no committed evidence file documenting live run
 - ❌ **FAIL** — Failed with documented cause
-- 🔍 **PARTIAL** — Partially verified, limitations documented
 
-**Red Line:** We do NOT invent test results. If something hasn't been tested, it's marked **PENDING** with an explanation.
+**Red Line:** We do NOT invent test results. If something hasn't been tested or documented with evidence, it's marked **PENDING**.
+
+**Current Status:** AI implementation merged to main (`c61c109`, PRs #79-#84), but live smoke test runs are not documented in committed evidence files. Most items are PENDING because implementations exist but lack evidence files proving live execution.
 
 ---
 
@@ -22,47 +23,43 @@ This document provides test evidence for SOSMesh's Meta AI Hackathon submission.
 
 ### 1.1 GitHub Actions CI
 
-**Latest Run (PR #79 - AI Foundation):**
+**Historical Snapshot (PR #79 - Before Later Fixes):**
 - **URL:** https://github.com/suleymantarsuslu/sosmesh/actions/runs/41642455767
-- **Status:** ⏳ In Progress
-- **Commit:** `de86a4b` (cursor/ai-foundation-8a90)
+- **Status:** Reference only (PR #79 merged, later PRs added fixes)
+- **Note:** This CI run was on PR #79 before subsequent fixes in PRs #80-#84
 
-**Test Suites:**
-```
-Test Suites: 3 failed, 31 passed, 34 total
-Tests:       10 failed, 215 passed, 225 total
-```
+**Current Main Branch:**
+- **Commit:** `c61c109` (Merge PR #82)
+- **Status:** PRs #79-#84 now merged to main
+- **Merged PRs:** #79 (AI Foundation), #80 (Voice), #81 (Fusion/Copilot), #82 (Vision), #83 (AI UI), #84 (CI resources)
 
-**Passed Suites (31):** ✅
-- Core API tests (ingest, operator, cases)
-- Database migrations (up/down/up cycle)
-- Contract validation
-- Security tests (secret scan, no PII leaks)
-- Audio conversion argument validation
-- Fusion scoring algorithm
+**Baseline Test Evidence (Pre-AI, Gate H):**
+- **File:** `docs/handover/evidence/gate-h/pnpm-test-full.txt`
+- **Results:** 18 test suites passed, 91 tests passed
+- **Note:** This is the pre-AI baseline; AI test files added in PRs #79-#82
 
-**Failed Suites (3):** ❌ Pre-existing on `origin/main`
-- `ai-worker.spec.ts` (10 tests) — Pre-existing failure, not caused by PR #79
-- `backup-adim49.spec.ts` (1 test) — Pre-existing failure
-- `recommendation-adim46.spec.ts` (12 tests) — Pre-existing failure
+**AI Test Files (Merged to Main):**
+- ✅ `apps/api/test/fusion-score.spec.ts` — Deterministic fusion scoring
+- ✅ `apps/api/test/fusion-confirm-no-merge.spec.ts` — Link confirmation workflow
+- ✅ `apps/api/test/voice-conversion.spec.ts` — FFmpeg argument validation
+- ✅ `apps/api/test/voice-transcription-failure.spec.ts` — SOS unaffected by transcription failure
 
-**Evidence:** PR #79 description documents identical failures on `origin/main` baseline  
-**Conclusion:** AI Foundation PR does not introduce new test failures
+**Evidence:** Git history shows test files committed; specific CI runs for final merged main not yet documented in repo
 
 ### 1.2 Lint & Type Checks
 
-**ESLint:** ✅ PASS (exit 0)  
-**TypeScript:** ✅ PASS (exit 0)  
-**Prettier:** ✅ PASS (exit 0)  
-**Secret Scan:** ✅ PASS (exit 0) — No API keys in repository
+**Status:** ⚠️ PENDING full CI run documentation for merged main
 
-**Evidence:** PR #79, #80, #81 CI logs
+**Expected (Based on PR CI):**
+- ESLint, TypeScript, Prettier, Secret Scan all passed in PR branches
+- No specific CI run URL documented for merged `c61c109` commit
 
 ### 1.3 OpenAPI Schema Generation
 
-**Status:** ✅ PASS  
-**Check:** `pnpm openapi:check` (exit 0)  
-**Generated:** `apps/api/openapi.json` with AI endpoints included
+**Status:** ⚠️ PENDING verification on merged main
+
+**Expected:** `pnpm openapi:check` should pass with AI endpoints
+**Note:** No specific CI evidence file for this check yet documented
 
 ---
 
@@ -70,70 +67,63 @@ Tests:       10 failed, 215 passed, 225 total
 
 ### 2.1 Muse Spark 1.3 Triage
 
-**Status:** ✅ PASS (Real API verified)
+**Status:** ⚠️ PENDING (Smoke test script exists, live run not documented in repo)
 
-**Smoke Test:** `scripts/ai-smoke/triage.mjs`  
-**Evidence:** PR #79 documents successful live API calls with:
-- Turkish SOS: "Bina çöktü, 3. katta 2 kişi mahsur kaldı"
-- English SOS: "Building collapsed, 3rd floor, 2 people trapped"
-- Latency: 11-16 seconds per call
-- Reasoning tokens: 1000-2500 per call
-- Budget tracking: Reserved $0.002, reconciled with actual usage
+**Smoke Test Script:**
+- **File:** `apps/api/scripts/ai-smoke/triage.mjs` (exists in main)
+- **Usage:** `MODEL_API_KEY=your-key node apps/api/scripts/ai-smoke/triage.mjs`
 
-**Output Validation:**
-- ✅ JSON schema validation passes
-- ✅ Urgency classification (critical/high/medium/low)
-- ✅ Person count extraction (when stated)
-- ✅ Needs array (rescue, medical, etc.)
-- ✅ Hazards array (fire, unstable_structure)
-- ✅ Source quotes cite original text
-- ✅ `null` for missing data (no hallucination)
+**Expected Capabilities (from implementation):**
+- JSON schema validation
+- Urgency classification (critical/high/medium/low)
+- Person count extraction
+- Needs/hazards arrays
+- Source quotes from original text
+- `null` for missing data (no hallucination)
 
-**Test Count:** 5/5 cases passed (TR/EN)
+**Why Pending:**
+- Smoke test script committed but no evidence file of live run
+- PR #79 description claims 5/5 cases passed but no committed output file
+- To mark PASS: Run script with real API key, save output to `docs/evidence/ai-smoke-triage.json`
 
 ### 2.2 Muse Voice Transcribe 1.0
 
-**Status:** ⚠️ PENDING (Smoke test ready, not live-verified yet)
+**Status:** ⚠️ PENDING (Smoke test script exists, live run not documented in repo)
 
-**Smoke Test Script:** `scripts/ai-smoke/voice.mjs`  
+**Smoke Test Script:**
+- **File:** `scripts/ai-smoke/voice.mjs` (exists in main)
+- **Usage:** `MODEL_API_KEY=your-key node scripts/ai-smoke/voice.mjs`
+
 **Requirements:**
 - espeak-ng or FFmpeg for synthetic audio generation
 - Live Meta AI API key
 
 **Why Pending:**
-- Smoke test script exists and generates synthetic Turkish audio
-- Real API call not executed with Meta credentials yet
-- English transcription verified in smoke test audit
-
-**Next Steps:**
-- Run with real `MODEL_API_KEY` before demo
-- Verify Turkish transcription accuracy
-- Document latency and cost per audio hour
+- Smoke test script committed but no evidence file of live run
+- To mark PASS: Run script with real API key, save output to `docs/evidence/ai-smoke-voice.json`
 
 ### 2.3 SAM 3.1 Photo Segmentation
 
-**Status:** ⚠️ PENDING (Implementation complete, live test pending)
+**Status:** ⚠️ PENDING (Smoke test script exists, live run not documented in repo)
 
-**Implementation:** PR #82 (cursor/ai-vision-wp-c-f85f)  
-**Smoke Test:** Not yet documented in PR
+**Smoke Test Script:**
+- **File:** `scripts/ai-smoke/vision.mjs` (exists in main)
+- **Usage:** `MODEL_API_KEY=your-key node scripts/ai-smoke/vision.mjs`
+
+**Implementation:** Merged in PR #82
 
 **Why Pending:**
-- Vision analysis service implemented
-- SAM response parsing complete
-- Live API call with disaster photo not verified yet
-
-**Next Steps:**
-- Capture test disaster photo (synthetic/public domain)
-- Verify bounding box + mask format
-- Test canvas overlay rendering in operator dashboard
+- Vision analysis service implemented and merged
+- Smoke test script committed but no evidence file of live run
+- To mark PASS: Run script with real API key and disaster photo, save output to `docs/evidence/ai-smoke-vision.json`
 
 ### 2.4 Signal Fusion (Deterministic + AI)
 
-**Status:** ✅ PASS (Deterministic), ⚠️ PENDING (AI Rationale)
+**Status:** ✅ PASS (Deterministic unit tests), ⚠️ PENDING (AI Rationale live test)
 
 **Deterministic Scoring:**
-- **Test File:** `apps/api/test/fusion-score.spec.ts`
-- **Status:** ✅ PASS
+- **Test File:** `apps/api/test/fusion-score.spec.ts` (exists in main)
+- **Status:** ✅ PASS (unit test passes)
 - **Coverage:**
   - Nearby same-type incidents → high score (≥0.6)
   - Distant incidents → low score (<0.6)
@@ -141,52 +131,46 @@ Tests:       10 failed, 215 passed, 225 total
   - Time proximity within 1-hour window
   - Needs/hazards Jaccard similarity
 
+**Integration Test:**
+- **File:** `apps/api/test/fusion-confirm-no-merge.spec.ts` (exists in main)
+- **Status:** ✅ PASS (unit test passes)
+- **Verified:** Confirming link does NOT auto-merge incidents (both remain separate)
+
 **AI Rationale Generation:**
 - **Status:** ⚠️ PENDING
-- **Smoke Test:** `scripts/ai-smoke/copilot.mjs` includes fusion queries
-- **Why Pending:** Real API call with Spark semantic analysis not live-verified
-
-**Integration Test:**
-- **File:** `apps/api/test/fusion-confirm-no-merge.spec.ts`
-- **Status:** ✅ PASS
-- **Verified:** Confirming link does NOT auto-merge incidents (both remain separate)
+- **Smoke Test Script:** `scripts/ai-smoke/copilot.mjs` includes fusion queries
+- **Why Pending:** Real API call with Spark semantic analysis not documented in evidence file
 
 ### 2.5 Mission Copilot
 
-**Status:** ⚠️ PENDING (Implementation complete, smoke test ready)
+**Status:** ⚠️ PENDING (Smoke test script exists, live run not documented in repo)
 
-**Smoke Test:** `scripts/ai-smoke/copilot.mjs`  
-**Endpoint:** `POST /v1/operator/copilot/ask`
+**Smoke Test Script:**
+- **File:** `scripts/ai-smoke/copilot.mjs` (exists in main)
+- **Usage:** `MODEL_API_KEY=your-key OPERATOR_TOKEN=your-token node scripts/ai-smoke/copilot.mjs`
+
+**Implementation:** Merged in PR #81
 
 **Why Pending:**
-- Copilot service implemented (PR #81)
-- Smoke test script ready
-- Real API call not executed yet
-
-**Next Steps:**
-- Run with real `MODEL_API_KEY` and `OPERATOR_TOKEN`
-- Verify cited incident links
-- Test prompt injection protection
+- Copilot service implemented and merged
+- Smoke test script committed but no evidence file of live run
+- To mark PASS: Run script with real credentials, save output to `docs/evidence/ai-smoke-copilot.json`
 
 ### 2.6 Budget Guard Enforcement
 
-**Status:** 🔍 PARTIAL (Database-backed ledger implemented, live budget exhaustion test pending)
+**Status:** ⚠️ PENDING (Implementation complete, live budget exhaustion test not documented)
 
-**Unit Test Coverage:**
-- ✅ Pre-flight budget check (reserve cost)
-- ✅ Post-flight reconciliation (actual cost)
-- ✅ Daily/total budget limits enforced
-- ✅ Pessimistic locking (concurrent workers)
+**Implementation:**
+- **File:** `apps/api/src/ai/budget-guard.service.ts` (exists in main)
+- Database-backed ledger
+- Pre-flight reserve, post-flight reconciliation
+- Daily/total budget limits
 
-**Why Partial:**
-- Budget guard service tested in unit tests
-- Real Meta AI cost reconciliation not verified at scale
-- Budget exhaustion behavior (jobs marked `blocked_budget`) not tested
-
-**Next Steps:**
-- Set low budget cap (e.g., $1) and exhaust it
-- Verify jobs marked `blocked_budget`
-- Confirm SOS ingestion continues normally
+**Why Pending:**
+- Budget guard service implemented and merged
+- No unit test file specifically for budget guard found in test directory
+- Live budget exhaustion test not documented in evidence file
+- To mark PASS: Create budget exhaustion test, save results to `docs/evidence/budget-guard-test.json`
 
 ---
 
@@ -258,28 +242,26 @@ Tests:       10 failed, 215 passed, 225 total
 
 **Status:** ✅ PASS
 
-**Test:** `POST /v1/ingest` with encrypted SOS envelope  
-**Verification:**
-- ✅ Duplicate detection (messageId uniqueness)
-- ✅ Server decryption with private key
-- ✅ Storage in `sos_messages` and `incidents` tables
-- ✅ Signed receipt returned to relay
-- ✅ SSE feed notifies operator dashboard
+**Test Files:**
+- `apps/api/test/ingest.spec.ts` (exists in main)
+- `apps/api/test/duplicate-message.spec.ts` (exists in main)
 
-**Evidence:** Integration tests in `apps/api/test/`
+**Evidence:** Test files committed to repository, baseline test run in `docs/handover/evidence/gate-h/pnpm-test-full.txt` shows ingest tests passing
 
 ### 4.2 Operator Dashboard (No AI)
 
-**Status:** ✅ PASS
+**Status:** ⚠️ PENDING (Implementation complete, no formal test evidence documented)
 
-**Tests:**
-- ✅ Case list view renders incidents
-- ✅ Map markers show location (if available)
-- ✅ Case detail page opens
-- ✅ `OPERATOR_SEEN` event logged
-- ✅ Status transitions (LOCAL_SAVED → PEER_RECEIVED → SERVER_ACCEPTED)
+**Test Files:**
+- `apps/web/features/case-list/filter-cases.test.ts` (exists in main)
+- `apps/web/features/case-list/geo.test.ts` (exists in main)
+- `apps/web/features/cases/ai-panel.test.ts` (exists in main)
 
-**Evidence:** Manual testing on localhost:3000
+**Evidence:** Test files exist; baseline run in `docs/handover/evidence/gate-h/pnpm-test-full.txt` shows 15 web tests passing
+
+**Why Pending for comprehensive verification:**
+- Manual end-to-end operator flow not documented with evidence
+- No screenshots or test report for case detail, map view, OPERATOR_SEEN event
 
 ### 4.3 AI Augmentation (End-to-End)
 
@@ -309,15 +291,16 @@ Tests:       10 failed, 215 passed, 225 total
 
 ### 5.1 Encryption Verification
 
-**Status:** ✅ PASS
+**Status:** ⚠️ PENDING (Encryption implemented, specific relay-cannot-decrypt test not found)
 
-**Tests:**
-- ✅ Relay device cannot decrypt SOS payload (integration test)
-- ✅ Server decrypts with correct private key
-- ✅ Key mismatch returns decryption error
-- ✅ Plaintext never logged
+**Implementation:**
+- E2E encryption with server public key exists
+- Decryption in backend with private key exists
 
-**Evidence:** Unit tests in `apps/api/test/`
+**Why Pending:**
+- No specific test file named `*encryption*.spec.ts` or `*decrypt*.spec.ts` found
+- Encryption tests may be part of ingest tests but not explicitly documented
+- To mark PASS: Point to specific test file that verifies relay cannot decrypt
 
 ### 5.2 Secret Scan
 
@@ -335,13 +318,9 @@ Tests:       10 failed, 215 passed, 225 total
 
 **Status:** ✅ PASS
 
-**Tests:**
-- ✅ GPS coordinates masked in logs (`[REDACTED_GPS]`)
-- ✅ SOS text masked in logs (`[REDACTED_TEXT]`)
-- ✅ Phone numbers, emails redacted
-- ✅ Meta AI does NOT receive GPS or device ID
+**Test File:** `apps/api/test/audit-redaction.util.spec.ts` (exists in main)
 
-**Evidence:** Log redaction utilities in `apps/api/src/observability/`
+**Evidence:** Baseline test run in `docs/handover/evidence/gate-h/pnpm-test-full.txt` includes audit-redaction tests passing
 
 ### 5.4 Prompt Injection Protection
 
@@ -390,18 +369,18 @@ Tests:       10 failed, 215 passed, 225 total
 
 ### 6.3 AI Cost Per Incident
 
-**Status:** 🔍 PARTIAL (Estimated, not empirically verified at scale)
+**Status:** ⚠️ PENDING (No committed cost data or pricing file)
 
-**Estimates (from smoke tests):**
-- Triage: ~$0.002 per call
-- Voice transcribe: ~$0.18/hour
-- SAM segmentation: ~$0.01 per image (estimated)
-- Fusion rationale: ~$0.001 per pair (estimated)
+**Cost Estimation:**
+- No committed config or pricing file found in repository
+- No evidence file with measured costs from smoke tests
+- Meta AI pricing would need to be referenced from official Meta docs
 
-**Why Partial:**
-- Based on smoke test token counts and Meta pricing docs
-- Not verified with production-scale load
-- Reasoning token costs variable by complexity
+**Why Pending:**
+- Cost figures require either:
+  1. Committed evidence file with actual API response usage data, OR
+  2. Reference to committed pricing config file with estimates
+- To document costs: Run smoke tests, save API response usage data to `docs/evidence/ai-costs.json`
 
 ---
 
@@ -409,19 +388,22 @@ Tests:       10 failed, 215 passed, 225 total
 
 ### 7.1 Demo Seed Script
 
-**Status:** ✅ PASS (Script ready, not executed with live API)
+**Status:** ⚠️ PENDING (Script exists, not executed with live API)
 
-**Script:** `scripts/demo/seed-synthetic.mjs`  
-**Features:**
-- ✅ Creates 8-10 synthetic SOSs
-- ✅ 2-3 form fusion group (same event, nearby locations)
-- ✅ All marked `synthetic: true`
-- ✅ Text includes "SENTETİK DEMO" label
-- ✅ Idempotent (checks for existing messageId)
+**Script Location:**
+- **File:** `scripts/demo/seed-synthetic.mjs` (NOT found in main branch git ls-tree)
+- **Alternative:** May be in PR branch, not yet merged
 
-**Why Not Executed Yet:**
-- Requires live `MODEL_API_KEY` and `OPERATOR_TOKEN`
-- Ready to run for demo walkthrough
+**Expected Features:**
+- Creates 8-10 synthetic SOSs
+- 2-3 form fusion group (same event, nearby locations)
+- All marked `synthetic: true`
+- Text includes "SENTETİK DEMO" label
+
+**Why Pending:**
+- Script existence in main not confirmed by git ls-tree
+- If script exists: needs execution with live credentials to generate evidence
+- To mark PASS: Verify script is in main, execute it, save output to `docs/evidence/demo-seed-output.json`
 
 ### 7.2 Video Demo Recording
 
@@ -449,16 +431,17 @@ Tests:       10 failed, 215 passed, 225 total
 
 ### 8.1 Android Tests
 
-**Status:** ✅ PASS (Instrumented tests)
+**Status:** ⚠️ PENDING (Test files exist, CI run not documented)
 
-**Test Coverage:**
-- ✅ SOS form validation
-- ✅ Local queue persistence
-- ✅ BLE advertisement
-- ✅ Encryption with server public key
-- ✅ UI instrumented tests (Compose)
+**Test Files:**
+- Android instrumented test directory: `apps/android/app/src/androidTest/` (expected location)
+- Unit test directory: `apps/android/app/src/test/` (expected location)
 
-**Evidence:** `apps/android/app/src/androidTest/`
+**Why Pending:**
+- Android test files exist in repository structure
+- No CI run documented for Android tests (GitHub Actions CI doesn't include Android build)
+- Physical device testing documented as `NOT_TESTED` in `docs/tests/m0-physical-report.md`
+- To mark PASS: Run Android instrumented tests, save output to `docs/evidence/android-test-results.txt`
 
 ### 8.2 iOS Tests
 
@@ -508,16 +491,22 @@ Tests:       10 failed, 215 passed, 225 total
 
 ### 9.2 Environment Variable Validation
 
-**Status:** ✅ PASS
+**Status:** ✅ PASS (Joi schema exists and enforces validation)
 
-**Schema:** `apps/api/src/config/env.schema.ts`  
-**Validation:** Joi schema enforces types and defaults
+**Schema:** `apps/api/src/config/env.schema.ts` (exists in main)  
+**Validation Framework:** Joi
 
 **Verified:**
-- ✅ `AI_ENABLED` defaults to `false` (opt-in)
-- ✅ `MODEL_API_KEY` optional (allows empty string)
-- ✅ Budget caps configurable
+- ✅ `AI_ENABLED` defaults to `'false'` (string, Joi schema line: `.valid('true', 'false').default('false')`)
+- ✅ `MODEL_API_KEY` optional (allows empty string: `.allow('').optional()`)
+- ✅ Budget caps configurable (AI_DAILY_BUDGET_USD, AI_TOTAL_BUDGET_USD env vars exist)
 - ✅ No secrets in `.env.example`
+
+**Production Config Note:**
+- **Code default:** `AI_ENABLED='false'` (safe fallback)
+- **VULUT deployment:** `infra/deploy/compose/docker-compose.vulut.yml` also defaults to false: `AI_ENABLED: ${AI_ENABLED:-false}`
+- **Runtime:** Operators can set `AI_ENABLED=true` in environment to enable AI features
+- **Budget guards:** Default caps are $30/day (`AI_DAILY_BUDGET_USD=30`), $150 total (`AI_TOTAL_BUDGET_USD=150`) per env.schema.ts
 
 ---
 
@@ -589,39 +578,39 @@ Tests:       10 failed, 215 passed, 225 total
 
 | Category | Test | Status | Evidence |
 |----------|------|--------|----------|
-| **CI/CD** | GitHub Actions CI | ⏳ In Progress | [Run 41642455767](https://github.com/suleymantarsuslu/sosmesh/actions/runs/41642455767) |
-| | ESLint / TypeScript | ✅ PASS | PR #79 logs |
-| | Secret Scan | ✅ PASS | PR #79 logs |
-| **AI** | Muse Spark Triage | ✅ PASS | `scripts/ai-smoke/triage.mjs` |
-| | Voice Transcribe | ⚠️ PENDING | Smoke test ready |
-| | SAM 3.1 Segmentation | ⚠️ PENDING | Implementation done |
-| | Signal Fusion (Deterministic) | ✅ PASS | `fusion-score.spec.ts` |
-| | Signal Fusion (AI Rationale) | ⚠️ PENDING | Smoke test ready |
-| | Mission Copilot | ⚠️ PENDING | Smoke test ready |
-| | Budget Guard | 🔍 PARTIAL | Unit tests pass |
-| **BLE Mesh** | Physical Device Transfer | ⚠️ PENDING | Procedure documented |
-| | Android BLE Implementation | ✅ PASS | Instrumented tests |
+| **CI/CD** | GitHub Actions CI | ⚠️ PENDING | Historical: [Run 41642455767](https://github.com/suleymantarsuslu/sosmesh/actions/runs/41642455767), current main not documented |
+| | ESLint / TypeScript | ⚠️ PENDING | PR CIs passed, merged main run not documented |
+| | Secret Scan | ⚠️ PENDING | PR CIs passed, merged main run not documented |
+| **AI** | Muse Spark Triage | ⚠️ PENDING | Script exists: `apps/api/scripts/ai-smoke/triage.mjs`, no evidence file |
+| | Voice Transcribe | ⚠️ PENDING | Script exists: `scripts/ai-smoke/voice.mjs`, no evidence file |
+| | SAM 3.1 Segmentation | ⚠️ PENDING | Script exists: `scripts/ai-smoke/vision.mjs`, no evidence file |
+| | Signal Fusion (Deterministic) | ✅ PASS | `apps/api/test/fusion-score.spec.ts` exists |
+| | Signal Fusion (AI Rationale) | ⚠️ PENDING | Script exists: `scripts/ai-smoke/copilot.mjs`, no evidence file |
+| | Mission Copilot | ⚠️ PENDING | Script exists: `scripts/ai-smoke/copilot.mjs`, no evidence file |
+| | Budget Guard | ⚠️ PENDING | Implementation merged, no test evidence file |
+| **BLE Mesh** | Physical Device Transfer | ⚠️ PENDING | Procedure: `docs/tests/m0-physical-report.md` (NOT_TESTED) |
+| | Android BLE Implementation | ⚠️ PENDING | Test files exist, CI run not documented |
 | | iOS BLE Implementation | ⚠️ PENDING | Not CI-verified |
 | | Background Mode | ⚠️ PENDING | Limitations documented |
-| **E2E** | SOS Ingestion (No AI) | ✅ PASS | Integration tests |
-| | Operator Dashboard | ✅ PASS | Manual testing |
-| | AI Augmentation E2E | ⚠️ PENDING | Components ready |
-| **Security** | E2E Encryption | ✅ PASS | Unit tests |
-| | PII Redaction | ✅ PASS | Log utilities |
-| | Prompt Injection | 🔍 PARTIAL | Prompts designed |
-| **Performance** | API Latency | ⚠️ PENDING | No load testing |
-| | AI Cost Per Incident | 🔍 PARTIAL | Estimates only |
-| **Deployment** | VULUT Staging | ⚠️ PENDING | Config ready |
-| | Environment Variables | ✅ PASS | Joi validation |
-| **Demo** | Seed Script | ✅ PASS | Script ready |
+| **E2E** | SOS Ingestion (No AI) | ✅ PASS | `apps/api/test/ingest.spec.ts`, baseline evidence |
+| | Operator Dashboard | ⚠️ PENDING | Test files exist, comprehensive E2E not documented |
+| | AI Augmentation E2E | ⚠️ PENDING | Components merged, flow not documented |
+| **Security** | E2E Encryption | ⚠️ PENDING | Implementation exists, specific test not found |
+| | PII Redaction | ✅ PASS | `apps/api/test/audit-redaction.util.spec.ts`, baseline evidence |
+| | Prompt Injection | ⚠️ PENDING | Prompts designed, injection test not documented |
+| **Performance** | API Latency | ⚠️ PENDING | No load testing documented |
+| | AI Cost Per Incident | ⚠️ PENDING | No cost data or pricing file |
+| **Deployment** | VULUT Staging | ⚠️ PENDING | Config: `infra/deploy/compose/docker-compose.vulut.yml`, not deployed |
+| | Environment Variables | ✅ PASS | `apps/api/src/config/env.schema.ts` with Joi validation |
+| **Demo** | Seed Script | ⚠️ PENDING | Script not found in main git ls-tree |
 | | Video Recording | ⚠️ PENDING | Script to be written |
 
 **Legend:**
-- ✅ **PASS** — Verified with evidence
-- ⚠️ **PENDING** — Not yet run (ready or planned)
-- 🔍 **PARTIAL** — Partially verified, limitations documented
+- ✅ **PASS** — Verified with concrete evidence (test file exists + baseline/CI evidence)
+- ⚠️ **PENDING** — Implementation exists but no evidence file documenting live run/test
 - ❌ **FAIL** — Failed (with cause)
-- ⏳ **In Progress** — Running now
+
+**Note:** Most AI features are implemented and merged (PRs #79-#84 merged to main at `c61c109`), but live API smoke test runs are not documented in committed evidence files.
 
 ---
 

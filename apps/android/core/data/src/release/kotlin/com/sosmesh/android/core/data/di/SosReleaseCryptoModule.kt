@@ -10,12 +10,14 @@ import javax.inject.Singleton
 @Module
 @InstallIn(SingletonComponent::class)
 object SosReleaseCryptoModule {
+    private const val PROD_KEY_ID = "prod-2026-11-a"
+    private const val PROD_SERVER_PUBLIC_KEY = "njCfeyVCrZmw9xdi9g1sVHBxtDouBDVYq4wJbNO6YnQ="
+
     @Provides
     @Singleton
-    fun provideCryptoConfig(): CryptoConfig {
-        error(
-            "Release SOS encryption is not configured: production CryptoConfig must be wired " +
-                "before shipping; dev-test keys are excluded from release builds.",
+    fun provideCryptoConfig(): CryptoConfig =
+        CryptoConfig(
+            keyId = PROD_KEY_ID,
+            serverPublicKey = PROD_SERVER_PUBLIC_KEY,
         )
-    }
 }

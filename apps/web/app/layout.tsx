@@ -9,6 +9,7 @@ import './design-system.css';
 import './operator.css';
 import './marketing.css';
 import './ai.css';
+import './cases-modern.css';
 
 const siteUrl =
   process.env.NEXT_PUBLIC_SITE_URL ??

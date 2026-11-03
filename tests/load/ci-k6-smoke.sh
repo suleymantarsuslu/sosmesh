@@ -18,8 +18,9 @@ drop_load_smoke_ci_db() {
 }
 
 resolve_load_smoke_db_url() {
+  local suffix="${API_PORT:-3001}"
   if [[ -n "${SOSMESH_CI_PG_ADMIN_URL:-}" ]] && [[ -n "${SOSMESH_CI_DATABASE_URL:-}" ]]; then
-    LOAD_SMOKE_PG_STATE="$(mktemp "${RUNNER_TEMP:-/tmp}/sosmesh-load-smoke-pg-XXXXXX.json")"
+    LOAD_SMOKE_PG_STATE="$(mktemp "${RUNNER_TEMP:-/tmp}/sosmesh-load-smoke-${suffix}-pg-XXXXXX.json")"
     rm -f "$LOAD_SMOKE_PG_STATE"
     echo "== load-smoke: provision isolated CI PostgreSQL =="
     node "$ROOT/apps/api/test/helpers/smoke-ci-db.mjs" create "$LOAD_SMOKE_PG_STATE"
@@ -45,8 +46,10 @@ ensure_pnpm() {
 }
 
 write_load_smoke_env() {
-  node <<'NODE'
+  local suffix="${API_PORT:-3001}"
+  node <<NODE
 const { randomBytes } = require('node:crypto');
+const suffix = process.env.API_PORT || '3001';
 const jwtSignKey = 'JWT' + String.fromCharCode(95) + String.fromCharCode(83) + 'ECRET';
 const metricsKey = 'METRICS_SCRAPE_' + 'AUTH';
 const jwt =
@@ -56,10 +59,10 @@ const metrics =
   process.env[metricsKey] ||
   randomBytes(18).toString('base64url').slice(0, 24);
 const lines = [
-  `${jwtSignKey}=${JSON.stringify(jwt)}`,
-  `${metricsKey}=${JSON.stringify(metrics)}`,
+  \`\${jwtSignKey}=\${JSON.stringify(jwt)}\`,
+  \`\${metricsKey}=\${JSON.stringify(metrics)}\`,
 ];
-require('node:fs').writeFileSync('/tmp/sosmesh-load-smoke.env', `${lines.join('\n')}\n`);
+require('node:fs').writeFileSync(\`/tmp/sosmesh-load-smoke-\${suffix}.env\`, \`\${lines.join('\\n')}\\n\`);
 NODE
 }
 
@@ -84,12 +87,13 @@ if ! pnpm --filter '@sosmesh/api...' run build 2>&1 | tee "$BUILD_LOG"; then
 fi
 
 export DATABASE_URL="$DB_URL"
+export API_PORT="${API_PORT:-3001}"
 write_load_smoke_env
 set -a
 # shellcheck source=/dev/null
-source /tmp/sosmesh-load-smoke.env
+source "/tmp/sosmesh-load-smoke-${API_PORT}.env"
 set +a
-export PORT="${PORT:-3001}"
+export PORT="${API_PORT}"
 export NODE_ENV=development
 export AI_ENABLED=false
 export INGEST_RATE_LIMIT_MAX=50000
@@ -105,18 +109,19 @@ process.stdout.write(privateKey.export({ format: 'der', type: 'pkcs8' }).toStrin
 export INGEST_RECEIPT_SIGNING_PRIVATE_KEY="$SIGNING_KEY"
 
 release_port() {
+  local port="${API_PORT:-3001}"
   if command -v lsof >/dev/null 2>&1; then
     local pids=""
-    if lsof -ti:"${PORT}" >/dev/null 2>&1; then
-      pids=$(lsof -ti:"${PORT}")
+    if lsof -ti:"${port}" >/dev/null 2>&1; then
+      pids=$(lsof -ti:"${port}")
     fi
     if [[ -n "$pids" ]]; then
       # shellcheck disable=SC2086
       kill -9 $pids 2>/dev/null
     fi
   elif command -v fuser >/dev/null 2>&1; then
-    if fuser "${PORT}/tcp" >/dev/null 2>&1; then
-      fuser -k "${PORT}/tcp" 2>/dev/null
+    if fuser "${port}/tcp" >/dev/null 2>&1; then
+      fuser -k "${port}/tcp" 2>/dev/null
     fi
   fi
   sleep 1
@@ -127,12 +132,12 @@ echo "== load-smoke: prisma migrate + seed =="
 pnpm --filter @sosmesh/api exec prisma migrate deploy
 pnpm --filter @sosmesh/api exec prisma db seed
 
-API_LOG="$ROOT/tests/load/.generated/api-smoke.log"
+API_LOG="$ROOT/tests/load/.generated/api-smoke-${API_PORT}.log"
 : >"$API_LOG"
 release_port
 set -a
 # shellcheck source=/dev/null
-source /tmp/sosmesh-load-smoke.env
+source "/tmp/sosmesh-load-smoke-${API_PORT}.env"
 set +a
 API_PID=""
 SMOKE_FINAL_EXIT=""
@@ -188,7 +193,7 @@ trap on_smoke_exit EXIT
 echo "== load-smoke: wait for /health/ready =="
 ready=0
 for _ in $(seq 1 90); do
-  if curl -fsS "http://127.0.0.1:${PORT}/health/ready" >/dev/null 2>&1; then
+  if curl -fsS "http://127.0.0.1:${API_PORT}/health/ready" >/dev/null 2>&1; then
     ready=1
     break
   fi
@@ -204,13 +209,14 @@ export INGEST_RECEIPT_SIGNING_PRIVATE_KEY="$SIGNING_KEY"
 bash "$ROOT/tests/load/scripts/generate-ingest-payloads.sh" 100 \
   "$ROOT/tests/load/.generated/payloads-100.json"
 PREFLIGHT_BODY=$(node -e "console.log(JSON.stringify(require('$ROOT/tests/load/.generated/payloads-100.json')[0]))")
-PREFLIGHT_CODE=$(curl -s -o /tmp/ingest-preflight.json -w '%{http_code}' \
-  -X POST "http://127.0.0.1:${PORT}/v1/ingest" \
+PREFLIGHT_PATH="/tmp/ingest-preflight-${API_PORT}.json"
+PREFLIGHT_CODE=$(curl -s -o "$PREFLIGHT_PATH" -w '%{http_code}' \
+  -X POST "http://127.0.0.1:${API_PORT}/v1/ingest" \
   -H 'Content-Type: application/json' \
   -d "$PREFLIGHT_BODY")
 if [[ "$PREFLIGHT_CODE" != "200" ]]; then
   echo "Preflight ingest failed with HTTP $PREFLIGHT_CODE" >&2
-  cat /tmp/ingest-preflight.json >&2
+  cat "$PREFLIGHT_PATH" >&2
   tail -40 "$API_LOG" 2>/dev/null | strings | tail -20 >&2
   exit 1
 fi
@@ -255,7 +261,7 @@ fi
 export K6_VUS=1
 echo "== load-smoke: k6 profile 100 =="
 set +e
-BASE_URL="http://127.0.0.1:${PORT}" bash "$ROOT/tests/load/run-profile.sh" 100
+BASE_URL="http://127.0.0.1:${API_PORT}" bash "$ROOT/tests/load/run-profile.sh" 100
 SMOKE_FINAL_EXIT=$?
 set -e
 trap - EXIT

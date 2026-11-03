@@ -6,6 +6,7 @@ import cookieParser from 'cookie-parser';
 
 import { AppModule } from './app.module';
 import { securityHeadersMiddleware } from './common/middleware/security-headers.middleware';
+import { applyTrustProxy } from './common/utils/trust-proxy.util';
 import { bootstrapOpenTelemetry } from './observability/otel-tracing';
 
 export async function createApp() {
@@ -15,6 +16,10 @@ export async function createApp() {
   app.use(securityHeadersMiddleware);
 
   const configService = app.get(ConfigService);
+
+  const trustProxy = configService.get<string>('TRUST_PROXY');
+  applyTrustProxy(app, trustProxy);
+
   const corsOrigins = configService.get<string>('CORS_ORIGINS');
   if (corsOrigins) {
     app.enableCors({

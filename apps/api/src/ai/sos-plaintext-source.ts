@@ -1,7 +1,16 @@
 import { Injectable, Logger } from '@nestjs/common';
 import type { EncryptedPayload, ServerCryptoConfig } from '@sosmesh/contracts';
-import { decryptPayload } from '@sosmesh/contracts';
 import { PrismaService } from '../prisma/prisma.service';
+
+// Lazy-load crypto to avoid ESM import issues in Jest
+let decryptPayloadFn: typeof import('@sosmesh/contracts').decryptPayload | null = null;
+async function getDecryptPayload() {
+  if (!decryptPayloadFn) {
+    const { decryptPayload } = await import('@sosmesh/contracts');
+    decryptPayloadFn = decryptPayload;
+  }
+  return decryptPayloadFn;
+}
 
 export type SosPlaintextRequest = {
   incidentId: string;
@@ -136,6 +145,7 @@ export class ServerKeyPlaintextSource implements SosPlaintextSource {
       };
 
       // Decrypt payload
+      const decryptPayload = await getDecryptPayload();
       const decrypted = decryptPayload(encryptedPayload, envelope, this.serverConfig);
 
       const noteText = decrypted.sosText ?? decrypted.note ?? null;

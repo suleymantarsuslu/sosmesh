@@ -52,7 +52,7 @@ class BleTransferGateTest {
             )
         val receiver = BleTransferReceiver(receiverT, TransferConfig(maxRetries = 3, chunkTimeoutMs = 400L), clock)
         val outbox = TrackingOutbox()
-        val tracker = SosPeerDeliveryTracker(outbox)
+        val tracker = SosPeerDeliveryTracker(outbox, testOutboxIoScope())
         tracker.active = SosPeerDeliveryTracker.ActiveTransfer("sos-gate", "digest-gate")
         tracker.attachSenderListener(sender)
         var senderCompleted = false
@@ -130,7 +130,7 @@ class BleTransferGateTest {
             )
         val sender = BleTransferSender(senderT, config, clock, rng)
         val outbox = TrackingOutbox()
-        val tracker = SosPeerDeliveryTracker(outbox)
+        val tracker = SosPeerDeliveryTracker(outbox, testOutboxIoScope())
         tracker.active = SosPeerDeliveryTracker.ActiveTransfer("sos-wait", "d")
         tracker.attachSenderListener(sender)
         wireNoOpListeners(sender, receiver)
@@ -276,19 +276,19 @@ class BleTransferGateTest {
     private class TrackingOutbox : OutboxQueueAdapter {
         val peerReceivedUpdates = AtomicInteger(0)
 
-        override fun enqueue(
+        override suspend fun enqueue(
             input: EnqueueInput,
             nowMs: Long,
         ): OutboxEntryMeta = throw UnsupportedOperationException()
 
-        override fun getByKey(
+        override suspend fun getByKey(
             sosId: String,
             digest: String,
         ): OutboxEntryMeta? = null
 
-        override fun listAll(): List<OutboxEntryMeta> = emptyList()
+        override suspend fun listAll(): List<OutboxEntryMeta> = emptyList()
 
-        override fun updateState(
+        override suspend fun updateState(
             sosId: String,
             digest: String,
             state: String,
@@ -299,19 +299,19 @@ class BleTransferGateTest {
             return null
         }
 
-        override fun setRetryAt(
+        override suspend fun setRetryAt(
             sosId: String,
             digest: String,
             retryAtMs: Long,
             lastError: String?,
         ) = Unit
 
-        override fun countDueForSend(
+        override suspend fun countDueForSend(
             nowMs: Long,
             paused: Boolean,
         ): Int = 0
 
-        override fun purgeExpired(nowMs: Long): Int = 0
+        override suspend fun purgeExpired(nowMs: Long): Int = 0
 
         override fun close() = Unit
     }

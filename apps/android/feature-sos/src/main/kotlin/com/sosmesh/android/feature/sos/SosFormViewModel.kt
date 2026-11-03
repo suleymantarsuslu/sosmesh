@@ -1,6 +1,10 @@
 package com.sosmesh.android.feature.sos
 
+import android.util.Log
 import androidx.lifecycle.ViewModel
+import androidx.lifecycle.viewModelScope
+import com.sosmesh.android.core.data.mesh.SosPeerDeliveryKickResult
+import com.sosmesh.android.core.data.mesh.SosPeerDeliveryPort
 import com.sosmesh.android.core.data.sos.DraftInvalidReason
 import com.sosmesh.android.core.data.sos.LocationSnapshot
 import com.sosmesh.android.core.data.sos.SosComposeRequest
@@ -10,10 +14,12 @@ import com.sosmesh.android.core.data.sos.SosDraftValidator
 import com.sosmesh.android.core.model.SosType
 import com.sosmesh.android.feature.sos.location.SosLocationProvider
 import dagger.hilt.android.lifecycle.HiltViewModel
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
+import kotlinx.coroutines.launch
 import java.util.Locale
 import javax.inject.Inject
 
@@ -21,6 +27,14 @@ enum class SosWizardStep {
     FORM,
     PREVIEW,
     DONE,
+}
+
+enum class SosPeerDeliveryHint {
+    NONE,
+    TRANSFER_STARTED,
+    WAITING_FOR_PEER,
+    PERMISSIONS_REQUIRED,
+    BLOCKED,
 }
 
 data class SosFormUiState(
@@ -37,6 +51,7 @@ data class SosFormUiState(
     val canContinue: Boolean = true,
     val savedMessageId: String? = null,
     val offlineMode: Boolean = true,
+    val peerDeliveryHint: SosPeerDeliveryHint = SosPeerDeliveryHint.NONE,
 )
 
 @HiltViewModel
@@ -45,6 +60,9 @@ class SosFormViewModel
     constructor(
         private val locationProvider: SosLocationProvider,
         private val submitRepository: SosSubmitRepository,
+        private val peerDelivery: SosPeerDeliveryPort,
+        private val bleMeshReadiness: com.sosmesh.android.core.permissions.BleMeshReadiness,
+        private val permissionFlowCoordinator: com.sosmesh.android.core.permissions.PermissionFlowCoordinator,
     ) : ViewModel() {
         private val _uiState = MutableStateFlow(SosFormUiState())
         val uiState: StateFlow<SosFormUiState> = _uiState.asStateFlow()
@@ -105,8 +123,18 @@ class SosFormViewModel
         }
 
         fun confirmAndSave(nowMs: Long = System.currentTimeMillis()) {
-            val state = _uiState.value
             if (!revalidate()) return
+            viewModelScope.launch {
+                runCatching { performSaveAfterPreview(nowMs) }
+                    .onFailure { throwable ->
+                        if (throwable is CancellationException) throw throwable
+                        Log.e("SosFormViewModel", "sos_save_failed", throwable)
+                    }
+            }
+        }
+
+        internal suspend fun performSaveAfterPreview(nowMs: Long) {
+            val state = _uiState.value
             val location = resolvedLocation(state)
             val personCount = SosDraftValidator.parsedPersonCount(state.toDraftInput())
             val language = Locale.getDefault().language
@@ -121,10 +149,22 @@ class SosFormViewModel
                         nowMs = nowMs,
                     ),
                 )
+            val delivery =
+                runCatching {
+                    if (bleMeshReadiness.canRunBleMeshFeatures()) {
+                        peerDelivery.kickOffAfterLocalSave(nowMs, foregroundVisible = true)
+                    } else {
+                        SosPeerDeliveryKickResult.PermissionsMissing(permissionFlowCoordinator.missingPermissions())
+                    }
+                }.getOrElse { error ->
+                    if (error is CancellationException) throw error
+                    SosPeerDeliveryKickResult.Blocked(error.message ?: "peer_kickoff_failed")
+                }
             _uiState.update {
                 it.copy(
                     step = SosWizardStep.DONE,
                     savedMessageId = composed.message.id,
+                    peerDeliveryHint = delivery.toHint(),
                 )
             }
         }
@@ -170,4 +210,15 @@ class SosFormViewModel
                 personCountUnknown = personCountUnknown,
                 note = note,
             )
+
+        private fun SosPeerDeliveryKickResult.toHint(): SosPeerDeliveryHint =
+            when (this) {
+                SosPeerDeliveryKickResult.Idle,
+                SosPeerDeliveryKickResult.SenderBusy,
+                SosPeerDeliveryKickResult.TransferStarted,
+                -> SosPeerDeliveryHint.TRANSFER_STARTED
+                SosPeerDeliveryKickResult.WaitingForGatt -> SosPeerDeliveryHint.WAITING_FOR_PEER
+                is SosPeerDeliveryKickResult.PermissionsMissing -> SosPeerDeliveryHint.PERMISSIONS_REQUIRED
+                is SosPeerDeliveryKickResult.Blocked -> SosPeerDeliveryHint.BLOCKED
+            }
     }

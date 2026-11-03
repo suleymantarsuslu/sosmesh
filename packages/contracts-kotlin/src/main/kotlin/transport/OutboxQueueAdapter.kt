@@ -25,19 +25,19 @@ data class EnqueueInput(
  * Room-portable contract; JVM implementation uses JDBC SQLite (NOT_TESTED on Android Room).
  */
 interface OutboxQueueAdapter {
-    fun enqueue(
+    suspend fun enqueue(
         input: EnqueueInput,
         nowMs: Long,
     ): OutboxEntryMeta
 
-    fun getByKey(
+    suspend fun getByKey(
         sosId: String,
         digest: String,
     ): OutboxEntryMeta?
 
-    fun listAll(): List<OutboxEntryMeta>
+    suspend fun listAll(): List<OutboxEntryMeta>
 
-    fun updateState(
+    suspend fun updateState(
         sosId: String,
         digest: String,
         state: String,
@@ -45,19 +45,19 @@ interface OutboxQueueAdapter {
         lastError: String? = null,
     ): OutboxEntryMeta?
 
-    fun setRetryAt(
+    suspend fun setRetryAt(
         sosId: String,
         digest: String,
         retryAtMs: Long,
         lastError: String?,
-    ): Unit
+    )
 
-    fun countDueForSend(
+    suspend fun countDueForSend(
         nowMs: Long,
         paused: Boolean,
     ): Int
 
-    fun purgeExpired(nowMs: Long): Int
+    suspend fun purgeExpired(nowMs: Long): Int
 
     fun close()
 }

@@ -5,6 +5,7 @@ import androidx.test.core.app.ApplicationProvider
 import com.sosmesh.android.core.data.fixtures.AndroidStateTransitionLoader
 import com.sosmesh.contracts.transport.DeliveryStateMachine
 import com.sosmesh.contracts.transport.EnqueueInput
+import kotlinx.coroutines.runBlocking
 import org.junit.After
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
@@ -41,44 +42,48 @@ class RoomOutboxQueueAdapterTest {
 
     @Test
     fun duplicateEnqueue_yieldsSingleRow() {
-        val input =
-            EnqueueInput(
-                sosId = "dup-android",
-                digest = "digest-1",
-                origin = "android-room",
-                encryptedBlobBase64 = "YQ==",
-            )
-        adapter.enqueue(input, 100)
-        adapter.enqueue(input, 200)
-        assertEquals(1, adapter.listAll().size)
+        runBlocking {
+            val input =
+                EnqueueInput(
+                    sosId = "dup-android",
+                    digest = "digest-1",
+                    origin = "android-room",
+                    encryptedBlobBase64 = "YQ==",
+                )
+            adapter.enqueue(input, 100)
+            adapter.enqueue(input, 200)
+            assertEquals(1, adapter.listAll().size)
+        }
     }
 
     @Test
     fun reopenDatabase_preservesQueueAfterClose() {
-        val context = ApplicationProvider.getApplicationContext<android.content.Context>()
-        context.deleteDatabase("outbox-persist-test")
-        val fixtureStream = javaClass.classLoader!!.getResourceAsStream("state-transitions.json")!!
-        val fixture = AndroidStateTransitionLoader.load(fixtureStream)
-        val db1 =
-            Room.databaseBuilder(context, OutboxDatabase::class.java, "outbox-persist-test")
-                .allowMainThreadQueries()
-                .build()
-        val adapter1 = RoomOutboxQueueAdapter(db1.outboxDao(), fixture.defaultRetentionMs)
-        adapter1.enqueue(
-            EnqueueInput("reboot-a", "d", "android-room", "YQ=="),
-            1,
-        )
-        db1.close()
+        runBlocking {
+            val context = ApplicationProvider.getApplicationContext<android.content.Context>()
+            context.deleteDatabase("outbox-persist-test")
+            val fixtureStream = javaClass.classLoader!!.getResourceAsStream("state-transitions.json")!!
+            val fixture = AndroidStateTransitionLoader.load(fixtureStream)
+            val db1 =
+                Room.databaseBuilder(context, OutboxDatabase::class.java, "outbox-persist-test")
+                    .allowMainThreadQueries()
+                    .build()
+            val adapter1 = RoomOutboxQueueAdapter(db1.outboxDao(), fixture.defaultRetentionMs)
+            adapter1.enqueue(
+                EnqueueInput("reboot-a", "d", "android-room", "YQ=="),
+                1,
+            )
+            db1.close()
 
-        val db2 =
-            Room.databaseBuilder(context, OutboxDatabase::class.java, "outbox-persist-test")
-                .allowMainThreadQueries()
-                .build()
-        val adapter2 = RoomOutboxQueueAdapter(db2.outboxDao(), fixture.defaultRetentionMs)
-        assertEquals(1, adapter2.listAll().size)
-        assertEquals("LOCAL_SAVED", adapter2.listAll().first().state)
-        db2.close()
-        context.deleteDatabase("outbox-persist-test")
+            val db2 =
+                Room.databaseBuilder(context, OutboxDatabase::class.java, "outbox-persist-test")
+                    .allowMainThreadQueries()
+                    .build()
+            val adapter2 = RoomOutboxQueueAdapter(db2.outboxDao(), fixture.defaultRetentionMs)
+            assertEquals(1, adapter2.listAll().size)
+            assertEquals("LOCAL_SAVED", adapter2.listAll().first().state)
+            db2.close()
+            context.deleteDatabase("outbox-persist-test")
+        }
     }
 
     @Test

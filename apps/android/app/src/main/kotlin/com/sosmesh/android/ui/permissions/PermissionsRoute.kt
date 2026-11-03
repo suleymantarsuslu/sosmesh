@@ -1,6 +1,5 @@
 package com.sosmesh.android.ui.permissions
 
-import android.app.Activity
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.runtime.Composable
@@ -16,6 +15,7 @@ import com.sosmesh.android.core.permissions.PermissionRequestOutcome
 import com.sosmesh.android.core.permissions.R
 import com.sosmesh.android.core.permissions.ui.PermissionRationaleScreen
 import com.sosmesh.android.core.permissions.ui.PermissionScreenState
+import com.sosmesh.android.ui.gate.findActivity
 import dagger.hilt.EntryPoint
 import dagger.hilt.InstallIn
 import dagger.hilt.android.EntryPointAccessors
@@ -30,7 +30,7 @@ interface PermissionsEntryPoint {
 @Composable
 fun PermissionsRoute(onBack: () -> Unit) {
     val context = LocalContext.current
-    val activity = context as Activity
+    val activity = remember(context) { context.findActivity() }
     val coordinator =
         remember {
             EntryPointAccessors.fromApplication(
@@ -58,7 +58,7 @@ fun PermissionsRoute(onBack: () -> Unit) {
                 outcome = PermissionRequestOutcome.GRANTED
                 showSettings = false
             } else {
-                val canRetry = activity.shouldShowRequestPermissionRationale(perm)
+                val canRetry = activity?.shouldShowRequestPermissionRationale(perm) == true
                 outcome =
                     if (canRetry) {
                         PermissionRequestOutcome.DENIED_CAN_RETRY

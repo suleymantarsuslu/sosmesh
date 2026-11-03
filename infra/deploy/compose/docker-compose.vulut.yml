@@ -2,7 +2,11 @@
 # Derived from docker-compose.staging.yml, with these differences:
 #   - no host port publishing (Traefik reaches the gateway over the coolify network)
 #   - nginx gateway routes /health + /v1 to api and / to web (see infra/deploy/nginx/vulut.conf)
+<<<<<<< HEAD
 #   - AI defaults to disabled (AI_ENABLED=${AI_ENABLED:-false}) but can be enabled
+=======
+#   - AI is hard-disabled (AI_ENABLED=false, no MODEL_API_KEY): offline BLE SOS must work without AI
+>>>>>>> origin/main
 # Secrets are injected as Coolify env vars (names only here, never values).
 # Coolify settings: Docker Compose, base dir "/" (Coolify passes --project-directory = repo root, so build context is "."),
 # domain https://sosmesh.antiosoft.com on service "gateway" (port 80).
@@ -21,7 +25,10 @@ services:
       retries: 10
     volumes:
       - sosmesh_pg_data:/var/lib/postgresql/data
+<<<<<<< HEAD
       - sosmesh_media:/data/media
+=======
+>>>>>>> origin/main
     restart: unless-stopped
 
   migrate:
@@ -49,6 +56,7 @@ services:
       METRICS_SCRAPE_AUTH: ${METRICS_SCRAPE_AUTH:?set METRICS_SCRAPE_AUTH}
       INGEST_RECEIPT_SIGNING_PRIVATE_KEY: ${INGEST_RECEIPT_SIGNING_PRIVATE_KEY:?set INGEST_RECEIPT_SIGNING_PRIVATE_KEY}
       CORS_ORIGINS: ${CORS_ORIGINS:-https://sosmesh.antiosoft.com}
+<<<<<<< HEAD
       AI_ENABLED: ${AI_ENABLED:-false}
       MODEL_API_KEY: ${MODEL_API_KEY:-}
       META_BASE_URL: ${META_BASE_URL:-https://api.meta.ai/v1}
@@ -69,6 +77,11 @@ services:
       LOG_LEVEL: ${LOG_LEVEL:-info}
     volumes:
       - sosmesh_media:/data/media
+=======
+      TRUST_PROXY: ${TRUST_PROXY:-2}
+      AI_ENABLED: 'false'
+      LOG_LEVEL: ${LOG_LEVEL:-info}
+>>>>>>> origin/main
     expose:
       - '3001'
     depends_on:
@@ -97,6 +110,7 @@ services:
       RETENTION_SOS_MESSAGE_MAX_AGE_SECONDS: ${RETENTION_SOS_MESSAGE_MAX_AGE_SECONDS:-}
       WORKER_HEALTH_PORT: '3002'
       WORKER_RETENTION_INTERVAL_MS: ${WORKER_RETENTION_INTERVAL_MS:-3600000}
+<<<<<<< HEAD
       AI_ENABLED: ${AI_ENABLED:-false}
       MODEL_API_KEY: ${MODEL_API_KEY:-}
       META_BASE_URL: ${META_BASE_URL:-https://api.meta.ai/v1}
@@ -112,6 +126,10 @@ services:
       LOG_LEVEL: ${LOG_LEVEL:-info}
     volumes:
       - sosmesh_media:/data/media
+=======
+      AI_ENABLED: 'false'
+      LOG_LEVEL: ${LOG_LEVEL:-info}
+>>>>>>> origin/main
     expose:
       - '3002'
     depends_on:
@@ -164,4 +182,7 @@ services:
 
 volumes:
   sosmesh_pg_data:
+<<<<<<< HEAD
   sosmesh_media:
+=======
+>>>>>>> origin/main

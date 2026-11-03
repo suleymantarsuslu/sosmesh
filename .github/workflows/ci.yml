@@ -6,6 +6,10 @@ on:
   pull_request:
     branches: [main, dev]
 
+concurrency:
+  group: ci-${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
 jobs:
   verify:
     name: Verify Quality Gates
@@ -34,6 +38,25 @@ jobs:
       SOSMESH_CI_DATABASE_URL: postgresql://postgres:postgres@localhost:5432/postgres
 
     steps:
+      - name: Derive per-runner port offset
+        shell: bash
+        run: |
+          RUNNER_NAME="${{ runner.name }}"
+          case "$RUNNER_NAME" in
+            zulal-runner-sosmesh)
+              OFFSET=0
+              ;;
+            zulal-runner-sosmesh-2)
+              OFFSET=100
+              ;;
+            *)
+              OFFSET=0
+              ;;
+          esac
+          echo "SOSMESH_PORT_OFFSET=${OFFSET}" >> "$GITHUB_ENV"
+          echo "WEB_PORT=$((3000 + OFFSET))" >> "$GITHUB_ENV"
+          echo "API_PORT=$((3001 + OFFSET))" >> "$GITHUB_ENV"
+          echo "Runner: ${RUNNER_NAME}, Offset: ${OFFSET}, Ports: web=$((3000 + OFFSET)) api=$((3001 + OFFSET))"
       - name: Checkout code
         uses: actions/checkout@v4
       
@@ -227,12 +250,9 @@ jobs:
     needs:
       - detect-mobile
       - swift-package-tests
-    # Mac: Android is skipped (not cancelled) when Swift fails; concurrency uses github.sha to avoid cross-run cancels on one MacBook.
+    # Mac: Android is skipped (not cancelled) when Swift fails; serial execution guaranteed by dependency chain.
     if: (vars.SOSMESH_MAC_RUNNER == 'on' || vars.SOSMESH_CI_RUNNER != 'zulal') && needs.detect-mobile.outputs.android == 'true' && (vars.SOSMESH_MAC_RUNNER != 'on' || needs.swift-package-tests.result == 'success')
     timeout-minutes: 25
-    concurrency:
-      group: sosmesh-mobile-${{ github.job }}-${{ github.workflow }}-${{ github.sha }}
-      cancel-in-progress: true
 
     steps:
       - name: Checkout code
@@ -329,9 +349,6 @@ jobs:
       - android-gradle
     if: (vars.SOSMESH_MAC_RUNNER == 'on' || vars.SOSMESH_CI_RUNNER != 'zulal') && needs.detect-mobile.outputs.ios == 'true' && (vars.SOSMESH_MAC_RUNNER != 'on' || needs.swift-package-tests.result == 'success') && (needs.detect-mobile.outputs.android != 'true' || needs.android-gradle.result == 'success' || needs.android-gradle.result == 'skipped')
     timeout-minutes: 30
-    concurrency:
-      group: sosmesh-mobile-${{ github.job }}-${{ github.workflow }}-${{ github.sha }}
-      cancel-in-progress: true
 
     steps:
       - name: Checkout code
@@ -513,9 +530,6 @@ jobs:
     runs-on: ${{ vars.SOSMESH_MAC_RUNNER == 'on' && fromJSON('["self-hosted","macOS","ARM64","macbook"]') || (vars.SOSMESH_CI_RUNNER == 'zulal' && fromJSON('["self-hosted","linux","ARM64","zulal"]') || 'ubuntu-latest') }}
     timeout-minutes: 25
     if: (vars.SOSMESH_MAC_RUNNER == 'on' || vars.SOSMESH_CI_RUNNER != 'zulal') && (github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository)
-    concurrency:
-      group: sosmesh-mobile-${{ github.job }}-${{ github.workflow }}-${{ github.sha }}
-      cancel-in-progress: true
 
     steps:
       - name: Checkout code

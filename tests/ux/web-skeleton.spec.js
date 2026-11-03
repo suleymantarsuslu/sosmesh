@@ -8,8 +8,8 @@ const { test, expect } = require('@playwright/test');
 
 test.describe('Web Skeleton Accessibility', () => {
   test('should have no axe violations on homepage', async ({ page }) => {
-    // Navigate to Next.js homepage (must be running on http://localhost:3000)
-    await page.goto('http://localhost:3000');
+    // Navigate to Next.js homepage (uses baseURL from config)
+    await page.goto('/');
     await page.waitForLoadState('networkidle');
 
     // Run axe accessibility scan

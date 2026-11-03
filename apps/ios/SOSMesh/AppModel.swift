@@ -126,13 +126,18 @@ final class AppModel: ObservableObject {
         )
         await reloadOutbox()
         
-        Task.detached { [weak self] in
-            await self?.attemptServerUpload(
-                sosId: composed.message.id,
-                digest: composed.digest,
-                encryptedBlobBase64: composed.encryptedBlobBase64,
-                sosMessage: composed.message.rawMessage
-            )
+        if let sosMessageObject = try? JSONSerialization.jsonObject(with: composed.wirePayload) as? [String: Any] {
+            let sosId = composed.message.id
+            let digest = composed.digest
+            let blob = composed.encryptedBlobBase64
+            Task.detached { [weak self] in
+                await self?.attemptServerUpload(
+                    sosId: sosId,
+                    digest: digest,
+                    encryptedBlobBase64: blob,
+                    sosMessage: sosMessageObject
+                )
+            }
         }
         
         _ = try? meshRadio?.connectFirstPeerIfNeeded()

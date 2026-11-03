@@ -102,6 +102,9 @@ public final class IngestUploader {
             
         case .noNetwork:
             return .noNetwork
+
+        case .invalidReceipt:
+            return .invalidReceipt
             
         case .httpError(let code, let message):
             return .httpError(code, message)

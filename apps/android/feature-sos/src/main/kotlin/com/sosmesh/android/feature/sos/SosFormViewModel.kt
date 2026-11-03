@@ -80,9 +80,19 @@ class SosFormViewModel
         }
 
         fun refreshLocation() {
-            val loc = locationProvider.currentLocation()
-            _uiState.update { it.copy(gpsLocation = loc) }
+            val initialLoc = locationProvider.currentLocation()
+            _uiState.update { it.copy(gpsLocation = initialLoc) }
             revalidate()
+
+            if (locationProvider is com.sosmesh.android.feature.sos.location.AndroidGpsLocationProvider) {
+                viewModelScope.launch {
+                    val freshLoc = locationProvider.requestLocationAsync()
+                    if (freshLoc.source == com.sosmesh.android.core.data.sos.LocationSource.GPS) {
+                        _uiState.update { it.copy(gpsLocation = freshLoc) }
+                        revalidate()
+                    }
+                }
+            }
         }
 
         fun selectType(type: SosType) {

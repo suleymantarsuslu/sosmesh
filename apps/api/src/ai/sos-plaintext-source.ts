@@ -172,10 +172,30 @@ export class ServerKeyPlaintextSource implements SosPlaintextSource {
         return null;
       }
 
-      // Cache decrypted plaintext
+      // Extract precise location from decrypted inner payload
+      const updateData: any = { noteText };
+      if (decrypted.location && typeof decrypted.location === 'object') {
+        const loc = decrypted.location as any;
+        if (typeof loc.latitude === 'number' && typeof loc.longitude === 'number') {
+          updateData.preciseLatitude = loc.latitude;
+          updateData.preciseLongitude = loc.longitude;
+          if (typeof loc.accuracy_meters === 'number') {
+            updateData.preciseAccuracyMeters = loc.accuracy_meters;
+          }
+          if (typeof loc.timestamp === 'string') {
+            try {
+              updateData.preciseCapturedAt = new Date(loc.timestamp);
+            } catch {
+              // Invalid timestamp, skip
+            }
+          }
+        }
+      }
+
+      // Cache decrypted plaintext and precise location
       await this.prisma.sosMessage.update({
         where: { id: sosMessage.id },
-        data: { noteText },
+        data: updateData,
       });
 
       this.logger.log({

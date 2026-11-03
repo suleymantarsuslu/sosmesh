@@ -125,6 +125,10 @@ model SosMessage {
   latitude            Decimal?       @db.Decimal(10, 7)
   longitude           Decimal?       @db.Decimal(10, 7)
   accuracyMeters      Float?         @map("accuracy_meters")
+  preciseLatitude     Decimal?       @map("precise_latitude") @db.Decimal(10, 7)
+  preciseLongitude    Decimal?       @map("precise_longitude") @db.Decimal(10, 7)
+  preciseAccuracyMeters Float?       @map("precise_accuracy_meters")
+  preciseCapturedAt   DateTime?      @map("precise_captured_at")
   /// Sensitive note: encrypted/opaque at rest (ADIM 9); must not appear in logs.
   encryptedNoteBlob   String?        @map("encrypted_note_blob") @db.Text
   encryptedPayloadRef String?        @map("encrypted_payload_ref")

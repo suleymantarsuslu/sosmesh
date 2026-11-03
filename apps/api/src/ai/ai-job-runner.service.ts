@@ -49,7 +49,11 @@ export class AiJobRunnerService {
 
         await this.processJob(job);
       } catch (error) {
-        this.logger.error({ err: error, msg: 'Job runner error' });
+        this.logger.error({
+          errorCode: error instanceof Error ? error.constructor.name : 'RUNNER_ERROR',
+          errorName: error instanceof Error ? error.name : 'unknown',
+          msg: 'Job runner error',
+        });
         await this.sleep(10000);
       }
     }
@@ -87,9 +91,14 @@ export class AiJobRunnerService {
           await this.queue.fail(job.id, `Unknown job kind: ${job.kind}`);
       }
     } catch (error) {
-      const errorMessage = error instanceof Error ? error.message : 'unknown_error';
+      const errorMessage = error instanceof Error ? error.message.substring(0, 200) : 'unknown_error';
       await this.queue.fail(job.id, errorMessage);
-      this.logger.error({ err: error, jobId: job.id, msg: 'Job failed' });
+      this.logger.error({
+        errorCode: error instanceof Error ? error.constructor.name : 'JOB_FAILED',
+        message: error instanceof Error ? error.message.substring(0, 200) : 'unknown',
+        jobId: job.id,
+        msg: 'Job failed',
+      });
     }
   }
 
@@ -138,7 +147,7 @@ export class AiJobRunnerService {
     if (result.success) {
       await this.queue.complete(job.id);
     } else {
-      const errorMsg = 'error' in result ? result.error : 'unknown_error';
+      const errorMsg = 'error' in result ? result.error.substring(0, 200) : 'unknown_error';
       await this.queue.fail(job.id, errorMsg);
     }
   }

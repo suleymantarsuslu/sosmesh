@@ -98,6 +98,25 @@ export class HttpExceptionFilter implements ExceptionFilter {
       const status = exception.getStatus();
       this.metrics.recordHttpStatus(status);
       const body = exception.getResponse();
+      
+      if (status >= 500) {
+        this.logger.error({
+          message: 'HTTP 5xx exception',
+          status,
+          errorClass: exception.constructor.name,
+          errorName: exception.name,
+          errorMessage: exception.message,
+          errorStack: exception.stack,
+          errorCause: exception.cause instanceof Error ? {
+            name: exception.cause.name,
+            message: exception.cause.message,
+            code: (exception.cause as NodeJS.ErrnoException).code,
+          } : undefined,
+          path,
+          requestId,
+        });
+      }
+      
       response.status(status).json(body);
       return;
     }
@@ -105,7 +124,10 @@ export class HttpExceptionFilter implements ExceptionFilter {
     this.logger.error({
       message: 'Unhandled exception',
       errorClass: exception?.constructor?.name || 'Unknown',
+      errorName: exception instanceof Error ? exception.name : undefined,
       errorMessage: exception instanceof Error ? exception.message : String(exception),
+      errorCode: (exception as NodeJS.ErrnoException)?.code,
+      errorStack: exception instanceof Error ? exception.stack : undefined,
       path,
       requestId,
     });

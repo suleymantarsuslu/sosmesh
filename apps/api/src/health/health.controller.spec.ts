@@ -3,6 +3,7 @@ import { Test, TestingModule } from '@nestjs/testing';
 import { HealthController } from './health.controller';
 import { PrismaService } from '../prisma/prisma.service';
 import { SosMeshMetricsService } from '../observability/sosmesh-metrics.service';
+import { MEDIA_STORAGE } from '../media/media-storage.interface';
 
 describe('HealthController', () => {
   let controller: HealthController;
@@ -21,6 +22,12 @@ describe('HealthController', () => {
           provide: SosMeshMetricsService,
           useValue: {
             setDatabaseUp: jest.fn(),
+          },
+        },
+        {
+          provide: MEDIA_STORAGE,
+          useValue: {
+            getStorageHealth: jest.fn().mockReturnValue({ healthy: true, error: null }),
           },
         },
       ],

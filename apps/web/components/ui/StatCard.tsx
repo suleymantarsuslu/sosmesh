@@ -1,19 +1,31 @@
 export function StatCard({
   label,
   value,
-  emptyLabel,
+  emptyHint,
+  icon,
 }: {
   label: string;
   value: number | null;
-  emptyLabel: string;
+  emptyHint?: string;
+  icon?: string;
 }) {
-  const display = value === null ? emptyLabel : String(value);
+  const hasValue = value !== null;
   return (
-    <article className="ui-stat" data-testid={`stat-${label}`}>
-      <p className="ui-stat__label">{label}</p>
-      <p className="ui-stat__value" data-empty={value === null ? 'true' : 'false'}>
-        {display}
+    <article className="ui-stat ui-stat--kpi" data-testid={`stat-${label}`}>
+      <div className="ui-stat__head">
+        {icon ? (
+          <span className="ui-stat__icon" aria-hidden>
+            {icon}
+          </span>
+        ) : null}
+        <p className="ui-stat__label">{label}</p>
+      </div>
+      <p className="ui-stat__value" data-empty={hasValue ? 'false' : 'true'}>
+        {hasValue ? String(value) : '—'}
       </p>
+      {!hasValue && emptyHint ? (
+        <p className="ui-stat__empty-hint">{emptyHint}</p>
+      ) : null}
     </article>
   );
 }

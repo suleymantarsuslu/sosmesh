@@ -1,10 +1,13 @@
 'use client';
 
+import { useOperatorPreferences } from './OperatorPreferencesProvider';
+
 type Props = {
   visible: boolean;
 };
 
 export function DemoModeBanner({ visible }: Props) {
+  const { t } = useOperatorPreferences();
   if (!visible) {
     return null;
   }
@@ -14,7 +17,7 @@ export function DemoModeBanner({ visible }: Props) {
       role="status"
       data-testid="demo-mode-banner"
     >
-      DEMO MODE — Sentetik/mock veri; gerçek acil durum kaydı değildir.
+      {t('web.shell.demoModeBanner')}
     </div>
   );
 }

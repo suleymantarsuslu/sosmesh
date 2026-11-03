@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="design_logo_content_description">SOSMesh logo</string>
+    <string name="design_call_112_button">Call 112</string>
+    <string name="design_call_112_content_description">Call emergency number 112</string>
+    <string name="design_nav_back">Back</string>
+    <string name="design_language_label">Language</string>
+    <string name="design_language_system">System default</string>
+    <string name="design_language_english">English</string>
+    <string name="design_language_turkish">Turkish</string>
+</resources>

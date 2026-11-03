@@ -30,9 +30,9 @@ function requireE2ePassword() {
 async function loginWithEmail(page, email) {
   const password = requireE2ePassword();
   await page.goto('/operator/login');
-  await page.getByLabel('E-posta').fill(email);
-  await page.getByLabel('Şifre').fill(password);
-  await page.getByRole('button', { name: 'Giriş yap' }).click();
+  await page.getByTestId('login-email').fill(email);
+  await page.getByTestId('login-password').fill(password);
+  await page.getByTestId('login-submit').click();
   await expect(page).toHaveURL(/\/operator\/dashboard/);
 }
 

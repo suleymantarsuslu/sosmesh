@@ -14,9 +14,9 @@ if (!E2E_PASS) {
 
 async function login(page) {
   await page.goto('/operator/login');
-  await page.getByLabel('E-posta').fill(E2E_EMAIL);
-  await page.getByLabel('Şifre').fill(E2E_PASS);
-  await page.getByRole('button', { name: 'Giriş yap' }).click();
+  await page.getByTestId('login-email').fill(E2E_EMAIL);
+  await page.getByTestId('login-password').fill(E2E_PASS);
+  await page.getByTestId('login-submit').click();
   await expect(page).toHaveURL(/\/operator\/dashboard/);
 }
 
@@ -42,7 +42,7 @@ test.describe('Operator map and case list', () => {
   test('live feed adds a new case row', async ({ page }) => {
     await login(page);
     await page.goto('/operator/cases');
-    await expect(page.getByTestId('live-feed-status')).toContainText('Canlı');
+    await expect(page.getByTestId('live-feed-status')).toContainText('Live feed');
     await expect(page.getByTestId('cases-a11y-table')).toContainText(/e2e33333|e2e44444/, {
       timeout: 15000,
     });

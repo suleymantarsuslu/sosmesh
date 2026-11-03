@@ -1,10 +1,10 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <string name="app_name">SOSMesh</string>
-    <string name="sos_hold_hint">3 sn basılı tut</string>
-    <string name="confirm_title">SOS gönder?</string>
-    <string name="confirm_send">Gönder</string>
-    <string name="confirm_cancel">İptal</string>
-    <string name="not_sent">SOS gönderilmedi</string>
-    <string name="not112">112 yerine geçmez</string>
+    <string name="sos_hold_hint">Hold for 3 sec</string>
+    <string name="confirm_title">Send SOS?</string>
+    <string name="confirm_send">Send</string>
+    <string name="confirm_cancel">Cancel</string>
+    <string name="not_sent">SOS was not sent</string>
+    <string name="not112">Not a substitute for 112</string>
 </resources>

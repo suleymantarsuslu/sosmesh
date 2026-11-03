@@ -2,8 +2,10 @@ package com.sosmesh.android.wear
 
 import android.os.Bundle
 import androidx.activity.compose.setContent
+import androidx.core.splashscreen.SplashScreen.Companion.installSplashScreen
 import androidx.fragment.app.FragmentActivity
 import androidx.wear.ambient.AmbientModeSupport
+import com.sosmesh.android.core.design.theme.SosMeshTheme
 import com.sosmesh.android.wear.companion.WearAppCoordinatorHolder
 import com.sosmesh.android.wear.ui.WearRootScreen
 import com.sosmesh.android.wear.ui.WearSosViewModel
@@ -15,6 +17,7 @@ class WearMainActivity :
     private lateinit var viewModel: WearSosViewModel
 
     override fun onCreate(savedInstanceState: Bundle?) {
+        installSplashScreen()
         super.onCreate(savedInstanceState)
         val coordinator = WearAppCoordinatorHolder.get(this)
         viewModel =
@@ -23,7 +26,9 @@ class WearMainActivity :
             )
         ambientController = AmbientModeSupport.attach(this)
         setContent {
-            WearRootScreen(viewModel = viewModel)
+            SosMeshTheme {
+                WearRootScreen(viewModel = viewModel)
+            }
         }
     }
 

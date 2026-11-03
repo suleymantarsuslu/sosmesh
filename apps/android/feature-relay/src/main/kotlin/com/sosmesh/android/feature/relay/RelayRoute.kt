@@ -18,6 +18,7 @@ fun RelayRoute(
         state = state,
         onToggleRelay = viewModel::setRelayEnabled,
         onStopAndExit = { viewModel.stopRelayAndExit(onBack) },
+        onNavigateBack = onBack,
         modifier = modifier,
     )
 }

@@ -15,9 +15,9 @@ if (!E2E_PASS) {
 
 async function loginAsOperator(page) {
   await page.goto('/operator/login');
-  await page.getByLabel('E-posta').fill(E2E_EMAIL);
-  await page.getByLabel('Şifre').fill(E2E_PASS);
-  await page.getByRole('button', { name: 'Giriş yap' }).click();
+  await page.getByTestId('login-email').fill(E2E_EMAIL);
+  await page.getByTestId('login-password').fill(E2E_PASS);
+  await page.getByTestId('login-submit').click();
   await expect(page).toHaveURL(/\/operator\/dashboard/);
 }
 
@@ -50,16 +50,16 @@ test.describe('Operator help', () => {
     );
     const ackText = await ackSection.innerText();
     expect(ackText.toLowerCase()).toContain('peer');
-    expect(ackText.toLowerCase()).toContain('operatör');
-    expect(ackText.toLowerCase()).toContain('sunucu');
+    expect(ackText.toLowerCase()).toMatch(/operator/);
+    expect(ackText.toLowerCase()).toMatch(/server/);
   });
 
   test('support form shows BLOCKED_APPROVAL feedback', async ({ page }) => {
     await loginAsOperator(page);
     await page.goto('/operator/help');
-    await page.getByRole('textbox', { name: 'Konu' }).fill('Test talebi');
-    await page.getByRole('textbox', { name: 'Mesaj' }).fill('Sentetik test — PII yok');
-    await page.getByRole('button', { name: 'Talebi kaydet (onay bekliyor)' }).click();
+    await page.getByRole('textbox', { name: 'Subject' }).fill('Test request');
+    await page.getByRole('textbox', { name: 'Message' }).fill('Synthetic test — no PII');
+    await page.getByRole('button', { name: 'Save request (pending approval)' }).click();
     await expect(page.getByTestId('help-support-feedback')).toContainText('BLOCKED_APPROVAL');
   });
 });

@@ -4,12 +4,9 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.defaultMinSize
-import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.selection.selectableGroup
-import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Button
 import androidx.compose.material3.Checkbox
 import androidx.compose.material3.FilterChip
@@ -18,6 +15,7 @@ import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.stringResource
@@ -25,11 +23,16 @@ import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.role
 import androidx.compose.ui.semantics.semantics
-import androidx.compose.ui.unit.dp
 import com.sosmesh.android.core.data.sos.DraftInvalidReason
 import com.sosmesh.android.core.data.sos.LocationFreshness
 import com.sosmesh.android.core.data.sos.LocationFreshnessTier
 import com.sosmesh.android.core.data.sos.LocationSnapshot
+import com.sosmesh.android.core.design.components.SosEmptyState
+import com.sosmesh.android.core.design.components.SosNot112Banner
+import com.sosmesh.android.core.design.components.SosScreenScaffold
+import com.sosmesh.android.core.design.components.SosScrollableScreenContent
+import com.sosmesh.android.core.design.components.SosStatusCard
+import com.sosmesh.android.core.design.theme.SosSpacing
 import com.sosmesh.android.core.model.SosType
 import com.sosmesh.android.core.permissions.ui.EmergencyCall112Button
 import com.sosmesh.android.feature.sos.R
@@ -52,32 +55,44 @@ fun SosFlowScreen(
     onConfirm: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    when (state.step) {
-        SosWizardStep.FORM ->
-            SosFormScreen(
-                state = state,
-                onSelectType = onSelectType,
-                onPersonCountChange = onPersonCountChange,
-                onPersonUnknownChange = onPersonUnknownChange,
-                onNoteChange = onNoteChange,
-                onManualToggle = onManualToggle,
-                onManualLat = onManualLat,
-                onManualLng = onManualLng,
-                onContinue = onContinue,
-                modifier = modifier,
-            )
-        SosWizardStep.PREVIEW ->
-            SosPreviewScreen(
-                state = state,
-                onBack = onBackFromPreview,
-                onConfirm = onConfirm,
-                modifier = modifier,
-            )
-        SosWizardStep.DONE ->
-            SosDoneScreen(
-                peerDeliveryHint = state.peerDeliveryHint,
-                modifier = modifier,
-            )
+    val title =
+        when (state.step) {
+            SosWizardStep.FORM -> stringResource(R.string.sos_flow_title)
+            SosWizardStep.PREVIEW -> stringResource(R.string.sos_preview_title)
+            SosWizardStep.DONE -> stringResource(R.string.sos_saved_local)
+        }
+    SosScreenScaffold(
+        title = title,
+        modifier = modifier,
+        showLogoInTopBar = true,
+    ) { contentModifier ->
+        when (state.step) {
+            SosWizardStep.FORM ->
+                SosFormScreen(
+                    state = state,
+                    onSelectType = onSelectType,
+                    onPersonCountChange = onPersonCountChange,
+                    onPersonUnknownChange = onPersonUnknownChange,
+                    onNoteChange = onNoteChange,
+                    onManualToggle = onManualToggle,
+                    onManualLat = onManualLat,
+                    onManualLng = onManualLng,
+                    onContinue = onContinue,
+                    contentModifier = contentModifier,
+                )
+            SosWizardStep.PREVIEW ->
+                SosPreviewScreen(
+                    state = state,
+                    onBack = onBackFromPreview,
+                    onConfirm = onConfirm,
+                    contentModifier = contentModifier,
+                )
+            SosWizardStep.DONE ->
+                SosDoneScreen(
+                    peerDeliveryHint = state.peerDeliveryHint,
+                    contentModifier = contentModifier,
+                )
+        }
     }
 }
 
@@ -92,25 +107,17 @@ private fun SosFormScreen(
     onManualLat: (String) -> Unit,
     onManualLng: (String) -> Unit,
     onContinue: () -> Unit,
-    modifier: Modifier = Modifier,
+    contentModifier: Modifier,
 ) {
-    Column(
-        modifier =
-            modifier
-                .fillMaxSize()
-                .verticalScroll(rememberScrollState())
-                .padding(16.dp),
-        verticalArrangement = Arrangement.spacedBy(12.dp),
-    ) {
+    SosScrollableScreenContent(contentModifier) {
         OfflineBadge()
-        Text(text = stringResource(R.string.sos_not112_disclaimer), style = MaterialTheme.typography.bodySmall)
+        SosNot112Banner(disclaimerText = stringResource(R.string.sos_not112_disclaimer))
         EmergencyCall112Button(modifier = Modifier.fillMaxWidth(), testTag = "sos_call_112_button")
-        Text(text = stringResource(R.string.sos_flow_title), style = MaterialTheme.typography.headlineSmall)
         Text(text = stringResource(R.string.sos_secondary_continue_hint), style = MaterialTheme.typography.bodySmall)
         Text(text = stringResource(R.string.sos_type_label), style = MaterialTheme.typography.titleMedium)
         Row(
             modifier = Modifier.selectableGroup(),
-            horizontalArrangement = Arrangement.spacedBy(8.dp),
+            horizontalArrangement = Arrangement.spacedBy(SosSpacing.xs),
         ) {
             for (type in SosType.entries) {
                 val labelText = typeLabel(type)
@@ -135,7 +142,7 @@ private fun SosFormScreen(
                 singleLine = true,
             )
         }
-        Row(verticalAlignment = androidx.compose.ui.Alignment.CenterVertically) {
+        Row(verticalAlignment = Alignment.CenterVertically) {
             Checkbox(checked = state.personCountUnknown, onCheckedChange = onPersonUnknownChange)
             Text(stringResource(R.string.sos_person_unknown))
         }
@@ -164,7 +171,7 @@ private fun SosFormScreen(
             modifier =
                 Modifier
                     .fillMaxWidth()
-                    .defaultMinSize(minHeight = 48.dp)
+                    .defaultMinSize(minHeight = SosSpacing.touchMin)
                     .testTag("sos_continue_button"),
         ) {
             Text(stringResource(R.string.sos_continue))
@@ -177,28 +184,26 @@ private fun SosPreviewScreen(
     state: SosFormUiState,
     onBack: () -> Unit,
     onConfirm: () -> Unit,
-    modifier: Modifier = Modifier,
+    contentModifier: Modifier,
 ) {
-    Column(
-        modifier = modifier.fillMaxSize().padding(16.dp),
-        verticalArrangement = Arrangement.spacedBy(12.dp),
-    ) {
-        Text(stringResource(R.string.sos_preview_title), style = MaterialTheme.typography.headlineSmall)
-        Text(stringResource(R.string.sos_type_label) + ": " + typeLabel(state.selectedType))
-        Text(
-            stringResource(R.string.sos_person_count_label) + ": " +
-                if (state.personCountUnknown) {
-                    stringResource(R.string.sos_person_unknown)
-                } else {
-                    state.personCountText
-                },
-        )
-        if (state.note.isNotBlank()) {
-            Text(stringResource(R.string.sos_note_label) + ": " + state.note)
+    SosScrollableScreenContent(contentModifier) {
+        SosStatusCard {
+            Text(stringResource(R.string.sos_type_label) + ": " + typeLabel(state.selectedType))
+            Text(
+                stringResource(R.string.sos_person_count_label) + ": " +
+                    if (state.personCountUnknown) {
+                        stringResource(R.string.sos_person_unknown)
+                    } else {
+                        state.personCountText
+                    },
+            )
+            if (state.note.isNotBlank()) {
+                Text(stringResource(R.string.sos_note_label) + ": " + state.note)
+            }
+            LocationPreview(state)
         }
-        LocationPreview(state)
-        Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-            Button(onClick = onBack, modifier = Modifier.defaultMinSize(minHeight = 48.dp)) {
+        Row(horizontalArrangement = Arrangement.spacedBy(SosSpacing.xs)) {
+            Button(onClick = onBack, modifier = Modifier.defaultMinSize(minHeight = SosSpacing.touchMin)) {
                 Text(stringResource(R.string.sos_preview_back))
             }
             Button(
@@ -206,7 +211,7 @@ private fun SosPreviewScreen(
                 modifier =
                     Modifier
                         .weight(1f)
-                        .defaultMinSize(minHeight = 48.dp)
+                        .defaultMinSize(minHeight = SosSpacing.touchMin)
                         .testTag("sos_confirm_button"),
             ) {
                 Text(stringResource(R.string.sos_preview_confirm))
@@ -218,33 +223,34 @@ private fun SosPreviewScreen(
 @Composable
 private fun SosDoneScreen(
     peerDeliveryHint: SosPeerDeliveryHint,
-    modifier: Modifier = Modifier,
+    contentModifier: Modifier,
 ) {
-    Column(modifier = modifier.fillMaxSize().padding(24.dp)) {
-        Text(stringResource(R.string.sos_saved_local), style = MaterialTheme.typography.titleLarge)
-        val detail =
-            when (peerDeliveryHint) {
-                SosPeerDeliveryHint.NONE,
-                SosPeerDeliveryHint.TRANSFER_STARTED,
-                -> stringResource(R.string.sos_peer_delivery_started)
-                SosPeerDeliveryHint.WAITING_FOR_PEER -> stringResource(R.string.sos_peer_delivery_waiting)
-                SosPeerDeliveryHint.PERMISSIONS_REQUIRED -> stringResource(R.string.sos_peer_delivery_permissions)
-                SosPeerDeliveryHint.BLOCKED -> stringResource(R.string.sos_peer_delivery_blocked)
-            }
-        Text(
-            text = detail,
-            modifier = Modifier.padding(top = 12.dp),
-            style = MaterialTheme.typography.bodyMedium,
-        )
+    SosScrollableScreenContent(contentModifier) {
+        Column(verticalArrangement = Arrangement.spacedBy(SosSpacing.sm)) {
+            SosEmptyState(message = stringResource(R.string.sos_saved_local))
+            val detail =
+                when (peerDeliveryHint) {
+                    SosPeerDeliveryHint.NONE,
+                    SosPeerDeliveryHint.TRANSFER_STARTED,
+                    -> stringResource(R.string.sos_peer_delivery_started)
+                    SosPeerDeliveryHint.WAITING_FOR_PEER -> stringResource(R.string.sos_peer_delivery_waiting)
+                    SosPeerDeliveryHint.PERMISSIONS_REQUIRED -> stringResource(R.string.sos_peer_delivery_permissions)
+                    SosPeerDeliveryHint.BLOCKED -> stringResource(R.string.sos_peer_delivery_blocked)
+                }
+            Text(text = detail, style = MaterialTheme.typography.bodyMedium)
+        }
     }
 }
 
 @Composable
 private fun OfflineBadge() {
-    Surface(color = MaterialTheme.colorScheme.errorContainer) {
+    Surface(
+        color = MaterialTheme.colorScheme.errorContainer,
+        shape = com.sosmesh.android.core.design.theme.SosShapes.banner,
+    ) {
         Text(
             text = stringResource(R.string.sos_offline_badge),
-            modifier = Modifier.padding(horizontal = 12.dp, vertical = 6.dp),
+            modifier = Modifier.padding(horizontal = SosSpacing.sm, vertical = SosSpacing.xs),
             style = MaterialTheme.typography.labelLarge,
         )
     }
@@ -272,8 +278,9 @@ private fun LocationFreshnessBadge(location: LocationSnapshot) {
                 else -> MaterialTheme.colorScheme.surfaceVariant
             },
         modifier = Modifier.testTag("sos_location_freshness"),
+        shape = com.sosmesh.android.core.design.theme.SosShapes.chip,
     ) {
-        Text(text = label, modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp))
+        Text(text = label, modifier = Modifier.padding(horizontal = SosSpacing.xs, vertical = SosSpacing.xxs))
     }
 }
 
@@ -302,7 +309,7 @@ private fun LocationSection(
             Text(stringResource(R.string.sos_location_accuracy, it))
         }
     }
-    Row(verticalAlignment = androidx.compose.ui.Alignment.CenterVertically) {
+    Row(verticalAlignment = Alignment.CenterVertically) {
         Checkbox(checked = useManual, onCheckedChange = onManualToggle)
         Text(stringResource(R.string.sos_manual_location))
     }

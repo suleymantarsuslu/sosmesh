@@ -9,12 +9,14 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
+import com.sosmesh.android.core.design.components.SosLanguagePicker
 import com.sosmesh.android.core.permissions.AppSettingsIntents
 import com.sosmesh.android.core.permissions.PermissionFlowCoordinator
 import com.sosmesh.android.core.permissions.PermissionRequestOutcome
 import com.sosmesh.android.core.permissions.R
 import com.sosmesh.android.core.permissions.ui.PermissionRationaleScreen
 import com.sosmesh.android.core.permissions.ui.PermissionScreenState
+import com.sosmesh.android.locale.AppLocaleController
 import com.sosmesh.android.ui.gate.findActivity
 import dagger.hilt.EntryPoint
 import dagger.hilt.InstallIn
@@ -94,6 +96,15 @@ fun PermissionsRoute(onBack: () -> Unit) {
         },
         onOpenSettings = {
             context.startActivity(AppSettingsIntents.applicationDetails(context))
+        },
+        onNavigateBack = onBack,
+        languagePicker = {
+            SosLanguagePicker(
+                selectedLanguageTag = AppLocaleController.readStoredTag(context),
+                onLanguageSelected = { tag ->
+                    AppLocaleController.setApplicationLanguage(context.applicationContext, tag)
+                },
+            )
         },
     )
 }

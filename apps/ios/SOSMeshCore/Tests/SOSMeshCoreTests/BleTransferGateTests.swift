@@ -74,8 +74,7 @@ final class BleTransferGateTests: XCTestCase {
         let clock = SimulatedBleTransferClock()
         let rng = SeededBleTransferRng(seed: 3)
         let channel = MockBleTransferChannel(packetLoss: 0, duplicateRate: 0, rng: rng)
-        let outbound = RecordingOutbound()
-        let (senderT, receiverT) = linkedPair(outbound: outbound)
+        let (senderT, receiverT) = channel.createTransportPair()
         let sender = BleTransferSender(
             transport: senderT,
             config: BleTransferConfig(chunkTimeoutMs: 400, maxRetries: 5),

@@ -20,10 +20,10 @@ class ProdFlavorBuildConfigTest {
     }
 
     @Test
-    fun prodBuildConfig_usesHttpsPlaceholderIngest() {
+    fun prodBuildConfig_usesHttpsIngestUrl() {
         assertTrue(BuildConfig.INGEST_BASE_URL.startsWith("https://"))
         assertFalse(BuildConfig.INGEST_BASE_URL.contains("localhost"))
         assertNotNull(BuildConfig.INGEST_BASE_URL)
-        assertTrue(BuildConfig.INGEST_BASE_URL.contains("api.sosmesh.example"))
+        assertTrue(BuildConfig.INGEST_BASE_URL.contains("sosmesh.antiosoft.com"))
     }
 }

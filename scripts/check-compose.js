@@ -35,7 +35,7 @@ function validateCompose(composeData) {
 
   const services = composeData.services;
 
-  REQUIRED_SERVICES.forEach(name => {
+  REQUIRED_SERVICES.forEach((name) => {
     if (!services[name]) {
       errors.push(`Missing required service: ${name}`);
       return;
@@ -66,39 +66,72 @@ function validateCompose(composeData) {
 }
 
 function main() {
-  const composePath = process.argv[2] || path.join(__dirname, '..', 'compose.yaml');
-
-  if (!fs.existsSync(composePath)) {
-    console.error('❌ compose.yaml not found');
-    process.exit(1);
-  }
+  const composePath = process.argv[2];
+  const composePaths = composePath
+    ? [composePath]
+    : [
+        path.join(__dirname, '..', 'compose.yaml'),
+        path.join(__dirname, '..', 'infra', 'deploy', 'compose', 'docker-compose.staging.yml'),
+        path.join(__dirname, '..', 'infra', 'deploy', 'compose', 'docker-compose.vulut.yml'),
+      ];
 
   console.log('=== SOSMesh Compose Validation ===\n');
-  console.log(`Checking: ${composePath}\n`);
 
-  const composeData = parseYaml(composePath);
-  const { errors, warnings } = validateCompose(composeData);
+  let allErrors = [];
+  let allWarnings = [];
+  const requiredFiles = composePath
+    ? []
+    : [
+        path.join(__dirname, '..', 'compose.yaml'),
+        path.join(__dirname, '..', 'infra', 'deploy', 'compose', 'docker-compose.staging.yml'),
+        path.join(__dirname, '..', 'infra', 'deploy', 'compose', 'docker-compose.vulut.yml'),
+      ];
 
-  const serviceCount = composeData.services ? Object.keys(composeData.services).length : 0;
-  console.log(`Services defined: ${serviceCount}`);
+  let validatedCount = 0;
 
-  if (errors.length === 0 && warnings.length === 0) {
-    console.log('\n✅ All checks passed');
-    console.log(`   - ${REQUIRED_SERVICES.length}/${REQUIRED_SERVICES.length} required services present`);
-    console.log(`   - All services have healthchecks`);
-    console.log(`   - All services have image or build`);
+  for (const checkPath of composePaths) {
+    if (!fs.existsSync(checkPath)) {
+      if (composePath || requiredFiles.includes(checkPath)) {
+        console.error(`❌ ${checkPath} not found`);
+        process.exit(1);
+      }
+      continue;
+    }
+    validatedCount++;
+
+    console.log(`Checking: ${checkPath}`);
+
+    const composeData = parseYaml(checkPath);
+    const { errors, warnings } = validateCompose(composeData);
+
+    const serviceCount = composeData.services ? Object.keys(composeData.services).length : 0;
+    console.log(`  Services defined: ${serviceCount}`);
+
+    if (errors.length === 0 && warnings.length === 0) {
+      console.log('  ✅ All checks passed\n');
+    } else {
+      if (warnings.length > 0) {
+        console.log('  ⚠️  Warnings:');
+        warnings.forEach((w) => console.log(`     - ${w}`));
+      }
+      if (errors.length > 0) {
+        console.log('  ❌ Errors:');
+        errors.forEach((e) => console.log(`     - ${e}`));
+      }
+      console.log('');
+    }
+
+    allErrors = allErrors.concat(errors.map((e) => `${checkPath}: ${e}`));
+    allWarnings = allWarnings.concat(warnings.map((w) => `${checkPath}: ${w}`));
+  }
+
+  if (allErrors.length === 0 && allWarnings.length === 0) {
+    console.log(`\n✅ All ${validatedCount} compose files validated successfully`);
     process.exit(0);
   }
 
-  if (warnings.length > 0) {
-    console.log('\n⚠️  Warnings:');
-    warnings.forEach(w => console.log(`   - ${w}`));
-  }
-
-  if (errors.length > 0) {
-    console.log('\n❌ Errors:');
-    errors.forEach(e => console.log(`   - ${e}`));
-    console.log(`\nValidation failed: ${errors.length} error(s)`);
+  if (allErrors.length > 0) {
+    console.log(`\n❌ Validation failed: ${allErrors.length} error(s) across all files`);
     process.exit(1);
   }
 

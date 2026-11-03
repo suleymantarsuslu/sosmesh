@@ -22,6 +22,7 @@ import { OperatorCsrfGuard } from '../operator/guards/operator-csrf.guard';
 import { AuthService } from './auth.service';
 import { LoginDto } from './dto/login.dto';
 import { SESSION_COOKIE } from './auth.constants';
+import { getClientKey } from '../common/utils/client-ip.util';
 
 @ApiTags('auth')
 @Controller('v1/auth')
@@ -38,7 +39,7 @@ export class AuthController {
     @Req() req: Request,
     @Res({ passthrough: true }) res: Response
   ) {
-    const clientKey = req.ip ?? req.socket.remoteAddress ?? 'unknown';
+    const clientKey = getClientKey(req);
     const result = await this.auth.login(dto, clientKey);
     const secure = this.config.get<string>('NODE_ENV') === 'production';
     res.cookie(SESSION_COOKIE, result.token, {

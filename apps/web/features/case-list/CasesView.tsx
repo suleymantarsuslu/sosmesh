@@ -1,9 +1,7 @@
 'use client';
 
-import Link from 'next/link';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
-import { CaseDetailPanel } from './CaseDetailPanel';
 import { CaseDrawer } from './CaseDrawer';
 import { CaseFilters } from './CaseFilters';
 import { CaseListPanel } from './CaseListPanel';

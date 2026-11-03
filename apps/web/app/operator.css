@@ -3661,6 +3661,14 @@ html[data-theme='dark'] .case-drawer {
   }
 }
 
+.case-drawer__actions {
+  padding: var(--space-3, 0.75rem) var(--space-4, 1rem) 0;
+}
+
+.case-drawer__actions .cases-detail-panel__open-button {
+  margin-top: 0;
+}
+
 .case-drawer__meta {
   padding: var(--space-4, 1rem);
   display: grid;

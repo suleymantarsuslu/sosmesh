@@ -5,17 +5,20 @@ import * as http from 'http';
 import { AppModule } from './app.module';
 import { PrismaService } from './prisma/prisma.service';
 import { PrivacyRetentionService } from './privacy/privacy-retention.service';
+import { AiJobRunnerService } from './ai/ai-job-runner.service';
 import { createWorkerHealthRequestListener } from './worker-health.http';
 
 async function bootstrap() {
   const app = await NestFactory.createApplicationContext(AppModule, { bufferLogs: true });
   app.useLogger(app.get(Logger));
   const retention = app.get(PrivacyRetentionService);
+  const aiJobRunner = app.get(AiJobRunnerService);
   const prisma = app.get(PrismaService);
   const logger = app.get(Logger);
 
   const port = Number(process.env.WORKER_HEALTH_PORT ?? 3002);
-  const intervalMs = Number(process.env.WORKER_RETENTION_INTERVAL_MS ?? 3_600_000);
+  const retentionIntervalMs = Number(process.env.WORKER_RETENTION_INTERVAL_MS ?? 3_600_000);
+  const aiEnabled = process.env.AI_ENABLED !== 'false';
 
   const server = http.createServer(createWorkerHealthRequestListener(prisma));
 
@@ -31,7 +34,15 @@ async function bootstrap() {
   await runRetention();
   setInterval(() => {
     void runRetention();
-  }, intervalMs);
+  }, retentionIntervalMs);
+
+  // Start AI job runner if enabled
+  if (aiEnabled) {
+    logger.log('Starting AI job runner');
+    void aiJobRunner.start();
+  } else {
+    logger.log('AI job runner disabled (AI_ENABLED=false)');
+  }
 
   logger.log(`SOSMesh worker listening for health on port ${port}`);
 }

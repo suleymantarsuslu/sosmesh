@@ -320,6 +320,8 @@
       "sidebarToggle": "Kenar çubuğunu aç/kapat",
       "sidebarCollapse": "Kenar çubuğunu daralt",
       "sidebarExpand": "Kenar çubuğunu genişlet",
+      "sidebarCollapseAria": "Kenar çubuğunu daralt",
+      "sidebarExpandAria": "Kenar çubuğunu genişlet",
       "connectionLive": "Canlı bağlantı",
       "connectionLost": "Canlı bağlantı kesildi — yedek senkronizasyon etkin."
     },

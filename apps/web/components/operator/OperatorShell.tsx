@@ -15,7 +15,6 @@ import { MobileNavDrawer } from './MobileNavDrawer';
 import { OperatorLiveStatus } from './OperatorLiveStatus';
 import { useOperatorPreferences } from './OperatorPreferencesProvider';
 import { OperatorTopbarOverflow } from './OperatorTopbarOverflow';
-import { OrgHeader } from './OrgHeader';
 import { SavedViewsMenu } from './SavedViewsMenu';
 import { useOrganizationContext } from './useOrganizationContext';
 
@@ -142,24 +141,25 @@ export function OperatorShell({
         {t('a11y.skipToMain')}
       </a>
       <aside className="operator-sidebar" aria-label={t('a11y.menu')}>
+        <button
+          type="button"
+          className="operator-sidebar__chevron-toggle"
+          onClick={toggleSidebar}
+          aria-expanded={!sidebarCollapsed}
+          aria-label={
+            sidebarCollapsed ? t('web.shell.sidebarExpandAria') : t('web.shell.sidebarCollapseAria')
+          }
+          title={
+            sidebarCollapsed ? t('web.shell.sidebarExpandAria') : t('web.shell.sidebarCollapseAria')
+          }
+          data-testid="operator-sidebar-toggle"
+        >
+          <span aria-hidden>{sidebarCollapsed ? '›' : '‹'}</span>
+        </button>
         <div className="operator-brand" data-testid="operator-brand">
           <SosMeshLogo size={44} />
           <span className="operator-brand__text">{t('web.shell.brand')}</span>
         </div>
-        <OrgHeader
-          organizationName={context?.organization?.name ?? null}
-          teamName={context?.team?.name ?? null}
-          role={user.role}
-        />
-        <Button
-          variant="ghost"
-          className="operator-sidebar__toggle"
-          onClick={toggleSidebar}
-          aria-expanded={!sidebarCollapsed}
-          data-testid="operator-sidebar-toggle"
-        >
-          {sidebarCollapsed ? t('web.shell.sidebarExpand') : t('web.shell.sidebarCollapse')}
-        </Button>
         <nav className="operator-sidebar__nav">
           <ul>
             {items.map((item) => (
@@ -167,7 +167,7 @@ export function OperatorShell({
                 <Link
                   href={item.href}
                   aria-current={pathname === item.href ? 'page' : undefined}
-                  title={item.label}
+                  title={sidebarCollapsed ? item.label : undefined}
                 >
                   <span className="operator-nav-icon" aria-hidden>
                     {NAV_ICONS[item.href] ?? '•'}

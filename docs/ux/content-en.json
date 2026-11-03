@@ -320,6 +320,8 @@
       "sidebarToggle": "Toggle sidebar",
       "sidebarCollapse": "Collapse sidebar",
       "sidebarExpand": "Expand sidebar",
+      "sidebarCollapseAria": "Collapse sidebar",
+      "sidebarExpandAria": "Expand sidebar",
       "connectionLive": "Live connection",
       "connectionLost": "Live connection lost — fallback sync active."
     },

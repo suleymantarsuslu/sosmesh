@@ -113,9 +113,9 @@ services:
     restart: unless-stopped
 
   gateway:
-    image: nginx:1.27-alpine
-    volumes:
-      - ../nginx/vulut.conf:/etc/nginx/conf.d/default.conf:ro
+    build:
+      context: ../../..
+      dockerfile: infra/deploy/docker/Dockerfile.gateway
     expose:
       - '80'
     depends_on:

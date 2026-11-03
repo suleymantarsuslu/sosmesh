@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useRef } from 'react';
+import Link from 'next/link';
 import { useOperatorPreferences } from '../../components/operator/OperatorPreferencesProvider';
 import { DeliveryStateBadge } from '../../components/cases/DeliveryStateBadge';
 import { Timeline } from '../../components/timeline/Timeline';
@@ -83,6 +84,15 @@ export function CaseDrawer({ open, row, timeline, onClose }: Props) {
           <span className="case-drawer__close-text">{t('web.caseDetail.close')}</span>
         </button>
       </header>
+      <div className="case-drawer__actions">
+        <Link
+          href={`/operator/cases/${row.incidentId}`}
+          className="cases-detail-panel__open-button"
+          data-testid="case-drawer-open-detail"
+        >
+          {t('web.cases.openFullCaseDetail')}
+        </Link>
+      </div>
       <dl className="case-drawer__meta">
         <div>
           <dt>{t('web.cases.tableHeaders.case')}</dt>

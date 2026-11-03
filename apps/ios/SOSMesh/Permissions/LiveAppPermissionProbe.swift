@@ -18,6 +18,7 @@ final class LiveAppPermissionProbe: NSObject, AppPermissionProbing, CBCentralMan
     private var bluetoothWarmupManager: CBCentralManager?
 
     func captureSnapshot() async -> PermissionGateSnapshot {
+        primeBluetoothAuthorizationIfAlreadyAuthorized()
         let notifications = await fetchNotificationAuthorization()
         let btState = bluetoothWarmupManager?.state ?? .unknown
         return PermissionGateSnapshot(

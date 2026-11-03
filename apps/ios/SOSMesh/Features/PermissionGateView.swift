@@ -45,11 +45,11 @@ struct PermissionGateView: View {
         }
         .background(DesignSystem.Colors.cardBackgroundSecondary.ignoresSafeArea())
         .onAppear {
-            Task { await appModel.refreshPermissionGate() }
+            appModel.onPermissionGateBecameVisible()
         }
         .onChange(of: scenePhase) { _, phase in
             if phase == .active {
-                Task { await appModel.refreshPermissionGate() }
+                appModel.onPermissionGateBecameVisible()
             }
         }
     }

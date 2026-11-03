@@ -12,14 +12,18 @@ struct SettingsView: View {
                         openLanguageSettings()
                     } label: {
                         HStack {
-                            Text("settings.language.change")
-                                .foregroundStyle(DesignSystem.Colors.textPrimary)
+                            VStack(alignment: .leading, spacing: 4) {
+                                Text("settings.language.follows_device")
+                                    .font(DesignSystem.Typography.callout)
+                                    .foregroundStyle(DesignSystem.Colors.textPrimary)
+                            }
                             Spacer()
                             Image(systemName: "chevron.right")
                                 .font(.caption)
                                 .foregroundStyle(DesignSystem.Colors.textSecondary)
                         }
                     }
+                    .accessibilityLabel(Text("settings.language.follows_device"))
                     .accessibilityHint(Text("settings.language.change_hint"))
                 }
                 

@@ -88,6 +88,5 @@
 "sos.sending" = "Gönderiliyor...";
 "settings.ble_phase" = "BLE yaşam döngüsü aşaması";
 "settings.language.title" = "Dil";
-"settings.language.current" = "Mevcut dil";
-"settings.language.change" = "Dili değiştir";
-"settings.language.change_hint" = "Uygulama dilini değiştirmek için sistem ayarlarını açar";
+"settings.language.follows_device" = "Cihaz dilini takip eder; iOS Ayarlarından değiştirin";
+"settings.language.change_hint" = "Cihaz dilini değiştirmek için iOS Ayarlarını açar";

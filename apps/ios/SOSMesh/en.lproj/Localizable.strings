@@ -88,6 +88,5 @@
 "sos.sending" = "Sending...";
 "settings.ble_phase" = "BLE lifecycle phase";
 "settings.language.title" = "Language";
-"settings.language.current" = "Current language";
-"settings.language.change" = "Change language";
-"settings.language.change_hint" = "Opens system settings to change the app language";
+"settings.language.follows_device" = "Follows device language; change it in iOS Settings";
+"settings.language.change_hint" = "Opens iOS Settings to change device language";

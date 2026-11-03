@@ -33,13 +33,6 @@ struct PermissionGateView: View {
                         icon: "bell.badge.fill",
                         isActive: activeStep == .notifications
                     )
-                    gateStepCard(
-                        step: .location,
-                        titleKey: "gate.step.location.title",
-                        bodyKey: "gate.step.location.body",
-                        icon: "location.fill",
-                        isActive: activeStep == .location
-                    )
                 }
 
                 if case .blocked(let step, let reason) = appModel.permissionGateStatus {
@@ -52,11 +45,11 @@ struct PermissionGateView: View {
         }
         .background(DesignSystem.Colors.cardBackgroundSecondary.ignoresSafeArea())
         .onAppear {
-            appModel.refreshPermissionGate()
+            Task { await appModel.refreshPermissionGate() }
         }
         .onChange(of: scenePhase) { _, phase in
             if phase == .active {
-                appModel.refreshPermissionGate()
+                Task { await appModel.refreshPermissionGate() }
             }
         }
     }
@@ -156,7 +149,6 @@ struct PermissionGateView: View {
         switch step {
         case .bluetooth: return "antenna.radiowaves.left.and.right"
         case .notifications: return "bell.badge.fill"
-        case .location: return "location.fill"
         }
     }
 
@@ -164,7 +156,6 @@ struct PermissionGateView: View {
         switch step {
         case .bluetooth: return "gate.action.allow_bluetooth"
         case .notifications: return "gate.action.allow_notifications"
-        case .location: return "gate.action.allow_location"
         }
     }
 

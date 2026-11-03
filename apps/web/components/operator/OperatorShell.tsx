@@ -2,7 +2,7 @@
 
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
-import { Suspense, useEffect, useMemo, useState, type ReactNode } from 'react';
+import { Suspense, useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 
 import { SosMeshLogo } from '../brand/SosMeshLogo';
 import { LocaleSwitcher } from '../i18n/LocaleSwitcher';
@@ -69,6 +69,21 @@ export function OperatorShell({
   const [paletteOpen, setPaletteOpen] = useState(false);
   const [drawerOpen, setDrawerOpen] = useState(false);
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
+  const [userMenuOpen, setUserMenuOpen] = useState(false);
+  const userMenuRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (!userMenuOpen) {
+      return;
+    }
+    const onPointerDown = (event: MouseEvent) => {
+      if (userMenuRef.current && !userMenuRef.current.contains(event.target as Node)) {
+        setUserMenuOpen(false);
+      }
+    };
+    document.addEventListener('mousedown', onPointerDown);
+    return () => document.removeEventListener('mousedown', onPointerDown);
+  }, [userMenuOpen]);
 
   useEffect(() => {
     try {
@@ -156,11 +171,6 @@ export function OperatorShell({
             ))}
           </ul>
         </nav>
-        <div className="operator-sidebar__footer">
-          <Button variant="ghost" onClick={logout} className="operator-sidebar__logout">
-            {t('web.shell.logout')}
-          </Button>
-        </div>
       </aside>
       <div className="operator-main-wrap">
         <DemoModeBanner visible={demoMode} />
@@ -205,13 +215,36 @@ export function OperatorShell({
             >
               {theme === 'light' ? t('web.shell.themeDark') : t('web.shell.themeLight')}
             </button>
-            <div className="operator-topbar__user" data-testid="operator-topbar-user">
-              <span className="operator-topbar__user-name">
-                {user.displayName || user.email || t('web.shell.defaultUser')}
-              </span>
-              <Button variant="ghost" onClick={logout} className="operator-topbar__logout">
-                {t('web.shell.logout')}
-              </Button>
+            <div className="operator-user-menu" ref={userMenuRef} data-testid="operator-topbar-user">
+              <button
+                type="button"
+                className="ui-button ui-button--ghost operator-user-menu__trigger"
+                aria-expanded={userMenuOpen}
+                aria-haspopup="menu"
+                onClick={() => setUserMenuOpen((open) => !open)}
+              >
+                <span className="operator-user-menu__avatar" aria-hidden>
+                  {(user.displayName || user.email || t('web.shell.defaultUser')).slice(0, 1).toUpperCase()}
+                </span>
+                <span className="operator-user-menu__name">
+                  {user.displayName || user.email || t('web.shell.defaultUser')}
+                </span>
+              </button>
+              {userMenuOpen ? (
+                <div className="operator-user-menu__panel" role="menu">
+                  <p className="operator-user-menu__meta">{user.email || user.displayName}</p>
+                  <Button
+                    variant="ghost"
+                    className="operator-user-menu__logout"
+                    onClick={() => {
+                      setUserMenuOpen(false);
+                      void logout();
+                    }}
+                  >
+                    {t('web.shell.logout')}
+                  </Button>
+                </div>
+              ) : null}
             </div>
           </div>
         </header>

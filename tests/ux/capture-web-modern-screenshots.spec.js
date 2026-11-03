@@ -89,4 +89,25 @@ test.describe('Web modern screenshots', () => {
     });
     await opCtx.close();
   });
+
+  test('capture operator panel screenshots production', async ({ browser }) => {
+    const { context: opCtx, page: opPage } = await freshEnglishContext(browser);
+    await opPage.setViewportSize({ width: 1440, height: 900 });
+    await loginAsOperator(opPage);
+    await opPage.goto('/operator/dashboard');
+    await expect(opPage.getByTestId('operator-dashboard')).toBeVisible();
+    await expect(opPage.getByTestId('locale-switcher-select')).toHaveValue('en');
+    await opPage.screenshot({
+      path: path.join(ARTIFACTS, 'operator-dashboard-en-1440.png'),
+      fullPage: true,
+    });
+
+    await opPage.goto('/operator/cases');
+    await expect(opPage.getByTestId('operator-cases-view')).toBeVisible();
+    await opPage.screenshot({
+      path: path.join(ARTIFACTS, 'operator-cases-en-1440.png'),
+      fullPage: true,
+    });
+    await opCtx.close();
+  });
 });

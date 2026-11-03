@@ -14,6 +14,7 @@ export function LocaleSwitcher({ className, testId = 'locale-switcher' }: Locale
     <label className={className} data-testid={testId}>
       <span className="locale-switcher__label">{t('web.shell.language')}</span>
       <select
+        className="locale-switcher__select"
         aria-label={t('web.shell.language')}
         value={locale}
         onChange={(event) => setLocale(event.target.value as 'tr' | 'en')}

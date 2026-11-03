@@ -37,11 +37,15 @@ export class OperatorEventsController {
     const accept = req.headers.accept ?? '';
     if (accept.includes('text/event-stream')) {
       res.setHeader('Content-Type', 'text/event-stream');
-      res.setHeader('Cache-Control', 'no-cache');
+      res.setHeader('Cache-Control', 'no-cache, no-transform');
+      res.setHeader('X-Accel-Buffering', 'no');
       res.setHeader('Connection', 'keep-alive');
       res.flushHeaders();
 
       let cursor = afterSeq;
+      let lastHeartbeat = Date.now();
+      const HEARTBEAT_INTERVAL_MS = 15_000;
+
       const writeBatch = async (): Promise<void> => {
         const batch = await this.operatorEvents.poll(req.operatorUser, cursor, 50);
         for (const event of batch) {
@@ -49,6 +53,11 @@ export class OperatorEventsController {
           res.write(`id: ${event.id}\n`);
           res.write('event: incident_message\n');
           res.write(`data: ${JSON.stringify(event)}\n\n`);
+          lastHeartbeat = Date.now();
+        }
+        if (Date.now() - lastHeartbeat > HEARTBEAT_INTERVAL_MS) {
+          res.write(': ping\n\n');
+          lastHeartbeat = Date.now();
         }
       };
 

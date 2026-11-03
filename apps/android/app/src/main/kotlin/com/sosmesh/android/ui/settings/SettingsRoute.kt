@@ -14,10 +14,10 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.sosmesh.android.R
+import com.sosmesh.android.core.design.components.SosLanguagePicker
 import com.sosmesh.android.core.design.components.SosNot112Banner
 import com.sosmesh.android.core.design.components.SosScreenScaffold
 import com.sosmesh.android.core.design.components.SosScrollableScreenContent
-import com.sosmesh.android.core.design.components.SosLanguagePicker
 import com.sosmesh.android.core.design.theme.SosSpacing
 import com.sosmesh.android.locale.AppLocaleController
 

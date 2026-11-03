@@ -20,7 +20,10 @@ class DesignLanguageStringsTest {
         assertTrue(tr.contains("Sistem", ignoreCase = true))
     }
 
-    private fun readStringValue(file: File, name: String): String {
+    private fun readStringValue(
+        file: File,
+        name: String,
+    ): String {
         val parser = XmlPullParserFactory.newInstance().newPullParser()
         parser.setInput(file.inputStream(), null)
         var event = parser.eventType

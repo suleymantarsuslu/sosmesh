@@ -2,9 +2,10 @@
  * Capture walkthrough screenshots (run explicitly; not part of default CI match).
  */
 
-const { test, expect } = require('@playwright/test');
-const path = require('node:path');
 const fs = require('node:fs');
+const path = require('node:path');
+
+const { test, expect } = require('@playwright/test');
 
 const { loginAsOperator } = require('./helpers/web-e2e');
 

@@ -32,7 +32,7 @@ class AppLocaleControllerTest {
         assertNull(
             context
                 .getSharedPreferences(AppLocaleController.PREFS_NAME, Context.MODE_PRIVATE)
-                .getString("language_tag", null)
+                .getString("language_tag", null),
         )
     }
 
@@ -46,7 +46,7 @@ class AppLocaleControllerTest {
         assertFalse(
             context
                 .getSharedPreferences(AppLocaleController.PREFS_NAME, Context.MODE_PRIVATE)
-                .contains("language_tag")
+                .contains("language_tag"),
         )
     }
 

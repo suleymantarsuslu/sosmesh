@@ -138,7 +138,8 @@ export class AiJobRunnerService {
     if (result.success) {
       await this.queue.complete(job.id);
     } else {
-      await this.queue.fail(job.id, result.error);
+      const errorMsg = 'error' in result ? result.error : 'unknown_error';
+      await this.queue.fail(job.id, errorMsg);
     }
   }
 

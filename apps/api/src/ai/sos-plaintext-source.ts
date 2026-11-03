@@ -1,5 +1,6 @@
 import { Injectable, Logger } from '@nestjs/common';
-import { decryptPayload, type EncryptedPayload, type ServerCryptoConfig } from '@sosmesh/contracts';
+import type { EncryptedPayload, ServerCryptoConfig } from '@sosmesh/contracts';
+import { decryptPayload } from '@sosmesh/contracts';
 import { PrismaService } from '../prisma/prisma.service';
 
 export type SosPlaintextRequest = {

@@ -356,10 +356,10 @@ export class MetaModelClient {
     };
 
     const formData = new FormData();
-    formData.append('request', JSON.stringify(requestJson), {
-      contentType: 'application/json',
-    });
-    formData.append('audio', new File([request.wavBuffer], 'audio.wav', {
+    formData.set('request', new File([JSON.stringify(requestJson)], 'request.json', {
+      type: 'application/json',
+    }));
+    formData.set('audio', new File([request.wavBuffer], 'audio.wav', {
       type: 'audio/wav',
     }));
 

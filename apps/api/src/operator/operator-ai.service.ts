@@ -80,10 +80,10 @@ export class OperatorAiService {
       modelVersion: analysis.modelVersion,
       eventType: analysis.eventType,
       reportedPersonCount: analysis.reportedPersonCount,
-      needs: this.parseJsonArray(analysis.needs),
-      hazards: this.parseJsonArray(analysis.hazards),
+      needs: this.parseJsonArray(analysis.needs) as string[],
+      hazards: this.parseJsonArray(analysis.hazards) as string[],
       urgencySuggestion: analysis.urgencySuggestion as UrgencySuggestion | null,
-      missingInfo: this.parseJsonArray(analysis.missingInfo),
+      missingInfo: this.parseJsonArray(analysis.missingInfo) as string[],
       summary: analysis.summary,
       nextStepSuggestion: analysis.nextStepSuggestion,
       sourceQuotes: this.parseJsonArray(analysis.sourceQuotes).map((q: unknown) => {

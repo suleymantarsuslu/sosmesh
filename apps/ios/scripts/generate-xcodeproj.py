@@ -16,12 +16,16 @@ APP_SOURCES = [
     "SOSMesh/Features/StatusView.swift",
     "SOSMesh/Features/RelayView.swift",
     "SOSMesh/Features/SettingsView.swift",
+    "SOSMesh/Features/PermissionGateView.swift",
+    "SOSMesh/Permissions/LiveAppPermissionProbe.swift",
     "SOSMesh/Companion/PhoneWatchSessionManager.swift",
     "SOSMesh/Companion/PhoneWatchOutboxAdapter.swift",
     "SOSMesh/Companion/PhoneWatchCompanionHolder.swift",
     "CoreBLE/BleCentralCoordinator.swift",
     "CoreBLE/BlePeripheralCoordinator.swift",
     "CoreBLE/BleBackgroundConfiguration.swift",
+    "CoreBLE/BleGattBridge.swift",
+    "CoreBLE/LiveBleMeshRadio.swift",
 ]
 
 WATCH_APP_SOURCES = [

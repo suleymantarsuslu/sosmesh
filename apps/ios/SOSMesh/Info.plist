@@ -33,7 +33,9 @@
 	<key>NSBluetoothPeripheralUsageDescription</key>
 	<string>Bluetooth: SOSMesh relay modunda yakın cihazlara hizmet sunmak için BLE kullanır.</string>
 	<key>NSLocationWhenInUseUsageDescription</key>
-	<string>Konum: SOS zarfına yaklaşık konum eklemek için isteğe bağlıdır; reddedebilirsiniz.</string>
+	<string>Konum: SOS mesajının zarfına yaklaşık konum eklemek için kullanılır; hassas sağlık verisi toplanmaz.</string>
+	<key>NSUserNotificationsUsageDescription</key>
+	<string>Bildirimler: SOS iletim durumu ve cihazınızdaki önemli uyarılar için kullanılır.</string>
 	<key>UIBackgroundModes</key>
 	<array>
 		<string>bluetooth-central</string>

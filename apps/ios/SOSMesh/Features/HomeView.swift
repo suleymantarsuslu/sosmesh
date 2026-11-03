@@ -1,4 +1,5 @@
 import SwiftUI
+import UIKit
 
 struct HomeView: View {
     @EnvironmentObject private var appModel: AppModel
@@ -12,7 +13,7 @@ struct HomeView: View {
                 Text("onboarding.not112")
                     .font(.body)
                     .accessibilityLabel(Text("onboarding.not112"))
-                CrossPlatformFaultBanner(hint: appModel.platformHint, onOpenSettings: {})
+                CrossPlatformFaultBanner(hint: appModel.platformHint, onOpenSettings: openSettings)
                 NavigationLink {
                     SosSendView()
                 } label: {
@@ -28,31 +29,57 @@ struct HomeView: View {
             }
             .padding()
             .navigationTitle("app.name")
-            .onAppear {
-                appModel.refreshPlatformHint()
+            .task {
+                await appModel.reloadOutbox()
             }
+        }
+    }
+
+    private func openSettings() {
+        if let url = URL(string: UIApplication.openSettingsURLString) {
+            UIApplication.shared.open(url)
         }
     }
 }
 
 struct SosSendView: View {
     @EnvironmentObject private var appModel: AppModel
-    @State private var queued = false
+    @State private var note = ""
+    @State private var sending = false
+    @State private var errorMessage: String?
 
     var body: some View {
         VStack(spacing: 12) {
             Text("sos.confirm.message")
+            TextField("sos.note.placeholder", text: $note)
+                .textFieldStyle(.roundedBorder)
             Button("sos.confirm.yes") {
-                queued = true
-                appModel.outboxCount += 1
+                Task { await send() }
             }
             .buttonStyle(.borderedProminent)
-            if queued {
-                Text("status.timeline.1")
-                    .accessibilityLabel(Text("status.timeline.1"))
+            .disabled(sending)
+            if sending {
+                ProgressView()
+            }
+            if let errorMessage {
+                Text(errorMessage)
+                    .font(.footnote)
+                    .foregroundStyle(.red)
             }
         }
         .padding()
         .navigationTitle("sos.confirm.title")
+    }
+
+    private func send() async {
+        sending = true
+        errorMessage = nil
+        defer { sending = false }
+        do {
+            let lang = Locale.current.language.languageCode?.identifier ?? "en"
+            try await appModel.submitSos(note: note, languageTag: lang)
+        } catch {
+            errorMessage = error.localizedDescription
+        }
     }
 }

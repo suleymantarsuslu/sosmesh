@@ -196,6 +196,44 @@ public final class DiskOutboxQueue {
         return before - store.entries.count
     }
 
+    public func getByKey(sosId: String, digest: String) throws -> OutboxEntryMeta? {
+        lock.lock()
+        defer { lock.unlock() }
+        return try readStoreUnlocked().entries.first { $0.sosId == sosId && $0.digest == digest }
+    }
+
+    @discardableResult
+    public func updateState(
+        sosId: String,
+        digest: String,
+        state: String,
+        nowMs: Int64,
+        lastError: String? = nil
+    ) throws -> OutboxEntryMeta? {
+        lock.lock()
+        defer { lock.unlock() }
+        var store = try readStoreUnlocked()
+        guard let idx = store.entries.firstIndex(where: { $0.sosId == sosId && $0.digest == digest }) else {
+            return nil
+        }
+        let old = store.entries[idx]
+        let updated = OutboxEntryMeta(
+            sosId: old.sosId,
+            digest: old.digest,
+            origin: old.origin,
+            encryptedBlobBase64: old.encryptedBlobBase64,
+            state: state,
+            retryAtMs: old.retryAtMs,
+            expiresAtMs: old.expiresAtMs,
+            lastError: lastError,
+            createdAtMs: old.createdAtMs,
+            updatedAtMs: nowMs
+        )
+        store.entries[idx] = updated
+        try writeStoreUnlocked(store)
+        return updated
+    }
+
     public func setRetryAt(sosId: String, digest: String, retryAtMs: Int64, lastError: String?) throws {
         lock.lock()
         defer { lock.unlock() }
@@ -214,7 +252,7 @@ public final class DiskOutboxQueue {
             expiresAtMs: old.expiresAtMs,
             lastError: lastError,
             createdAtMs: old.createdAtMs,
-            updatedAtMs: old.updatedAtMs
+            updatedAtMs: retryAtMs
         )
         try writeStoreUnlocked(store)
     }

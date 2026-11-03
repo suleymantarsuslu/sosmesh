@@ -43,9 +43,9 @@ class RelayUploadExecutor
             if (!networkConnected) {
                 val retryAt = nowMs + NO_NETWORK_BACKOFF_MS
                 due.forEach { entry ->
-                    outbox.setRetryAt(entry.sosId, entry.digest, retryAt, "no_network")
+                    outbox.setUploadRetryAt(entry.sosId, entry.digest, retryAt, "no_network")
                 }
-                return RelayUploadRunSummary(0, 0, null, retryAt)
+                return RelayUploadRunSummary(0, 0, null, retryAt, due.size)
             }
             var uploaded = 0
             var attempted = 0
@@ -68,15 +68,16 @@ class RelayUploadExecutor
                             nowMs,
                             null,
                         )
+                        outbox.clearUploadRetry(entry.sosId, entry.digest)
                         uploaded++
                     }
                     is RelayIngestResult.InvalidReceipt -> {
                         retryMs = nowMs + HTTP_ERROR_BACKOFF_MS
-                        outbox.setRetryAt(entry.sosId, entry.digest, retryMs, "invalid_receipt")
+                        outbox.setUploadRetryAt(entry.sosId, entry.digest, retryMs, "invalid_receipt")
                         break
                     }
                     is RelayIngestResult.MessageIdConflict -> {
-                        outbox.setRetryAt(
+                        outbox.setUploadRetryAt(
                             entry.sosId,
                             entry.digest,
                             NEEDS_REVIEW_RETRY_AT_MS,
@@ -86,22 +87,31 @@ class RelayUploadExecutor
                     }
                     is RelayIngestResult.NoNetwork -> {
                         retryMs = nowMs + NO_NETWORK_BACKOFF_MS
-                        outbox.setRetryAt(entry.sosId, entry.digest, retryMs, "no_network")
+                        outbox.setUploadRetryAt(entry.sosId, entry.digest, retryMs, "no_network")
                         break
                     }
                     is RelayIngestResult.RateLimited -> {
                         retryMs = nowMs + min(result.retryAfterMs, RATE_LIMIT_MAX_BACKOFF_MS)
-                        outbox.setRetryAt(entry.sosId, entry.digest, retryMs, "http_429")
+                        outbox.setUploadRetryAt(entry.sosId, entry.digest, retryMs, "http_429")
                         break
                     }
                     is RelayIngestResult.HttpError -> {
-                        retryMs = nowMs + HTTP_ERROR_BACKOFF_MS
-                        outbox.setRetryAt(
-                            entry.sosId,
-                            entry.digest,
-                            retryMs,
-                            "http_${result.code}",
-                        )
+                        if (result.code in 400..499 && result.code != 429) {
+                            outbox.setUploadRetryAt(
+                                entry.sosId,
+                                entry.digest,
+                                NEEDS_REVIEW_RETRY_AT_MS,
+                                "http_${result.code}",
+                            )
+                        } else {
+                            retryMs = nowMs + HTTP_ERROR_BACKOFF_MS
+                            outbox.setUploadRetryAt(
+                                entry.sosId,
+                                entry.digest,
+                                retryMs,
+                                "http_${result.code}",
+                            )
+                        }
                         break
                     }
                 }

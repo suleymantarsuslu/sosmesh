@@ -566,6 +566,14 @@ AI_TOTAL_BUDGET_USD=150     # Default: $150 total
 3. **GDPR/Privacy** — explicit consent for external AI processing
 4. **Offline focus** — reinforces that AI is augmentation, not dependency
 
+### Production Deployment
+
+**VULUT Deployment:** The production VULUT deployment sets `AI_ENABLED=true` via its Coolify environment configuration (Coolify web UI environment variables). The compose file's `AI_ENABLED=${AI_ENABLED:-false}` provides a safe fallback only if the environment variable is unset.
+
+**Code default:** `'false'` (Joi schema in `apps/api/src/config/env.schema.ts`)  
+**Compose fallback:** `false` (via `${AI_ENABLED:-false}` shell parameter expansion)  
+**Runtime (VULUT):** `true` (set in Coolify environment, activating AI features)
+
 ### How to Enable
 
 ```bash
@@ -628,7 +636,7 @@ pnpm --filter @sosmesh/api restart
 
 ```bash
 # Core AI Settings
-AI_ENABLED=false                          # Master toggle (default: disabled)
+AI_ENABLED=false                          # Master toggle (code default: false, VULUT production: true via Coolify)
 MODEL_API_KEY=                            # Meta AI API key
 META_BASE_URL=https://api.meta.ai/v1     # Meta API endpoint
 META_MODEL=muse-spark-1.3                 # Default Spark model

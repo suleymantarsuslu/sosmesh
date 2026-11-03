@@ -503,10 +503,10 @@ This document provides test evidence for SOSMesh's Meta AI Hackathon submission.
 - ✅ No secrets in `.env.example`
 
 **Production Config Note:**
-- **Code default:** `AI_ENABLED='false'` (safe fallback)
-- **VULUT deployment:** `infra/deploy/compose/docker-compose.vulut.yml` also defaults to false: `AI_ENABLED: ${AI_ENABLED:-false}`
-- **Runtime:** Operators can set `AI_ENABLED=true` in environment to enable AI features
-- **Budget guards:** Default caps are $30/day (`AI_DAILY_BUDGET_USD=30`), $150 total (`AI_TOTAL_BUDGET_USD=150`) per env.schema.ts
+- **Code default:** `AI_ENABLED='false'` (safe fallback in `apps/api/src/config/env.schema.ts`)
+- **Compose fallback:** `AI_ENABLED: ${AI_ENABLED:-false}` (defaults to false only if unset)
+- **VULUT Production:** Coolify environment sets `AI_ENABLED=true` (via Coolify web UI environment variables), activating AI features
+- **Budget guards:** Daily $30 (`AI_DAILY_BUDGET_USD=30`), total $150 (`AI_TOTAL_BUDGET_USD=150`) enforced by database-backed ledger
 
 ---
 

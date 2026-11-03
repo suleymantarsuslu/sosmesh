@@ -95,4 +95,40 @@ describe('SOS Message Validation', () => {
     const result = validateSosMessage(deserialized);
     expect(result.valid).toBe(true);
   });
+
+  it('should accept null signature', () => {
+    const sosWithNullSig = {
+      version: 1,
+      id: 'bb0e8400-e29b-41d4-a716-446655440006',
+      envelope: {
+        timestamp: '2026-10-29T21:00:00Z',
+        locationStatus: 'GPS',
+        location: { latitude: 40.0, longitude: 33.0, accuracy: 5.0 },
+        priority: 1,
+        ackLevel: 'DEVICE_STORED',
+      },
+      encryptedPayload: 'PAYLOAD',
+      signature: null,
+    };
+    const result = validateSosMessage(sosWithNullSig);
+    expect(result.valid).toBe(true);
+  });
+
+  it('should accept null accuracy in location', () => {
+    const sosWithNullAccuracy = {
+      version: 1,
+      id: 'cc0e8400-e29b-41d4-a716-446655440007',
+      envelope: {
+        timestamp: '2026-10-29T21:30:00Z',
+        locationStatus: 'MANUAL',
+        location: { latitude: 41.0, longitude: 29.0, accuracy: null },
+        priority: 1,
+        ackLevel: 'DEVICE_STORED',
+      },
+      encryptedPayload: 'PAYLOAD',
+      signature: null,
+    };
+    const result = validateSosMessage(sosWithNullAccuracy);
+    expect(result.valid).toBe(true);
+  });
 });

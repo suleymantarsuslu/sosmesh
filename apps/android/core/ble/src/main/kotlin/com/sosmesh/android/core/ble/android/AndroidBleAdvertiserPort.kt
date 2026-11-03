@@ -28,10 +28,8 @@ class AndroidBleAdvertiserPort
         private var callback: AdvertiseCallback? = null
 
         override fun startAdvertising(request: AdvertiseRequest): Result<Unit> {
-            if (PermissionChecker.checkSelfPermission(context, Manifest.permission.BLUETOOTH_ADVERTISE) !=
-                PermissionChecker.PERMISSION_GRANTED
-            ) {
-                return Result.failure(SecurityException("BLUETOOTH_ADVERTISE not granted"))
+            if (!AndroidBlePermissionCheck.canAdvertise(context)) {
+                return Result.failure(SecurityException("BLE advertise permission not granted"))
             }
             val adapter = bluetoothAdapter() ?: return Result.failure(IllegalStateException("No BT adapter"))
             advertiser = adapter.bluetoothLeAdvertiser

@@ -34,10 +34,8 @@ class AndroidBleScannerPort
             request: ScanRequest,
             callback: ScanCallbackPort,
         ): Result<Unit> {
-            if (PermissionChecker.checkSelfPermission(context, Manifest.permission.BLUETOOTH_SCAN) !=
-                PermissionChecker.PERMISSION_GRANTED
-            ) {
-                return Result.failure(SecurityException("BLUETOOTH_SCAN not granted"))
+            if (!AndroidBlePermissionCheck.canScan(context)) {
+                return Result.failure(SecurityException("BLE scan permission not granted"))
             }
             val adapter = bluetoothAdapter() ?: return Result.failure(IllegalStateException("No BT adapter"))
             scanner = adapter.bluetoothLeScanner

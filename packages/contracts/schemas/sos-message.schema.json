@@ -39,7 +39,10 @@
                   "maximum": 180
                 },
                 "accuracy": {
-                  "$ref": "common.schema.json#/definitions/accuracy"
+                  "oneOf": [
+                    { "type": "null" },
+                    { "$ref": "common.schema.json#/definitions/accuracy" }
+                  ]
                 }
               },
               "additionalProperties": false
@@ -98,7 +101,10 @@
       "description": "Encrypted sensitive message text, opaque to relays"
     },
     "signature": {
-      "type": "string",
+      "oneOf": [
+        { "type": "null" },
+        { "type": "string" }
+      ],
       "description": "Message signature for integrity"
     }
   },

@@ -12,7 +12,7 @@ enum CanonicalJsonFixtureInput {
                 for unit in units {
                     utf16.append(UTF16.CodeUnit(truncatingIfNeeded: unit.intValue))
                 }
-                return String(utf16CodeUnits: utf16, count: utf16.count)
+                return String(decoding: utf16, as: UTF16.self)
             }
             var out = [String: Any]()
             for (key, value) in dict {

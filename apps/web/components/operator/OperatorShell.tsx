@@ -4,6 +4,7 @@ import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import { Suspense, useEffect, useMemo, useState, type ReactNode } from 'react';
 
+import { SosMeshLogo } from '../brand/SosMeshLogo';
 import { Button } from '../ui/Button';
 
 import { CommandPalette } from './CommandPalette';
@@ -81,7 +82,10 @@ export function OperatorShell({
         {t('a11y.skipToMain')}
       </a>
       <aside className="operator-sidebar" aria-label={t('a11y.menu')}>
-        <div className="operator-brand">{t('web.shell.brand')}</div>
+        <div className="operator-brand" data-testid="operator-brand">
+          <SosMeshLogo size={44} />
+          <span className="operator-brand__text">{t('web.shell.brand')}</span>
+        </div>
         <OrgHeader
           organizationName={context?.organization?.name ?? null}
           teamName={context?.team?.name ?? null}
@@ -112,6 +116,9 @@ export function OperatorShell({
       <div className="operator-main-wrap">
         <DemoModeBanner visible={demoMode} />
         <header className="operator-topbar">
+          <div className="operator-topbar__brand-mobile">
+            <SosMeshLogo size={32} />
+          </div>
           <Button
             variant="ghost"
             className="operator-mobile-menu"

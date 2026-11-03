@@ -1,14 +1,34 @@
 body {
-  font-family: var(--type-fontFamily-base, -apple-system, sans-serif);
+  font-family: var(--type-fontFamily-base, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif);
   margin: 0;
-  padding: var(--space-4, 1rem);
+  padding: 0;
   background: var(--color-surface-primary, #fff);
-  color: var(--color-text-primary, #212121);
+  color: var(--color-text-primary, #0b1220);
 }
 
 .container {
   max-width: 1200px;
   margin: 0 auto;
+  padding: var(--space-4, 1rem);
+}
+
+.marketing-home__header {
+  display: flex;
+  align-items: center;
+  gap: var(--space-4, 1rem);
+  margin-bottom: var(--space-4, 1rem);
+}
+
+.marketing-home__lead {
+  font-size: var(--type-fontSize-lg, 1.125rem);
+  color: var(--color-text-secondary);
+}
+
+.marketing-home__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-3, 0.75rem);
+  margin-top: var(--space-4, 1rem);
 }
 
 h1 {
@@ -17,8 +37,9 @@ h1 {
 }
 
 .warning-banner {
-  background: var(--color-warning, #F57C00);
-  color: var(--color-text-primary, #000);
+  background: color-mix(in srgb, var(--color-warning, #f57c00) 18%, var(--color-surface-secondary));
+  color: var(--color-text-primary);
+  border: 1px solid color-mix(in srgb, var(--color-warning) 35%, var(--color-border));
   padding: var(--space-3, 0.75rem);
   border-radius: var(--radius-base, 0.5rem);
   margin-bottom: var(--space-4, 1rem);

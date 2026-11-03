@@ -4,6 +4,7 @@ import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { useEffect, useId } from 'react';
 
+import { SosMeshLogo } from '../brand/SosMeshLogo';
 import { Button } from '../ui/Button';
 
 import { useOperatorPreferences } from './OperatorPreferencesProvider';
@@ -58,7 +59,10 @@ export function MobileNavDrawer({
         onClick={(event) => event.stopPropagation()}
       >
         <div className="operator-drawer__header">
-          <strong id={titleId}>{t('web.shell.brand')}</strong>
+          <div className="operator-drawer__brand">
+            <SosMeshLogo size={36} />
+            <strong id={titleId}>{t('web.shell.brand')}</strong>
+          </div>
           <Button
             variant="ghost"
             data-testid="mobile-nav-close"

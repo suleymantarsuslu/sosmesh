@@ -1,45 +1,49 @@
 :root {
+  --color-brand-navy: #070D1D;
+  --color-brand-red: #C62828;
+
   /* Light mode (default) */
   --color-light-sos: #D32F2F;
   --color-light-danger: #C62828;
   --color-light-warning: #F57C00;
   --color-light-success: #2E7D32;
   --color-light-offline: #616161;
-  --color-light-info: #1976D2;
+  --color-light-info: #1565C0;
   --color-light-surface-primary: #FFFFFF;
-  --color-light-surface-secondary: #F5F5F5;
-  --color-light-surface-tertiary: #E0E0E0;
-  --color-light-text-primary: #212121;
-  --color-light-text-secondary: #616161;
+  --color-light-surface-secondary: #F4F6FA;
+  --color-light-surface-tertiary: #E2E8F0;
+  --color-light-text-primary: #0B1220;
+  --color-light-text-secondary: #475569;
   --color-light-text-disabled: #616161;
   --color-light-text-onSos: #FFFFFF;
   --color-light-text-onDanger: #FFFFFF;
   --color-light-text-onSuccess: #FFFFFF;
-  --color-light-border: #BDBDBD;
-  --color-light-focus: #1976D2;
+  --color-light-border: #CBD5E1;
+  --color-light-focus: #C62828;
 
   /* Dark mode */
-  --color-dark-sos: #EF5350;
-  --color-dark-danger: #EF5350;
+  --color-dark-sos: #D32F2F;
+  --color-dark-danger: #C62828;
   --color-dark-warning: #FFA726;
   --color-dark-success: #66BB6A;
   --color-dark-offline: #9E9E9E;
-  --color-dark-info: #1976D2;
-  --color-dark-surface-primary: #121212;
-  --color-dark-surface-secondary: #1E1E1E;
-  --color-dark-surface-tertiary: #2C2C2C;
-  --color-dark-text-primary: #FFFFFF;
-  --color-dark-text-secondary: #B0B0B0;
+  --color-dark-info: #64B5F6;
+  --color-dark-surface-primary: #070D1D;
+  --color-dark-surface-secondary: #0E1628;
+  --color-dark-surface-tertiary: #1A2438;
+  --color-dark-text-primary: #E8ECF4;
+  --color-dark-text-secondary: #94A3B8;
   --color-dark-text-disabled: #B0B0B0;
-  --color-dark-text-onSos: #000000;
-  --color-dark-text-onDanger: #000000;
+  --color-dark-text-onSos: #FFFFFF;
+  --color-dark-text-onDanger: #FFFFFF;
   --color-dark-text-onSuccess: #000000;
   --color-dark-text-onWarning: #000000;
-  --color-dark-border: #424242;
+  --color-dark-border: #475569;
   --color-dark-focus: #64B5F6;
 }
 
-html[data-theme="light"], :root {
+html[data-theme="light"],
+:root {
   --color-sos: var(--color-light-sos);
   --color-danger: var(--color-light-danger);
   --color-warning: var(--color-light-warning);

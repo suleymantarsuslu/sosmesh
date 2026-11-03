@@ -83,10 +83,12 @@ export class AiJobService {
       void this.runJob(params)
         .catch((error) => {
           this.metrics.recordAiFailure();
-          this.logger.error(
-            { incidentId: params.incidentId, err: error instanceof Error ? error.message : 'job_failed' },
-            'AI job failed'
-          );
+          this.logger.error({
+            incidentId: params.incidentId,
+            errorCode: error instanceof Error ? error.constructor.name : 'JOB_FAILED',
+            message: error instanceof Error ? error.message.substring(0, 200) : 'job_failed',
+            msg: 'AI job failed',
+          });
         })
         .finally(() => {
           this.pendingJobs = Math.max(0, this.pendingJobs - 1);
@@ -122,7 +124,7 @@ export class AiJobService {
     tenantKey: string;
   }): Promise<void> {
     const metrics = getAiRunMetrics();
-    const aiEnabled = process.env.AI_ENABLED !== 'false';
+    const aiEnabled = process.env.AI_ENABLED === 'true';
     if (!aiEnabled) {
       metrics.recordSkip('skippedDisabled');
       await this.persistSkipped(params.incidentId, AI_ANALYSIS_STATUS.SKIPPED_DISABLED);

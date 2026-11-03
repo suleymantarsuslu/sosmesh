@@ -252,22 +252,30 @@ async function runSmokeTest() {
   let passed = 0;
   let failed = 0;
   const results = [];
+  const startTime = Date.now();
 
   for (const testCase of TEST_CASES) {
     console.log(`\n[${testCase.id}] Testing ${testCase.language} case...`);
     console.log(`Input: "${testCase.text.substring(0, 60)}..."`);
 
+    const caseStartTime = Date.now();
     const response = await callSparkTriage(testCase.text, testCase.language);
+    const latencyMs = Date.now() - caseStartTime;
 
     if (!response.ok) {
       console.log(`❌ FAILED: ${response.error}`);
       failed++;
-      results.push({ testCase: testCase.id, status: 'FAILED', error: response.error });
+      results.push({
+        testCase: testCase.id,
+        status: 'FAILED',
+        error: response.error,
+        latencyMs,
+      });
       continue;
     }
 
     const { result, usage } = response;
-    console.log(`✅ PASSED`);
+    console.log(`✅ PASSED (${(latencyMs / 1000).toFixed(1)}s)`);
     console.log(`Event Type: ${result.event_type}`);
     console.log(`Urgency: ${result.urgency_suggestion}`);
     console.log(`Person Count: ${result.reported_person_count ?? 'null'}`);
@@ -281,16 +289,53 @@ async function runSmokeTest() {
     results.push({
       testCase: testCase.id,
       status: 'PASSED',
-      eventType: result.event_type,
-      urgency: result.urgency_suggestion,
-      usage,
+      latencyMs,
+      parsed: {
+        eventType: result.event_type,
+        urgency: result.urgency_suggestion,
+        reportedPersonCount: result.reported_person_count,
+        needs: result.needs,
+        hazards: result.hazards,
+        summary: result.summary,
+        nextStepSuggestion: result.next_step_suggestion,
+        translation: result.translation,
+        followUpQuestions: result.follow_up_questions,
+      },
+      usage: {
+        inputTokens: usage.inputTokens,
+        outputTokens: usage.outputTokens,
+        reasoningTokens: usage.reasoningTokens,
+        totalTokens: usage.totalTokens,
+      },
     });
   }
+
+  const totalTimeMs = Date.now() - startTime;
+
+  const evidence = {
+    meta: {
+      timestamp: new Date().toISOString(),
+      model: META_MODEL,
+      baseUrl: META_BASE_URL,
+      totalCases: TEST_CASES.length,
+      passed,
+      failed,
+      totalTimeMs,
+    },
+    results,
+  };
+
+  // Write evidence to JSON file
+  const fs = await import('node:fs/promises');
+  const evidencePath = 'ai-smoke-evidence.json';
+  await fs.writeFile(evidencePath, JSON.stringify(evidence, null, 2), 'utf8');
+  console.log(`\n📊 Evidence written to ${evidencePath}`);
 
   console.log('\n=== Summary ===');
   console.log(`Total: ${TEST_CASES.length}`);
   console.log(`✅ Passed: ${passed}`);
   console.log(`❌ Failed: ${failed}`);
+  console.log(`⏱️  Total Time: ${(totalTimeMs / 1000).toFixed(1)}s`);
 
   if (failed > 0) {
     console.log('\n❌ SMOKE TEST FAILED');

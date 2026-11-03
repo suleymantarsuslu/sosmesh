@@ -7,7 +7,6 @@ import {
 } from '@prisma/client';
 import { createHash } from 'node:crypto';
 
-import { AiJobService } from '../ai/ai-job.service';
 import { AiJobQueueService } from '../ai/ai-job-queue.service';
 import { PrismaService } from '../prisma/prisma.service';
 import { OperatorFeedService } from '../events/operator-feed.service';
@@ -32,7 +31,6 @@ export class IngestService {
     private readonly rateLimit: IngestRateLimitService,
     private readonly receiptSigner: ReceiptSignerService,
     private readonly operatorFeed: OperatorFeedService,
-    private readonly aiJobs: AiJobService,
     private readonly aiJobQueue: AiJobQueueService,
     private readonly metrics: SosMeshMetricsService,
     private readonly events: StructuredEventLogger

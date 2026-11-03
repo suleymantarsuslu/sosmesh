@@ -38,15 +38,16 @@ final class AppModel: ObservableObject {
     private var meshTickTimer: Timer?
 
     init(
-        permissionProbe: AppPermissionProbing = LiveAppPermissionProbe(),
+        permissionProbe: AppPermissionProbing? = nil,
         outboxStorePath: String? = nil,
         meshRadioFactory: ((SosOutboxService, ReceivedSosInbox) -> BleMeshRadioPort)? = nil
     ) {
-        self.permissionProbe = permissionProbe
+        let probe = permissionProbe ?? LiveAppPermissionProbe()
+        self.permissionProbe = probe
         self.outboxStorePathOverride = outboxStorePath
         self.meshRadioFactory = meshRadioFactory
         self.composer = try? IosSosMessageComposer(cryptoConfig: SosCryptoConfiguration.loadComposerConfig())
-        permissionProbe.onGateRefreshRequested = { [weak self] in
+        probe.onGateRefreshRequested = { [weak self] in
             Task { @MainActor in
                 await self?.refreshPermissionGate()
             }

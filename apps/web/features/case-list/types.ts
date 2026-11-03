@@ -10,6 +10,7 @@ export type OperatorCaseRow = {
   latitude: number | null;
   longitude: number | null;
   accuracyMeters: number | null;
+  locationApproximate: boolean;
   receivedAt: string;
   source: string | null;
 };

@@ -22,13 +22,19 @@ public final class AttachmentUploadCoordinator {
         self.baseURL = baseURL
         
         monitor.pathUpdateHandler = { [weak self] path in
+            // The coordinator can be deallocated while the monitor still delivers updates.
+            guard let self else { return }
             let connected = path.status == .satisfied
-            if connected && !self!.isConnected {
-                Task { await self?.processQueue() }
+            if connected && !self.isConnected {
+                Task { await self.processQueue() }
             }
-            self?.isConnected = connected
+            self.isConnected = connected
         }
         monitor.start(queue: DispatchQueue.global(qos: .background))
+    }
+
+    deinit {
+        monitor.cancel()
     }
     
     public func processQueue() async {

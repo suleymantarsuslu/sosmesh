@@ -41,8 +41,8 @@ export function CaseFilters({ filters, onChange }: Props) {
             type="search"
             value={filters.search}
             onChange={(e) => onChange({ ...filters, search: e.target.value })}
-            placeholder={t('web.cases.searchPlaceholder')}
-            aria-label={t('web.cases.searchPlaceholder')}
+            placeholder={t('web.filters.searchPlaceholder')}
+            aria-label={t('web.filters.searchAriaLabel')}
             className="case-filters-toolbar__search-input"
             data-testid="case-filter-search"
           />
@@ -50,47 +50,50 @@ export function CaseFilters({ filters, onChange }: Props) {
 
         <div className="case-filters-toolbar__desktop-filters">
           <label className="case-filters-toolbar__filter">
-            <span className="case-filters-toolbar__filter-label">{t('web.cases.tableHeaders.category')}</span>
+            <span className="case-filters-toolbar__filter-label">{t('web.filters.category')}</span>
             <select
               value={filters.category}
               onChange={(e) => onChange({ ...filters, category: e.target.value })}
               className="case-filters-toolbar__select"
+              aria-label={t('web.filters.categoryAriaLabel')}
             >
-              <option value="">{t('web.cases.filterAll')}</option>
-              <option value="GENERAL">{t('web.sos.button.label')}</option>
-              <option value="MEDICAL">{t('web.teams.typeMedical')}</option>
-              <option value="TRAPPED">{t('web.cases.detail')}</option>
-              <option value="FIRE">{t('web.teams.typeFire')}</option>
-              <option value="OTHER">{t('web.cases.detail')}</option>
+              <option value="">{t('web.filters.all')}</option>
+              <option value="GENERAL">{t('web.categoryTypes.GENERAL')}</option>
+              <option value="MEDICAL">{t('web.categoryTypes.MEDICAL')}</option>
+              <option value="TRAPPED">{t('web.categoryTypes.TRAPPED')}</option>
+              <option value="FIRE">{t('web.categoryTypes.FIRE')}</option>
+              <option value="OTHER">{t('web.categoryTypes.OTHER')}</option>
             </select>
           </label>
 
           <label className="case-filters-toolbar__filter">
-            <span className="case-filters-toolbar__filter-label">{t('web.cases.filterByStatus')}</span>
+            <span className="case-filters-toolbar__filter-label">{t('web.filters.incidentState')}</span>
             <select
               value={filters.incidentState}
               onChange={(e) => onChange({ ...filters, incidentState: e.target.value })}
               className="case-filters-toolbar__select"
+              aria-label={t('web.filters.incidentStateAriaLabel')}
             >
-              <option value="">{t('web.cases.filterAll')}</option>
-              <option value="PENDING">{t('web.cases.statusPending')}</option>
-              <option value="ASSIGNED">{t('web.teams.resourceTeam')}</option>
-              <option value="IN_PROGRESS">{t('web.cases.statusInProgress')}</option>
-              <option value="RESOLVED">{t('web.cases.statusResolved')}</option>
+              <option value="">{t('web.filters.all')}</option>
+              <option value="PENDING">{t('web.incidentStates.PENDING')}</option>
+              <option value="ASSIGNED">{t('web.incidentStates.ASSIGNED')}</option>
+              <option value="IN_PROGRESS">{t('web.incidentStates.IN_PROGRESS')}</option>
+              <option value="RESOLVED">{t('web.incidentStates.RESOLVED')}</option>
             </select>
           </label>
 
           <label className="case-filters-toolbar__filter">
-            <span className="case-filters-toolbar__filter-label">{t('web.cases.tableHeaders.locationStatus')}</span>
+            <span className="case-filters-toolbar__filter-label">{t('web.filters.locationStatus')}</span>
             <select
               value={filters.locationStatus}
               onChange={(e) => onChange({ ...filters, locationStatus: e.target.value })}
               className="case-filters-toolbar__select"
+              aria-label={t('web.filters.locationStatusAriaLabel')}
             >
-              <option value="">{t('web.cases.filterAll')}</option>
-              <option value="GPS">GPS</option>
-              <option value="MANUAL">{t('web.tasks.manual')}</option>
-              <option value="UNKNOWN">{t('web.ai.urgencyUnknown')}</option>
+              <option value="">{t('web.filters.all')}</option>
+              <option value="GPS">{t('web.locationStatuses.GPS')}</option>
+              <option value="MANUAL">{t('web.locationStatuses.MANUAL')}</option>
+              <option value="UNKNOWN">{t('web.locationStatuses.UNKNOWN')}</option>
             </select>
           </label>
 
@@ -126,7 +129,7 @@ export function CaseFilters({ filters, onChange }: Props) {
           aria-expanded={isExpanded}
         >
           <span className="case-filters-toolbar__mobile-toggle-icon" aria-hidden="true">⚙</span>
-          <span>{t('web.cases.filterByStatus')}</span>
+          <span>{t('web.filters.legend')}</span>
           {activeFilterCount > 0 && (
             <span className="case-filters-toolbar__badge">{activeFilterCount}</span>
           )}
@@ -136,44 +139,44 @@ export function CaseFilters({ filters, onChange }: Props) {
       {isExpanded && (
         <div className="case-filters-toolbar__mobile-panel">
           <label className="case-filters-toolbar__mobile-filter">
-            <span className="case-filters-toolbar__filter-label">{t('web.cases.tableHeaders.category')}</span>
+            <span className="case-filters-toolbar__filter-label">{t('web.filters.category')}</span>
             <select
               value={filters.category}
               onChange={(e) => onChange({ ...filters, category: e.target.value })}
               className="case-filters-toolbar__select"
             >
-              <option value="">{t('web.cases.filterAll')}</option>
-              <option value="GENERAL">{t('web.sos.button.label')}</option>
-              <option value="MEDICAL">{t('web.teams.typeMedical')}</option>
-              <option value="TRAPPED">{t('web.cases.detail')}</option>
-              <option value="FIRE">{t('web.teams.typeFire')}</option>
-              <option value="OTHER">{t('web.cases.detail')}</option>
+              <option value="">{t('web.filters.all')}</option>
+              <option value="GENERAL">{t('web.categoryTypes.GENERAL')}</option>
+              <option value="MEDICAL">{t('web.categoryTypes.MEDICAL')}</option>
+              <option value="TRAPPED">{t('web.categoryTypes.TRAPPED')}</option>
+              <option value="FIRE">{t('web.categoryTypes.FIRE')}</option>
+              <option value="OTHER">{t('web.categoryTypes.OTHER')}</option>
             </select>
           </label>
 
           <label className="case-filters-toolbar__mobile-filter">
-            <span className="case-filters-toolbar__filter-label">{t('web.cases.filterByStatus')}</span>
+            <span className="case-filters-toolbar__filter-label">{t('web.filters.incidentState')}</span>
             <select
               value={filters.incidentState}
               onChange={(e) => onChange({ ...filters, incidentState: e.target.value })}
               className="case-filters-toolbar__select"
             >
-              <option value="">{t('web.cases.filterAll')}</option>
-              <option value="PENDING">{t('web.cases.statusPending')}</option>
-              <option value="ASSIGNED">{t('web.teams.resourceTeam')}</option>
-              <option value="IN_PROGRESS">{t('web.cases.statusInProgress')}</option>
-              <option value="RESOLVED">{t('web.cases.statusResolved')}</option>
+              <option value="">{t('web.filters.all')}</option>
+              <option value="PENDING">{t('web.incidentStates.PENDING')}</option>
+              <option value="ASSIGNED">{t('web.incidentStates.ASSIGNED')}</option>
+              <option value="IN_PROGRESS">{t('web.incidentStates.IN_PROGRESS')}</option>
+              <option value="RESOLVED">{t('web.incidentStates.RESOLVED')}</option>
             </select>
           </label>
 
           <label className="case-filters-toolbar__mobile-filter">
-            <span className="case-filters-toolbar__filter-label">{t('web.delivery.SERVER_ACCEPTED')}</span>
+            <span className="case-filters-toolbar__filter-label">{t('web.filters.deliveryState')}</span>
             <select
               value={filters.deliveryState}
               onChange={(e) => onChange({ ...filters, deliveryState: e.target.value })}
               className="case-filters-toolbar__select"
             >
-              <option value="">{t('web.cases.filterAll')}</option>
+              <option value="">{t('web.filters.all')}</option>
               <option value="SERVER_ACCEPTED">{t('web.delivery.SERVER_ACCEPTED')}</option>
               <option value="OPERATOR_SEEN">{t('web.delivery.OPERATOR_SEEN')}</option>
               <option value="CASE_IN_PROGRESS">{t('web.delivery.CASE_IN_PROGRESS')}</option>
@@ -181,21 +184,21 @@ export function CaseFilters({ filters, onChange }: Props) {
           </label>
 
           <label className="case-filters-toolbar__mobile-filter">
-            <span className="case-filters-toolbar__filter-label">{t('web.cases.tableHeaders.locationStatus')}</span>
+            <span className="case-filters-toolbar__filter-label">{t('web.filters.locationStatus')}</span>
             <select
               value={filters.locationStatus}
               onChange={(e) => onChange({ ...filters, locationStatus: e.target.value })}
               className="case-filters-toolbar__select"
             >
-              <option value="">{t('web.cases.filterAll')}</option>
-              <option value="GPS">GPS</option>
-              <option value="MANUAL">{t('web.tasks.manual')}</option>
-              <option value="UNKNOWN">{t('web.ai.urgencyUnknown')}</option>
+              <option value="">{t('web.filters.all')}</option>
+              <option value="GPS">{t('web.locationStatuses.GPS')}</option>
+              <option value="MANUAL">{t('web.locationStatuses.MANUAL')}</option>
+              <option value="UNKNOWN">{t('web.locationStatuses.UNKNOWN')}</option>
             </select>
           </label>
 
           <label className="case-filters-toolbar__mobile-filter">
-            <span className="case-filters-toolbar__filter-label">{t('web.cases.tableHeaders.accuracy')}</span>
+            <span className="case-filters-toolbar__filter-label">{t('web.filters.accuracyMax')}</span>
             <input
               type="number"
               min={0}
@@ -203,6 +206,7 @@ export function CaseFilters({ filters, onChange }: Props) {
               onChange={(e) => onChange({ ...filters, accuracyMax: e.target.value })}
               placeholder="Max (m)"
               className="case-filters-toolbar__input"
+              aria-label={t('web.filters.accuracyMaxAriaLabel')}
             />
           </label>
 

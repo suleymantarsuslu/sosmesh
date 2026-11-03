@@ -188,21 +188,23 @@ export function CaseDetailView({ detail, aiData, onRefresh }: Props) {
       <div className="case-detail-modern__columns">
         {/* Left Column: Message & Media */}
         <div className="case-detail-modern__column-left">
-          {/* Message Section */}
+          {/* Message Section with Translation Display */}
           <section className="case-detail-modern__card">
             <h2 className="case-detail-modern__card-title">{t('web.cases.messageMediaTitle')}</h2>
             
             <div className="case-detail-modern__message-content">
-              <div className="case-detail-modern__message-original">
-                <h3 className="case-detail-modern__message-label">{t('web.cases.originalMessage')}</h3>
-                <div className="case-detail-modern__message-text" data-testid="case-original-text">
-                  {detail.originalText || (
-                    <span className="case-detail-modern__message-empty">
-                      {t('web.cases.noOriginalText')}
-                    </span>
-                  )}
-                </div>
-              </div>
+              {detail.originalText ? (
+                <TranslatedMessageDisplay
+                  originalText={detail.originalText}
+                  translatedText={detail.translatedText}
+                  detectedLanguage={detail.detectedLanguage}
+                  aiAvailable={aiData !== null}
+                />
+              ) : (
+                <p className="case-detail-modern__message-empty" data-testid="case-original-missing">
+                  {t('web.cases.originalMissing')}
+                </p>
+              )}
             </div>
           </section>
 
@@ -309,7 +311,14 @@ export function CaseDetailView({ detail, aiData, onRefresh }: Props) {
               </div>
               <div>
                 <dt>{t('web.cases.locationStatus')}</dt>
-                <dd>{detail.verifiedMetadata.locationStatus}</dd>
+                <dd>
+                  {detail.verifiedMetadata.locationStatus}
+                  {detail.verifiedMetadata.locationApproximate && (
+                    <span className="case-detail__location-badge" title={t('web.cases.locationApproximate')}>
+                      {t('web.cases.locationApproximateShort')}
+                    </span>
+                  )}
+                </dd>
               </div>
             </dl>
             <button

@@ -19,6 +19,8 @@ import { AudioConversionService } from '../media/audio-conversion.service';
 import { AudioChunkingService } from '../media/audio-chunking.service';
 import { LocalDiskStorageService } from '../media/local-disk-storage.service';
 import { MEDIA_STORAGE } from '../media/media-storage.interface';
+import { LocaleContentService } from './locale-content.service';
+import { MessageTranslationService } from './message-translation.service';
 
 @Module({
   imports: [PrismaModule, VisionModule],
@@ -34,6 +36,8 @@ import { MEDIA_STORAGE } from '../media/media-storage.interface';
     VoiceTranscriptionService,
     AudioConversionService,
     AudioChunkingService,
+    LocaleContentService,
+    MessageTranslationService,
     {
       provide: MEDIA_STORAGE,
       useClass: LocalDiskStorageService,
@@ -52,6 +56,8 @@ import { MEDIA_STORAGE } from '../media/media-storage.interface';
     FusionService,
     CopilotService,
     VoiceTranscriptionService,
+    LocaleContentService,
+    MessageTranslationService,
   ],
 })
 export class AiModule {}

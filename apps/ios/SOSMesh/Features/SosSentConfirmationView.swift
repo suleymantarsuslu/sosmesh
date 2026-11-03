@@ -114,32 +114,3 @@ struct SosSentConfirmationView: View {
         }
     }
 }
-
-struct PrimaryButton: View {
-    let title: LocalizedStringKey
-    let icon: String
-    var isDestructive: Bool = false
-    let action: () -> Void
-    
-    var body: some View {
-        Button(action: action) {
-            HStack(spacing: DesignSystem.Spacing.sm) {
-                Image(systemName: icon)
-                Text(title)
-            }
-            .font(DesignSystem.Typography.headline)
-            .foregroundStyle(.white)
-            .frame(maxWidth: .infinity)
-            .padding(.vertical, DesignSystem.Spacing.md)
-            .background(
-                RoundedRectangle(cornerRadius: DesignSystem.CornerRadius.md)
-                    .fill(
-                        isDestructive
-                            ? DesignSystem.Colors.emergencyRed
-                            : DesignSystem.Colors.accentBlue
-                    )
-            )
-        }
-        .accessibilityLabel(Text(title))
-    }
-}

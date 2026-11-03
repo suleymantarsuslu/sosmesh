@@ -1,6 +1,7 @@
 'use client';
 
-import { AI_DRAFT_LABEL, type OperatorAiSuggestion } from './types';
+import { useOperatorPreferences } from '../../components/operator/OperatorPreferencesProvider';
+import type { OperatorAiSuggestion } from './types';
 
 type Props = {
   ai: OperatorAiSuggestion | null;
@@ -8,27 +9,29 @@ type Props = {
 };
 
 export function AiSuggestionPanel({ ai, loadError }: Props) {
+  const { t } = useOperatorPreferences();
+
   return (
     <section className="case-ai-panel" aria-labelledby="case-ai-title" data-testid="case-ai-panel">
       <header className="case-ai-panel__header">
-        <h2 id="case-ai-title">AI yardım önerisi</h2>
+        <h2 id="case-ai-title">{t('web.aiSuggestionPanel.title')}</h2>
         <span className="case-ai-panel__badge" data-testid="case-ai-draft-badge">
-          {AI_DRAFT_LABEL}
+          {t('web.aiSuggestionPanel.draftBadge')}
         </span>
       </header>
       {loadError ? (
-        <p role="status">AI önerisi yüklenemedi; vaka yine işlenebilir.</p>
+        <p role="status">{t('web.aiSuggestionPanel.loadError')}</p>
       ) : null}
       {!ai || !ai.suggestion ? (
-        <p role="status">Henüz AI önerisi yok veya üretilemedi.</p>
+        <p role="status">{t('web.aiSuggestionPanel.empty')}</p>
       ) : (
         <dl className="case-ai-panel__body">
           <div>
-            <dt>Belirsizlik</dt>
-            <dd>{ai.suggestion.uncertainty === true ? 'Evet' : 'Hayır'}</dd>
+            <dt>{t('web.aiSuggestionPanel.uncertainty')}</dt>
+            <dd>{ai.suggestion.uncertainty === true ? t('web.aiSuggestionPanel.yes') : t('web.aiSuggestionPanel.no')}</dd>
           </div>
           <div>
-            <dt>Dayanak alıntısı</dt>
+            <dt>{t('web.aiSuggestionPanel.evidenceQuote')}</dt>
             <dd data-testid="case-ai-evidence">
               {Array.isArray(ai.suggestion.quoted_evidence)
                 ? (ai.suggestion.quoted_evidence as string[]).join(' · ')
@@ -36,7 +39,7 @@ export function AiSuggestionPanel({ ai, loadError }: Props) {
             </dd>
           </div>
           <div>
-            <dt>Özet ihtiyaçlar</dt>
+            <dt>{t('web.aiSuggestionPanel.summaryNeeds')}</dt>
             <dd>
               {Array.isArray(ai.suggestion.needs)
                 ? (ai.suggestion.needs as string[]).join(', ')
@@ -44,13 +47,13 @@ export function AiSuggestionPanel({ ai, loadError }: Props) {
             </dd>
           </div>
           <div>
-            <dt>Aciliyet (taslak)</dt>
+            <dt>{t('web.aiSuggestionPanel.urgencyDraft')}</dt>
             <dd>{String(ai.suggestion.urgency_suggestion ?? 'unknown')}</dd>
           </div>
         </dl>
       )}
       <p className="case-ai-panel__disclaimer">
-        AI operatör adına karar vermez; öneri yalnızca taslaktır ve doğrulanmalıdır.
+        {t('web.aiSuggestionPanel.disclaimer')}
       </p>
     </section>
   );

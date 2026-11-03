@@ -592,4 +592,61 @@ describe('Operator case detail and actions (ADIM 23)', () => {
     expect(detail.body.ai?.suggestion).toBeNull();
     expect(detail.body.verifiedMetadata.locationStatus).toBe('UNKNOWN');
   });
+
+  it('loads case detail with attachment (storageKey mapping fix)', async () => {
+    const token = await loginToken();
+    const prisma = app.get(PrismaService);
+    
+    const incidentWithAttachment = '00000000-0000-4000-8000-000000000901';
+    const messageWithAttachment = 'detail-msg-attachment-001';
+    
+    await prisma.incident.create({
+      data: {
+        id: incidentWithAttachment,
+        state: 'PENDING',
+        version: 0,
+        reviewStatus: 'NEW',
+      },
+    });
+    
+    await prisma.assignment.create({
+      data: {
+        incidentId: incidentWithAttachment,
+        teamId: teamA,
+        status: 'OPEN',
+      },
+    });
+    
+    const sosMsg = await prisma.sosMessage.create({
+      data: {
+        messageId: messageWithAttachment,
+        incidentId: incidentWithAttachment,
+        locationStatus: 'GPS',
+        latitude: 40.0,
+        longitude: 33.0,
+        deliveryState: 'SERVER_ACCEPTED',
+        operatorDisplayText: 'Test with attachment',
+      },
+    });
+    
+    await prisma.attachment.create({
+      data: {
+        incidentId: incidentWithAttachment,
+        sosMessageId: sosMsg.id,
+        kind: 'PHOTO',
+        mime: 'image/jpeg',
+        sizeBytes: 12345,
+        storageKey: 's3://bucket/path/to/photo.jpg',
+        sha256: 'a'.repeat(64),
+        synthetic: true,
+      },
+    });
+    
+    const detail = await request(app.getHttpServer())
+      .get(`/v1/operator/cases/${incidentWithAttachment}/detail`)
+      .set('Authorization', `Bearer ${token}`);
+    
+    expect(detail.status).toBe(200);
+    expect(detail.body.originalText).toBe('Test with attachment');
+  });
 });

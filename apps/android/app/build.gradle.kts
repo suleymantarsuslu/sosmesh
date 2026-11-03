@@ -54,7 +54,7 @@ android {
             applicationIdSuffix = ".staging"
             versionNameSuffix = "-staging"
             buildConfigField("String", "SOSMESH_ENV", "\"staging\"")
-            buildConfigField("String", "INGEST_BASE_URL", "\"https://api.staging.sosmesh.local\"")
+            buildConfigField("String", "INGEST_BASE_URL", "\"https://sosmesh.antiosoft.com\"")
             buildConfigField("boolean", "SHOW_DEMO_MODE_LABEL", "false")
             buildConfigField("boolean", "REQUIRE_HTTPS_INGEST", "true")
         }
@@ -65,7 +65,7 @@ android {
             buildConfigField(
                 "String",
                 "INGEST_BASE_URL",
-                "\"https://api.sosmesh.example\"",
+                "\"https://sosmesh.antiosoft.com\"",
             )
             buildConfigField("boolean", "SHOW_DEMO_MODE_LABEL", "false")
             buildConfigField("boolean", "REQUIRE_HTTPS_INGEST", "true")

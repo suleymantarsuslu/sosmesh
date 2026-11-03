@@ -33,7 +33,8 @@
     "test:secret-scan": "bash scripts/secret-scan.sh",
     "test:cycles": "bash scripts/check-dependency-cycles.sh",
     "clean": "pnpm -r clean && rm -rf node_modules",
-    "bootstrap": "bash scripts/bootstrap.sh"
+    "bootstrap": "bash scripts/bootstrap.sh",
+    "branding:icons": "node scripts/branding/generate-icons.mjs"
   },
   "devDependencies": {
     "@axe-core/playwright": "^4.8.2",
@@ -46,6 +47,7 @@
     "eslint-config-prettier": "^9.1.0",
     "eslint-plugin-import": "^2.29.1",
     "prettier": "^3.2.5",
+    "sharp": "^0.35.5",
     "typescript": "^5.3.3",
     "yaml": "^2.9.1"
   }

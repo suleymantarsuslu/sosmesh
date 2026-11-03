@@ -306,6 +306,18 @@ class BleTransferGateTest {
             lastError: String?,
         ) = Unit
 
+        override suspend fun setUploadRetryAt(
+            sosId: String,
+            digest: String,
+            retryAtMs: Long,
+            lastError: String?,
+        ) = Unit
+
+        override suspend fun clearUploadRetry(
+            sosId: String,
+            digest: String,
+        ) = Unit
+
         override suspend fun countDueForSend(
             nowMs: Long,
             paused: Boolean,

@@ -2161,7 +2161,7 @@
       "pass_criteria": "\"Tamamlandı\" yalnızca tüm gerekli kapılar gerçek kanıtla PASS olduğunda denebilir.",
       "status": "PARTIAL",
       "attempts": 1,
-      "commit": "9192284bf7893bc5a01ba6bb829acd1f3d68b118",
+      "commit": "5bbe4b3c14a75be7fe3bbbe2bb3fce75d02c1941",
       "evidence": [
         "docs/handover/final-report.md",
         "scripts/release/verify-handover.mjs",

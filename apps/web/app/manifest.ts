@@ -7,8 +7,8 @@ export default function manifest(): MetadataRoute.Manifest {
     description: 'Emergency mesh network operator dashboard',
     start_url: '/operator/login',
     display: 'standalone',
-    background_color: '#0A1530',
-    theme_color: '#0A1530',
+    background_color: '#070D1D',
+    theme_color: '#070D1D',
     icons: [
       {
         src: '/icons/icon-192.png',

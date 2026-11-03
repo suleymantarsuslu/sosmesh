@@ -4,7 +4,7 @@
 
 | File | Dimensions | Notes |
 |------|------------|--------|
-| `sosmesh-logo-source.png` | 1254×1254 | RGB, opaque; official SOSMesh logo on `#0A1530` navy |
+| `sosmesh-logo-source.png` | 1254×1254 | RGB, opaque; official SOSMesh logo on dark navy (corner color sampled at generation) |
 
 Do not edit derived launcher or favicon files by hand. Regenerate from the master with the script below.
 
@@ -16,7 +16,11 @@ From the repository root (requires Node 20+ and `pnpm install`):
 node scripts/branding/generate-icons.mjs
 ```
 
-Dependencies: `sharp` and `to-ico` (root `devDependencies`).
+Dependencies: `sharp` (root `devDependency`).
+
+Adaptive icon background color is **sampled from corner patches** of the master PNG (see `sampled-background.json` and `values/ic_launcher_colors.xml`). Foreground and maskable layers use full-bleed cover with zoom-out so every pixel comes from the master (no flat padded box).
+
+After regeneration, review `icon-regression-sheet.png` for seam checks.
 
 ## Generated outputs
 
@@ -28,7 +32,7 @@ Dependencies: `sharp` and `to-ico` (root `devDependencies`).
 
 ### Android phone & Wear (`apps/android/app/…` and `apps/android/wear/…`)
 
-Adaptive icon background color: `#0A1530` (`values/ic_launcher_colors.xml`).
+Adaptive icon background color: sampled from master corners (`values/ic_launcher_colors.xml`, `branding/sampled-background.json`).
 
 | Asset | Densities / sizes |
 |-------|-------------------|
@@ -39,7 +43,7 @@ Adaptive icon background color: `#0A1530` (`values/ic_launcher_colors.xml`).
 | `mipmap-anydpi-v26/ic_launcher.xml` | adaptive icon definition |
 | `mipmap-anydpi-v26/ic_launcher_round.xml` | round adaptive icon |
 
-Foreground logo scale: 70% of the 108dp canvas (safe zone).
+Foreground: full-bleed cover zoomed to fit the 66/108dp adaptive safe zone (no flat pad seam).
 
 ### Web (`apps/web/`)
 

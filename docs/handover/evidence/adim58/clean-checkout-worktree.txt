@@ -1,0 +1,15 @@
+# ADIM 58 — bağımsız worktree checkout (2026-11-02 UTC)
+
+Komutlar (agent VM):
+
+```
+git worktree add /tmp/sosmesh-worktree-adim58 <HEAD>
+cd /tmp/sosmesh-worktree-adim58
+pnpm install --frozen-lockfile  → exit 0
+pnpm -r build                   → exit 0
+bash scripts/smoke.sh (önce build yok) → exit 1
+bash scripts/smoke.sh (build sonrası)  → exit 0
+bash scripts/release/checksums.sh      → exit 0 (437 satır SHA256SUMS)
+```
+
+Not: `smoke.sh` build öncesi bilerek exit 1 (API dist yok).

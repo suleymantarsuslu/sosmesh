@@ -79,6 +79,10 @@ IOS_COPY_RESOURCES = [
     "SOSMesh/Assets.xcassets",
 ]
 
+IOS_COPY_FIXTURES = [
+    "../../packages/fixtures/transport/state-transitions.json",
+]
+
 TEST_SOURCES = [
     "SOSMeshTests/SOSMeshCoreLinkTests.swift",
     "SOSMeshTests/LocalizationCompletenessTests.swift",
@@ -109,7 +113,7 @@ lines.append("\tobjects = {")
 all_source_paths = APP_SOURCES + TEST_SOURCES + WATCH_APP_SOURCES + WATCH_WIDGET_SOURCES
 file_refs = {}
 for i, path in enumerate(
-    all_source_paths + RESOURCES + WATCH_RESOURCES + WATCH_WIDGET_RESOURCES, start=1
+    all_source_paths + RESOURCES + WATCH_RESOURCES + WATCH_WIDGET_RESOURCES + IOS_COPY_FIXTURES, start=1
 ):
     ref = uid(i)
     file_refs[path] = ref
@@ -157,6 +161,15 @@ for i, path in enumerate(
         lines.append(
             f"\t\t{ref} /* {last} */ = {{isa = {isa}; lastKnownFileType = text.plist.entitlements; path = {last}; sourceTree = \"<group>\"; }};"
         )
+    elif path.endswith(".json"):
+        if path.startswith("../"):
+            lines.append(
+                f"\t\t{ref} /* {last} */ = {{isa = {isa}; lastKnownFileType = text.json; name = {last}; path = {path}; sourceTree = SOURCE_ROOT; }};"
+            )
+        else:
+            lines.append(
+                f"\t\t{ref} /* {last} */ = {{isa = {isa}; lastKnownFileType = text.json; path = {last}; sourceTree = \"<group>\"; }};"
+            )
 
 prod_ref = uid(9001)
 lines.append(f"\t\t{prod_ref} /* SOSMesh.app */ = {{isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = SOSMesh.app; sourceTree = BUILT_PRODUCTS_DIR; }};")
@@ -271,6 +284,7 @@ test_sources_phase = uid(7002)
 resources_phase = uid(7003)
 frameworks_phase = uid(7004)
 test_frameworks_phase = uid(7005)
+fixture_copy_phase = uid(7098)
 watch_sources_phase = uid37(7001)
 watch_resources_phase = uid37(7002)
 watch_frameworks_phase = uid37(7003)
@@ -365,6 +379,15 @@ for idx, p in enumerate(IOS_COPY_RESOURCES):
     )
     res_build_files.append(bf)
 
+fixture_copy_build_files = []
+for idx, p in enumerate(IOS_COPY_FIXTURES):
+    bf = uid(6998 + idx)
+    label = p.split("/")[-1]
+    lines.append(
+        f"\t\t{bf} /* {label} in CopyFiles */ = {{isa = PBXBuildFile; fileRef = {file_refs[p]} /* {label} */; }};"
+    )
+    fixture_copy_build_files.append(bf)
+
 watch_res_build_files = []
 for idx, p in enumerate(WATCH_RESOURCES):
     if p.endswith(".plist") or p.endswith("Info.plist"):
@@ -414,6 +437,9 @@ lines.append(
 lines.append(
     f"\t\t{watch_widget_resources_phase} /* Resources */ = {{isa = PBXResourcesBuildPhase; buildActionMask = 2147483647; files = ({', '.join(f'{b} /* in Resources */' for b in watch_widget_res_build_files) if watch_widget_res_build_files else ''}); runOnlyForDeploymentPostprocessing = 0; }};"
 )
+lines.append(
+    f"\t\t{fixture_copy_phase} /* Bundle transport fixture */ = {{isa = PBXCopyFilesBuildPhase; buildActionMask = 2147483647; dstPath = \"packages/fixtures/transport\"; dstSubfolderSpec = 7; files = ({', '.join(f'{b} /* in CopyFiles */' for b in fixture_copy_build_files)}); runOnlyForDeploymentPostprocessing = 0; }};"
+)
 
 # Targets
 app_target = uid(3001)
@@ -426,7 +452,7 @@ lines.append(
 \t\t{app_target} /* SOSMesh-iOS */ = {{
 \t\t\tisa = PBXNativeTarget;
 \t\t\tbuildConfigurationList = {uid(4001)} /* Build configuration list for PBXNativeTarget "SOSMesh-iOS" */;
-\t\t\tbuildPhases = ({app_sources_phase} /* Sources */, {frameworks_phase} /* Frameworks */, {resources_phase} /* Resources */);
+\t\t\tbuildPhases = ({app_sources_phase} /* Sources */, {frameworks_phase} /* Frameworks */, {resources_phase} /* Resources */, {fixture_copy_phase} /* Bundle transport fixture */);
 \t\t\tbuildRules = ();
 \t\t\tdependencies = ();
 \t\t\tname = "SOSMesh-iOS";

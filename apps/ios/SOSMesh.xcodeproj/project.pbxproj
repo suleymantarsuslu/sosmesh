@@ -55,6 +55,7 @@
 		A3100480000000000000001 /* Localizable.strings */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; path = ../watchos/SOSMeshWatch/en.lproj/Localizable.strings; sourceTree = SOURCE_ROOT; };
 		A3100490000000000000001 /* Localizable.strings */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; path = ../watchos/SOSMeshWatch/tr.lproj/Localizable.strings; sourceTree = SOURCE_ROOT; };
 		A3100500000000000000001 /* PrivacyInfo.xcprivacy */ = {isa = PBXFileReference; lastKnownFileType = text.xml; path = ../watchos/SOSMeshWatchWidgets/PrivacyInfo.xcprivacy; sourceTree = SOURCE_ROOT; };
+		A3100510000000000000001 /* state-transitions.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; name = state-transitions.json; path = ../../packages/fixtures/transport/state-transitions.json; sourceTree = SOURCE_ROOT; };
 		A3190010000000000000001 /* SOSMesh.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = SOSMesh.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		A3190020000000000000001 /* SOSMeshTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = SOSMeshTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		A3790010000000000000001 /* SOSMeshWatch.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = SOSMeshWatch.app; sourceTree = BUILT_PRODUCTS_DIR; };
@@ -130,6 +131,7 @@
 		A3166030000000000000001 /* InfoPlist.strings in Resources */ = {isa = PBXBuildFile; fileRef = A3100420000000000000001 /* InfoPlist.strings */; };
 		A3166040000000000000001 /* InfoPlist.strings in Resources */ = {isa = PBXBuildFile; fileRef = A3100430000000000000001 /* InfoPlist.strings */; };
 		A3166050000000000000001 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = A3100440000000000000001 /* Assets.xcassets */; };
+		A3169980000000000000001 /* state-transitions.json in CopyFiles */ = {isa = PBXBuildFile; fileRef = A3100510000000000000001 /* state-transitions.json */; };
 		A3766010000000000000001 /* PrivacyInfo.xcprivacy in Resources */ = {isa = PBXBuildFile; fileRef = A3100460000000000000001 /* PrivacyInfo.xcprivacy */; };
 		A3766020000000000000001 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = A3100470000000000000001 /* Assets.xcassets */; };
 		A3766030000000000000001 /* Localizable.strings in Resources */ = {isa = PBXBuildFile; fileRef = A3100480000000000000001 /* Localizable.strings */; };
@@ -146,10 +148,11 @@
 		A3770050000000000000001 /* Frameworks */ = {isa = PBXFrameworksBuildPhase; buildActionMask = 2147483647; files = (A3767220000000000000001 /* WidgetKit in Frameworks */); runOnlyForDeploymentPostprocessing = 0; };
 		A3770020000000000000001 /* Resources */ = {isa = PBXResourcesBuildPhase; buildActionMask = 2147483647; files = (A3766010000000000000001 /* in Resources */, A3766020000000000000001 /* in Resources */, A3766030000000000000001 /* in Resources */, A3766040000000000000001 /* in Resources */); runOnlyForDeploymentPostprocessing = 0; };
 		A3770060000000000000001 /* Resources */ = {isa = PBXResourcesBuildPhase; buildActionMask = 2147483647; files = (A3766500000000000000001 /* in Resources */); runOnlyForDeploymentPostprocessing = 0; };
+		A3170980000000000000001 /* Bundle transport fixture */ = {isa = PBXCopyFilesBuildPhase; buildActionMask = 2147483647; dstPath = "packages/fixtures/transport"; dstSubfolderSpec = 7; files = (A3169980000000000000001 /* in CopyFiles */); runOnlyForDeploymentPostprocessing = 0; };
 A3130010000000000000001 /* SOSMesh-iOS */ = {
 	isa = PBXNativeTarget;
 	buildConfigurationList = A3140010000000000000001 /* Build configuration list for PBXNativeTarget "SOSMesh-iOS" */;
-	buildPhases = (A3170010000000000000001 /* Sources */, A3170040000000000000001 /* Frameworks */, A3170030000000000000001 /* Resources */);
+	buildPhases = (A3170010000000000000001 /* Sources */, A3170040000000000000001 /* Frameworks */, A3170030000000000000001 /* Resources */, A3170980000000000000001 /* Bundle transport fixture */);
 	buildRules = ();
 	dependencies = ();
 	name = "SOSMesh-iOS";

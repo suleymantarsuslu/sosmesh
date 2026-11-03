@@ -10,3 +10,5 @@
 "watch.complication.detail.default" = "Onay gerekli";
 "watch.initial.detail" = "Acil durumda iki adımda onaylayın.";
 "watch.complication.description" = "Hızlı SOS kısayolu; iki adımlı onay uygulamada.";
+"watch.cancel.headline" = "SOS gönderilmedi";
+"watch.cancel.detail" = "İptal edildi.";

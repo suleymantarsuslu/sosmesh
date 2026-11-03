@@ -10,3 +10,5 @@
 "watch.complication.detail.default" = "Confirmation required";
 "watch.initial.detail" = "Confirm in two steps for emergency.";
 "watch.complication.description" = "Quick SOS shortcut; two-step confirmation in app.";
+"watch.cancel.headline" = "SOS not sent";
+"watch.cancel.detail" = "Cancelled.";

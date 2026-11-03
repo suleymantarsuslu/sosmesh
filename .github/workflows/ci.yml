@@ -250,12 +250,6 @@ jobs:
           fi
           echo "sdk.dir=${SDK_ROOT}" >> apps/android/local.properties
 
-      - name: Configure isolated Gradle home (Mac self-hosted)
-        if: vars.SOSMESH_MAC_RUNNER == 'on'
-        shell: bash
-        run: |
-          echo "GRADLE_USER_HOME=${{ runner.temp }}/gradle-${{ github.job }}" >> "$GITHUB_ENV"
-      
       - name: Setup Android SDK components
         if: vars.SOSMESH_MAC_RUNNER != 'on'
         run: |
@@ -272,6 +266,10 @@ jobs:
         uses: gradle/actions/setup-gradle@v3
       
       - name: Gradle assemble, unit tests, lint
+        env:
+          GRADLE_OPTS: >-
+            -Dorg.gradle.internal.repository.max.retries=8
+            -Dorg.gradle.internal.repository.initial.backoff=2000
         run: |
           cd apps/android
           ./gradlew assembleProdDebug \

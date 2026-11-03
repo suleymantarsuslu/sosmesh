@@ -1,6 +1,13 @@
+private val googleMavenCentralMirror =
+    uri("https://maven-central.storage-download.googleapis.com/maven2/")
+
 pluginManagement {
     repositories {
         google()
+        maven {
+            name = "GoogleMavenCentralMirror"
+            url = googleMavenCentralMirror
+        }
         mavenCentral()
         gradlePluginPortal()
     }
@@ -17,6 +24,10 @@ dependencyResolutionManagement {
     repositoriesMode.set(RepositoriesMode.PREFER_PROJECT)
     repositories {
         google()
+        maven {
+            name = "GoogleMavenCentralMirror"
+            url = googleMavenCentralMirror
+        }
         mavenCentral()
     }
 }

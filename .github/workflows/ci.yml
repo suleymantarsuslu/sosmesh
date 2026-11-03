@@ -34,6 +34,29 @@ jobs:
       SOSMESH_CI_DATABASE_URL: postgresql://postgres:postgres@localhost:5432/postgres
 
     steps:
+      - name: Derive per-runner port offset
+        shell: bash
+        run: |
+          RUNNER_NAME="${{ runner.name }}"
+          case "$RUNNER_NAME" in
+            zulal-runner-sosmesh)
+              OFFSET=0
+              ;;
+            zulal-runner-sosmesh-2)
+              OFFSET=100
+              ;;
+            *)
+              OFFSET=0
+              ;;
+          esac
+          echo "SOSMESH_PORT_OFFSET=${OFFSET}" >> "$GITHUB_ENV"
+          echo "WEB_PORT=$((3000 + OFFSET))" >> "$GITHUB_ENV"
+          echo "API_PORT=$((3001 + OFFSET))" >> "$GITHUB_ENV"
+          echo "PG_PORT=$((5432 + OFFSET))" >> "$GITHUB_ENV"
+          echo "REDIS_PORT=$((6379 + OFFSET))" >> "$GITHUB_ENV"
+          echo "Runner: ${RUNNER_NAME}, Offset: ${OFFSET}, Ports: web=$((3000 + OFFSET)) api=$((3001 + OFFSET))"
+      
+    
       - name: Checkout code
         uses: actions/checkout@v4
       

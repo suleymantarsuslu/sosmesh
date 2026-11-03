@@ -6,6 +6,7 @@ import SOSMeshCore
 struct HomeView: View {
     @EnvironmentObject private var appModel: AppModel
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
+    let navigateToStatus: () -> Void
 
     var body: some View {
         NavigationStack {
@@ -75,7 +76,7 @@ struct HomeView: View {
     private var sosButtonSection: some View {
         VStack(spacing: DesignSystem.Spacing.md) {
             NavigationLink {
-                SosSendView()
+                SosSendView(navigateToStatus: navigateToStatus)
             } label: {
                 HStack(spacing: DesignSystem.Spacing.sm) {
                     Image(systemName: "exclamationmark.triangle.fill")
@@ -157,6 +158,7 @@ struct HomeView: View {
 
 struct SosSendView: View {
     @EnvironmentObject private var appModel: AppModel
+    let navigateToStatus: () -> Void
     @State private var note = ""
     @State private var sending = false
     @State private var errorMessage: String?
@@ -168,6 +170,8 @@ struct SosSendView: View {
     @StateObject private var audioPlayer = AudioPlayer()
     @State private var attachmentStatuses: [String: AttachmentUploadStatus] = [:]
     @State private var attachmentIds: [String] = []
+    @State private var showConfirmation = false
+    @State private var sentSosId: String?
     @Environment(\.dismiss) private var dismiss
 
     var body: some View {
@@ -405,6 +409,11 @@ struct SosSendView: View {
                 }
             ))
         }
+        .sheet(isPresented: $showConfirmation) {
+            if let sosId = sentSosId {
+                SosSentConfirmationView(sosId: sosId, navigateToStatus: navigateToStatus)
+            }
+        }
     }
     
     private func compressImage(_ image: UIImage) -> UIImage {
@@ -449,6 +458,11 @@ struct SosSendView: View {
             let sosId = try await appModel.submitSos(note: note, languageTag: lang)
             
             await queueAttachments(sosMessageId: sosId)
+            
+            await SosNotificationManager.shared.trackPendingSos(sosId: sosId)
+            
+            sentSosId = sosId
+            showConfirmation = true
             
             dismiss()
         } catch {

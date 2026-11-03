@@ -99,3 +99,11 @@
 "settings.language.title" = "Language";
 "settings.language.follows_device" = "Follows device language; change it in iOS Settings";
 "settings.language.change_hint" = "Opens iOS Settings to change device language";
+"sos.sent.title" = "SOS Being Sent";
+"sos.sent.online" = "Your message is being sent to the server.";
+"sos.sent.offline" = "Your message has been saved on your device and will be relayed via nearby devices or sent when internet connection is restored.";
+"sos.sent.not112" = "SOSMesh does not replace 112.";
+"sos.sent.action.ok" = "OK";
+"sos.sent.action.status" = "Go to status";
+"notification.sos.delivered.title" = "Your message has been delivered";
+"notification.sos.delivered.body" = "Your SOS message has reached the server.";

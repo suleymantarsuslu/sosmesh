@@ -250,6 +250,7 @@ final class AppModel: ObservableObject {
             let nowMs = Int64(Date().timeIntervalSince1970 * 1000)
             if let service = try? requireOutbox(),
                let entry = try? service.listEntries().first(where: { $0.sosId == sosId && $0.digest == digest }) {
+                let wasPending = entry.state == "LOCAL_SAVED"
                 _ = try? service.markServerAccepted(
                     sosId: sosId,
                     digest: digest,
@@ -259,6 +260,12 @@ final class AppModel: ObservableObject {
                 await MainActor.run {
                     self.lastUploadToken = receipt.uploadToken
                     Task { await self.reloadOutbox() }
+                    
+                    if wasPending, UIApplication.shared.applicationState != .active {
+                        Task {
+                            await SosNotificationManager.shared.notifyServerAccepted(sosId: sosId)
+                        }
+                    }
                 }
                 
                 if let uploadToken = receipt.uploadToken {

@@ -1,7 +1,7 @@
 'use client';
 
-import { useMemo } from 'react';
-import Map, { Marker } from 'react-map-gl/maplibre';
+import { forwardRef, useImperativeHandle, useMemo, useRef } from 'react';
+import Map, { Marker, type MapRef } from 'react-map-gl/maplibre';
 import * as maplibregl from 'maplibre-gl';
 import Supercluster from 'supercluster';
 import 'maplibre-gl/dist/maplibre-gl.css';
@@ -26,6 +26,10 @@ type Props = {
   assignmentPreview?: AssignmentPreviewRoute | null;
 };
 
+export type OperatorMapHandle = {
+  flyTo: (latitude: number, longitude: number, zoom?: number) => void;
+};
+
 type ClusterProps = {
   cluster: boolean;
   cluster_id?: number;
@@ -47,16 +51,27 @@ function getSeverityColor(priority: number): string {
   return '#65a30d';
 }
 
-export function OperatorMap({
+export const OperatorMap = forwardRef<OperatorMapHandle, Props>(function OperatorMap({
   rows,
   selectedId,
   onSelect,
   zoom,
   onZoomChange,
   assignmentPreview,
-}: Props) {
+}, ref) {
   const testMode = isMapTestMode();
   const { t } = useOperatorPreferences();
+  const mapRef = useRef<MapRef>(null);
+
+  useImperativeHandle(ref, () => ({
+    flyTo: (latitude: number, longitude: number, targetZoom = 14) => {
+      mapRef.current?.flyTo({
+        center: [longitude, latitude],
+        zoom: targetZoom,
+        duration: 1500,
+      });
+    },
+  }));
   const plottable = useMemo(
     () => rows.filter((row) => hasPlottableCoordinates(row)),
     [rows]
@@ -150,6 +165,7 @@ export function OperatorMap({
   return (
     <div className="operator-map-wrap operator-map-wrap--modern" data-testid="operator-map">
       <Map
+        ref={mapRef}
         mapLib={maplibregl}
         initialViewState={{
           latitude: SYNTHETIC_MAP_CENTER.lat,
@@ -316,4 +332,4 @@ export function OperatorMap({
       ) : null}
     </div>
   );
-}
+});

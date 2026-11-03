@@ -54,6 +54,13 @@ function getTypeIcon(sosType: string): string {
 export function CaseListPanel({ rows, selectedId, onSelect }: Props) {
   const { t, locale } = useOperatorPreferences();
 
+  const handleKeyDown = (event: React.KeyboardEvent, incidentId: string) => {
+    if (event.key === 'Enter' || event.key === ' ') {
+      event.preventDefault();
+      onSelect(incidentId);
+    }
+  };
+
   return (
     <section
       className="case-list-panel case-list-panel--modern"
@@ -69,18 +76,25 @@ export function CaseListPanel({ rows, selectedId, onSelect }: Props) {
         <ul className="case-list-panel__list">
           {rows.map((row) => {
             const isCritical = row.priority <= 1;
+            const isSelected = selectedId === row.incidentId;
             return (
-              <li key={row.incidentId}>
+              <li key={row.incidentId} ref={(el) => {
+                if (isSelected && el) {
+                  el.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+                }
+              }}>
                 <button
                   type="button"
                   className={
-                    selectedId === row.incidentId
+                    isSelected
                       ? 'case-list-panel__card case-list-panel__card--active'
                       : 'case-list-panel__card'
                   }
                   onClick={() => onSelect(row.incidentId)}
+                  onKeyDown={(e) => handleKeyDown(e, row.incidentId)}
                   data-testid={`case-list-item-${row.incidentId.slice(0, 8)}`}
                   aria-label={t('web.cases.selectCase').replace('{{id}}', row.incidentId.slice(0, 8))}
+                  aria-pressed={isSelected}
                 >
                   <span className={`case-list-panel__severity-bar ${getSeverityClass(row.priority)} ${isCritical ? 'case-list-panel__severity-bar--pulse' : ''}`} aria-hidden="true" />
                   <div className="case-list-panel__card-header">

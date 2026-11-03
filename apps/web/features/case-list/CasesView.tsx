@@ -52,6 +52,7 @@ export function CasesView({ initialCases }: { initialCases: OperatorCaseRow[] })
   const [timeline, setTimeline] = useState<TimelineEntry[]>([]);
   const [mapZoom, setMapZoom] = useState(6);
   const [assignmentPreview, setAssignmentPreview] = useState<AssignmentPreviewRoute | null>(null);
+  const mapRef = useRef<OperatorMapHandle>(null);
 
   const refreshCases = useCallback(async () => {
     const params = new URLSearchParams({ limit: '100' });
@@ -128,7 +129,12 @@ export function CasesView({ initialCases }: { initialCases: OperatorCaseRow[] })
     }
     const body = (await res.json()) as { timeline: TimelineEntry[] };
     setTimeline(body.timeline ?? []);
-  }, []);
+    
+    const selectedCase = cases.find((row) => row.incidentId === incidentId);
+    if (selectedCase && selectedCase.latitude !== null && selectedCase.longitude !== null && hasPlottableCoordinates(selectedCase)) {
+      mapRef.current?.flyTo(selectedCase.latitude, selectedCase.longitude, 14);
+    }
+  }, [cases]);
 
   return (
     <div className="cases-view cases-view--modern" data-testid="operator-cases-view">
@@ -148,6 +154,7 @@ export function CasesView({ initialCases }: { initialCases: OperatorCaseRow[] })
 
       <div className="cases-view__map-container">
         <OperatorMap
+          ref={mapRef}
           rows={plottable}
           selectedId={selectedId}
           onSelect={openDrawer}

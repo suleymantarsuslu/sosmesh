@@ -134,6 +134,51 @@ const server = http.createServer(async (req, res) => {
     return;
   }
 
+  if (url.pathname.match(/^\/v1\/operator\/cases\/[^/]+\/detail$/) && req.method === 'GET') {
+    const incidentId = url.pathname.split('/')[4];
+    sendJson(res, 200, {
+      incidentId,
+      state: 'PENDING',
+      reviewStatus: 'SEEN',
+      version: 1,
+      originalText: 'Help! Three people trapped under collapsed building at downtown area. Building is unstable, need immediate rescue.',
+      verifiedMetadata: {
+        personCount: 3,
+        locationStatus: 'GPS',
+        latitude: 41.0082,
+        longitude: 28.9784,
+        accuracyMeters: 15
+      },
+      ai: null,
+      timeline: [
+        {
+          id: 'evt-1',
+          deliveryState: 'SERVER_ACCEPTED',
+          source: 'BLE Relay',
+          createdAt: new Date(Date.now() - 600000).toISOString()
+        },
+        {
+          id: 'evt-2',
+          deliveryState: 'OPERATOR_SEEN',
+          source: 'Operator Panel',
+          createdAt: new Date(Date.now() - 300000).toISOString()
+        }
+      ],
+      audit: [
+        {
+          id: 'audit-1',
+          action: 'CASE_OPENED',
+          actorId: 'e2e-operator',
+          actorDisplayName: 'E2E Operator',
+          createdAt: new Date(Date.now() - 300000).toISOString(),
+          before: null,
+          after: null
+        }
+      ]
+    });
+    return;
+  }
+
   if (url.pathname.startsWith('/v1/operator/cases/') && req.method === 'GET') {
     sendJson(res, 404, { code: 'NOT_FOUND' });
     return;
@@ -146,6 +191,158 @@ const server = http.createServer(async (req, res) => {
 
   if (url.pathname === '/v1/auth/me' && req.method === 'GET') {
     sendJson(res, 401, { code: 'UNAUTHORIZED' });
+    return;
+  }
+
+  // AI endpoints for screenshots
+  if (url.pathname === '/v1/operator/ai/status' && req.method === 'GET') {
+    sendJson(res, 200, {
+      enabled: true,
+      circuitState: 'closed',
+      budgetUsedToday: 12.50,
+      budgetTotalLimit: 150,
+      budgetDailyLimit: 30,
+      lastAnalysisAt: new Date().toISOString(),
+      queueDepth: 2,
+      modelsAvailable: { spark: true, asr: true, sam: true },
+    });
+    return;
+  }
+
+  if (url.pathname.match(/^\/v1\/operator\/cases\/[^/]+\/ai$/) && req.method === 'GET') {
+    const incidentId = url.pathname.split('/')[4];
+    sendJson(res, 200, {
+      triage: {
+        status: 'completed',
+        modelVersion: 'muse-spark-1.3',
+        eventType: 'Building Collapse',
+        reportedPersonCount: 3,
+        needs: ['Medical Assistance', 'Rescue Equipment', 'Structural Assessment'],
+        hazards: ['Unstable Structure', 'Potential Gas Leak'],
+        urgencySuggestion: 'critical',
+        missingInfo: ['Exact building address', 'Number of floors affected'],
+        summary: 'Three people reported trapped in collapsed residential building. Structure appears unstable with visible cracks and debris.',
+        nextStepSuggestion: 'Immediate deployment of urban search and rescue team with structural engineer assessment.',
+        sourceQuotes: [
+          { text: 'Three people trapped under collapsed building', field: 'noteText' },
+          { text: 'Building is unstable', field: 'transcript' }
+        ],
+        translation: {
+          language: 'tr',
+          text: 'Yıkılan binada üç kişi mahsur kaldı. Acil yardım gerekli.',
+          uncertain: false
+        },
+        followUpQuestions: [
+          'Are you in a safe location to communicate?',
+          'Can you hear any sounds from the trapped individuals?'
+        ],
+        operatorOverride: null,
+        analyzedAt: new Date().toISOString()
+      },
+      transcript: {
+        attachmentId: 'mock-audio-1',
+        model: 'muse-voice-transcribe-1.0',
+        transcript: 'Help, we are three people trapped under a collapsed building. Please send help immediately. The building is unstable.',
+        turns: [
+          {
+            turnId: 1,
+            startMs: 0,
+            endMs: 4200,
+            transcript: 'Help, we are three people trapped under a collapsed building.',
+            speaker: 'A'
+          },
+          {
+            turnId: 2,
+            startMs: 4200,
+            endMs: 7500,
+            transcript: 'Please send help immediately. The building is unstable.',
+            speaker: 'A'
+          }
+        ],
+        language: 'en',
+        audioDurationMs: 7500,
+        createdAt: new Date().toISOString()
+      },
+      sparkVision: {
+        attachmentId: 'mock-photo-1',
+        model: 'muse-spark-1.3',
+        summary: {
+          description: 'Collapsed multi-story residential building with visible structural damage. Debris scattered across the area. Two people visible in the image near the damaged structure.',
+          visibleObjects: ['debris', 'damaged building', 'people', 'rubble'],
+          estimatedPersonCount: 2,
+          hazardsVisible: ['structural collapse', 'falling debris'],
+          uncertainty: 'Image quality and angle limit full assessment of the collapse extent.'
+        },
+        analyzedAt: new Date().toISOString()
+      },
+      samVision: {
+        attachmentId: 'mock-photo-1',
+        model: 'sam-3.1',
+        results: [
+          {
+            concept: 'person',
+            segments: [
+              {
+                id: 'seg-1',
+                confidence: 0.95,
+                boundingBox: { x1: 150, y1: 200, x2: 250, y2: 400, width: 800, height: 600 },
+                mask: { x: 150, y: 200, width: 100, height: 200, encoding: '!', data: '!AAABBCCDDEEFFGGHHIIJJKKLLMMNNOOPPQQRRSSTTUUVVWWXXYYZZaabbccddeeffgghhiijj' }
+              }
+            ]
+          },
+          {
+            concept: 'debris',
+            segments: [
+              {
+                id: 'seg-2',
+                confidence: 0.87,
+                boundingBox: { x1: 300, y1: 250, x2: 500, y2: 450, width: 800, height: 600 },
+                mask: null
+              }
+            ]
+          }
+        ],
+        analyzedAt: new Date().toISOString()
+      },
+      linkSuggestions: [
+        {
+          id: 'link-1',
+          incidentAId: incidentId,
+          incidentBId: 'incident-nearby-1',
+          score: 0.85,
+          deterministicSignals: {
+            distanceMeters: 120,
+            timeDeltaSeconds: 180,
+            locationProximity: true,
+            timeProximity: true,
+            sosTypeMatch: true,
+            tokenOverlap: 0.6
+          },
+          aiRationale: 'Both incidents report collapsed building in same neighborhood within 3 minutes. Likely the same event reported by different witnesses.',
+          status: 'suggested',
+          decidedBy: null,
+          decidedAt: null,
+          createdAt: new Date(Date.now() - 300000).toISOString()
+        }
+      ]
+    });
+    return;
+  }
+
+  if (url.pathname.match(/^\/v1\/operator\/attachments\/[^/]+\/image$/) && req.method === 'GET') {
+    // Return an 800x600 placeholder PNG for screenshots
+    // This is a minimal PNG with gray background to make the overlay visible
+    const png = Buffer.from('iVBORw0KGgoAAAANSUhEUgAAAyAAAAJYCAIAAAAVFBUnAAAAEklEQVR4nGNgGAWjYBSMAggAAAbQAAExk/sKAAAAAElFTkSuQmCC', 'base64');
+    res.writeHead(200, { 'Content-Type': 'image/png', 'Content-Length': png.length });
+    res.end(png);
+    return;
+  }
+
+  if (url.pathname.match(/^\/v1\/operator\/attachments\/[^/]+\/audio$/) && req.method === 'GET') {
+    // Return minimal WAV header (silence)
+    const wav = Buffer.from('UklGRiQAAABXQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YQAAAAA=', 'base64');
+    res.writeHead(200, { 'Content-Type': 'audio/wav', 'Content-Length': wav.length });
+    res.end(wav);
     return;
   }
 

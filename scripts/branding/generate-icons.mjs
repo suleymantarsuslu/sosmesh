@@ -19,6 +19,15 @@ const SOURCE = path.join(REPO_ROOT, 'branding/sosmesh-logo-source.png');
 /** Android adaptive icon safe zone: 66dp of 108dp. */
 const ADAPTIVE_SAFE_RATIO = 66 / 108;
 
+/** Launcher mask typically shows center 72dp of the 108dp foreground layer. */
+const LAUNCHER_VISIBLE_RATIO = 72 / 108;
+
+/** Master logo scale on the 108dp foreground canvas (fits pin inside 66dp safe circle). */
+const ADAPTIVE_LOGO_SCALE = 0.62;
+
+/** Soft alpha falloff on the outer portion of the scaled logo patch. */
+const ADAPTIVE_EDGE_FEATHER = 0.12;
+
 /** Maskable icon safe zone (~80% diameter). */
 const MASKABLE_SAFE_RATIO = 0.8;
 
@@ -135,42 +144,170 @@ function roundLegacyIcon(source, size) {
   return legacySquareIcon(source, size).composite([{ input: mask, blend: 'dest-in' }]);
 }
 
-function adaptiveForegroundLayer(source, size) {
-  return coverFromSource(source, size, 1 / ADAPTIVE_SAFE_RATIO);
-}
-
 function maskableWebIcon(source, size) {
   return coverFromSource(source, size, 1 / MASKABLE_SAFE_RATIO);
 }
 
-/** White silhouette on transparent for Android themed (monochrome) icon. */
-async function monochromeForeground(source, size) {
-  const inner = Math.round(size * ADAPTIVE_SAFE_RATIO);
-  const grey = await coverFromSource(source, inner, 1 / ADAPTIVE_SAFE_RATIO)
-    .greyscale()
-    .normalize()
+function buildFeatherAlphaMask(canvasSize, radiusPx, featherFraction) {
+  const cx = canvasSize / 2;
+  const cy = canvasSize / 2;
+  const inner = radiusPx * (1 - featherFraction);
+  const span = radiusPx - inner;
+  const mask = Buffer.alloc(canvasSize * canvasSize);
+  for (let y = 0; y < canvasSize; y += 1) {
+    for (let x = 0; x < canvasSize; x += 1) {
+      const dist = Math.hypot(x + 0.5 - cx, y + 0.5 - cy);
+      let alpha = 0;
+      if (dist <= inner) {
+        alpha = 255;
+      } else if (dist <= radiusPx && span > 0) {
+        alpha = Math.round(255 * (1 - (dist - inner) / span));
+      }
+      mask[y * canvasSize + x] = alpha;
+    }
+  }
+  return mask;
+}
+
+/**
+ * Adaptive foreground: scaled logo (~62% canvas), edge-feathered to transparent so the
+ * sampled background layer continues the art without a square seam.
+ */
+async function adaptiveForegroundLayer(source, size) {
+  const logoSide = Math.round(size * ADAPTIVE_LOGO_SCALE);
+  const pad = Math.floor((size - logoSide) / 2);
+  const radius = logoSide / 2;
+
+  const logoBuf = await sharp(source)
+    .resize(logoSide, logoSide, { fit: 'contain', background: { r: 0, g: 0, b: 0, alpha: 0 } })
+    .ensureAlpha()
     .png()
     .toBuffer();
 
-  const canvas = sharp({
+  const { data, info } = await sharp({
     create: {
       width: size,
       height: size,
       channels: 4,
       background: { r: 0, g: 0, b: 0, alpha: 0 },
     },
-  });
+  })
+    .composite([{ input: logoBuf, left: pad, top: pad }])
+    .ensureAlpha()
+    .raw()
+    .toBuffer({ resolveWithObject: true });
 
-  const pad = Math.floor((size - inner) / 2);
-  const whiteSilhouette = await sharp(grey)
+  const feather = buildFeatherAlphaMask(size, radius, ADAPTIVE_EDGE_FEATHER);
+  const pixels = info.width * info.height;
+  for (let p = 0; p < pixels; p += 1) {
+    const i = p * 4 + 3;
+    data[i] = Math.round((data[i] * feather[p]) / 255);
+  }
+
+  return sharp(data, {
+    raw: { width: info.width, height: info.height, channels: 4 },
+  });
+}
+
+/** Simulate adaptive icon as launchers draw it: bg + fg, circular mask at 72/108 diameter. */
+async function renderLauncherVisiblePreview(foregroundPng, size, bgRgb) {
+  const fgBuf = await sharp(foregroundPng).png().toBuffer();
+  const visibleRadius = (size / 2) * LAUNCHER_VISIBLE_RATIO;
+  const circleMask = Buffer.from(
+    `<svg width="${size}" height="${size}" xmlns="http://www.w3.org/2000/svg">
+      <circle cx="${size / 2}" cy="${size / 2}" r="${visibleRadius}" fill="white"/>
+    </svg>`
+  );
+
+  return sharp({
+    create: {
+      width: size,
+      height: size,
+      channels: 3,
+      background: bgRgb,
+    },
+  })
+    .composite([{ input: fgBuf }])
+    .composite([{ input: circleMask, blend: 'dest-in' }]);
+}
+
+/**
+ * Ensure opaque logo content fits inside the 66dp safe circle (and thus inside 72dp launcher mask).
+ */
+async function assertForegroundFitsSafeZone(foregroundPng, size) {
+  const { data, info } = await sharp(foregroundPng)
+    .ensureAlpha()
+    .raw()
+    .toBuffer({ resolveWithObject: true });
+  const w = info.width;
+  const h = info.height;
+  let minX = w;
+  let minY = h;
+  let maxX = 0;
+  let maxY = 0;
+  const cx = size / 2;
+  const cy = size / 2;
+  const safeRadius = (size / 2) * ADAPTIVE_SAFE_RATIO;
+  let maxDist = 0;
+  for (let y = 0; y < h; y += 1) {
+    for (let x = 0; x < w; x += 1) {
+      const alpha = data[(y * w + x) * 4 + 3];
+      if (alpha > 16) {
+        minX = Math.min(minX, x);
+        minY = Math.min(minY, y);
+        maxX = Math.max(maxX, x);
+        maxY = Math.max(maxY, y);
+      }
+      if (alpha > 180) {
+        const dist = Math.hypot(x + 0.5 - cx, y + 0.5 - cy);
+        if (dist > maxDist) {
+          maxDist = dist;
+        }
+      }
+    }
+  }
+  if (maxX < minX) {
+    throw new Error('Adaptive foreground has no visible pixels');
+  }
+  if (maxDist > safeRadius + 0.5) {
+    throw new Error(
+      `Adaptive foreground subject extends outside 66/108 safe circle (max radius ${maxDist.toFixed(1)} > ${safeRadius.toFixed(1)})`
+    );
+  }
+}
+
+async function validateAdaptiveForegroundAtXxxhdpi(resRoot, bgRgb) {
+  const size = ANDROID_FOREGROUND_SIZES.xxxhdpi;
+  const fgPath = path.join(resRoot, 'mipmap-xxxhdpi/ic_launcher_foreground.png');
+  const fgPng = await fs.readFile(fgPath);
+  await assertForegroundFitsSafeZone(fgPng, size);
+  const preview = await renderLauncherVisiblePreview(fgPng, size, bgRgb);
+  await writePng(path.join(REPO_ROOT, 'branding/adaptive-launcher-preview.png'), preview);
+  console.log('Adaptive foreground safe-zone check passed (xxxhdpi)');
+}
+
+/** White silhouette on transparent for Android themed (monochrome) icon. */
+async function monochromeForeground(source, size) {
+  const fg = await adaptiveForegroundLayer(source, size);
+  const silhouette = await fg
+    .greyscale()
+    .normalize()
     .threshold(40)
     .negate()
     .tint({ r: 255, g: 255, b: 255 })
     .toColourspace('srgb')
     .ensureAlpha()
+    .png()
     .toBuffer();
 
-  return canvas.composite([{ input: whiteSilhouette, left: pad, top: pad }]);
+  return sharp({
+    create: {
+      width: size,
+      height: size,
+      channels: 4,
+      background: { r: 0, g: 0, b: 0, alpha: 0 },
+    },
+  }).composite([{ input: silhouette }]);
 }
 
 /**
@@ -254,7 +391,7 @@ async function generateAndroid(resRoot) {
     const dir = path.join(resRoot, `mipmap-${density}`);
     await writePng(
       path.join(dir, 'ic_launcher_foreground.png'),
-      adaptiveForegroundLayer(SOURCE, size)
+      await adaptiveForegroundLayer(SOURCE, size)
     );
     await writePng(
       path.join(dir, 'ic_launcher_monochrome.png'),
@@ -376,6 +513,11 @@ async function generateContactSheet() {
       thumb: 256,
     },
     {
+      title: 'Launcher visible 72dp',
+      path: 'branding/adaptive-launcher-preview.png',
+      thumb: 256,
+    },
+    {
       title: 'Android round xxxhdpi',
       path: 'apps/android/app/src/main/res/mipmap-xxxhdpi/ic_launcher_round.png',
       thumb: 256,
@@ -423,10 +565,12 @@ async function main() {
 
   LAUNCHER_BACKGROUND = await sampleCornerBackground(SOURCE);
   console.log('Sampled launcher background:', LAUNCHER_BACKGROUND);
+  const bgRgb = parseHex(LAUNCHER_BACKGROUND);
 
   for (const root of ANDROID_RES_ROOTS) {
     await generateAndroid(root);
   }
+  await validateAdaptiveForegroundAtXxxhdpi(ANDROID_RES_ROOTS[0], bgRgb);
   await generateIos();
   await generateWeb();
   await writeSampledColorMeta();

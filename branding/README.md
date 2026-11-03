@@ -43,7 +43,7 @@ Adaptive icon background color: sampled from master corners (`values/ic_launcher
 | `mipmap-anydpi-v26/ic_launcher.xml` | adaptive icon definition |
 | `mipmap-anydpi-v26/ic_launcher_round.xml` | round adaptive icon |
 
-Foreground: full-bleed cover zoomed to fit the 66/108dp adaptive safe zone (no flat pad seam).
+Foreground: scaled to ~62% of the 108dp canvas with a radial alpha feather (~12%) so edges blend into the sampled background (no square seam). `branding/adaptive-launcher-preview.png` simulates the 72/108dp launcher circle; the generator asserts the subject bbox fits the 66/108 safe circle.
 
 ### Web (`apps/web/`)
 

@@ -726,5 +726,25 @@
   "warnings": {
     "not112": "SOSMesh is not a replacement for 112. Always call 112 in emergencies.",
     "noFalseHope": "Status updates are technical information only and do not guarantee assistance."
+  },
+  "timeline": {
+    "empty": "No events yet",
+    "sources": {
+      "ingest": "Received by server",
+      "operator_view": "Viewed by operator",
+      "peer_ack": "Acknowledged by peer",
+      "relay": "Relayed",
+      "system": "System event",
+      "api": "API event",
+      "manual": "Manual action"
+    }
+  },
+  "deliveryStates": {
+    "LOCAL_SAVED": "Saved on device",
+    "PEER_RECEIVED": "Peer received",
+    "SERVER_ACCEPTED": "Server accepted",
+    "OPERATOR_SEEN": "Operator seen",
+    "CASE_IN_PROGRESS": "Case in progress",
+    "unknown": "Event"
   }
 }

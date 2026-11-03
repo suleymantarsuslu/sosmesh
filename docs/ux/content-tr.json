@@ -726,5 +726,25 @@
   "warnings": {
     "not112": "SOSMesh, 112'nin yerine geçmez. Acil durumlarda 112'yi arayın.",
     "noFalseHope": "Durum güncellemeleri yalnızca teknik bilgidir, yardım garantisi vermez."
+  },
+  "timeline": {
+    "empty": "Henüz etkinlik yok",
+    "sources": {
+      "ingest": "Sunucuya ulaştı",
+      "operator_view": "Operatör görüntüledi",
+      "peer_ack": "Eş onayladı",
+      "relay": "Aktarıldı",
+      "system": "Sistem etkinliği",
+      "api": "API etkinliği",
+      "manual": "Manuel işlem"
+    }
+  },
+  "deliveryStates": {
+    "LOCAL_SAVED": "Cihazda kaydedildi",
+    "PEER_RECEIVED": "Eş aldı",
+    "SERVER_ACCEPTED": "Sunucu kabul etti",
+    "OPERATOR_SEEN": "Operatör gördü",
+    "CASE_IN_PROGRESS": "Vaka işlemde",
+    "unknown": "Etkinlik"
   }
 }

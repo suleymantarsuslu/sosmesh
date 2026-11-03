@@ -7,6 +7,7 @@ import { DeliveryStateBadge } from '../../components/cases/DeliveryStateBadge';
 import { useOperatorPreferences } from '../../components/operator/OperatorPreferencesProvider';
 import { AiIntelligencePanel } from '../ai/AiIntelligencePanel';
 import { TranslatedMessageDisplay } from './TranslatedMessageDisplay';
+import { Timeline } from '../../components/timeline/Timeline';
 import type {
   AiTriageView,
   TranscriptView,
@@ -366,17 +367,7 @@ export function CaseDetailView({ detail, aiData, onRefresh }: Props) {
           {/* Timeline */}
           <section className="case-detail-modern__card case-detail-modern__card--compact">
             <h3 className="case-detail-modern__card-title-sm">{t('web.cases.timelineEventTitle')}</h3>
-            <ol className="case-detail-modern__timeline" data-testid="case-detail-timeline">
-              {detail.timeline.map((entry) => (
-                <li key={entry.id} className="case-detail-modern__timeline-item">
-                  <DeliveryStateBadge state={entry.deliveryState} />
-                  <span className="case-detail-modern__timeline-source">{entry.source}</span>
-                  <time dateTime={entry.createdAt}>
-                    {formatRelativeTime(entry.createdAt, locale)}
-                  </time>
-                </li>
-              ))}
-            </ol>
+            <Timeline entries={detail.timeline} />
           </section>
 
           {/* Audit Log */}

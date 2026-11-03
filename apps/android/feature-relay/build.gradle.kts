@@ -48,6 +48,7 @@ dependencies {
     implementation(project(":core:data"))
     implementation(project(":core:ble"))
     implementation(project(":core:platform"))
+    implementation(project(":core:permissions"))
     implementation(project(":mesh-v2"))
     implementation(project(":contracts-kotlin"))
     implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.6.2")
@@ -56,7 +57,7 @@ dependencies {
 
     implementation("androidx.core:core-ktx:1.12.0")
     implementation("androidx.lifecycle:lifecycle-runtime-compose:2.7.0")
-    implementation("androidx.lifecycle:lifecycle-viewmodel-compose:2.7.0")
+    implementation("androidx.lifecycle:lifecycle-viewmodel-ktx:2.7.0")
     implementation(platform("androidx.compose:compose-bom:2024.02.00"))
     implementation("androidx.compose.ui:ui")
     implementation("androidx.compose.material3:material3")
@@ -70,7 +71,8 @@ dependencies {
     testImplementation("org.robolectric:robolectric:4.11.1")
     testImplementation("androidx.test:core:1.5.0")
     testImplementation("androidx.room:room-runtime:2.6.1")
-    testImplementation("androidx.work:work-testing:2.9.0")
+    testImplementation("androidx.arch.core:core-testing:2.2.0")
+    testImplementation("org.jetbrains.kotlinx:kotlinx-coroutines-test:1.7.3")
 }
 
 kapt {

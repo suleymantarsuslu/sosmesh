@@ -28,6 +28,7 @@ import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.sosmesh.android.BuildConfig
 import com.sosmesh.android.R
+import com.sosmesh.android.core.permissions.ui.EmergencyCall112Button
 
 @Composable
 fun HomeRoute(
@@ -43,7 +44,29 @@ fun HomeRoute(
     LaunchedEffect(Unit) {
         viewModel.refreshPlatform()
     }
+    HomeScreen(
+        state = state,
+        onOpenPermissions = onOpenPermissions,
+        onOpenRadioDebug = onOpenRadioDebug,
+        onOpenSos = onOpenSos,
+        onOpenStatus = onOpenStatus,
+        onOpenRelay = onOpenRelay,
+        onOpenSettings = onOpenSettings,
+        onExpressSos = { viewModel.expressSaveSos() },
+    )
+}
 
+@Composable
+internal fun HomeScreen(
+    state: HomeUiState,
+    onOpenPermissions: () -> Unit,
+    onOpenRadioDebug: () -> Unit,
+    onOpenSos: () -> Unit,
+    onOpenStatus: () -> Unit,
+    onOpenRelay: () -> Unit,
+    onOpenSettings: () -> Unit,
+    onExpressSos: () -> Unit,
+) {
     Column(
         modifier =
             Modifier
@@ -58,9 +81,10 @@ fun HomeRoute(
             text = stringResource(com.sosmesh.android.core.permissions.R.string.permission_disclaimer_not112),
             style = MaterialTheme.typography.bodyMedium,
         )
+        EmergencyCall112Button(modifier = Modifier.fillMaxWidth(), testTag = "home_call_112_button")
         PlatformSelfRepairCard(hint = state.platformHint, onOpenPermissions = onOpenPermissions)
         CrossPlatformFaultCard(hint = state.crossPlatformFault, onOpenPermissions = onOpenPermissions)
-        ExpressSosButton(onClick = { viewModel.expressSaveSos() })
+        ExpressSosButton(onClick = onExpressSos)
         state.expressSavedMessageId?.let {
             Text(
                 text = stringResource(R.string.home_express_saved),

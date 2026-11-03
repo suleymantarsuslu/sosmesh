@@ -1,0 +1,135 @@
+# SOSMesh central stack for Coolify (VULUT) — https://sosmesh.antiosoft.com
+# Derived from docker-compose.staging.yml, with these differences:
+#   - no host port publishing (Traefik reaches the gateway over the coolify network)
+#   - nginx gateway routes /health + /v1 to api and / to web (see infra/deploy/nginx/vulut.conf)
+#   - AI is hard-disabled (AI_ENABLED=false, no MODEL_API_KEY): offline BLE SOS must work without AI
+# Secrets are injected as Coolify env vars (names only here, never values).
+# Coolify settings: Docker Compose, base dir "/" (Coolify passes --project-directory = repo root, so build context is "."),
+# domain https://sosmesh.antiosoft.com on service "gateway" (port 80).
+
+services:
+  postgres:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:-sosmesh_staging}
+      POSTGRES_USER: ${POSTGRES_USER:-sosmesh}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?set POSTGRES_PASSWORD}
+    healthcheck:
+      test: ['CMD-SHELL', 'pg_isready -U "$${POSTGRES_USER}" -d "$${POSTGRES_DB}"']
+      interval: 5s
+      timeout: 5s
+      retries: 10
+    volumes:
+      - sosmesh_pg_data:/var/lib/postgresql/data
+    restart: unless-stopped
+
+  migrate:
+    build:
+      context: .
+      dockerfile: infra/deploy/docker/Dockerfile.migrate
+    environment:
+      DATABASE_URL: ${DATABASE_URL:?set DATABASE_URL}
+    depends_on:
+      postgres:
+        condition: service_healthy
+    restart: 'no'
+    exclude_from_hc: true
+
+  api:
+    build:
+      context: .
+      dockerfile: infra/deploy/docker/Dockerfile.api
+    environment:
+      NODE_ENV: production
+      SOSMESH_ENV: staging
+      PORT: '3001'
+      DATABASE_URL: ${DATABASE_URL:?set DATABASE_URL}
+      JWT_SECRET: ${JWT_SECRET:?set JWT_SECRET}
+      METRICS_SCRAPE_AUTH: ${METRICS_SCRAPE_AUTH:?set METRICS_SCRAPE_AUTH}
+      INGEST_RECEIPT_SIGNING_PRIVATE_KEY: ${INGEST_RECEIPT_SIGNING_PRIVATE_KEY:?set INGEST_RECEIPT_SIGNING_PRIVATE_KEY}
+      CORS_ORIGINS: ${CORS_ORIGINS:-https://sosmesh.antiosoft.com}
+      TRUST_PROXY: ${TRUST_PROXY:-2}
+      AI_ENABLED: 'false'
+      LOG_LEVEL: ${LOG_LEVEL:-info}
+    expose:
+      - '3001'
+    depends_on:
+      migrate:
+        condition: service_completed_successfully
+    healthcheck:
+      test: ['CMD-SHELL', 'wget -q -O- http://127.0.0.1:3001/health/ready >/dev/null']
+      interval: 10s
+      timeout: 5s
+      retries: 12
+      start_period: 90s
+    restart: unless-stopped
+
+  worker:
+    build:
+      context: .
+      dockerfile: infra/deploy/docker/Dockerfile.worker
+    environment:
+      NODE_ENV: production
+      SOSMESH_ENV: staging
+      DATABASE_URL: ${DATABASE_URL:?set DATABASE_URL}
+      JWT_SECRET: ${JWT_SECRET:?set JWT_SECRET}
+      METRICS_SCRAPE_AUTH: ${METRICS_SCRAPE_AUTH:?set METRICS_SCRAPE_AUTH}
+      INGEST_RECEIPT_SIGNING_PRIVATE_KEY: ${INGEST_RECEIPT_SIGNING_PRIVATE_KEY:?set INGEST_RECEIPT_SIGNING_PRIVATE_KEY}
+      RETENTION_JOB_ENABLED: ${RETENTION_JOB_ENABLED:-false}
+      RETENTION_SOS_MESSAGE_MAX_AGE_SECONDS: ${RETENTION_SOS_MESSAGE_MAX_AGE_SECONDS:-}
+      WORKER_HEALTH_PORT: '3002'
+      WORKER_RETENTION_INTERVAL_MS: ${WORKER_RETENTION_INTERVAL_MS:-3600000}
+      AI_ENABLED: 'false'
+      LOG_LEVEL: ${LOG_LEVEL:-info}
+    expose:
+      - '3002'
+    depends_on:
+      api:
+        condition: service_healthy
+    restart: unless-stopped
+
+  web:
+    build:
+      context: .
+      dockerfile: infra/deploy/docker/Dockerfile.web
+      args:
+        # Server-side only (Next route handlers call the API); internal compose DNS name.
+        NEXT_PUBLIC_API_URL: http://api:3001
+        NEXT_PUBLIC_MAP_TEST_MODE: '0'
+    environment:
+      NODE_ENV: production
+      PORT: '3000'
+      NEXT_PUBLIC_API_URL: http://api:3001
+    expose:
+      - '3000'
+    depends_on:
+      api:
+        condition: service_healthy
+    healthcheck:
+      test: ['CMD-SHELL', 'wget -q -O- http://127.0.0.1:3000/health >/dev/null']
+      interval: 10s
+      timeout: 5s
+      retries: 12
+      start_period: 120s
+    restart: unless-stopped
+
+  gateway:
+    build:
+      context: .
+      dockerfile: infra/deploy/docker/Dockerfile.gateway
+    expose:
+      - '80'
+    depends_on:
+      api:
+        condition: service_healthy
+      web:
+        condition: service_healthy
+    healthcheck:
+      test: ['CMD-SHELL', 'wget -q -O- http://127.0.0.1:80/gateway-health >/dev/null']
+      interval: 10s
+      timeout: 5s
+      retries: 6
+    restart: unless-stopped
+
+volumes:
+  sosmesh_pg_data:

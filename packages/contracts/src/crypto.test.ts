@@ -218,6 +218,53 @@ describe('Crypto - Key Management', () => {
 
     expect(() => validateCryptoConfig(prodConfig, 'production')).not.toThrow();
   });
+
+  it('should allow encryption with prod keyId and public key in production', () => {
+    const originalEnv = process.env.NODE_ENV;
+    process.env.NODE_ENV = 'production';
+
+    try {
+      const prodConfig = {
+        keyId: 'prod-2026-11-a',
+        serverPublicKey: 'njCfeyVCrZmw9xdi9g1sVHBxtDouBDVYq4wJbNO6YnQ=',
+      };
+
+      const payload = { sosText: 'Test', category: 'medical' };
+      const envelope = { timestamp: '2026-11-03T10:00:00Z', priority: 1 };
+
+      // Should not throw - encrypting with a public key is safe
+      const encrypted = encryptPayload(payload, envelope, prodConfig);
+
+      expect(encrypted.keyId).toBe('prod-2026-11-a');
+      expect(encrypted.ephemeralPublicKey).toBeTruthy();
+      expect(encrypted.nonce).toBeTruthy();
+      expect(encrypted.ciphertext).toBeTruthy();
+    } finally {
+      process.env.NODE_ENV = originalEnv;
+    }
+  });
+
+  it('should reject prod keyId with private key in production', () => {
+    const originalEnv = process.env.NODE_ENV;
+    process.env.NODE_ENV = 'production';
+
+    try {
+      const prodConfigWithPrivateKey = {
+        keyId: 'prod-2026-11-a',
+        serverPublicKey: 'njCfeyVCrZmw9xdi9g1sVHBxtDouBDVYq4wJbNO6YnQ=',
+        serverPrivateKey: 'fake-private-key-should-not-be-in-client',
+      };
+
+      const payload = { sosText: 'Test', category: 'medical' };
+      const envelope = { timestamp: '2026-11-03T10:00:00Z', priority: 1 };
+
+      // Should throw - production keys with private keys require secure key management
+      expect(() => encryptPayload(payload, envelope, prodConfigWithPrivateKey))
+        .toThrow('requires secure key management');
+    } finally {
+      process.env.NODE_ENV = originalEnv;
+    }
+  });
 });
 
 describe('Crypto - Log Hygiene', () => {

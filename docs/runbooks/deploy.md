@@ -4,8 +4,9 @@
 
 ## Kapsam
 
-- Docker imajları: `infra/deploy/docker/` (`api`, `web`, `worker`, `migrate`)
+- Docker imajları: `infra/deploy/docker/` (`api`, `web`, `worker`, `migrate`, `gateway`)
 - Staging compose: `infra/deploy/compose/docker-compose.staging.yml`
+- **VULUT Coolify production:** `infra/deploy/compose/docker-compose.vulut.yml` (canlı: https://sosmesh.antiosoft.com)
 - Health: API `GET /health`, `GET /health/ready`; Web `GET /health`; Worker `GET /health/ready`
 - Secret'lar: yalnızca secret manager / ortam değişkeni **adı** (`.env.example` değer içermez)
 - Demo/staging: sentetik seed; gerçek PII yok (`apps/api/prisma/seed.ts`)
@@ -94,13 +95,32 @@ nginx/ingress şablonları HSTS ve TLS 1.2+ içerir.
 
 ## 8. Ortam ayrımı
 
-| Ortam | DB | Meta limitleri |
-|-------|-----|----------------|
-| development | local compose | mock / kapalı |
-| staging | ayrı URL | `meta-limits.staging.yaml` |
-| production | ayrı URL | `meta-limits.production.yaml` + onay |
+| Ortam | DB | Meta limitleri | Durum |
+|-------|-----|----------------|-------|
+| development | local compose | mock / kapalı | Yerel |
+| staging | ayrı URL | `meta-limits.staging.yaml` | BLOCKED_APPROVAL |
+| **VULUT Coolify** | ayrı URL | staging limitleri | **Planned** (https://sosmesh.antiosoft.com pending) |
+| production | ayrı URL | `meta-limits.production.yaml` + onay | BLOCKED_APPROVAL |
 
 `SOSMESH_ENV` ve `DATABASE_URL` asla paylaşılmaz.
+
+### VULUT Coolify (Planned Deployment)
+
+**Dal:** `deploy/vulut-coolify` (Coolify bu dalı izler; yeniden yazma/silme yasak)  
+**URL:** https://sosmesh.antiosoft.com (pending DNS + main merge)  
+**Stack:** `infra/deploy/compose/docker-compose.vulut.yml`
+
+**Mimari:**
+- TLS: Coolify Traefik (Let's Encrypt)
+- Gateway: nginx path routing (`infra/deploy/nginx/vulut.conf`)
+- AI: kapalı (`AI_ENABLED=false`)
+- Rate limiting: `TRUST_PROXY` env ile yapılandırılabilir (nginx + Traefik arkasında doğru istemci IP'si için)
+
+**Gerekli env değişkenleri** (Coolify enjekte eder, değerler commit'lenmez):
+- `POSTGRES_PASSWORD`, `DATABASE_URL`, `JWT_SECRET`
+- `METRICS_SCRAPE_AUTH`, `INGEST_RECEIPT_SIGNING_PRIVATE_KEY`
+- `CORS_ORIGINS` (default: `https://sosmesh.antiosoft.com`)
+- `TRUST_PROXY` (isteğe bağlı; rate limiting için proxy güveni)
 
 ## 9. CI (bu repo)
 

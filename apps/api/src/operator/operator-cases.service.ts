@@ -252,12 +252,8 @@ export class OperatorCasesService {
       sizeBytes: att.sizeBytes,
       durationMs: att.durationMs,
       createdAt: att.createdAt.toISOString(),
-      transcriptStatus: att.transcript
-        ? (att.transcript.status?.toLowerCase() as 'pending' | 'processing' | 'completed' | 'failed')
-        : null,
-      visionStatus: att.visionAnalysis
-        ? (att.visionAnalysis.status?.toLowerCase() as 'pending' | 'processing' | 'completed' | 'failed')
-        : null,
+      transcriptStatus: att.transcript ? 'completed' : null,
+      visionStatus: att.visionAnalysis ? 'completed' : null,
     }));
 
     const transcripts: TranscriptView[] = attachments
@@ -313,31 +309,9 @@ export class OperatorCasesService {
 
     const attachments = await this.prisma.attachment.findMany({
       where: { incidentId },
-      select: {
-        id: true,
-        kind: true,
-        mime: true,
-        sizeBytes: true,
-        durationMs: true,
-        createdAt: true,
-        transcript: {
-          select: {
-            id: true,
-            model: true,
-            transcript: true,
-            turns: true,
-            language: true,
-            audioDurationMs: true,
-          },
-        },
-        visionAnalysis: {
-          select: {
-            id: true,
-            status: true,
-            sparkResults: true,
-            samResults: true,
-          },
-        },
+      include: {
+        transcript: true,
+        visionAnalysis: true,
       },
       orderBy: { createdAt: 'asc' },
     });
@@ -362,13 +336,9 @@ export class OperatorCasesService {
       visionAnalysis: attachment.visionAnalysis
         ? {
             id: attachment.visionAnalysis.id,
-            status: attachment.visionAnalysis.status,
-            sparkSummary:
-              attachment.visionAnalysis.status === 'COMPLETED'
-                ? (attachment.visionAnalysis.sparkResults as any)?.description || null
-                : null,
+            status: 'completed' as const,
+            sparkSummary: (attachment.visionAnalysis.sparkSummary as any)?.description || null,
             hasSamResults:
-              attachment.visionAnalysis.status === 'COMPLETED' &&
               Array.isArray(attachment.visionAnalysis.samResults) &&
               attachment.visionAnalysis.samResults.length > 0,
           }

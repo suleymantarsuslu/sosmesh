@@ -130,6 +130,21 @@ final class TransportOutboxTests: XCTestCase {
         XCTAssertEqual(try queue.countDueForSend(nowMs: 182_000, paused: false), 1)
     }
 
+    func testSetRetryAtPreservesUpdatedAtMs() throws {
+        let tmp = URL(fileURLWithPath: NSTemporaryDirectory())
+            .appendingPathComponent("outbox-swift-retry-\(UUID().uuidString).json")
+        defer { try? FileManager.default.removeItem(at: tmp) }
+        let queue = try DiskOutboxQueue(storePath: tmp.path, defaultRetentionMs: 604_800_000)
+        let created = try queue.enqueue(
+            input: EnqueueInput(sosId: "r1", digest: "d", origin: "linux", encryptedBlobBase64: "YQ=="),
+            nowMs: 5_000
+        )
+        try queue.setRetryAt(sosId: "r1", digest: "d", retryAtMs: 61_000, lastError: "offline")
+        let updated = try XCTUnwrap(try queue.getByKey(sosId: "r1", digest: "d"))
+        XCTAssertEqual(updated.retryAtMs, 61_000)
+        XCTAssertEqual(updated.updatedAtMs, created.updatedAtMs)
+    }
+
     func testThousandPendingEnvelopesListable() throws {
         let storePath = URL(fileURLWithPath: NSTemporaryDirectory())
             .appendingPathComponent("outbox-swift-1k-\(UUID().uuidString).json")

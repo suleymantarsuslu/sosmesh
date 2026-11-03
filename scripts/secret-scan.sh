@@ -29,6 +29,7 @@ EMAIL_ALLOWLIST=(
   'noreply@cursor\.com'
   'user@example'
   'admin@sosmesh\.example'
+  '@[0-9]x\.(png|jpg|pdf)$'
 )
 
 # KEY/SECRET/TOKEN/PASSWORD=<değer> eşleşmesi güvenli mi (atla)?

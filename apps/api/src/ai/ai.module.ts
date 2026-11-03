@@ -1,4 +1,4 @@
-import { Module } from '@nestjs/common';
+import { Module, forwardRef } from '@nestjs/common';
 
 import { AI_PROVIDER_OVERRIDE, AiJobService } from './ai-job.service';
 import {
@@ -12,7 +12,11 @@ import { AiJobQueueService } from './ai-job-queue.service';
 import { AiJobRunnerService } from './ai-job-runner.service';
 import { TriageV2Service } from './triage-v2.service';
 import { VisionModule } from './vision/vision.module';
+import { VoiceTranscriptionService } from './voice/voice-transcription.service';
+import { AudioConversionService } from '../media/audio-conversion.service';
+import { AudioChunkingService } from '../media/audio-chunking.service';
 import { LocalDiskStorageService } from '../media/local-disk-storage.service';
+import { MEDIA_STORAGE } from '../media/media-storage.interface';
 
 @Module({
   imports: [PrismaModule, VisionModule],
@@ -23,7 +27,13 @@ import { LocalDiskStorageService } from '../media/local-disk-storage.service';
     AiJobQueueService,
     AiJobRunnerService,
     TriageV2Service,
-    LocalDiskStorageService,
+    VoiceTranscriptionService,
+    AudioConversionService,
+    AudioChunkingService,
+    {
+      provide: MEDIA_STORAGE,
+      useClass: LocalDiskStorageService,
+    },
     { provide: AI_PROVIDER_OVERRIDE, useValue: null },
     { provide: SOS_PLAINTEXT_SOURCE, useClass: ServerKeyPlaintextSource },
   ],
@@ -35,6 +45,7 @@ import { LocalDiskStorageService } from '../media/local-disk-storage.service';
     AiJobRunnerService,
     TriageV2Service,
     VisionModule,
+    VoiceTranscriptionService,
   ],
 })
 export class AiModule {}

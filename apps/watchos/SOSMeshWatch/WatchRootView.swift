@@ -3,31 +3,59 @@ import SOSMeshCore
 
 struct WatchRootView: View {
     @EnvironmentObject private var model: WatchAppModel
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
 
     var body: some View {
         NavigationStack {
-            VStack(spacing: 8) {
-                Text(model.headline)
-                    .font(.headline)
-                    .accessibilityAddTraits(.isHeader)
-                Text(model.detail)
-                    .font(.caption2)
-                    .multilineTextAlignment(.center)
-                if !model.connectivityHeadline.isEmpty {
-                    Text(model.connectivityHeadline)
+            ScrollView {
+                VStack(spacing: 6) {
+                    Image("WatchLogo")
+                        .resizable()
+                        .aspectRatio(contentMode: .fit)
+                        .frame(height: 32)
+                        .accessibilityLabel("SOSMesh")
+                        .padding(.bottom, 4)
+                    
+                    Text(model.headline)
+                        .font(.headline)
+                        .multilineTextAlignment(.center)
+                        .accessibilityAddTraits(.isHeader)
+                    
+                    Text(model.detail)
                         .font(.caption2)
+                        .multilineTextAlignment(.center)
                         .foregroundStyle(.secondary)
+                    
+                    if !model.connectivityHeadline.isEmpty {
+                        HStack(spacing: 4) {
+                            Image(systemName: "iphone")
+                                .font(.system(size: 10))
+                            Text(model.connectivityHeadline)
+                                .font(.caption2)
+                        }
+                        .foregroundStyle(.secondary)
+                        .padding(.top, 2)
+                    }
+                    
+                    sosButton
+                    
+                    if model.confirmStep == .confirmDialog {
+                        confirmButtons
+                    }
+                    
+                    NavigationLink {
+                        WatchOfflineHelpView()
+                    } label: {
+                        HStack(spacing: 4) {
+                            Image(systemName: "info.circle")
+                            Text("watch.help.link")
+                        }
+                        .font(.caption2)
+                        .foregroundStyle(.blue)
+                    }
                 }
-                sosButton
-                if model.confirmStep == .confirmDialog {
-                    confirmButtons
-                }
-                NavigationLink("Bağlantı yardımı") {
-                    WatchOfflineHelpView()
-                }
-                .font(.caption2)
+                .padding(8)
             }
-            .padding()
         }
         .onAppear { model.onAppear() }
     }
@@ -36,14 +64,29 @@ struct WatchRootView: View {
         Button {
             // press handled via gesture
         } label: {
-            Text("SOS")
-                .frame(maxWidth: .infinity)
-                .padding(.vertical, 12)
+            HStack(spacing: 4) {
+                Image(systemName: "exclamationmark.triangle.fill")
+                    .font(.system(size: 16, weight: .bold))
+                Text("SOS")
+                    .font(.system(size: 20, weight: .bold, design: .rounded))
+            }
+            .foregroundStyle(.white)
+            .frame(maxWidth: .infinity)
+            .padding(.vertical, 12)
         }
-        .buttonStyle(.borderedProminent)
-        .tint(.red)
-        .accessibilityLabel("Acil SOS")
-        .accessibilityHint("Basılı tutun, bırakın, ardından onaylayın")
+        .buttonStyle(.plain)
+        .background(
+            RoundedRectangle(cornerRadius: 10)
+                .fill(
+                    LinearGradient(
+                        colors: [Color.red, Color.red.opacity(0.85)],
+                        startPoint: .topLeading,
+                        endPoint: .bottomTrailing
+                    )
+                )
+        )
+        .accessibilityLabel(Text("watch.sos.label"))
+        .accessibilityHint(Text("watch.sos.hint"))
         .simultaneousGesture(
             DragGesture(minimumDistance: 0)
                 .onChanged { _ in model.onSosPressStart() }
@@ -52,10 +95,24 @@ struct WatchRootView: View {
     }
 
     private var confirmButtons: some View {
-        HStack {
-            Button("İptal") { model.onConfirmCancel() }
-            Button("Gönder") { model.onConfirmSend() }
-                .tint(.red)
+        VStack(spacing: 6) {
+            Button {
+                model.onConfirmSend()
+            } label: {
+                HStack(spacing: 4) {
+                    Image(systemName: "paperplane.fill")
+                    Text("watch.confirm.send")
+                }
+                .frame(maxWidth: .infinity)
+            }
+            .buttonStyle(.borderedProminent)
+            .tint(.red)
+            
+            Button("watch.confirm.cancel") {
+                model.onConfirmCancel()
+            }
+            .buttonStyle(.bordered)
+            .controlSize(.small)
         }
     }
 }
@@ -65,16 +122,46 @@ struct WatchOfflineHelpView: View {
 
     var body: some View {
         ScrollView {
-            VStack(alignment: .leading, spacing: 6) {
-                Text(copy.headline)
-                    .font(.headline)
-                Text(copy.detail)
-                    .font(.caption2)
-                Text("112 yerine geçmez.")
-                    .font(.caption2)
-                    .foregroundStyle(.secondary)
+            VStack(alignment: .leading, spacing: 8) {
+                Image("WatchLogo")
+                    .resizable()
+                    .aspectRatio(contentMode: .fit)
+                    .frame(height: 24)
+                    .padding(.bottom, 4)
+                
+                VStack(alignment: .leading, spacing: 6) {
+                    HStack(spacing: 4) {
+                        Image(systemName: "iphone.slash")
+                            .font(.system(size: 14))
+                            .foregroundStyle(.orange)
+                        Text(copy.headline)
+                            .font(.headline)
+                    }
+                    
+                    Text(copy.detail)
+                        .font(.caption2)
+                        .foregroundStyle(.secondary)
+                        .fixedSize(horizontal: false, vertical: true)
+                }
+                
+                VStack(alignment: .leading, spacing: 4) {
+                    HStack(spacing: 4) {
+                        Image(systemName: "exclamationmark.triangle.fill")
+                            .font(.system(size: 12))
+                            .foregroundStyle(.red)
+                        Text("onboarding.not112")
+                            .font(.caption2)
+                            .fontWeight(.semibold)
+                    }
+                    
+                    Text("watch.offline.emergency_warning")
+                        .font(.caption2)
+                        .foregroundStyle(.secondary)
+                }
+                .padding(.top, 4)
             }
+            .padding(8)
         }
-        .navigationTitle("Offline")
+        .navigationTitle(Text("watch.help.title"))
     }
 }

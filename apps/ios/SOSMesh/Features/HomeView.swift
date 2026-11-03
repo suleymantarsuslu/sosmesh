@@ -446,11 +446,9 @@ struct SosSendView: View {
         defer { sending = false }
         do {
             let lang = Locale.current.language.languageCode?.identifier ?? "en"
-            try await appModel.submitSos(note: note, languageTag: lang)
+            let sosId = try await appModel.submitSos(note: note, languageTag: lang)
             
-            if let token = appModel.lastUploadToken {
-                await queueAttachments(uploadToken: token)
-            }
+            await queueAttachments(sosMessageId: sosId)
             
             dismiss()
         } catch {
@@ -458,7 +456,7 @@ struct SosSendView: View {
         }
     }
     
-    private func queueAttachments(uploadToken: String) async {
+    private func queueAttachments(sosMessageId: String) async {
         guard let baseDir = try? FileManager.default.url(
             for: .applicationSupportDirectory,
             in: .userDomainMask,
@@ -472,12 +470,10 @@ struct SosSendView: View {
             return
         }
         
-        let sosMessageId = uploadToken.split(separator: ":").first.map(String.init) ?? ""
-        
         if let photo = selectedPhoto, let imageData = photo.jpegData(compressionQuality: 0.9) {
             if let queued = try? queue.enqueue(
                 sosMessageId: sosMessageId,
-                uploadToken: uploadToken,
+                uploadToken: nil,
                 kind: .image,
                 data: imageData,
                 mimeType: "image/jpeg"
@@ -491,7 +487,7 @@ struct SosSendView: View {
            let audioData = try? Data(contentsOf: audioURL) {
             if let queued = try? queue.enqueue(
                 sosMessageId: sosMessageId,
-                uploadToken: uploadToken,
+                uploadToken: nil,
                 kind: .audio,
                 data: audioData,
                 mimeType: "audio/aac"
@@ -500,19 +496,6 @@ struct SosSendView: View {
                 attachmentStatuses["audio"] = .waiting
             }
         }
-        
-        let baseURL = IngestConfig.production(deviceId: "").baseURL
-        let coordinator = AttachmentUploadCoordinator(queue: queue, baseURL: baseURL)
-        coordinator.onStatusChange = { id, status in
-            if self.attachmentIds.contains(id) {
-                if id.contains("jpg") {
-                    self.attachmentStatuses["photo"] = status
-                } else {
-                    self.attachmentStatuses["audio"] = status
-                }
-            }
-        }
-        await coordinator.processQueue()
     }
     
     private func formatDuration(_ seconds: TimeInterval) -> String {

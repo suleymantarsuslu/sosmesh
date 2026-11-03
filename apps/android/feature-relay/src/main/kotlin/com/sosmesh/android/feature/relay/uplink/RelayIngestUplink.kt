@@ -1,7 +1,7 @@
 package com.sosmesh.android.feature.relay.uplink
 
 sealed class RelayIngestResult {
-    data object Success : RelayIngestResult()
+    data class Success(val uploadToken: String?) : RelayIngestResult()
 
     data object NoNetwork : RelayIngestResult()
 

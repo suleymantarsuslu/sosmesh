@@ -3,7 +3,7 @@ import Foundation
 public struct QueuedAttachment: Codable {
     public let id: String
     public let sosMessageId: String
-    public let uploadToken: String
+    public var uploadToken: String?
     public let kind: String
     public let dataPath: String
     public let mimeType: String
@@ -12,7 +12,7 @@ public struct QueuedAttachment: Codable {
     public init(
         id: String,
         sosMessageId: String,
-        uploadToken: String,
+        uploadToken: String?,
         kind: String,
         dataPath: String,
         mimeType: String,
@@ -41,7 +41,7 @@ public final class AttachmentQueue {
     
     public func enqueue(
         sosMessageId: String,
-        uploadToken: String,
+        uploadToken: String? = nil,
         kind: AttachmentKind,
         data: Data,
         mimeType: String
@@ -83,6 +83,24 @@ public final class AttachmentQueue {
     
     public func listPending() -> [QueuedAttachment] {
         return loadQueue()
+    }
+    
+    public func listBySosId(_ sosId: String) -> [QueuedAttachment] {
+        return loadQueue().filter { $0.sosMessageId == sosId }
+    }
+    
+    public func setUploadToken(_ uploadToken: String, forSosId sosId: String) throws {
+        var queue = loadQueue()
+        var updated = false
+        for i in 0..<queue.count {
+            if queue[i].sosMessageId == sosId && queue[i].uploadToken == nil {
+                queue[i].uploadToken = uploadToken
+                updated = true
+            }
+        }
+        if updated {
+            try saveQueue(queue)
+        }
     }
     
     private func loadQueue() -> [QueuedAttachment] {

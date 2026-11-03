@@ -32,8 +32,24 @@ public final class AttachmentUploadCoordinator {
     }
     
     public func processQueue() async {
-        let pending = queue.listPending()
+        let pending = queue.listPending().filter { $0.uploadToken != nil }
         for attachment in pending {
+            if uploadTasks[attachment.id] != nil {
+                continue
+            }
+            
+            let task = Task {
+                await uploadAttachment(attachment)
+            }
+            uploadTasks[attachment.id] = task
+            await task.value
+            uploadTasks.removeValue(forKey: attachment.id)
+        }
+    }
+    
+    public func processSosAttachments(sosId: String) async {
+        let attachments = queue.listBySosId(sosId).filter { $0.uploadToken != nil }
+        for attachment in attachments {
             if uploadTasks[attachment.id] != nil {
                 continue
             }
@@ -53,6 +69,10 @@ public final class AttachmentUploadCoordinator {
             return
         }
         
+        guard let uploadToken = attachment.uploadToken else {
+            return
+        }
+        
         notifyStatus(attachment.id, .uploading)
         
         guard let data = try? Data(contentsOf: URL(fileURLWithPath: attachment.dataPath)) else {
@@ -61,7 +81,7 @@ public final class AttachmentUploadCoordinator {
             return
         }
         
-        let config = AttachmentUploadConfig(baseURL: baseURL, uploadToken: attachment.uploadToken)
+        let config = AttachmentUploadConfig(baseURL: baseURL, uploadToken: uploadToken)
         let uploader = AttachmentUploader(config: config)
         
         let kind: AttachmentKind = attachment.kind == "audio" ? .audio : .image

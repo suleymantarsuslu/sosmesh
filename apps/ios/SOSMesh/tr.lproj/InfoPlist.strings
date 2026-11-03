@@ -2,3 +2,6 @@
 "NSBluetoothPeripheralUsageDescription" = "Bluetooth: SOSMesh relay modunda yakın cihazlara hizmet sunmak için BLE kullanır.";
 "NSLocationWhenInUseUsageDescription" = "Konum: SOS zarfına yaklaşık konum eklemek isteğe bağlıdır; reddedebilirsiniz.";
 "NSUserNotificationsUsageDescription" = "Bildirimler: SOS iletim durumu ve cihazınızdaki önemli uyarılar için kullanılır.";
+"NSCameraUsageDescription" = "Kamera: SOS mesajınıza eklemek için fotoğraf çekin.";
+"NSMicrophoneUsageDescription" = "Mikrofon: SOS mesajınıza eklemek için sesli mesaj kaydedin.";
+"NSPhotoLibraryUsageDescription" = "Fotoğraf Kütüphanesi: SOS mesajınıza eklemek için fotoğraf seçin.";

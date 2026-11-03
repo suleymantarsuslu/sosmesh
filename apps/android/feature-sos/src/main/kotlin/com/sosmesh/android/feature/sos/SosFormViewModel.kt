@@ -68,6 +68,7 @@ class SosFormViewModel
         private val peerDelivery: SosPeerDeliveryPort,
         private val bleMeshReadiness: com.sosmesh.android.core.permissions.BleMeshReadiness,
         private val permissionFlowCoordinator: com.sosmesh.android.core.permissions.PermissionFlowCoordinator,
+        private val pendingStore: com.sosmesh.android.feature.sos.attachment.AttachmentPendingStore,
     ) : ViewModel() {
         private val _uiState = MutableStateFlow(SosFormUiState())
         val uiState: StateFlow<SosFormUiState> = _uiState.asStateFlow()
@@ -129,35 +130,6 @@ class SosFormViewModel
         fun setRecording(isRecording: Boolean) {
             _uiState.update { it.copy(isRecording = isRecording) }
         }
-        
-        fun scheduleAttachmentUploads(context: android.content.Context, uploadToken: String, baseUrl: String) {
-            val state = _uiState.value
-            state.photoUri?.let { uri ->
-                val file = java.io.File(uri.path ?: return@let)
-                if (file.exists()) {
-                    submitRepository.scheduleAttachmentUpload(
-                        context = context,
-                        uploadToken = uploadToken,
-                        kind = "image",
-                        file = file,
-                        mimeType = "image/jpeg",
-                        baseUrl = baseUrl
-                    )
-                }
-            }
-            state.voiceFile?.let { file ->
-                if (file.exists()) {
-                    submitRepository.scheduleAttachmentUpload(
-                        context = context,
-                        uploadToken = uploadToken,
-                        kind = "audio",
-                        file = file,
-                        mimeType = "audio/aac",
-                        baseUrl = baseUrl
-                    )
-                }
-            }
-        }
 
         fun goToPreview() {
             if (!revalidate()) return
@@ -195,6 +167,33 @@ class SosFormViewModel
                         nowMs = nowMs,
                     ),
                 )
+            
+            state.photoUri?.let { uri ->
+                val file = java.io.File(uri.path ?: return@let)
+                if (file.exists()) {
+                    pendingStore.add(
+                        com.sosmesh.android.feature.sos.attachment.PendingAttachment(
+                            sosId = composed.message.id,
+                            kind = "image",
+                            filePath = file.absolutePath,
+                            mimeType = "image/jpeg",
+                        ),
+                    )
+                }
+            }
+            state.voiceFile?.let { file ->
+                if (file.exists()) {
+                    pendingStore.add(
+                        com.sosmesh.android.feature.sos.attachment.PendingAttachment(
+                            sosId = composed.message.id,
+                            kind = "audio",
+                            filePath = file.absolutePath,
+                            mimeType = "audio/aac",
+                        ),
+                    )
+                }
+            }
+            
             val delivery =
                 runCatching {
                     if (bleMeshReadiness.canRunBleMeshFeatures()) {

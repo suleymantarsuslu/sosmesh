@@ -36,32 +36,4 @@ class SosSubmitRepository
                 uploadScheduler.scheduleUpload(request.nowMs, delayMs = 1_000L)
                 composed
             }
-
-        fun scheduleAttachmentUpload(
-            context: android.content.Context,
-            uploadToken: String,
-            kind: String,
-            file: java.io.File,
-            mimeType: String,
-            baseUrl: String,
-        ) {
-            val data =
-                androidx.work.Data.Builder()
-                    .putString("uploadToken", uploadToken)
-                    .putString("kind", kind)
-                    .putString("filePath", file.absolutePath)
-                    .putString("mimeType", mimeType)
-                    .putString("baseUrl", baseUrl)
-                    .build()
-            val request =
-                androidx.work.OneTimeWorkRequestBuilder<com.sosmesh.android.feature.sos.upload.AttachmentUploadWorker>()
-                    .setInputData(data)
-                    .setConstraints(
-                        androidx.work.Constraints.Builder()
-                            .setRequiredNetworkType(androidx.work.NetworkType.CONNECTED)
-                            .build(),
-                    )
-                    .build()
-            androidx.work.WorkManager.getInstance(context).enqueue(request)
-        }
     }

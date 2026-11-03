@@ -2,3 +2,6 @@
 "NSBluetoothPeripheralUsageDescription" = "Bluetooth: In relay mode SOSMesh advertises a BLE service for nearby devices.";
 "NSLocationWhenInUseUsageDescription" = "Location: Optional approximate location for the SOS envelope; you may deny and continue.";
 "NSUserNotificationsUsageDescription" = "Notifications: Used for SOS delivery status and important alerts on your device.";
+"NSCameraUsageDescription" = "Camera: Take a photo to attach to your SOS message.";
+"NSMicrophoneUsageDescription" = "Microphone: Record a voice message to attach to your SOS.";
+"NSPhotoLibraryUsageDescription" = "Photo Library: Select a photo to attach to your SOS message.";

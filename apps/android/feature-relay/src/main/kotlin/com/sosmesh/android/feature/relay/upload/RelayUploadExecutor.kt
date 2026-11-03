@@ -1,11 +1,13 @@
 package com.sosmesh.android.feature.relay.upload
 
+import com.sosmesh.android.core.data.attachment.AttachmentUploadScheduler
 import com.sosmesh.android.core.data.outbox.RelayOutboxReader
 import com.sosmesh.android.feature.relay.battery.RelayBatteryPolicy
 import com.sosmesh.android.feature.relay.battery.RelayBatterySnapshot
 import com.sosmesh.android.feature.relay.battery.RelayPauseReason
 import com.sosmesh.android.feature.relay.settings.RelayHourlyDataBudget
 import com.sosmesh.android.feature.relay.settings.RelaySettingsPort
+import com.sosmesh.android.feature.relay.uplink.RelayIngestConfig
 import com.sosmesh.android.feature.relay.uplink.RelayIngestResult
 import com.sosmesh.android.feature.relay.uplink.RelayIngestUplink
 import com.sosmesh.contracts.transport.OutboxQueueAdapter
@@ -31,6 +33,8 @@ class RelayUploadExecutor
         private val outboxReader: RelayOutboxReader,
         private val outbox: OutboxQueueAdapter,
         private val uplink: RelayIngestUplink,
+        private val ingestConfig: RelayIngestConfig,
+        private val attachmentScheduler: AttachmentUploadScheduler?,
     ) {
         suspend fun runOwnSosUploadCycle(
             nowMs: Long,
@@ -69,6 +73,13 @@ class RelayUploadExecutor
                             null,
                         )
                         uploaded++
+                        result.uploadToken?.let { token ->
+                            attachmentScheduler?.scheduleUploadsForMessage(
+                                sosId = entry.sosId,
+                                uploadToken = token,
+                                baseUrl = deriveBaseUrl(ingestConfig.ingestUrl),
+                            )
+                        }
                     }
                     is RelayIngestResult.InvalidReceipt -> {
                         retryMs = nowMs + HTTP_ERROR_BACKOFF_MS
@@ -215,6 +226,10 @@ class RelayUploadExecutor
                 }
             }
             return RelayUploadRunSummary(attempted, uploaded, deferred, retryMs, due.size)
+        }
+
+        private fun deriveBaseUrl(ingestUrl: String): String {
+            return ingestUrl.substringBeforeLast("/v1/")
         }
 
         companion object {

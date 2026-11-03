@@ -130,12 +130,13 @@ class SosFormViewModel
             _uiState.update { it.copy(isRecording = isRecording) }
         }
         
-        fun scheduleAttachmentUploads(uploadToken: String, baseUrl: String) {
+        fun scheduleAttachmentUploads(context: android.content.Context, uploadToken: String, baseUrl: String) {
             val state = _uiState.value
             state.photoUri?.let { uri ->
                 val file = java.io.File(uri.path ?: return@let)
                 if (file.exists()) {
                     submitRepository.scheduleAttachmentUpload(
+                        context = context,
                         uploadToken = uploadToken,
                         kind = "image",
                         file = file,
@@ -147,6 +148,7 @@ class SosFormViewModel
             state.voiceFile?.let { file ->
                 if (file.exists()) {
                     submitRepository.scheduleAttachmentUpload(
+                        context = context,
                         uploadToken = uploadToken,
                         kind = "audio",
                         file = file,

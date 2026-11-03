@@ -81,6 +81,10 @@ fun SosFlowScreen(
                     onManualToggle = onManualToggle,
                     onManualLat = onManualLat,
                     onManualLng = onManualLng,
+                    onPhotoSelected = onPhotoSelected,
+                    onVoiceRecorded = onVoiceRecorded,
+                    onStartRecording = onStartRecording,
+                    onStopRecording = onStopRecording,
                     onContinue = onContinue,
                     contentModifier = contentModifier,
                 )
@@ -110,6 +114,10 @@ private fun SosFormScreen(
     onManualToggle: (Boolean) -> Unit,
     onManualLat: (String) -> Unit,
     onManualLng: (String) -> Unit,
+    onPhotoSelected: (android.net.Uri?) -> Unit,
+    onVoiceRecorded: (java.io.File?) -> Unit,
+    onStartRecording: () -> Unit,
+    onStopRecording: (Boolean) -> Unit,
     onContinue: () -> Unit,
     contentModifier: Modifier,
 ) {

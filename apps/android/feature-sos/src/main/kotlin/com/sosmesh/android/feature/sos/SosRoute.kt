@@ -4,6 +4,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.sosmesh.android.feature.sos.ui.SosFlowScreen
 
@@ -13,6 +14,7 @@ fun SosRoute(
     viewModel: SosFormViewModel = hiltViewModel(),
 ) {
     val state by viewModel.uiState.collectAsState()
+    val context = LocalContext.current
     SosFlowScreen(
         state = state,
         onSelectType = viewModel::selectType,
@@ -31,7 +33,7 @@ fun SosRoute(
         onConfirm = {
             viewModel.confirmAndSave()
             state.uploadToken?.let { token ->
-                viewModel.scheduleAttachmentUploads(token, "https://sosmesh.antiosoft.com")
+                viewModel.scheduleAttachmentUploads(context.applicationContext, token, "https://sosmesh.antiosoft.com")
             }
         },
         modifier = modifier,

@@ -39,38 +39,48 @@ export function PhotoAnalysisCard({ sparkVision, samVision }: Props) {
 
     if (!samVision?.segments || samVision.segments.length === 0) return;
 
-    // Draw all elements
-    const drawPromises: Promise<void>[] = [];
-    
-    samVision.segments.forEach((segment, idx) => {
-      const color = getColor(idx);
-      
-      // Scale normalized coordinates to display size
-      const boxX = segment.box.x * displayWidth;
-      const boxY = segment.box.y * displayHeight;
-      const boxW = segment.box.w * displayWidth;
-      const boxH = segment.box.h * displayHeight;
-
-      if (showMasks && segment.maskPng) {
-        drawPromises.push(drawMaskPng(ctx, segment.maskPng, boxX, boxY, boxW, boxH, color));
+    // First draw all masks (async), then draw boxes on top synchronously
+    const drawAll = async () => {
+      // Draw masks first
+      if (showMasks) {
+        for (const [idx, segment] of samVision.segments.entries()) {
+          if (!segment.maskPng) continue;
+          const color = getColor(idx);
+          const boxX = segment.box.x * displayWidth;
+          const boxY = segment.box.y * displayHeight;
+          const boxW = segment.box.w * displayWidth;
+          const boxH = segment.box.h * displayHeight;
+          await drawMaskPng(ctx, segment.maskPng, boxX, boxY, boxW, boxH, color);
+        }
       }
 
+      // Then draw boxes on top
       if (showBoxes) {
-        ctx.strokeStyle = color;
-        ctx.lineWidth = 3;
-        ctx.strokeRect(boxX, boxY, boxW, boxH);
+        samVision.segments.forEach((segment, idx) => {
+          const color = getColor(idx);
+          const boxX = segment.box.x * displayWidth;
+          const boxY = segment.box.y * displayHeight;
+          const boxW = segment.box.w * displayWidth;
+          const boxH = segment.box.h * displayHeight;
 
-        ctx.fillStyle = color;
-        ctx.font = '14px system-ui, sans-serif';
-        const label = `${segment.concept}${
-          segment.confidence ? ` (${(segment.confidence * 100).toFixed(0)}%)` : ''
-        }`;
-        const metrics = ctx.measureText(label);
-        ctx.fillRect(boxX, boxY - 20, metrics.width + 8, 20);
-        ctx.fillStyle = '#fff';
-        ctx.fillText(label, boxX + 4, boxY - 5);
+          ctx.strokeStyle = color;
+          ctx.lineWidth = 3;
+          ctx.strokeRect(boxX, boxY, boxW, boxH);
+
+          ctx.fillStyle = color;
+          ctx.font = '14px system-ui, sans-serif';
+          const label = `${segment.concept}${
+            segment.confidence ? ` (${(segment.confidence * 100).toFixed(0)}%)` : ''
+          }`;
+          const metrics = ctx.measureText(label);
+          ctx.fillRect(boxX, boxY - 20, metrics.width + 8, 20);
+          ctx.fillStyle = '#fff';
+          ctx.fillText(label, boxX + 4, boxY - 5);
+        });
       }
-    });
+    };
+
+    void drawAll();
   }, [imageLoaded, showMasks, showBoxes, samVision]);
 
   const drawMaskPng = (

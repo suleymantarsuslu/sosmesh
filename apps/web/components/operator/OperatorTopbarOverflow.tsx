@@ -1,13 +1,12 @@
 'use client';
 
-import { Suspense, useEffect, useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 
 import { LocaleSwitcher } from '../i18n/LocaleSwitcher';
 import { Button } from '../ui/Button';
 
 import { IncidentSwitcher, type IncidentOption } from './IncidentSwitcher';
 import { useOperatorPreferences } from './OperatorPreferencesProvider';
-import { SavedViewsMenu } from './SavedViewsMenu';
 
 export function OperatorTopbarOverflow({ incidents }: { incidents: IncidentOption[] }) {
   const { t, theme, setTheme } = useOperatorPreferences();
@@ -52,9 +51,6 @@ export function OperatorTopbarOverflow({ incidents }: { incidents: IncidentOptio
             {theme === 'light' ? t('web.shell.themeDark') : t('web.shell.themeLight')}
           </button>
           <IncidentSwitcher incidents={incidents} />
-          <Suspense fallback={null}>
-            <SavedViewsMenu />
-          </Suspense>
         </div>
       ) : null}
     </div>

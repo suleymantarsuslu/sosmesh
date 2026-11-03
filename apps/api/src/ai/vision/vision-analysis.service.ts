@@ -14,8 +14,8 @@ import { PrismaService } from '../../prisma/prisma.service';
 import { MetaModelClient } from '../meta-model-client';
 import { BudgetGuardService } from '../budget-guard.service';
 
-// Fixed concepts for SAM (max 6 per photo, rate limit 60/min)
-const SAM_CONCEPTS = ['person', 'debris', 'fire', 'smoke', 'water', 'vehicle'] as const;
+// Fixed concepts for SAM (max 8 per photo, rate limit 60/min)
+const SAM_CONCEPTS = ['person', 'concrete debris', 'collapsed building', 'fire', 'smoke', 'water', 'vehicle'] as const;
 
 type SparkVisionSchema = {
   sceneSummary: string;
@@ -65,12 +65,13 @@ export class VisionAnalysisService {
     );
 
     if (!sparkResult.ok) {
+      const errorMsg = 'error' in sparkResult ? sparkResult.error : 'unknown_error';
       this.logger.error({
         msg: 'Spark analysis failed',
         attachmentId: request.attachmentId,
-        error: sparkResult.error,
+        error: errorMsg,
       });
-      return { success: false, error: `Spark analysis failed: ${sparkResult.error}` };
+      return { success: false, error: `Spark analysis failed: ${errorMsg}` };
     }
 
     // Step 2: Run SAM segmentation for each concept
@@ -123,7 +124,8 @@ export class VisionAnalysisService {
     const reservation = await this.budgetGuard.reserve(estimatedUsd, 'muse-spark-1.3');
 
     if (!reservation.reserved) {
-      return { ok: false, error: `Budget limit: ${reservation.reason}` };
+      const reason = 'reason' in reservation ? reservation.reason : 'unknown';
+      return { ok: false, error: `Budget limit: ${reason}` };
     }
 
     const dataUrl = `data:${mimeType};base64,${imageBuffer.toString('base64')}`;
@@ -230,7 +232,8 @@ CRITICAL RULES:
       requestId: 'failed',
     });
 
-    return { ok: false, error: response.error };
+    const errorMsg = 'error' in response ? response.error : 'unknown_error';
+    return { ok: false, error: errorMsg };
   }
 
   /**
@@ -294,9 +297,10 @@ CRITICAL RULES:
     const reservation = await this.budgetGuard.reserve(estimatedUsd, 'sam-3.1');
 
     if (!reservation.reserved) {
+      const reason = 'reason' in reservation ? reservation.reason : 'unknown';
       this.logger.warn({
         msg: 'SAM budget exhausted, skipping segmentation',
-        reason: reservation.reason,
+        reason,
       });
       return results;
     }
@@ -324,10 +328,11 @@ CRITICAL RULES:
             segmentCount: response.segments.length,
           });
         } else {
+          const errorMsg = 'error' in response ? response.error : 'unknown_error';
           this.logger.warn({
             msg: 'SAM segmentation failed',
             concept,
-            error: response.error,
+            error: errorMsg,
           });
         }
       } catch (error) {

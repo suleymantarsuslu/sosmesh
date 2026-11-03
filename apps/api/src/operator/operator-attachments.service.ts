@@ -3,25 +3,37 @@
  * Work Package C - Vision
  * 
  * Handles retrieval of attachments and vision analysis for operator panel
+ * Decodes SAM masks to PNG on server
  */
 
 import { Injectable, Logger } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { LocalDiskStorageService } from '../media/local-disk-storage.service';
+import { SamMaskDecoderService } from '../ai/vision/sam-mask-decoder.service';
 
 export type AttachmentImageResult =
   | { found: true; buffer: Buffer; mime: string }
   | { found: false };
 
+export type MaskSegment = {
+  concept: string;
+  id: string;
+  confidence: number | null;
+  box: {
+    x: number; // normalized 0-1
+    y: number; // normalized 0-1
+    w: number; // normalized 0-1
+    h: number; // normalized 0-1
+  };
+  maskPng: string | null; // data:image/png;base64,... at box size with transparency
+};
+
 export type AttachmentMasksResult =
   | {
       found: true;
-      visionAnalysis: {
-        sparkSummary: unknown;
-        samResults: unknown;
-        samModel: string | null;
-        createdAt: Date;
-      } | null;
+      imageWidth: number;
+      imageHeight: number;
+      segments: MaskSegment[];
     }
   | { found: false };
 
@@ -31,7 +43,8 @@ export class OperatorAttachmentsService {
 
   constructor(
     private readonly prisma: PrismaService,
-    private readonly storage: LocalDiskStorageService
+    private readonly storage: LocalDiskStorageService,
+    private readonly maskDecoder: SamMaskDecoderService
   ) {}
 
   /**
@@ -80,6 +93,7 @@ export class OperatorAttachmentsService {
 
   /**
    * Get vision analysis (Spark + SAM) for attachment
+   * Decodes SAM masks to PNG on server
    */
   async getAttachmentMasks(attachmentId: string): Promise<AttachmentMasksResult> {
     const attachment = await this.prisma.attachment.findUnique({
@@ -87,22 +101,86 @@ export class OperatorAttachmentsService {
       select: {
         visionAnalysis: {
           select: {
-            sparkSummary: true,
             samResults: true,
-            samModel: true,
-            createdAt: true,
           },
         },
       },
     });
 
-    if (!attachment) {
+    if (!attachment || !attachment.visionAnalysis) {
       return { found: false };
+    }
+
+    // Get image dimensions from storage
+    const metadata = await this.storage.getMetadata(attachmentId);
+    if (!metadata) {
+      return { found: false };
+    }
+
+    // TODO: Get actual image dimensions - for now use 1280x960 as placeholder
+    const imageWidth = 1280;
+    const imageHeight = 1280;
+
+    const samResults = attachment.visionAnalysis.samResults as any[];
+    const segments: MaskSegment[] = [];
+
+    for (const conceptResult of samResults) {
+      const concept = conceptResult.concept as string;
+      const conceptSegments = conceptResult.segments as any[];
+
+      for (const segment of conceptSegments) {
+        const box = segment.boundingBox;
+        const mask = segment.mask;
+
+        // Normalize box coordinates
+        const normalizedBox = {
+          x: box.x1 / box.width,
+          y: box.y1 / box.height,
+          w: (box.x2 - box.x1 + 1) / box.width,
+          h: (box.y2 - box.y1 + 1) / box.height,
+        };
+
+        let maskPng: string | null = null;
+
+        if (mask) {
+          try {
+            // Box dimensions in pixels
+            const boxWidthPx = box.x2 - box.x1 + 1;
+            const boxHeightPx = box.y2 - box.y1 + 1;
+
+            maskPng = await this.maskDecoder.decodeMaskToPng(
+              mask.data,
+              mask.width,
+              mask.height,
+              boxWidthPx,
+              boxHeightPx
+            );
+          } catch (error) {
+            this.logger.error({
+              err: error,
+              msg: 'Failed to decode mask',
+              attachmentId,
+              concept,
+              segmentId: segment.id,
+            });
+          }
+        }
+
+        segments.push({
+          concept,
+          id: segment.id,
+          confidence: segment.confidence,
+          box: normalizedBox,
+          maskPng,
+        });
+      }
     }
 
     return {
       found: true,
-      visionAnalysis: attachment.visionAnalysis,
+      imageWidth,
+      imageHeight,
+      segments,
     };
   }
 }

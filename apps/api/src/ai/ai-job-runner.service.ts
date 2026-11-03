@@ -147,12 +147,12 @@ export class AiJobRunnerService {
   }
 
   private async processVision(job: AiJob): Promise<void> {
-    const attachmentId = job.metadata?.attachmentId as string | undefined;
-
-    if (!attachmentId) {
-      await this.queue.fail(job.id, 'Missing attachmentId in job metadata');
+    if (!job.attachmentId) {
+      await this.queue.fail(job.id, 'Missing attachmentId');
       return;
     }
+
+    const attachmentId = job.attachmentId;
 
     // Get attachment with incident context
     const attachment = await this.prisma.attachment.findUnique({
@@ -211,7 +211,8 @@ export class AiJobRunnerService {
     if (result.success) {
       await this.queue.complete(job.id);
     } else {
-      await this.queue.fail(job.id, result.error);
+      const errorMsg = 'error' in result ? result.error : 'unknown_error';
+      await this.queue.fail(job.id, errorMsg);
     }
   }
 

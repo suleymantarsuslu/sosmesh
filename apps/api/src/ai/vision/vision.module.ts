@@ -7,6 +7,7 @@ import { Module } from '@nestjs/common';
 import { PrismaModule } from '../../prisma/prisma.module';
 import { PhotoValidatorService } from './photo-validator.service';
 import { VisionAnalysisService } from './vision-analysis.service';
+import { SamMaskDecoderService } from './sam-mask-decoder.service';
 import { MetaModelClient } from '../meta-model-client';
 import { BudgetGuardService } from '../budget-guard.service';
 
@@ -15,9 +16,14 @@ import { BudgetGuardService } from '../budget-guard.service';
   providers: [
     PhotoValidatorService,
     VisionAnalysisService,
+    SamMaskDecoderService,
     MetaModelClient,
     BudgetGuardService,
   ],
-  exports: [PhotoValidatorService, VisionAnalysisService],
+  exports: [
+    PhotoValidatorService,
+    VisionAnalysisService,
+    SamMaskDecoderService,
+  ],
 })
 export class VisionModule {}

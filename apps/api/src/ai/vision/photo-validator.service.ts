@@ -10,12 +10,32 @@ import { createHash } from 'node:crypto';
 import sharp, { type Sharp, type Metadata } from 'sharp';
 import ExifReader from 'exifreader';
 
-const MAX_PHOTO_BYTES = 10 * 1024 * 1024; // 10 MB
+// ONLINE (direct internet upload): 15 MB
+const MEDIA_ONLINE_MAX_IMAGE_BYTES = Number(process.env.MEDIA_ONLINE_MAX_IMAGE_BYTES ?? 15_728_640);
+// MESH (BLE relay): 16 KB (from mesh-payload-limits.ts)
+const MAX_MESH_OPAQUE_CIPHERTEXT_BYTES = 16_384;
+
 const ALLOWED_FORMATS = ['jpeg', 'png', 'webp'];
+const MAX_AI_DIMENSION = 2048; // Downscale to this for AI processing
 
 export type PhotoValidationResult =
-  | { valid: true; buffer: Buffer; sha256: string; mime: string; width: number; height: number }
+  | { 
+      valid: true; 
+      buffer: Buffer; 
+      sha256: string; 
+      mime: string; 
+      width: number; 
+      height: number;
+      downscaled: boolean;
+      originalWidth?: number;
+      originalHeight?: number;
+    }
   | { valid: false; reason: string };
+
+export type PhotoValidationRequest = {
+  buffer: Buffer;
+  source?: 'online' | 'mesh';
+};
 
 @Injectable()
 export class PhotoValidatorService {
@@ -24,16 +44,20 @@ export class PhotoValidatorService {
   /**
    * Validate and sanitize a photo upload
    * - Check format (jpeg/png/webp)
-   * - Check size (≤10 MB)
+   * - Check size based on source (online: 15MB, mesh: 16KB)
    * - Strip ALL EXIF/GPS metadata (privacy)
+   * - Downscale if >2048px on long edge (for AI processing)
    * - Return sanitized buffer with sha256
    */
-  async validateAndSanitize(buffer: Buffer): Promise<PhotoValidationResult> {
-    // Size check
-    if (buffer.length > MAX_PHOTO_BYTES) {
+  async validateAndSanitize(request: PhotoValidationRequest): Promise<PhotoValidationResult> {
+    const { buffer, source = 'online' } = request;
+    
+    // Size check based on source
+    const maxBytes = source === 'mesh' ? MAX_MESH_OPAQUE_CIPHERTEXT_BYTES : MEDIA_ONLINE_MAX_IMAGE_BYTES;
+    if (buffer.length > maxBytes) {
       return {
         valid: false,
-        reason: `Photo too large: ${buffer.length} bytes (max ${MAX_PHOTO_BYTES})`,
+        reason: `Photo too large: ${buffer.length} bytes (max ${maxBytes} for ${source})`,
       };
     }
 
@@ -57,10 +81,10 @@ export class PhotoValidatorService {
       };
     }
 
-    const width = metadata.width ?? 0;
-    const height = metadata.height ?? 0;
+    const originalWidth = metadata.width ?? 0;
+    const originalHeight = metadata.height ?? 0;
 
-    if (width === 0 || height === 0) {
+    if (originalWidth === 0 || originalHeight === 0) {
       return { valid: false, reason: 'Invalid image dimensions' };
     }
 
@@ -73,16 +97,36 @@ export class PhotoValidatorService {
       });
     }
 
+    // Determine if downscaling needed
+    const maxDim = Math.max(originalWidth, originalHeight);
+    const needsDownscale = maxDim > MAX_AI_DIMENSION;
+    
+    let processedImage = image.rotate(); // Apply EXIF orientation first
+
+    if (needsDownscale) {
+      const scale = MAX_AI_DIMENSION / maxDim;
+      const newWidth = Math.round(originalWidth * scale);
+      const newHeight = Math.round(originalHeight * scale);
+      
+      processedImage = processedImage.resize(newWidth, newHeight, {
+        fit: 'inside',
+        withoutEnlargement: true,
+      });
+    }
+
     // Strip ALL metadata (EXIF, GPS, orientation, color profile, etc.)
     let sanitized: Buffer;
     try {
-      sanitized = await image
-        .rotate() // Apply EXIF orientation, then strip
-        .toBuffer({ resolveWithObject: false }); // toBuffer without metadata strips all EXIF/GPS
+      sanitized = await processedImage.toBuffer({ resolveWithObject: false });
     } catch (error) {
       this.logger.error({ err: error, msg: 'Failed to strip metadata' });
       return { valid: false, reason: 'Failed to sanitize image' };
     }
+
+    // Get final dimensions
+    const finalMetadata = await sharp(sanitized).metadata();
+    const finalWidth = finalMetadata.width ?? originalWidth;
+    const finalHeight = finalMetadata.height ?? originalHeight;
 
     // Compute sha256 of sanitized image
     const sha256 = createHash('sha256').update(sanitized).digest('hex');
@@ -92,12 +136,16 @@ export class PhotoValidatorService {
     this.logger.log({
       msg: 'Photo validated and sanitized',
       format: metadata.format,
-      width,
-      height,
+      originalWidth,
+      originalHeight,
+      finalWidth,
+      finalHeight,
+      downscaled: needsDownscale,
       originalBytes: buffer.length,
       sanitizedBytes: sanitized.length,
       sha256,
       gpsStripped: hasGps,
+      source,
     });
 
     return {
@@ -105,8 +153,10 @@ export class PhotoValidatorService {
       buffer: sanitized,
       sha256,
       mime,
-      width,
-      height,
+      width: finalWidth,
+      height: finalHeight,
+      downscaled: needsDownscale,
+      ...(needsDownscale ? { originalWidth, originalHeight } : {}),
     };
   }
 

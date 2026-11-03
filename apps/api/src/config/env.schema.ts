@@ -18,7 +18,7 @@ export const envValidationSchema = Joi.object({
   MODEL_API_KEY: Joi.string().allow('').optional(),
   META_BASE_URL: Joi.string().uri().default('https://api.meta.ai/v1'),
   META_MODEL: Joi.string().default('muse-spark-1.3'),
-  META_TIMEOUT_MS: Joi.number().integer().min(1000).default(15000),
+  META_TIMEOUT_MS: Joi.number().integer().min(1000).default(60000),
   META_MAX_RETRIES: Joi.number().integer().min(0).max(5).default(2),
   META_MAX_TOKENS: Joi.number().integer().min(256).default(4096),
   META_CIRCUIT_FAILURE_THRESHOLD: Joi.number().integer().min(1).default(3),

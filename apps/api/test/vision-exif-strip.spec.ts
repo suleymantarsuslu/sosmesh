@@ -40,7 +40,7 @@ describe('Photo EXIF/GPS Stripping', () => {
       .toBuffer();
 
     // Validate and sanitize
-    const result = await validator.validateAndSanitize(testImage);
+    const result = await validator.validateAndSanitize({ buffer: testImage, source: 'online' });
 
     expect(result.valid).toBe(true);
     if (!result.valid) return;
@@ -71,11 +71,10 @@ describe('Photo EXIF/GPS Stripping', () => {
   });
 
   it('should reject oversized photos', async () => {
-    // Create a small image but pretend it's large by using a huge buffer
-    // (For real test, this would be an actual 11MB image, but we simulate)
-    const largeBuffer = Buffer.alloc(11 * 1024 * 1024); // 11 MB
+    // Create a large buffer exceeding online limit
+    const largeBuffer = Buffer.alloc(16 * 1024 * 1024); // 16 MB > 15 MB online limit
     
-    const result = await validator.validateAndSanitize(largeBuffer);
+    const result = await validator.validateAndSanitize({ buffer: largeBuffer, source: 'online' });
 
     expect(result.valid).toBe(false);
     if (result.valid === false) {
@@ -87,7 +86,7 @@ describe('Photo EXIF/GPS Stripping', () => {
     // Create a buffer that's not a valid image
     const invalidBuffer = Buffer.from('not an image');
 
-    const result = await validator.validateAndSanitize(invalidBuffer);
+    const result = await validator.validateAndSanitize({ buffer: invalidBuffer, source: 'online' });
 
     expect(result.valid).toBe(false);
     if (result.valid === false) {
@@ -107,7 +106,7 @@ describe('Photo EXIF/GPS Stripping', () => {
       .jpeg()
       .toBuffer();
 
-    const result = await validator.validateAndSanitize(validJpeg);
+    const result = await validator.validateAndSanitize({ buffer: validJpeg, source: 'online' });
 
     expect(result.valid).toBe(true);
     if (!result.valid) return;
@@ -127,7 +126,7 @@ describe('Photo EXIF/GPS Stripping', () => {
       .png()
       .toBuffer();
 
-    const result = await validator.validateAndSanitize(validPng);
+    const result = await validator.validateAndSanitize({ buffer: validPng, source: 'online' });
 
     expect(result.valid).toBe(true);
     if (!result.valid) return;
@@ -146,7 +145,7 @@ describe('Photo EXIF/GPS Stripping', () => {
       .webp()
       .toBuffer();
 
-    const result = await validator.validateAndSanitize(validWebp);
+    const result = await validator.validateAndSanitize({ buffer: validWebp, source: 'online' });
 
     expect(result.valid).toBe(true);
     if (!result.valid) return;
@@ -165,7 +164,7 @@ describe('Photo EXIF/GPS Stripping', () => {
       .jpeg()
       .toBuffer();
 
-    const result = await validator.validateAndSanitize(testImage);
+    const result = await validator.validateAndSanitize({ buffer: testImage, source: 'online' });
 
     expect(result.valid).toBe(true);
     if (!result.valid) return;

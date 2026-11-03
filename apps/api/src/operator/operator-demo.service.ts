@@ -8,6 +8,7 @@ import { randomBytes } from 'node:crypto';
 import { PrismaService } from '../prisma/prisma.service';
 import { AiJobQueueService } from '../ai/ai-job-queue.service';
 import { LocalDiskStorageService } from '../media/local-disk-storage.service';
+import { PhotoValidatorService } from '../ai/vision/photo-validator.service';
 import { DeliveryState, IncidentState, LocationStatus } from '@prisma/client';
 
 export type CreateSyntheticSosRequest = {
@@ -27,7 +28,8 @@ export class OperatorDemoService {
   constructor(
     private readonly prisma: PrismaService,
     private readonly aiJobQueue: AiJobQueueService,
-    private readonly mediaStorage: LocalDiskStorageService
+    private readonly mediaStorage: LocalDiskStorageService,
+    private readonly photoValidator: PhotoValidatorService
   ) {}
 
   async createSyntheticSos(
@@ -82,11 +84,22 @@ export class OperatorDemoService {
         audioAttachmentId = audioAttachment.id;
       }
 
-      // Store photo attachment if provided
+      // Store photo attachment if provided (EXIF/GPS stripped)
       if (request.photoBuffer && request.photoMime) {
-        const stored = await this.mediaStorage.store({
+        // Validate and sanitize photo (strips EXIF/GPS, downscales if needed)
+        const validated = await this.photoValidator.validateAndSanitize({
           buffer: request.photoBuffer,
-          mimeType: request.photoMime,
+          source: 'online', // Demo uploads are online
+        });
+
+        if (!validated.valid) {
+          throw new Error(`Photo validation failed: ${validated.reason}`);
+        }
+
+        const stored = await this.mediaStorage.store({
+          buffer: validated.buffer,
+          mimeType: validated.mime,
+          sha256: validated.sha256,
         });
 
         const photoAttachment = await tx.attachment.create({
@@ -94,7 +107,7 @@ export class OperatorDemoService {
             incidentId: incident.id,
             sosMessageId: message.id,
             kind: 'photo',
-            mime: request.photoMime,
+            mime: validated.mime,
             sizeBytes: stored.sizeBytes,
             storageKey: stored.storageKey,
             sha256: stored.sha256,

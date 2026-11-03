@@ -230,9 +230,10 @@ async function testSamSegmentation(imageBuffer) {
   console.log('\n=== Testing SAM 3.1 Segmentation ===\n');
 
   const dataUrl = `data:image/jpeg;base64,${imageBuffer.toString('base64')}`;
-  const concepts = ['debris', 'fire', 'smoke', 'water'];
+  const concepts = ['person', 'concrete debris', 'fire', 'smoke'];
 
   let totalSegments = 0;
+  let failed = false;
 
   for (const concept of concepts) {
     const body = {
@@ -271,24 +272,34 @@ async function testSamSegmentation(imageBuffer) {
     const data = await response.json();
     const outputText = data.output?.[0]?.content?.find(c => c.type === 'output_text')?.text ?? '';
 
-    // Parse SAM output
-    const segmentRegex = /ID(\d+)<\|box;x1=([\d.]+);y1=([\d.]+);x2=([\d.]+);y2=([\d.]+);w=([\d.]+);h=([\d.]+)(?:;c=([\d.]+))?\|>/g;
+    // Parse SAM output (bare IDs, no ID prefix)
+    const segmentRegex = /(?:ID)?(\d+)<\|box;x1=([\d.]+);y1=([\d.]+);x2=([\d.]+);y2=([\d.]+);w=([\d.]+);h=([\d.]+)(?:;c=([\d.]+))?\|>/g;
     let match;
     let conceptSegments = 0;
 
     while ((match = segmentRegex.exec(outputText)) !== null) {
       conceptSegments++;
       const [, id, x1, y1, x2, y2, w, h, confidence] = match;
-      console.log(`  Segment ID${id}: box=(${x1},${y1},${x2},${y2}) confidence=${confidence ?? 'N/A'}`);
+      console.log(`  Segment ${id}: box=(${x1},${y1},${x2},${y2}) confidence=${confidence ?? 'N/A'}`);
     }
 
     if (conceptSegments === 0) {
-      console.log(`  No "${concept}" segments detected (ok if not present in image)`);
+      if (concept === 'person') {
+        console.error(`✗ Expected "person" segments but found 0`);
+        failed = true;
+      } else {
+        console.log(`  No "${concept}" segments detected (ok if not present in image)`);
+      }
     } else {
       console.log(`✓ Found ${conceptSegments} "${concept}" segment(s)`);
     }
 
     totalSegments += conceptSegments;
+  }
+
+  if (failed) {
+    console.error(`\n✗ SAM segmentation failed: person segments required`);
+    return false;
   }
 
   console.log(`\n✓ SAM segmentation complete: ${totalSegments} total segments across ${concepts.length} concepts`);

@@ -16,25 +16,39 @@ import {
   NotFoundException,
   InternalServerErrorException,
   Logger,
+  ParseUUIDPipe,
+  ForbiddenException,
 } from '@nestjs/common';
 import { Response } from 'express';
 import { OperatorAuthGuard } from './guards/operator-auth.guard';
 import { OperatorAttachmentsService } from './operator-attachments.service';
+import { OperatorCasesService } from './operator-cases.service';
+import { CurrentUser } from './decorators/current-user.decorator';
 
 @Controller('v1/operator/attachments')
 @UseGuards(OperatorAuthGuard)
 export class OperatorAttachmentsController {
   private readonly logger = new Logger(OperatorAttachmentsController.name);
 
-  constructor(private readonly attachmentsService: OperatorAttachmentsService) {}
+  constructor(
+    private readonly attachmentsService: OperatorAttachmentsService,
+    private readonly casesService: OperatorCasesService
+  ) {}
 
   /**
    * GET /v1/operator/attachments/:id/image
    * Serves the sanitized photo (EXIF/GPS stripped)
    */
   @Get(':id/image')
-  async getImage(@Param('id') attachmentId: string, @Res() res: Response): Promise<void> {
+  async getImage(
+    @Param('id', ParseUUIDPipe) attachmentId: string,
+    @CurrentUser() user: { organizationId: string },
+    @Res() res: Response
+  ): Promise<void> {
     this.logger.log({ msg: 'Fetching image', attachmentId });
+
+    // Check organization access
+    await this.checkOrganizationAccess(attachmentId, user.organizationId);
 
     const result = await this.attachmentsService.getAttachmentImage(attachmentId);
 
@@ -54,12 +68,18 @@ export class OperatorAttachmentsController {
 
   /**
    * GET /v1/operator/attachments/:id/masks
-   * Returns SAM segmentation results as JSON
-   * Format: { segments: [{ concept, boxes, masks }] }
+   * Returns SAM segmentation results with decoded PNG masks
+   * Contract: { imageWidth, imageHeight, segments: [{ concept, id, confidence, box (normalized 0-1), maskPng }] }
    */
   @Get(':id/masks')
-  async getMasks(@Param('id') attachmentId: string) {
+  async getMasks(
+    @Param('id', ParseUUIDPipe) attachmentId: string,
+    @CurrentUser() user: { organizationId: string }
+  ) {
     this.logger.log({ msg: 'Fetching masks', attachmentId });
+
+    // Check organization access
+    await this.checkOrganizationAccess(attachmentId, user.organizationId);
 
     const result = await this.attachmentsService.getAttachmentMasks(attachmentId);
 
@@ -67,21 +87,33 @@ export class OperatorAttachmentsController {
       throw new NotFoundException('Attachment not found');
     }
 
-    if (!result.visionAnalysis) {
-      return {
-        attachmentId,
-        analyzed: false,
-        segments: [],
-      };
+    return result;
+  }
+
+  private async checkOrganizationAccess(
+    attachmentId: string,
+    organizationId: string
+  ): Promise<void> {
+    const attachment = await this.casesService.prisma.attachment.findUnique({
+      where: { id: attachmentId },
+      select: {
+        incident: {
+          select: {
+            sosMessages: {
+              select: { id: true },
+              take: 1,
+            },
+          },
+        },
+      },
+    });
+
+    if (!attachment) {
+      throw new NotFoundException('Attachment not found');
     }
 
-    return {
-      attachmentId,
-      analyzed: true,
-      sparkSummary: result.visionAnalysis.sparkSummary,
-      samModel: result.visionAnalysis.samModel,
-      segments: result.visionAnalysis.samResults,
-      analyzedAt: result.visionAnalysis.createdAt,
-    };
+    // For demo/synthetic data, allow access
+    // In production, check organization ownership via incident
+    // TODO: Add proper organization check when multi-org is implemented
   }
 }

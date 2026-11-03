@@ -4,6 +4,12 @@ import Foundation
 
 final class CanonicalJSONVectorTests: XCTestCase {
     private func parseFixtureInput(_ value: Any) throws -> Any {
+        if value is NSNull || value is String || value is Bool || value is NSNumber {
+            return value
+        }
+        if value is Int || value is Int64 || value is Double {
+            return value
+        }
         let wrapData = try JSONSerialization.data(withJSONObject: [value], options: [])
         guard var wrapped = String(data: wrapData, encoding: .utf8), wrapped.count >= 2 else {
             throw NSError(domain: "CanonicalJSONVectorTests", code: 1, userInfo: nil)

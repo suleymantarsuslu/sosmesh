@@ -11,16 +11,12 @@ const branch = execSync('git rev-parse --abbrev-ref HEAD', { encoding: 'utf8' })
 let sumSample =
   '066eb3dac305e6cb6fd2a23ac63c76189bcef4a78b3d5fe3adff9a4cd1d4d176  apps/api/dist/ai/ai.constants.d.ts';
 try {
-  sumSample = readFileSync('docs/release/SHA256SUMS', 'utf8').split('\n').slice(0, 3).join('\n');
+  sumSample = readFileSync('/tmp/sosmesh-worktree-adim58/docs/release/SHA256SUMS', 'utf8')
+    .split('\n')
+    .slice(0, 3)
+    .join('\n');
 } catch {
-  try {
-    sumSample = readFileSync('/tmp/sosmesh-worktree-adim58/docs/release/SHA256SUMS', 'utf8')
-      .split('\n')
-      .slice(0, 3)
-      .join('\n');
-  } catch {
-    /* keep default */
-  }
+  /* illustrative sample only; file is not committed */
 }
 
 const report = `# SOSMesh ADIM 58 — Operasyonel handover ve tamamlanma raporu
@@ -237,11 +233,14 @@ cd /tmp/sosmesh-clean && git fetch origin cursor/adim-58-handover-03c7 && git ch
 
 ## Artifact checksum kanıtı (ADIM 56)
 
+\`docs/release/SHA256SUMS\` ve \`docs/release/sbom.cdx.json\` **repoda commit edilmez** — \`bash scripts/verify.sh\` çalıştırıldığında yerelde üretilir (**imzalı release artifact değil**).
+
 \`\`\`bash
 pnpm -r build && bash scripts/release/checksums.sh && sha256sum -c docs/release/SHA256SUMS
+bash scripts/release/sbom.sh
 \`\`\`
 
-Örnek (\`docs/release/SHA256SUMS\`, 437 dosya — worktree koşusu):
+Örnek satır formatı (worktree koşusu; hashler makine/build’e göre değişir):
 
 \`\`\`
 ${sumSample}

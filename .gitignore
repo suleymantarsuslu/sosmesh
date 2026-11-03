@@ -22,8 +22,10 @@ node_modules/
 .pnp
 .pnp.js
 
-# Build outputs
-build/
+# Release verify by-products (generated locally by scripts/verify.sh; not committed)
+docs/release/SHA256SUMS
+docs/release/sbom.cdx.json
+
 dist/
 out/
 .next/

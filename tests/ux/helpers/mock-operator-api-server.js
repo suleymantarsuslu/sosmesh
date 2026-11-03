@@ -14,7 +14,7 @@ const sharp = require('sharp');
 const PORT = Number(process.env.PORT || 3001);
 const JWT_SECRET =
   process.env.JWT_SECRET || 'e2e-local-jwt-secret-32chars-min!!';
-const E2E_PASSWORD = process.env.OPERATOR_E2E_PASSWORD;
+const mockOperatorPass = process.env.OPERATOR_E2E_PASSWORD;
 
 const E2E_OPERATOR_EMAIL = 'e2e-operator@sosmesh.example';
 const E2E_ADMIN_EMAIL = 'e2e-admin@sosmesh.example';
@@ -42,7 +42,7 @@ function readBody(req) {
 }
 
 function loginUser(email, password) {
-  if (!E2E_PASSWORD || password !== E2E_PASSWORD) {
+  if (!mockOperatorPass || password !== mockOperatorPass) {
     return null;
   }
   if (email === E2E_OPERATOR_EMAIL) {

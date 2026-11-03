@@ -7,6 +7,7 @@ import androidx.core.os.LocaleListCompat
 object AppLocaleController {
     const val PREFS_NAME = "sosmesh_app_locale"
     private const val KEY_TAG = "language_tag"
+
     /** Follow device locale (values/ fallback for unsupported languages). */
     const val TAG_SYSTEM = "system"
     const val TAG_ENGLISH = "en"
@@ -31,7 +32,10 @@ object AppLocaleController {
         }
     }
 
-    fun setApplicationLanguage(context: Context, languageTag: String) {
+    fun setApplicationLanguage(
+        context: Context,
+        languageTag: String,
+    ) {
         val prefs = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE).edit()
         when (languageTag) {
             TAG_SYSTEM -> {

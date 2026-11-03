@@ -18,6 +18,17 @@ export type OperatorCaseAuditEntry = {
   after: unknown;
 };
 
+export type OperatorAttachmentSummary = {
+  id: string;
+  kind: 'audio' | 'photo';
+  mime: string;
+  sizeBytes: number;
+  durationMs: number | null;
+  createdAt: string;
+  transcriptStatus: 'pending' | 'processing' | 'completed' | 'failed' | null;
+  visionStatus: 'pending' | 'processing' | 'completed' | 'failed' | null;
+};
+
 export type OperatorCaseDetail = OperatorCaseRow & {
   version: number;
   reviewStatus: string;
@@ -33,6 +44,7 @@ export type OperatorCaseDetail = OperatorCaseRow & {
     locationApproximate: boolean;
   };
   ai: OperatorAiSuggestion | null;
+  attachments?: OperatorAttachmentSummary[];
   timeline: {
     id: string;
     deliveryState: string;

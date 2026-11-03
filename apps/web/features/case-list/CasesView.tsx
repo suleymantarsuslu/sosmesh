@@ -205,7 +205,7 @@ export function CasesView({ initialCases }: { initialCases: OperatorCaseRow[] })
         </aside>
       </div>
 
-      <CasesAccessibleTable rows={filtered} />
+      <CasesAccessibleTable rows={filtered} selectedId={selectedId} onSelect={openDrawer} />
 
       {selectedId ? (
         <p className="cases-view__detail-link">

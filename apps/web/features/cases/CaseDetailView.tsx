@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import Link from 'next/link';
 
 import { DeliveryStateBadge } from '../../components/cases/DeliveryStateBadge';
 import { useOperatorPreferences } from '../../components/operator/OperatorPreferencesProvider';
@@ -29,6 +30,27 @@ type Props = {
   aiData: AiData | null;
   onRefresh: () => Promise<void>;
 };
+
+function getSeverityClass(priority: number): string {
+  if (priority <= 1) return 'severity--critical';
+  if (priority <= 2) return 'severity--high';
+  if (priority <= 3) return 'severity--medium';
+  return 'severity--low';
+}
+
+function formatRelativeTime(dateStr: string, locale: string): string {
+  const date = new Date(dateStr);
+  const now = new Date();
+  const diffMs = now.getTime() - date.getTime();
+  const diffMins = Math.floor(diffMs / 60000);
+  const diffHours = Math.floor(diffMs / 3600000);
+  const diffDays = Math.floor(diffMs / 86400000);
+
+  if (diffMins < 1) return locale === 'tr' ? 'Az önce' : 'Just now';
+  if (diffMins < 60) return locale === 'tr' ? `${diffMins} dk önce` : `${diffMins}m ago`;
+  if (diffHours < 24) return locale === 'tr' ? `${diffHours} sa önce` : `${diffHours}h ago`;
+  return locale === 'tr' ? `${diffDays} gün önce` : `${diffDays}d ago`;
+}
 
 export function CaseDetailView({ detail, aiData, onRefresh }: Props) {
   const { t, locale } = useOperatorPreferences();
@@ -95,143 +117,286 @@ export function CaseDetailView({ detail, aiData, onRefresh }: Props) {
     await onRefresh();
   };
 
+  const audioAttachments = detail.attachments?.filter((a) => a.kind === 'audio') ?? [];
+  const photoAttachments = detail.attachments?.filter((a) => a.kind === 'photo') ?? [];
+
   return (
-    <article className="case-detail case-detail--modern" data-testid="operator-case-detail">
-      <header className="case-detail__header">
-        <h1>{t('web.cases.detailTitle')}</h1>
-        <p>
-          <span className="case-detail__id">{detail.incidentId.slice(0, 8)}…</span>
-          <span className="case-detail__review" data-testid="case-review-status">
-            {reviewStatus}
-          </span>
-        </p>
-        {conflictMessage ? (
-          <p className="case-detail__conflict" role="alert" data-testid="case-version-conflict">
-            {conflictMessage}
-          </p>
-        ) : null}
+    <article className="case-detail-modern" data-testid="operator-case-detail">
+      {/* Header Card */}
+      <header className="case-detail-modern__header-card">
+        <div className="case-detail-modern__header-top">
+          <Link href="/operator/cases" className="case-detail-modern__back-link">
+            ← {t('web.cases.backToCases')}
+          </Link>
+          {conflictMessage && (
+            <p className="case-detail-modern__conflict" role="alert" data-testid="case-version-conflict">
+              ⚠️ {conflictMessage}
+            </p>
+          )}
+        </div>
+
+        <div className="case-detail-modern__header-main">
+          <div className="case-detail-modern__header-left">
+            <h1 className="case-detail-modern__title">
+              <span className="case-detail-modern__id">{detail.incidentId.slice(0, 8)}</span>
+              <span className={`case-detail-modern__priority ${getSeverityClass(detail.priority)}`}>
+                P{detail.priority}
+              </span>
+              <DeliveryStateBadge state={detail.deliveryState} />
+            </h1>
+            <div className="case-detail-modern__meta-row">
+              <span className="case-detail-modern__time">
+                {formatRelativeTime(detail.receivedAt, locale)} 
+                <span className="case-detail-modern__time-absolute">
+                  ({new Date(detail.receivedAt).toLocaleString(dateLocale)})
+                </span>
+              </span>
+              <span className="case-detail-modern__source">
+                {t('web.tasks.source')}: {detail.source || '—'}
+              </span>
+              <span className="case-detail-modern__location-badge">
+                {detail.verifiedMetadata.locationApproximate
+                  ? t('web.cases.approximateLocation')
+                  : detail.verifiedMetadata.latitude
+                  ? t('web.cases.preciseLocation')
+                  : t('web.cases.locationNotAvailable')}
+              </span>
+            </div>
+          </div>
+
+          <div className="case-detail-modern__header-actions">
+            {getReviewStatusOptions(t).map((option) => (
+              <button
+                key={option.value}
+                type="button"
+                className={
+                  reviewStatus === option.value
+                    ? 'case-detail-modern__action-btn case-detail-modern__action-btn--active'
+                    : 'case-detail-modern__action-btn'
+                }
+                disabled={busy}
+                onClick={() => changeReviewStatus(option.value)}
+                data-testid={`case-review-${option.value}`}
+              >
+                {option.label}
+              </button>
+            ))}
+          </div>
+        </div>
       </header>
 
-      <section aria-labelledby="case-original-title">
-        <h2 id="case-original-title">{t('web.cases.originalTitle')}</h2>
-        {detail.originalText ? (
-          <TranslatedMessageDisplay
-            originalText={detail.originalText}
-            translatedText={detail.translatedText}
-            detectedLanguage={detail.detectedLanguage}
-            aiAvailable={aiData !== null}
-          />
-        ) : (
-          <p className="case-detail__original" data-testid="case-original-missing">
-            {t('web.cases.originalMissing')}
-          </p>
-        )}
-      </section>
-
-      <section aria-labelledby="case-meta-title">
-        <h2 id="case-meta-title">{t('web.cases.metaTitle')}</h2>
-        <dl>
-          <div>
-            <dt id="case-person-count-label">{t('web.cases.personCount')}</dt>
-            <dd>
-              <input
-                type="number"
-                min={0}
-                aria-labelledby="case-person-count-label"
-                value={personCount}
-                onChange={(event) => setPersonCount(event.target.value)}
-                data-testid="case-person-count-input"
-              />
-            </dd>
-          </div>
-          <div>
-            <dt>{t('web.cases.locationStatus')}</dt>
-            <dd>
-              {detail.verifiedMetadata.locationStatus}
-              {detail.verifiedMetadata.locationApproximate && (
-                <span className="case-detail__location-badge" title={t('web.cases.locationApproximate')}>
-                  {t('web.cases.locationApproximateShort')}
-                </span>
+      {/* Two Column Layout */}
+      <div className="case-detail-modern__columns">
+        {/* Left Column: Message & Media */}
+        <div className="case-detail-modern__column-left">
+          {/* Message Section with Translation Display */}
+          <section className="case-detail-modern__card">
+            <h2 className="case-detail-modern__card-title">{t('web.cases.messageMediaTitle')}</h2>
+            
+            <div className="case-detail-modern__message-content">
+              {detail.originalText ? (
+                <TranslatedMessageDisplay
+                  originalText={detail.originalText}
+                  translatedText={detail.translatedText}
+                  detectedLanguage={detail.detectedLanguage}
+                  aiAvailable={aiData !== null}
+                />
+              ) : (
+                <p className="case-detail-modern__message-empty" data-testid="case-original-missing">
+                  {t('web.cases.originalMissing')}
+                </p>
               )}
-            </dd>
-          </div>
-        </dl>
-        <button
-          type="button"
-          className="ui-button"
-          disabled={busy}
-          onClick={() => saveCorrection()}
-          data-testid="case-save-correction"
-        >
-          {t('web.cases.saveCorrection')}
-        </button>
-      </section>
+            </div>
+          </section>
 
-      {aiData && (
-        <AiIntelligencePanel
-          incidentId={detail.incidentId}
-          triage={aiData.triage}
-          transcript={aiData.transcript}
-          sparkVision={aiData.sparkVision}
-          samVision={aiData.samVision}
-          linkSuggestions={aiData.linkSuggestions}
-          isSynthetic={false}
-          onRefresh={onRefresh}
-        />
-      )}
-
-      <AssignmentPreviewPanel incidentId={detail.incidentId} caseCoordinates={caseCoordinates} />
-
-      <section aria-labelledby="case-actions-title">
-        <h2 id="case-actions-title">{t('web.cases.operatorStatusTitle')}</h2>
-        <div className="case-detail__review-actions">
-          {getReviewStatusOptions(t).map((option) => (
-            <button
-              key={option.value}
-              type="button"
-              className="ui-button ui-button--secondary"
-              disabled={busy || reviewStatus === option.value}
-              onClick={() => changeReviewStatus(option.value)}
-              data-testid={`case-review-${option.value}`}
-            >
-              {option.label}
-            </button>
-          ))}
-        </div>
-      </section>
-
-      <section aria-label={t('web.cases.auditTitle')}>
-        <h2>{t('web.cases.auditTitle')}</h2>
-        <ul className="case-detail__audit" data-testid="case-audit-list">
-          {detail.audit.length === 0 ? (
-            <li>{t('web.cases.auditEmpty')}</li>
-          ) : (
-            detail.audit.map((entry) => (
-              <li key={entry.id} data-testid={`case-audit-${entry.action}`}>
-                <strong>{entry.action}</strong>
-                <time dateTime={entry.createdAt}>
-                  {new Date(entry.createdAt).toLocaleString(dateLocale)}
-                </time>
-              </li>
-            ))
+          {/* Media Section: Audio */}
+          {audioAttachments.length > 0 && (
+            <section className="case-detail-modern__card">
+              <h2 className="case-detail-modern__card-title">{t('web.cases.audioTranscript')}</h2>
+              {audioAttachments.map((attachment) => (
+                <div key={attachment.id} className="case-detail-modern__audio-item">
+                  <audio
+                    controls
+                    className="case-detail-modern__audio-player"
+                    src={`/api/operator/attachments/${attachment.id}/audio`}
+                    preload="metadata"
+                  >
+                    Your browser does not support audio playback.
+                  </audio>
+                  <div className="case-detail-modern__audio-meta">
+                    <span>{attachment.durationMs ? `${Math.round(attachment.durationMs / 1000)}s` : '—'}</span>
+                    {attachment.transcriptStatus === 'pending' && (
+                      <span className="case-detail-modern__status-badge case-detail-modern__status-badge--pending">
+                        {t('web.cases.aiAnalysisPending')}
+                      </span>
+                    )}
+                    {attachment.transcriptStatus === 'processing' && (
+                      <span className="case-detail-modern__status-badge case-detail-modern__status-badge--processing">
+                        {t('web.cases.aiAnalysisProcessing')}
+                      </span>
+                    )}
+                    {attachment.transcriptStatus === 'failed' && (
+                      <span className="case-detail-modern__status-badge case-detail-modern__status-badge--failed">
+                        {t('web.cases.aiAnalysisFailed')}
+                      </span>
+                    )}
+                  </div>
+                </div>
+              ))}
+            </section>
           )}
-        </ul>
-      </section>
 
-      <section aria-label={t('web.cases.timelineTitle')}>
-        <h2>{t('web.cases.timelineTitle')}</h2>
-        <ol className="case-detail__timeline" data-testid="case-detail-timeline">
-          {detail.timeline.map((entry) => (
-            <li key={entry.id} className="case-detail__timeline-item">
-              <DeliveryStateBadge state={entry.deliveryState} />
-              <span className="case-detail__timeline-source">{entry.source}</span>
-              <time dateTime={entry.createdAt}>
-                {new Date(entry.createdAt).toLocaleString(dateLocale)}
-              </time>
-            </li>
-          ))}
-        </ol>
-      </section>
+          {/* Media Section: Photos */}
+          {photoAttachments.length > 0 && (
+            <section className="case-detail-modern__card">
+              <h2 className="case-detail-modern__card-title">{t('web.cases.photosTitle')}</h2>
+              <div className="case-detail-modern__photo-grid">
+                {photoAttachments.map((attachment) => (
+                  <div key={attachment.id} className="case-detail-modern__photo-item">
+                    <img
+                      src={`/api/operator/attachments/${attachment.id}/image`}
+                      alt={`Photo ${attachment.id.slice(0, 8)}`}
+                      className="case-detail-modern__photo-thumb"
+                      loading="lazy"
+                    />
+                    {attachment.visionStatus === 'pending' && (
+                      <span className="case-detail-modern__photo-status case-detail-modern__status-badge--pending">
+                        {t('web.cases.aiAnalysisPending')}
+                      </span>
+                    )}
+                    {attachment.visionStatus === 'processing' && (
+                      <span className="case-detail-modern__photo-status case-detail-modern__status-badge--processing">
+                        {t('web.cases.aiAnalysisProcessing')}
+                      </span>
+                    )}
+                  </div>
+                ))}
+              </div>
+            </section>
+          )}
+        </div>
+
+        {/* Right Column: Metadata, AI, Assignment */}
+        <div className="case-detail-modern__column-right">
+          {/* Mini Map */}
+          {caseCoordinates && (
+            <section className="case-detail-modern__card case-detail-modern__card--compact">
+              <h3 className="case-detail-modern__card-title-sm">{t('web.cases.miniMapTitle')}</h3>
+              <div className="case-detail-modern__mini-map">
+                <p className="case-detail-modern__map-placeholder">
+                  📍 {caseCoordinates.latitude.toFixed(4)}, {caseCoordinates.longitude.toFixed(4)}
+                  {detail.verifiedMetadata.accuracyMeters && (
+                    <span> (±{detail.verifiedMetadata.accuracyMeters}m)</span>
+                  )}
+                </p>
+              </div>
+            </section>
+          )}
+
+          {/* Verified Metadata */}
+          <section className="case-detail-modern__card case-detail-modern__card--compact">
+            <h3 className="case-detail-modern__card-title-sm">{t('web.cases.verifiedMetadataTitle')}</h3>
+            <dl className="case-detail-modern__meta-list">
+              <div>
+                <dt>{t('web.cases.personCount')}</dt>
+                <dd>
+                  <input
+                    type="number"
+                    min={0}
+                    value={personCount}
+                    onChange={(e) => setPersonCount(e.target.value)}
+                    className="case-detail-modern__input"
+                    data-testid="case-person-count-input"
+                  />
+                </dd>
+              </div>
+              <div>
+                <dt>{t('web.cases.locationStatus')}</dt>
+                <dd>
+                  {detail.verifiedMetadata.locationStatus}
+                  {detail.verifiedMetadata.locationApproximate && (
+                    <span className="case-detail__location-badge" title={t('web.cases.locationApproximate')}>
+                      {t('web.cases.locationApproximateShort')}
+                    </span>
+                  )}
+                </dd>
+              </div>
+            </dl>
+            <button
+              type="button"
+              className="case-detail-modern__save-btn"
+              disabled={busy}
+              onClick={saveCorrection}
+              data-testid="case-save-correction"
+            >
+              {t('web.cases.saveCorrection')}
+            </button>
+          </section>
+
+          {/* AI Suggestion */}
+          {aiData && (
+            <section className="case-detail-modern__card case-detail-modern__card--compact">
+              <h3 className="case-detail-modern__card-title-sm">
+                {t('web.cases.aiSuggestionTitle')}
+                <span className="case-detail-modern__ai-badge">AI</span>
+              </h3>
+              <p className="case-detail-modern__ai-disclaimer">
+                {t('web.cases.aiDisclaimerFull')}
+              </p>
+              {/* Render AI intelligence panel inline or simplified */}
+              <AiIntelligencePanel
+                incidentId={detail.incidentId}
+                triage={aiData.triage}
+                transcript={aiData.transcript}
+                sparkVision={aiData.sparkVision}
+                samVision={aiData.samVision}
+                linkSuggestions={aiData.linkSuggestions}
+                isSynthetic={false}
+                onRefresh={onRefresh}
+              />
+            </section>
+          )}
+
+          {/* Assignment Preview */}
+          <section className="case-detail-modern__card case-detail-modern__card--compact">
+            <h3 className="case-detail-modern__card-title-sm">{t('web.cases.assignmentPreview')}</h3>
+            <AssignmentPreviewPanel incidentId={detail.incidentId} caseCoordinates={caseCoordinates} />
+          </section>
+
+          {/* Timeline */}
+          <section className="case-detail-modern__card case-detail-modern__card--compact">
+            <h3 className="case-detail-modern__card-title-sm">{t('web.cases.timelineEventTitle')}</h3>
+            <ol className="case-detail-modern__timeline" data-testid="case-detail-timeline">
+              {detail.timeline.map((entry) => (
+                <li key={entry.id} className="case-detail-modern__timeline-item">
+                  <DeliveryStateBadge state={entry.deliveryState} />
+                  <span className="case-detail-modern__timeline-source">{entry.source}</span>
+                  <time dateTime={entry.createdAt}>
+                    {formatRelativeTime(entry.createdAt, locale)}
+                  </time>
+                </li>
+              ))}
+            </ol>
+          </section>
+
+          {/* Audit Log */}
+          {detail.audit.length > 0 && (
+            <section className="case-detail-modern__card case-detail-modern__card--compact">
+              <h3 className="case-detail-modern__card-title-sm">{t('web.cases.auditLogTitle')}</h3>
+              <ul className="case-detail-modern__audit-list" data-testid="case-audit-list">
+                {detail.audit.map((entry) => (
+                  <li key={entry.id} data-testid={`case-audit-${entry.action}`}>
+                    <strong>{entry.action}</strong>
+                    <time dateTime={entry.createdAt}>
+                      {formatRelativeTime(entry.createdAt, locale)}
+                    </time>
+                  </li>
+                ))}
+              </ul>
+            </section>
+          )}
+        </div>
+      </div>
     </article>
   );
 }

@@ -35,6 +35,17 @@ export type OperatorAiSuggestion = {
   label: 'öneri/taslak, doğrulanmadı';
 };
 
+export type OperatorAttachmentSummary = {
+  id: string;
+  kind: 'audio' | 'photo';
+  mime: string;
+  sizeBytes: number;
+  durationMs: number | null;
+  createdAt: string;
+  transcriptStatus: 'pending' | 'processing' | 'completed' | 'failed' | null;
+  visionStatus: 'pending' | 'processing' | 'completed' | 'failed' | null;
+};
+
 export type OperatorCaseDetail = OperatorCaseRow & {
   version: number;
   reviewStatus: string;
@@ -50,6 +61,7 @@ export type OperatorCaseDetail = OperatorCaseRow & {
     locationApproximate: boolean;
   };
   ai: OperatorAiSuggestion | null;
+  attachments: OperatorAttachmentSummary[];
   transcripts: TranscriptView[];
   timeline: {
     id: string;
@@ -220,8 +232,8 @@ export class OperatorCasesService {
           status: aiRow.status,
           modelVersion: aiRow.modelVersion,
           suggestion:
-            aiRow.status === 'COMPLETED' ||
-            aiRow.status === 'OPERATOR_OVERRIDE' ||
+            aiRow.status.toUpperCase() === 'COMPLETED' ||
+            aiRow.status.toUpperCase() === 'OPERATOR_OVERRIDE' ||
             (aiRow.resultJson as Record<string, unknown>).categories
               ? (aiRow.resultJson as Record<string, unknown>)
               : null,
@@ -234,9 +246,21 @@ export class OperatorCasesService {
       where: { incidentId },
       include: {
         transcript: true,
+        visionAnalysis: true,
       },
       orderBy: { createdAt: 'asc' },
     });
+
+    const attachmentSummaries: OperatorAttachmentSummary[] = attachments.map((att) => ({
+      id: att.id,
+      kind: att.kind as 'audio' | 'photo',
+      mime: att.mime,
+      sizeBytes: att.sizeBytes,
+      durationMs: att.durationMs,
+      createdAt: att.createdAt.toISOString(),
+      transcriptStatus: att.transcript ? 'completed' : null,
+      visionStatus: att.visionAnalysis ? 'completed' : null,
+    }));
 
     const transcripts: TranscriptView[] = attachments
       .filter((a) => a.transcript)
@@ -290,6 +314,7 @@ export class OperatorCasesService {
         locationApproximate: !message.preciseLatitude && !!message.latitude,
       },
       ai: aiSuggestion,
+      attachments: attachmentSummaries,
       transcripts,
       timeline: message.messageEvents.map((event) => ({
         id: event.id,
@@ -298,6 +323,51 @@ export class OperatorCasesService {
         createdAt: event.createdAt.toISOString(),
       })),
     };
+  }
+
+  async listAttachments(user: OperatorRequestUser, incidentId: string) {
+    const allowed = await this.scope.canAccessIncident(user, incidentId, this.prisma);
+    if (!allowed) {
+      return null;
+    }
+
+    const attachments = await this.prisma.attachment.findMany({
+      where: { incidentId },
+      include: {
+        transcript: true,
+        visionAnalysis: true,
+      },
+      orderBy: { createdAt: 'asc' },
+    });
+
+    return attachments.map((attachment) => ({
+      id: attachment.id,
+      kind: attachment.kind,
+      mime: attachment.mime,
+      sizeBytes: attachment.sizeBytes,
+      durationMs: attachment.durationMs,
+      createdAt: attachment.createdAt.toISOString(),
+      transcript: attachment.transcript
+        ? {
+            id: attachment.transcript.id,
+            model: attachment.transcript.model,
+            transcript: attachment.transcript.transcript,
+            turns: attachment.transcript.turns,
+            language: attachment.transcript.language,
+            audioDurationMs: attachment.transcript.audioDurationMs,
+          }
+        : null,
+      visionAnalysis: attachment.visionAnalysis
+        ? {
+            id: attachment.visionAnalysis.id,
+            status: 'completed' as const,
+            sparkSummary: (attachment.visionAnalysis.sparkSummary as any)?.description || null,
+            hasSamResults:
+              Array.isArray(attachment.visionAnalysis.samResults) &&
+              attachment.visionAnalysis.samResults.length > 0,
+          }
+        : null,
+    }));
   }
 
   private toRow(row: {

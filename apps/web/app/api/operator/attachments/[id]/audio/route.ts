@@ -1,5 +1,8 @@
 import { NextResponse } from 'next/server';
 
+import { apiBaseUrl } from '../../../../../../lib/config';
+import { getSessionToken } from '../../../../../../lib/session';
+
 export const dynamic = 'force-dynamic';
 
 export async function GET(
@@ -7,12 +10,15 @@ export async function GET(
   props: { params: Promise<{ id: string }> }
 ) {
   const params = await props.params;
+  const token = await getSessionToken();
+  if (!token) {
+    return NextResponse.json({ code: 'UNAUTHORIZED' }, { status: 401 });
+  }
   try {
-    const apiUrl = process.env.API_URL || 'http://localhost:3001';
-    const res = await fetch(`${apiUrl}/v1/operator/attachments/${params.id}/audio`, {
+    const res = await fetch(`${apiBaseUrl()}/v1/operator/attachments/${params.id}/audio`, {
       cache: 'no-store',
       headers: {
-        Cookie: '',
+        Authorization: `Bearer ${token}`,
       },
     });
 

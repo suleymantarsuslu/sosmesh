@@ -99,6 +99,7 @@ export class OperatorAttachmentsService {
     const attachment = await this.prisma.attachment.findUnique({
       where: { id: attachmentId },
       select: {
+        storageKey: true,
         visionAnalysis: {
           select: {
             samResults: true,
@@ -111,26 +112,40 @@ export class OperatorAttachmentsService {
       return { found: false };
     }
 
-    // Get image dimensions from storage
-    const metadata = await this.storage.getMetadata(attachmentId);
+    // Masks are decoded from the stored analysis; the media file is addressed by its
+    // storage key (not the attachment id) and is only checked for presence.
+    const metadata = await this.storage.getMetadata(attachment.storageKey);
     if (!metadata) {
+      this.logger.warn({
+        msg: 'Storage key not found for masks request',
+        attachmentId,
+        storageKey: attachment.storageKey,
+      });
       return { found: false };
     }
 
-    // TODO: Get actual image dimensions - for now use 1280x960 as placeholder
-    const imageWidth = 1280;
-    const imageHeight = 1280;
-
-    const samResults = attachment.visionAnalysis.samResults as any[];
+    const samResults = Array.isArray(attachment.visionAnalysis.samResults)
+      ? (attachment.visionAnalysis.samResults as any[])
+      : [];
     const segments: MaskSegment[] = [];
+
+    // SAM reports the analysed image size in every bounding box; use it for the
+    // canvas dimensions instead of a hard-coded placeholder.
+    let imageWidth = 0;
+    let imageHeight = 0;
 
     for (const conceptResult of samResults) {
       const concept = conceptResult.concept as string;
-      const conceptSegments = conceptResult.segments as any[];
+      const conceptSegments = Array.isArray(conceptResult.segments) ? (conceptResult.segments as any[]) : [];
 
       for (const segment of conceptSegments) {
         const box = segment.boundingBox;
         const mask = segment.mask;
+
+        if (imageWidth === 0 && box.width > 0 && box.height > 0) {
+          imageWidth = box.width;
+          imageHeight = box.height;
+        }
 
         // Normalize box coordinates
         const normalizedBox = {

@@ -2,8 +2,6 @@
 
 import { useCallback, useEffect, useRef, useState } from 'react';
 
-import { CaseDetailView } from './CaseDetailView';
-import type { OperatorCaseDetail } from './types';
 import type {
   AiTriageView,
   TranscriptView,
@@ -11,6 +9,9 @@ import type {
   SamVisionView,
   IncidentLinkSuggestionView,
 } from '../ai/types';
+
+import { CaseDetailView } from './CaseDetailView';
+import type { OperatorCaseDetail } from './types';
 
 type AiData = {
   triage: AiTriageView | null;
@@ -24,6 +25,7 @@ export function CaseDetailClient({ incidentId }: { incidentId: string }) {
   const [detail, setDetail] = useState<OperatorCaseDetail | null>(null);
   const [aiData, setAiData] = useState<AiData | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [samVision, setSamVision] = useState<SamVisionView | null>(null);
   const seenSent = useRef(false);
 
   const loadDetail = useCallback(async () => {
@@ -55,6 +57,50 @@ export function CaseDetailClient({ incidentId }: { incidentId: string }) {
       });
     }
   }, [incidentId]);
+
+  const photoIds = (detail?.attachments ?? [])
+    .filter((a) => a.kind === 'photo' && a.visionStatus === 'completed')
+    .map((a) => a.id)
+    .join(',');
+
+  useEffect(() => {
+    const photoId = photoIds.split(',')[0];
+    if (!photoId) {
+      setSamVision(null);
+      return;
+    }
+    let cancelled = false;
+    void (async () => {
+      try {
+        const res = await fetch(`/api/operator/attachments/${photoId}/masks`, { cache: 'no-store' });
+        if (!res.ok) {
+          if (!cancelled) setSamVision(null);
+          return;
+        }
+        const body = (await res.json()) as {
+          found?: boolean;
+          imageWidth: number;
+          imageHeight: number;
+          segments: SamVisionView['segments'];
+        };
+        if (!cancelled) {
+          setSamVision({
+            attachmentId: photoId,
+            model: 'sam-3.1',
+            imageWidth: body.imageWidth,
+            imageHeight: body.imageHeight,
+            segments: body.segments ?? [],
+            analyzedAt: new Date().toISOString(),
+          });
+        }
+      } catch {
+        if (!cancelled) setSamVision(null);
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [photoIds]);
 
   const recordSeen = useCallback(async () => {
     const res = await fetch(`/api/operator/cases/${incidentId}/seen`, { method: 'POST' });
@@ -98,5 +144,8 @@ export function CaseDetailClient({ incidentId }: { incidentId: string }) {
   if (!detail) {
     return <p>Yükleniyor…</p>;
   }
-  return <CaseDetailView detail={detail} aiData={aiData} onRefresh={refresh} />;
+  const mergedAiData: AiData | null = aiData
+    ? { ...aiData, samVision: aiData.samVision ?? samVision, linkSuggestions: aiData.linkSuggestions ?? [] }
+    : aiData;
+  return <CaseDetailView detail={detail} aiData={mergedAiData} onRefresh={refresh} />;
 }

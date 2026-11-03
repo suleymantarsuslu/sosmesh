@@ -3,7 +3,6 @@ package com.sosmesh.android.core.data.outbox
 import androidx.room.Room
 import androidx.test.core.app.ApplicationProvider
 import com.sosmesh.contracts.transport.EnqueueInput
-import com.sosmesh.contracts.transport.OutboxEntryMeta
 import java.util.concurrent.CountDownLatch
 import java.util.concurrent.Executors
 import java.util.concurrent.TimeUnit

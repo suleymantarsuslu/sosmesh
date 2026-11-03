@@ -22,19 +22,39 @@ class RelayUploadWorker
     ) : CoroutineWorker(context, params) {
         override suspend fun doWork(): Result {
             val nowMs = System.currentTimeMillis()
-            val summary =
+            val networkConnected = networkStatus.isConnected()
+            val ownSummary =
+                executor.runOwnSosUploadCycle(
+                    nowMs = nowMs,
+                    networkConnected = networkConnected,
+                )
+            val relaySummary =
                 executor.runUploadCycle(
                     nowMs = nowMs,
-                    networkConnected = networkStatus.isConnected(),
+                    networkConnected = networkConnected,
                     battery = batteryReader.read(),
                 )
-            val retryMs = summary.scheduledRetryMs
-            if (retryMs != null) {
-                val delay = (retryMs - nowMs).coerceAtLeast(1_000L)
+            val ownRetry = ownSummary.scheduledRetryMs
+            val relayRetry = relaySummary.scheduledRetryMs
+            val earliestRetry =
+                when {
+                    ownRetry != null && relayRetry != null -> minOf(ownRetry, relayRetry)
+                    ownRetry != null -> ownRetry
+                    relayRetry != null -> relayRetry
+                    else -> null
+                }
+            if (earliestRetry != null) {
+                val delay = (earliestRetry - nowMs).coerceAtLeast(1_000L)
                 scheduler.scheduleUpload(nowMs, delay)
-            } else if (summary.attempted == 0 && summary.uploaded == 0 && summary.deferredReason == null) {
+            } else if (
+                ownSummary.attempted == 0 &&
+                ownSummary.uploaded == 0 &&
+                relaySummary.attempted == 0 &&
+                relaySummary.uploaded == 0 &&
+                relaySummary.deferredReason == null
+            ) {
                 return Result.success()
-            } else if (summary.uploaded > 0) {
+            } else if (ownSummary.uploaded > 0 || relaySummary.uploaded > 0) {
                 scheduler.scheduleUpload(nowMs, 5_000L)
             }
             return Result.success()

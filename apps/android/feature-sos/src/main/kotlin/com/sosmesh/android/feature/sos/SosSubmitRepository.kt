@@ -4,6 +4,7 @@ import com.sosmesh.android.core.data.di.IoDispatcher
 import com.sosmesh.android.core.data.sos.ComposedSosMessage
 import com.sosmesh.android.core.data.sos.SosComposeRequest
 import com.sosmesh.android.core.data.sos.SosMessageComposer
+import com.sosmesh.android.feature.relay.upload.RelayUploadCommands
 import com.sosmesh.contracts.transport.EnqueueInput
 import com.sosmesh.contracts.transport.OutboxQueueAdapter
 import kotlinx.coroutines.CoroutineDispatcher
@@ -17,6 +18,7 @@ class SosSubmitRepository
     constructor(
         private val composer: SosMessageComposer,
         private val outbox: OutboxQueueAdapter,
+        private val uploadScheduler: RelayUploadCommands,
         @IoDispatcher private val ioDispatcher: CoroutineDispatcher,
     ) {
         suspend fun submit(request: SosComposeRequest): ComposedSosMessage =
@@ -31,6 +33,7 @@ class SosSubmitRepository
                     ),
                     request.nowMs,
                 )
+                uploadScheduler.scheduleUpload(request.nowMs, delayMs = 1_000L)
                 composed
             }
     }

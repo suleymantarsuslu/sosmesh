@@ -32,6 +32,83 @@ class RelayUploadExecutor
         private val outbox: OutboxQueueAdapter,
         private val uplink: RelayIngestUplink,
     ) {
+        suspend fun runOwnSosUploadCycle(
+            nowMs: Long,
+            networkConnected: Boolean,
+        ): RelayUploadRunSummary {
+            val due = outboxReader.listDueOwnUpload(nowMs)
+            if (due.isEmpty()) {
+                return RelayUploadRunSummary(0, 0, null, null, 0)
+            }
+            if (!networkConnected) {
+                val retryAt = nowMs + NO_NETWORK_BACKOFF_MS
+                due.forEach { entry ->
+                    outbox.setRetryAt(entry.sosId, entry.digest, retryAt, "no_network")
+                }
+                return RelayUploadRunSummary(0, 0, null, retryAt)
+            }
+            var uploaded = 0
+            var attempted = 0
+            var retryMs: Long? = null
+            for (entry in due) {
+                attempted++
+                when (
+                    val result =
+                        uplink.uploadOutboxEntry(
+                            entry.sosId,
+                            entry.digest,
+                            entry.encryptedBlobBase64,
+                        )
+                ) {
+                    is RelayIngestResult.Success -> {
+                        outbox.updateState(
+                            entry.sosId,
+                            entry.digest,
+                            "SERVER_ACCEPTED",
+                            nowMs,
+                            null,
+                        )
+                        uploaded++
+                    }
+                    is RelayIngestResult.InvalidReceipt -> {
+                        retryMs = nowMs + HTTP_ERROR_BACKOFF_MS
+                        outbox.setRetryAt(entry.sosId, entry.digest, retryMs, "invalid_receipt")
+                        break
+                    }
+                    is RelayIngestResult.MessageIdConflict -> {
+                        outbox.setRetryAt(
+                            entry.sosId,
+                            entry.digest,
+                            NEEDS_REVIEW_RETRY_AT_MS,
+                            "needs_review",
+                        )
+                        break
+                    }
+                    is RelayIngestResult.NoNetwork -> {
+                        retryMs = nowMs + NO_NETWORK_BACKOFF_MS
+                        outbox.setRetryAt(entry.sosId, entry.digest, retryMs, "no_network")
+                        break
+                    }
+                    is RelayIngestResult.RateLimited -> {
+                        retryMs = nowMs + min(result.retryAfterMs, RATE_LIMIT_MAX_BACKOFF_MS)
+                        outbox.setRetryAt(entry.sosId, entry.digest, retryMs, "http_429")
+                        break
+                    }
+                    is RelayIngestResult.HttpError -> {
+                        retryMs = nowMs + HTTP_ERROR_BACKOFF_MS
+                        outbox.setRetryAt(
+                            entry.sosId,
+                            entry.digest,
+                            retryMs,
+                            "http_${result.code}",
+                        )
+                        break
+                    }
+                }
+            }
+            return RelayUploadRunSummary(attempted, uploaded, null, retryMs, due.size)
+        }
+
         suspend fun runUploadCycle(
             nowMs: Long,
             networkConnected: Boolean,

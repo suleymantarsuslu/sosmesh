@@ -183,6 +183,57 @@ class RelayUploadExecutorTest {
         )
     }
 
+    @Test
+    fun ownSosUpload_uploadsAndroidOriginWhenRelayDisabled() =
+        runBlocking {
+            settings.relayEnabled = false
+            enqueueOwnSosBlob("android-sos-1", origin = "android")
+            fakeUplink.nextResult = RelayIngestResult.Success
+            val summary =
+                executor.runOwnSosUploadCycle(
+                    nowMs = 8_000L,
+                    networkConnected = true,
+                )
+            assertEquals(1, fakeUplink.uploadCallCount)
+            assertEquals(1, summary.uploaded)
+            val entry = adapter.getByKey("android-sos-1", digestFor("android-sos-1"))
+            assertEquals("SERVER_ACCEPTED", entry!!.state)
+        }
+
+    @Test
+    fun ownSosUpload_uploadsWearOsOrigin() =
+        runBlocking {
+            settings.relayEnabled = false
+            enqueueOwnSosBlob("wear-sos-1", origin = "wear_os")
+            fakeUplink.nextResult = RelayIngestResult.Success
+            val summary =
+                executor.runOwnSosUploadCycle(
+                    nowMs = 9_000L,
+                    networkConnected = true,
+                )
+            assertEquals(1, fakeUplink.uploadCallCount)
+            assertEquals(1, summary.uploaded)
+            val entry = adapter.getByKey("wear-sos-1", digestFor("wear-sos-1"))
+            assertEquals("SERVER_ACCEPTED", entry!!.state)
+        }
+
+    private suspend fun enqueueOwnSosBlob(
+        sosId: String,
+        origin: String = "android",
+        blobSize: Int = 16,
+    ) {
+        val blob = "x".repeat(blobSize)
+        adapter.enqueue(
+            EnqueueInput(
+                sosId = sosId,
+                digest = digestFor(sosId, blobSize),
+                origin = origin,
+                encryptedBlobBase64 = blob,
+            ),
+            nowMs = 1L,
+        )
+    }
+
     private fun digestFor(
         sosId: String,
         blobSize: Int = 16,

@@ -11,7 +11,15 @@ import com.sosmesh.android.feature.relay.session.RelayForegroundLauncher
 import com.sosmesh.android.feature.relay.session.RelaySessionController
 import com.sosmesh.android.feature.relay.settings.RelayHourlyDataBudget
 import com.sosmesh.android.feature.relay.settings.RelaySettingsStore
+import com.sosmesh.android.core.permissions.PermissionFlowCoordinator
+import com.sosmesh.android.core.permissions.PermissionStatusReader
+import com.sosmesh.android.core.protocol.BleTransferEnginePort
+import com.sosmesh.android.core.protocol.TransferState
+import com.sosmesh.android.feature.relay.mesh.MeshRelayForwardOrchestrator
 import com.sosmesh.android.feature.relay.upload.RelayUploadCommands
+import com.sosmesh.android.meshv2.MeshForwardQueue
+import com.sosmesh.android.meshv2.MeshRouteSelector
+import com.sosmesh.android.meshv2.MeshV2RelayCoordinator
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
@@ -45,6 +53,17 @@ class RelaySessionControllerTest {
         val budget = RelayHourlyDataBudget(context)
         budget.resetForTests()
         val policy = RelayBatteryPolicy(settings, budget)
+        val meshForward =
+            MeshRelayForwardOrchestrator(
+                meshV2RelayCoordinator =
+                    MeshV2RelayCoordinator(
+                        forwardQueue = MeshForwardQueue(maxDepth = 4),
+                        routeSelector = MeshRouteSelector(),
+                    ),
+                engine = NoOpTransferEngine(),
+                radio = radio,
+                permissions = grantAllPermissions(),
+            )
         controller =
             RelaySessionController(
                 settings,
@@ -52,6 +71,7 @@ class RelaySessionControllerTest {
                 radio,
                 foreground,
                 upload,
+                meshForward,
             )
     }
 
@@ -112,7 +132,34 @@ class RelaySessionControllerTest {
         override fun connectFirstDiscoveredPeer(): Result<Unit> = Result.success(Unit)
 
         override fun disconnectPeerSession() = Unit
+
+        override fun tickGattReconnect(): Result<Unit>? = null
     }
+
+    private class NoOpTransferEngine : BleTransferEnginePort {
+        override fun sendOutbound(
+            sosId: String,
+            digest: String,
+            payload: ByteArray,
+        ) = Unit
+
+        override fun sendOpaqueForward(payload: ByteArray) = Unit
+
+        override fun onGattReady() = Unit
+
+        override fun senderState(): TransferState = TransferState.IDLE
+    }
+
+    private fun grantAllPermissions(): PermissionFlowCoordinator =
+        PermissionFlowCoordinator(
+            sdkInt = 33,
+            statusReader =
+                object : PermissionStatusReader {
+                    override fun isGranted(permission: String): Boolean = true
+
+                    override fun shouldShowRationale(permission: String): Boolean = false
+                },
+        )
 
     private class RecordingUploadCommands : RelayUploadCommands {
         var scheduleCount = 0

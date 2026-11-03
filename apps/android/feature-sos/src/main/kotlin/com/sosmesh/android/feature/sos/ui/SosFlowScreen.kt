@@ -33,6 +33,7 @@ import com.sosmesh.android.core.data.sos.LocationSnapshot
 import com.sosmesh.android.core.model.SosType
 import com.sosmesh.android.feature.sos.R
 import com.sosmesh.android.feature.sos.SosFormUiState
+import com.sosmesh.android.feature.sos.SosPeerDeliveryHint
 import com.sosmesh.android.feature.sos.SosWizardStep
 
 @Composable
@@ -72,7 +73,10 @@ fun SosFlowScreen(
                 modifier = modifier,
             )
         SosWizardStep.DONE ->
-            SosDoneScreen(modifier = modifier)
+            SosDoneScreen(
+                peerDeliveryHint = state.peerDeliveryHint,
+                modifier = modifier,
+            )
     }
 }
 
@@ -210,9 +214,26 @@ private fun SosPreviewScreen(
 }
 
 @Composable
-private fun SosDoneScreen(modifier: Modifier = Modifier) {
+private fun SosDoneScreen(
+    peerDeliveryHint: SosPeerDeliveryHint,
+    modifier: Modifier = Modifier,
+) {
     Column(modifier = modifier.fillMaxSize().padding(24.dp)) {
         Text(stringResource(R.string.sos_saved_local), style = MaterialTheme.typography.titleLarge)
+        val detail =
+            when (peerDeliveryHint) {
+                SosPeerDeliveryHint.NONE,
+                SosPeerDeliveryHint.TRANSFER_STARTED,
+                -> stringResource(R.string.sos_peer_delivery_started)
+                SosPeerDeliveryHint.WAITING_FOR_PEER -> stringResource(R.string.sos_peer_delivery_waiting)
+                SosPeerDeliveryHint.PERMISSIONS_REQUIRED -> stringResource(R.string.sos_peer_delivery_permissions)
+                SosPeerDeliveryHint.BLOCKED -> stringResource(R.string.sos_peer_delivery_blocked)
+            }
+        Text(
+            text = detail,
+            modifier = Modifier.padding(top = 12.dp),
+            style = MaterialTheme.typography.bodyMedium,
+        )
     }
 }
 

@@ -90,6 +90,8 @@ class MeshV2RelayCoordinator
 
         fun pollForwardHandoff(): MeshForwardQueueItem? = forwardQueue.pollNext()
 
+        fun peekForwardHandoff(): MeshForwardQueueItem? = forwardQueue.peekNext()
+
         fun selectHandoffPeer(candidates: List<MeshPeerCandidate>) = routeSelector.selectBestPeer(candidates)
 
         private fun parseV2(payload: ByteArray): MeshRelayEnvelopeV2? {

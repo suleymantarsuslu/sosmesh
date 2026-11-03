@@ -6,6 +6,7 @@ import com.sosmesh.android.feature.relay.battery.RelayBatterySnapshot
 import com.sosmesh.android.feature.relay.battery.RelayPauseReason
 import com.sosmesh.android.feature.relay.settings.RelaySettingsStore
 import com.sosmesh.android.feature.relay.upload.RelayUploadCommands
+import com.sosmesh.android.feature.relay.mesh.MeshRelayForwardOrchestrator
 import javax.inject.Inject
 import javax.inject.Singleton
 
@@ -32,6 +33,7 @@ class RelaySessionController
         private val bleMeshRadio: BleMeshRadio,
         private val foregroundLauncher: RelayForegroundLauncher,
         private val uploadScheduler: RelayUploadCommands,
+        private val meshForwardOrchestrator: MeshRelayForwardOrchestrator,
     ) {
         private var sessionRunning: Boolean = false
 
@@ -72,6 +74,7 @@ class RelaySessionController
             } else {
                 bleMeshRadio.startPeerDiscovery(foregroundVisible = screenVisible)
             }
+            meshForwardOrchestrator.runForwardCycle(foregroundVisible = screenVisible)
             return RelaySessionStatus(
                 running = true,
                 pauseReason = eval.pauseReason,

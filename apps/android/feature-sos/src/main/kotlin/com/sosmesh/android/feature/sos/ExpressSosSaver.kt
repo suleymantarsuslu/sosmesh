@@ -1,5 +1,6 @@
 package com.sosmesh.android.feature.sos
 
+import com.sosmesh.android.core.data.mesh.SosPeerDeliveryPort
 import com.sosmesh.android.core.data.sos.SosComposeRequest
 import com.sosmesh.android.core.model.SosType
 import com.sosmesh.android.feature.sos.location.SosLocationProvider
@@ -14,8 +15,9 @@ class ExpressSosSaver
     constructor(
         private val locationProvider: SosLocationProvider,
         private val submitRepository: SosSubmitRepository,
+        private val peerDelivery: SosPeerDeliveryPort,
     ) {
-        fun save(nowMs: Long = System.currentTimeMillis()): String {
+        suspend fun save(nowMs: Long = System.currentTimeMillis()): String {
             val composed =
                 submitRepository.submit(
                     SosComposeRequest(
@@ -27,6 +29,7 @@ class ExpressSosSaver
                         nowMs = nowMs,
                     ),
                 )
+            peerDelivery.kickOffAfterLocalSave(nowMs, foregroundVisible = true)
             return composed.message.id
         }
     }

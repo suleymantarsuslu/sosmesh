@@ -43,4 +43,13 @@ interface OutboxDao {
         """,
     )
     fun listDueRelayUpload(nowMs: Long): List<OutboxEntity>
+
+    @Query(
+        """
+        SELECT * FROM outbox
+        WHERE retry_at <= :nowMs AND state = 'LOCAL_SAVED' AND origin = 'android'
+        ORDER BY created_at ASC
+        """,
+    )
+    fun listDueAndroidPeerSend(nowMs: Long): List<OutboxEntity>
 }

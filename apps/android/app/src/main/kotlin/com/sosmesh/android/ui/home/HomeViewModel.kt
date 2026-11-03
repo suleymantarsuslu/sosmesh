@@ -1,6 +1,7 @@
 package com.sosmesh.android.ui.home
 
 import androidx.lifecycle.ViewModel
+import androidx.lifecycle.viewModelScope
 import com.sosmesh.android.core.platform.CrossPlatformFaultEvaluator
 import com.sosmesh.android.core.platform.CrossPlatformFaultHint
 import com.sosmesh.android.core.platform.CrossPlatformFaultState
@@ -12,6 +13,7 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
+import kotlinx.coroutines.launch
 import javax.inject.Inject
 
 data class HomeUiState(
@@ -51,10 +53,11 @@ class HomeViewModel
             }
         }
 
-        fun expressSaveSos(nowMs: Long = System.currentTimeMillis()): String {
-            val messageId = expressSosSaver.save(nowMs)
-            _uiState.update { it.copy(expressSavedMessageId = messageId) }
-            return messageId
+        fun expressSaveSos(nowMs: Long = System.currentTimeMillis()) {
+            viewModelScope.launch {
+                val messageId = expressSosSaver.save(nowMs)
+                _uiState.update { it.copy(expressSavedMessageId = messageId) }
+            }
         }
 
         fun clearExpressResult() {

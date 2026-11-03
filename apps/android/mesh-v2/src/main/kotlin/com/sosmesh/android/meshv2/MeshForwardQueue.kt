@@ -66,6 +66,8 @@ class MeshForwardQueue(
 
     fun pollNext(): MeshForwardQueueItem? = items.removeFirstOrNull()
 
+    fun peekNext(): MeshForwardQueueItem? = items.firstOrNull()
+
     fun snapshot(): MeshForwardQueueSnapshot =
         MeshForwardQueueSnapshot(
             depth = items.size,

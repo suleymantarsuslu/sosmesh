@@ -54,7 +54,7 @@ class RelayOfflineOnlineIntegrationTest {
                 javaClass.classLoader!!.getResourceAsStream("state-transitions.json")!!,
             )
         adapter = RoomOutboxQueueAdapter(db.outboxDao(), fixture.defaultRetentionMs)
-        reader = RelayOutboxReader(db.outboxDao())
+        reader = RelayOutboxReader(db.outboxDao(), kotlinx.coroutines.Dispatchers.IO)
         settings = MutableRelaySettings(relayEnabled = true)
         val budget = RelayHourlyDataBudget(context)
         budget.resetForTests()

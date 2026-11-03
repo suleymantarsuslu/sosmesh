@@ -1,4 +1,4 @@
-import { Module, forwardRef } from '@nestjs/common';
+import { Module } from '@nestjs/common';
 
 import { AI_PROVIDER_OVERRIDE, AiJobService } from './ai-job.service';
 import {

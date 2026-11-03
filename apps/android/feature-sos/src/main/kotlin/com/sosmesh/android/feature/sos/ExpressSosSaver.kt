@@ -22,13 +22,19 @@ class ExpressSosSaver
         private val permissionFlowCoordinator: PermissionFlowCoordinator,
     ) {
         suspend fun save(nowMs: Long = System.currentTimeMillis()): String {
+            val location = if (locationProvider is com.sosmesh.android.feature.sos.location.AndroidGpsLocationProvider) {
+                locationProvider.requestLocationAsync(timeoutMs = 2000)
+            } else {
+                locationProvider.currentLocation()
+            }
+
             val composed =
                 submitRepository.submit(
                     SosComposeRequest(
                         sosType = SosType.DIGER,
                         personCount = null,
                         note = "",
-                        location = locationProvider.currentLocation(),
+                        location = location,
                         languageTag = Locale.getDefault().language,
                         nowMs = nowMs,
                     ),

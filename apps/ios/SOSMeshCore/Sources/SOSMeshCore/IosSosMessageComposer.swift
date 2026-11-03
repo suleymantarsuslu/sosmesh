@@ -6,12 +6,14 @@ public struct IosSosComposeRequest: Sendable {
     public var languageTag: String
     public var nowMs: Int64
     public var messageIdOverride: String?
+    public var location: SosLocationSnapshot
 
-    public init(note: String, languageTag: String, nowMs: Int64, messageIdOverride: String? = nil) {
+    public init(note: String, languageTag: String, nowMs: Int64, messageIdOverride: String? = nil, location: SosLocationSnapshot = .unknown) {
         self.note = note
         self.languageTag = languageTag
         self.nowMs = nowMs
         self.messageIdOverride = messageIdOverride
+        self.location = location
     }
 }
 
@@ -37,27 +39,67 @@ public struct IosSosMessageComposer: Sendable {
         let trimmedNote = request.note.trimmingCharacters(in: .whitespacesAndNewlines)
         let noteField: String? = trimmedNote.isEmpty ? nil : trimmedNote
 
+        struct InnerLocation: Encodable {
+            var latitude: Double
+            var longitude: Double
+            var accuracy_meters: Double?
+            var timestamp: String
+        }
+
         struct InnerPayload: Encodable {
             var sos_type: String
             var person_count: Int?
             var note: String?
+            var location: InnerLocation?
             var language: String
+        }
+
+        let innerLocation: InnerLocation? = if request.location.status == .gps || request.location.status == .manual,
+                                               let lat = request.location.latitude,
+                                               let lng = request.location.longitude {
+            InnerLocation(
+                latitude: lat,
+                longitude: lng,
+                accuracy_meters: request.location.accuracy,
+                timestamp: isoTimestamp
+            )
+        } else {
+            nil
         }
 
         let inner = InnerPayload(
             sos_type: "GENERAL",
             person_count: nil,
             note: noteField,
+            location: innerLocation,
             language: normalizeLanguage(request.languageTag)
         )
         let innerEncoder = JSONEncoder()
         innerEncoder.outputFormatting = [.sortedKeys, .withoutEscapingSlashes]
         let innerBytes = try innerEncoder.encode(inner)
 
+        let locationStatus = mapLocationStatus(request.location)
+        let envelopeLocation: Location? = if request.location.status == .gps || request.location.status == .manual,
+                                             let lat = request.location.latitude,
+                                             let lng = request.location.longitude {
+            Location(latitude: lat, longitude: lng, accuracy: request.location.accuracy)
+        } else {
+            nil
+        }
+
         let envelopeMap: [String: Any] = [
             "timestamp": isoTimestamp,
-            "locationStatus": LocationStatusWire.unknown.rawValue,
-            "location": NSNull(),
+            "locationStatus": locationStatus.rawValue,
+            "location": envelopeLocation.map { loc in
+                var dict: [String: Any] = [
+                    "latitude": loc.latitude,
+                    "longitude": loc.longitude
+                ]
+                if let acc = loc.accuracy {
+                    dict["accuracy"] = acc
+                }
+                return dict
+            } ?? NSNull(),
             "priority": 1,
         ]
 
@@ -66,8 +108,8 @@ public struct IosSosMessageComposer: Sendable {
 
         let envelope = Envelope(
             timestamp: isoTimestamp,
-            locationStatus: .unknown,
-            location: nil,
+            locationStatus: locationStatus,
+            location: envelopeLocation,
             priority: 1,
             ackLevel: "DEVICE_STORED",
             relayCount: 0
@@ -117,6 +159,17 @@ public struct IosSosMessageComposer: Sendable {
 
     private func normalizeLanguage(_ tag: String) -> String {
         tag.lowercased().hasPrefix("tr") ? "tr" : "en"
+    }
+
+    private func mapLocationStatus(_ location: SosLocationSnapshot) -> LocationStatusWire {
+        switch location.status {
+        case .unknown:
+            return .unknown
+        case .gps:
+            return .gps
+        case .manual:
+            return .manual
+        }
     }
 }
 

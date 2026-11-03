@@ -32,6 +32,8 @@
 	<string>Bluetooth: SOSMesh, internet olmadan yakındaki cihazlara SOS iletmek için Bluetooth Low Energy kullanır.</string>
 	<key>NSBluetoothPeripheralUsageDescription</key>
 	<string>Bluetooth: SOSMesh relay modunda yakın cihazlara hizmet sunmak için BLE kullanır.</string>
+	<key>NSLocationWhenInUseUsageDescription</key>
+	<string>Konum: SOS zarfına yaklaşık konum eklemek isteğe bağlıdır; reddedebilirsiniz.</string>
 	<key>UIBackgroundModes</key>
 	<array>
 		<string>bluetooth-central</string>

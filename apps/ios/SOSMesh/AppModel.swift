@@ -38,6 +38,7 @@ final class AppModel: ObservableObject {
     private var meshRadio: BleMeshRadioPort?
     private var meshTickTimer: Timer?
     private var ingestUploader: IngestUploader?
+    private let locationManager = SosLocationManager()
 
     init(
         permissionProbe: AppPermissionProbing? = nil,
@@ -112,8 +113,11 @@ final class AppModel: ObservableObject {
         }
         try ensureOutbox()
         let nowMs = Int64(Date().timeIntervalSince1970 * 1000)
+        
+        let location = await locationManager.requestLocationAsync(timeoutMs: 2000)
+        
         let composed = try composer.compose(
-            IosSosComposeRequest(note: note, languageTag: languageTag, nowMs: nowMs)
+            IosSosComposeRequest(note: note, languageTag: languageTag, nowMs: nowMs, location: location)
         )
         let service = try requireOutbox()
         _ = try service.enqueueLocalSos(

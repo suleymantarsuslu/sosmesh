@@ -29,7 +29,7 @@ export interface SosStatusTimeline {
   5: string; // VAKA İŞLEME ALINDI
 }
 
-export { encryptPayload, decryptPayload, type EncryptedPayload, type ServerCryptoConfig } from './crypto';
+export { encryptPayload, decryptPayload, canonicalJSON, type EncryptedPayload, type ServerCryptoConfig } from './crypto';
 export { validateSosMessage } from './validator';
 export {
   MeshRelayEngine,

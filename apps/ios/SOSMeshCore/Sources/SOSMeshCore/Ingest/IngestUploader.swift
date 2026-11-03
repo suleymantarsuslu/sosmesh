@@ -39,7 +39,7 @@ public struct IngestConfig {
 }
 
 public enum IngestUploadResult {
-    case success
+    case success(ServerAcceptedReceipt)
     case noNetwork
     case invalidReceipt
     case httpError(Int, String)
@@ -98,7 +98,7 @@ public final class IngestUploader {
                 expectedMessageId: sosId,
                 expectedPacketHash: packetHash
             )
-            return valid ? .success : .invalidReceipt
+            return valid ? .success(receipt) : .invalidReceipt
             
         case .noNetwork:
             return .noNetwork

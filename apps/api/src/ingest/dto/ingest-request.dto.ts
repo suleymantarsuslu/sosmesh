@@ -62,6 +62,7 @@ export class IngestReceiptDto {
   packetHash!: string;
   timestamp!: string;
   signature!: string;
+  uploadToken?: string;
 }
 
 export class IngestResponseDto {

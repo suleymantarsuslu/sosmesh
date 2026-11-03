@@ -16,6 +16,7 @@ final class AppModel: ObservableObject {
         .blocked(step: .bluetooth, reason: .notDetermined)
     @Published private(set) var outboxEntries: [OutboxEntryMeta] = []
     @Published private(set) var receivedInbox: [ReceivedSosRecord] = []
+    @Published var lastUploadToken: String?
 
     /// Debug-only fault injection (not the default data path).
     #if DEBUG
@@ -106,7 +107,7 @@ final class AppModel: ObservableObject {
         await refreshPermissionGate()
     }
 
-    func submitSos(note: String, languageTag: String) async throws {
+    func submitSos(note: String, languageTag: String) async throws -> String {
         guard let composer else {
             throw SosCryptoConfigurationError.releaseEncryptionNotConfigured
         }
@@ -143,6 +144,8 @@ final class AppModel: ObservableObject {
         
         _ = try? meshRadio?.connectFirstPeerIfNeeded()
         meshRadio?.tick(nowMs: nowMs)
+        
+        return composed.message.id
     }
 
     func reloadOutbox() async {
@@ -244,7 +247,7 @@ final class AppModel: ObservableObject {
         )
         
         switch result {
-        case .success:
+        case .success(let receipt):
             let nowMs = Int64(Date().timeIntervalSince1970 * 1000)
             if let service = try? requireOutbox(),
                let entry = try? service.listEntries().first(where: { $0.sosId == sosId && $0.digest == digest }) {
@@ -255,12 +258,41 @@ final class AppModel: ObservableObject {
                     nowMs: nowMs
                 )
                 await MainActor.run {
+                    self.lastUploadToken = receipt.uploadToken
                     Task { await self.reloadOutbox() }
+                }
+                
+                if let uploadToken = receipt.uploadToken {
+                    Task {
+                        await self.processAttachmentUploads(sosId: sosId, uploadToken: uploadToken)
+                    }
                 }
             }
         case .noNetwork, .httpError, .invalidReceipt, .error:
             break
         }
+    }
+    
+    private func processAttachmentUploads(sosId: String, uploadToken: String) async {
+        guard let baseDir = try? FileManager.default.url(
+            for: .applicationSupportDirectory,
+            in: .userDomainMask,
+            appropriateFor: nil,
+            create: true
+        ).appendingPathComponent("sosmesh") else {
+            return
+        }
+        
+        guard let queue = try? AttachmentQueue(baseDir: baseDir) else {
+            return
+        }
+        
+        try? queue.setUploadToken(uploadToken, forSosId: sosId)
+        
+        let deviceId = UIDevice.current.identifierForVendor?.uuidString ?? UUID().uuidString
+        let config = IngestConfig.production(deviceId: deviceId)
+        let coordinator = AttachmentUploadCoordinator(queue: queue, baseURL: config.baseURL)
+        await coordinator.processSosAttachments(sosId: sosId)
     }
 
     private func sourceRoot() -> String {

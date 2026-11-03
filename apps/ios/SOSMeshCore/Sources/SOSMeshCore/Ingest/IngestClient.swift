@@ -40,6 +40,7 @@ public struct ServerAcceptedReceipt: Codable {
     public let packetHash: String
     public let timestamp: String
     public let signature: String
+    public let uploadToken: String?
 }
 
 public struct IngestResponse: Codable {

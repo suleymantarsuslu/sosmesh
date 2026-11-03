@@ -78,6 +78,16 @@
 "gate.hint.open_settings" = "İzin reddedildi. Ayarlar'dan izin verip SOSMesh'e dönün.";
 "gate.hint.bluetooth_unsupported" = "Bu cihazda Bluetooth kullanılamıyor.";
 "sos.note.placeholder" = "İsteğe bağlı not (gerçek kişisel veri yok)";
+"sos.attach.photo" = "Fotoğraf ekle";
+"sos.attach.voice" = "Sesli not kaydet";
+"sos.voice.recording" = "Kaydediliyor";
+"sos.voice.stop" = "Durdur";
+"sos.voice.delete" = "Sil";
+"sos.voice.duration" = "Süre: %@";
+"sos.attach.uploading" = "Yükleniyor...";
+"sos.attach.uploaded" = "Yüklendi";
+"sos.attach.failed" = "Yükleme başarısız";
+"sos.attach.online_only" = "Ekler yalnızca çevrimiçiyken kullanılabilir";
 "settings.debug.fault_simulation" = "Hata simülasyonu (debug)";
 "settings.debug.use_fault_simulation" = "Simüle hataları kullan";
 "settings.debug.simulate_bluetooth_off" = "Bluetooth kapalı simülasyonu";

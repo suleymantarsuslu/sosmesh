@@ -44,7 +44,7 @@ function feedEventToCase(event: FeedEvent, existing?: OperatorCaseRow): Operator
 }
 
 export function CasesView({ initialCases }: { initialCases: OperatorCaseRow[] }) {
-  const { activeIncidentId } = useOperatorPreferences();
+  const { activeIncidentId, t } = useOperatorPreferences();
   const [cases, setCases] = useState<OperatorCaseRow[]>(initialCases);
   const [filters, setFilters] = useState(defaultCaseFilters());
   const [selectedId, setSelectedId] = useState<string | null>(null);
@@ -132,14 +132,14 @@ export function CasesView({ initialCases }: { initialCases: OperatorCaseRow[] })
   return (
     <div className="cases-view" data-testid="operator-cases-view">
       <header className="cases-view__header">
-        <h1>Harita ve vakalar</h1>
+        <h1>{t('web.cases.pageTitle')}</h1>
         <div className="cases-view__live" role="status" data-testid="live-feed-status">
-          {feed.connected ? 'Canlı bağlı' : 'Yedek senkronizasyon'}
-          {feed.stale ? ' · veri bayat olabilir' : ''}
+          {feed.connected ? t('web.cases.liveConnected') : t('web.cases.liveFallback')}
+          {feed.stale ? t('web.cases.liveStale') : ''}
           <span className="cases-view__live-mode"> ({feed.mode})</span>
         </div>
         <button type="button" className="ui-button" onClick={() => refreshCases()}>
-          Listeyi yenile
+          {t('web.cases.refreshList')}
         </button>
       </header>
 
@@ -180,7 +180,7 @@ export function CasesView({ initialCases }: { initialCases: OperatorCaseRow[] })
 
       {selectedId ? (
         <p className="cases-view__detail-link">
-          <Link href={`/operator/cases/${selectedId}`}>Vaka ayrıntısını aç</Link>
+          <Link href={`/operator/cases/${selectedId}`}>{t('web.cases.openDetailLink')}</Link>
         </p>
       ) : null}
 

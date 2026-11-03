@@ -43,6 +43,7 @@ android {
 }
 
 dependencies {
+    implementation(project(":core:design"))
     implementation(project(":core:model"))
     implementation("androidx.core:core-ktx:1.12.0")
     implementation("androidx.activity:activity-compose:1.8.2")

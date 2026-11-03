@@ -1,13 +1,17 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
+
+import { useOperatorPreferences } from './OperatorPreferencesProvider';
 
 type Props = {
   onReconnect?: () => void;
 };
 
 export function ConnectionBanner({ onReconnect }: Props) {
+  const { t } = useOperatorPreferences();
   const [disconnected, setDisconnected] = useState(false);
+  const wasDisconnectedRef = useRef(false);
 
   useEffect(() => {
     let after = '0';
@@ -17,6 +21,7 @@ export function ConnectionBanner({ onReconnect }: Props) {
         const res = await fetch(`/api/operator/events?after=${after}`);
         if (!res.ok) {
           setDisconnected(true);
+          wasDisconnectedRef.current = true;
           return;
         }
         const body = (await res.json()) as { events?: { seq: string }[] };
@@ -24,10 +29,14 @@ export function ConnectionBanner({ onReconnect }: Props) {
         if (events.length > 0) {
           after = events[events.length - 1].seq;
         }
+        if (wasDisconnectedRef.current) {
+          onReconnect?.();
+          wasDisconnectedRef.current = false;
+        }
         setDisconnected(false);
-        onReconnect?.();
       } catch {
         setDisconnected(true);
+        wasDisconnectedRef.current = true;
       }
     };
 
@@ -45,7 +54,7 @@ export function ConnectionBanner({ onReconnect }: Props) {
 
   return (
     <div className="ui-connection-banner" role="status" data-testid="connection-disconnected">
-      Canlı bağlantı kesildi — yedek senkronizasyon etkin.
+      {t('web.shell.connectionLost')}
     </div>
   );
 }

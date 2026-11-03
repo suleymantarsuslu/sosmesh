@@ -6,7 +6,11 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.material3.Button
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.ui.Alignment
@@ -14,13 +18,15 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.testTag
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
-import androidx.wear.compose.material.Button
-import androidx.wear.compose.material.MaterialTheme
-import androidx.wear.compose.material.Text
+import com.sosmesh.android.core.design.components.SosMeshLogo
+import com.sosmesh.android.core.design.theme.SosBrandColors
+import com.sosmesh.android.core.design.theme.SosSpacing
+import com.sosmesh.android.wear.R
 import kotlinx.coroutines.delay
 
 @Composable
@@ -34,7 +40,7 @@ fun WearRootScreen(viewModel: WearSosViewModel) {
 
     when (viewModel.confirmStep) {
         WearConfirmStep.CONFIRM_DIALOG -> ConfirmDialog(viewModel)
-        WearConfirmStep.CANCELLED -> StatusPanel(viewModel, accent = Color.DarkGray)
+        WearConfirmStep.CANCELLED -> StatusPanel(viewModel, accent = SosBrandColors.NavyMuted)
         else -> SosHome(viewModel, viewModel.isAmbientMode)
     }
 }
@@ -48,15 +54,21 @@ private fun SosHome(
         modifier =
             Modifier
                 .fillMaxSize()
-                .padding(8.dp),
+                .padding(SosSpacing.xs),
         verticalArrangement = Arrangement.Center,
         horizontalAlignment = Alignment.CenterHorizontally,
     ) {
+        if (!isAmbient) {
+            SosMeshLogo(
+                modifier = Modifier.testTag("wear_sosmesh_logo"),
+                size = 40.dp,
+            )
+        }
         Box(
             modifier =
                 Modifier
                     .weight(1f)
-                    .fillMaxSize()
+                    .fillMaxWidth()
                     .background(WearAmbientUiPolicy.sosBackground(isAmbient))
                     .then(
                         if (isAmbient) {
@@ -80,7 +92,7 @@ private fun SosHome(
             Text(
                 text = "SOS",
                 color = WearAmbientUiPolicy.primaryText(isAmbient),
-                style = MaterialTheme.typography.title1,
+                style = MaterialTheme.typography.titleLarge,
             )
         }
         Text(
@@ -88,24 +100,24 @@ private fun SosHome(
             textAlign = TextAlign.Center,
             modifier =
                 Modifier
-                    .padding(top = 8.dp)
+                    .padding(top = SosSpacing.xs)
                     .testTag("wear_status_headline"),
         )
         if (!WearAmbientUiPolicy.hideSecondaryDetailInAmbient(isAmbient)) {
             Text(
                 text = viewModel.statusDetail,
                 textAlign = TextAlign.Center,
-                style = MaterialTheme.typography.caption1,
+                style = MaterialTheme.typography.bodySmall,
                 modifier = Modifier.testTag("wear_status_detail"),
             )
         }
         Text(
-            text = "112 yerine geçmez",
+            text = stringResource(R.string.not112),
             textAlign = TextAlign.Center,
-            style = MaterialTheme.typography.caption2,
+            style = MaterialTheme.typography.labelSmall,
             modifier =
                 Modifier
-                    .padding(top = 4.dp)
+                    .padding(top = SosSpacing.xxs)
                     .testTag("wear_not112_disclaimer"),
         )
     }
@@ -117,15 +129,16 @@ private fun ConfirmDialog(viewModel: WearSosViewModel) {
         modifier =
             Modifier
                 .fillMaxSize()
-                .padding(8.dp),
+                .padding(SosSpacing.xs),
         verticalArrangement = Arrangement.Center,
         horizontalAlignment = Alignment.CenterHorizontally,
     ) {
+        SosMeshLogo(size = 36.dp)
         Text(text = "SOS gönder?", textAlign = TextAlign.Center)
-        Button(onClick = { viewModel.onConfirmSend() }, modifier = Modifier.padding(top = 8.dp)) {
+        Button(onClick = { viewModel.onConfirmSend() }, modifier = Modifier.padding(top = SosSpacing.xs)) {
             Text("Gönder")
         }
-        Button(onClick = { viewModel.onConfirmCancel() }, modifier = Modifier.padding(top = 4.dp)) {
+        Button(onClick = { viewModel.onConfirmCancel() }, modifier = Modifier.padding(top = SosSpacing.xxs)) {
             Text("İptal")
         }
     }
@@ -141,7 +154,7 @@ private fun StatusPanel(
             Modifier
                 .fillMaxSize()
                 .background(accent)
-                .padding(12.dp),
+                .padding(SosSpacing.sm),
         verticalArrangement = Arrangement.Center,
         horizontalAlignment = Alignment.CenterHorizontally,
     ) {
@@ -150,7 +163,7 @@ private fun StatusPanel(
             text = viewModel.statusDetail,
             color = Color.White,
             textAlign = TextAlign.Center,
-            modifier = Modifier.padding(top = 6.dp),
+            modifier = Modifier.padding(top = SosSpacing.xs),
         )
     }
 }

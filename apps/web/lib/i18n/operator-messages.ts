@@ -3,6 +3,9 @@ import contentTr from '../../../../docs/ux/content-tr.json';
 
 export type OperatorLocale = 'tr' | 'en';
 
+export const DEFAULT_LOCALE: OperatorLocale = 'en';
+export const LOCALE_COOKIE_NAME = 'sosmesh_locale';
+
 type MessageTree = typeof contentTr;
 
 const MESSAGES: Record<OperatorLocale, MessageTree> = {

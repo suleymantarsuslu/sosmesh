@@ -24,6 +24,7 @@ const operatorSpecs = [
   '**/operator-tasks-teams.spec.js',
   '**/operator-help.spec.js',
   '**/adim50-web-closure.spec.js',
+  '**/marketing-landing.spec.js',
 ];
 
 const webProjects = [

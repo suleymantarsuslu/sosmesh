@@ -1,23 +1,15 @@
 'use client';
 
+import { LocaleSwitcher } from '../i18n/LocaleSwitcher';
+
 import { useOperatorPreferences } from './OperatorPreferencesProvider';
 
 export function ThemeLocaleControls() {
-  const { locale, setLocale, theme, setTheme, t } = useOperatorPreferences();
+  const { theme, setTheme, t } = useOperatorPreferences();
 
   return (
     <div className="operator-theme-locale" data-testid="theme-locale-controls">
-      <label>
-        {t('web.shell.language')}
-        <select
-          aria-label={t('web.shell.language')}
-          value={locale}
-          onChange={(event) => setLocale(event.target.value as 'tr' | 'en')}
-        >
-          <option value="tr">TR</option>
-          <option value="en">EN</option>
-        </select>
-      </label>
+      <LocaleSwitcher />
       <button
         type="button"
         className="ui-button ui-button--ghost"

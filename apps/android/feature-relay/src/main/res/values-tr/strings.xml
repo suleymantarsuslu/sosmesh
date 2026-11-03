@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="relay_not112_disclaimer">SOSMesh 112\'nin yerine geçmez. Acil durumda 112\'yi arayın.</string>
+    <string name="relay_title">Gönüllü röle modu</string>
+    <string name="relay_intro">Yakındaki cihazlardan gelen şifreli SOS paketlerini internete taşımayı seçebilirsiniz. Paket içeriğini göremezsiniz; yalnızca sayı ve durum görünür.</string>
+    <string name="relay_toggle_label">Röle modunu etkinleştir</string>
+    <string name="relay_pending_count">Bekleyen yükleme: %1$d paket</string>
+    <string name="relay_battery_status">Pil: %1$d%% — %2$s</string>
+    <string name="relay_charging_yes">şarjda</string>
+    <string name="relay_charging_no">şarjda değil</string>
+    <string name="relay_battery_impact_estimate">Tahmini pil etkisi: saatte ~%1$d%% (düşük güç tarama)</string>
+    <string name="relay_policy_summary">Pil eşiği: %1$d%% altında durur (şarjda devam). Saatlik veri limiti: ~%2$d MB.</string>
+    <string name="relay_pause_battery">Pil eşiğinin altında; röle durduruldu. Şarjda veya pil yükselince devam eder.</string>
+    <string name="relay_pause_hourly_limit">Saatlik veri limiti doldu; yükleme ertelendi.</string>
+    <string name="relay_constraints_title">Android ve üretici kısıtları</string>
+    <string name="relay_stop_exit">Röleyi durdur ve çık</string>
+    <string name="relay_opt_out_label">Gönüllü röleyi kapat</string>
+    <string name="relay_opt_out_hint">Kapattığınızda şifreli paket taşımayı durdurursunuz; cihazdaki SOS kayıtlarınız silinmez.</string>
+</resources>

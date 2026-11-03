@@ -11,6 +11,8 @@ import {
 } from 'react';
 
 import {
+  DEFAULT_LOCALE,
+  LOCALE_COOKIE_NAME,
   operatorNavLabels,
   translate,
   type OperatorLocale,
@@ -65,17 +67,17 @@ function readStored(): StoredPreferences {
 }
 
 export function OperatorPreferencesProvider({ children }: { children: ReactNode }) {
-  const [locale, setLocaleState] = useState<OperatorLocale>('tr');
-  const [theme, setThemeState] = useState<'light' | 'dark'>('light');
+  const [locale, setLocaleState] = useState<OperatorLocale>(DEFAULT_LOCALE);
+  const [theme, setThemeState] = useState<'light' | 'dark'>('dark');
   const [savedViews, setSavedViews] = useState<SavedView[]>([]);
   const [activeIncidentId, setActiveIncidentId] = useState<string | null>(null);
 
   useEffect(() => {
     const stored = readStored();
-    if (stored.locale) {
+    if (stored.locale === 'en' || stored.locale === 'tr') {
       setLocaleState(stored.locale);
     }
-    if (stored.theme) {
+    if (stored.theme === 'light' || stored.theme === 'dark') {
       setThemeState(stored.theme);
     }
     if (stored.savedViews) {
@@ -89,6 +91,7 @@ export function OperatorPreferencesProvider({ children }: { children: ReactNode 
   useEffect(() => {
     document.documentElement.lang = locale;
     document.documentElement.dataset.theme = theme;
+    document.cookie = `${LOCALE_COOKIE_NAME}=${locale};path=/;max-age=31536000;SameSite=Lax`;
     window.localStorage.setItem(
       STORAGE_KEY,
       JSON.stringify({ locale, theme, savedViews, activeIncidentId })

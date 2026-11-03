@@ -335,8 +335,6 @@ export class FusionService {
       return null;
     }
 
-    const sosA = incidentA.sosMessages[0];
-    const sosB = incidentB.sosMessages[0];
     const analysisA = incidentA.aiAnalyses[0];
     const analysisB = incidentB.aiAnalyses[0];
 

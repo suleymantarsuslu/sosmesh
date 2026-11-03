@@ -1,4 +1,5 @@
 import Foundation
+import SOSMeshContracts
 
 public protocol OutboxQueueUpdating: AnyObject {
     func updateState(

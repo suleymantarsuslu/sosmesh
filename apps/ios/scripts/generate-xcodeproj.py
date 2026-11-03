@@ -18,6 +18,8 @@ APP_SOURCES = [
     "SOSMesh/Features/SettingsView.swift",
     "SOSMesh/Features/PermissionGateView.swift",
     "SOSMesh/Permissions/LiveAppPermissionProbe.swift",
+    "SOSMesh/Crypto/SosCryptoConfiguration.swift",
+    "SOSMesh/Storage/OutboxStorePaths.swift",
     "SOSMesh/Companion/PhoneWatchSessionManager.swift",
     "SOSMesh/Companion/PhoneWatchOutboxAdapter.swift",
     "SOSMesh/Companion/PhoneWatchCompanionHolder.swift",
@@ -69,7 +71,10 @@ IOS_COPY_RESOURCES = [
     "SOSMesh/Assets.xcassets",
 ]
 
-TEST_SOURCES = ["SOSMeshTests/SOSMeshCoreLinkTests.swift"]
+TEST_SOURCES = [
+    "SOSMeshTests/SOSMeshCoreLinkTests.swift",
+    "SOSMeshTests/AppModelPermissionGateTests.swift",
+]
 
 
 def uid(n: int) -> str:

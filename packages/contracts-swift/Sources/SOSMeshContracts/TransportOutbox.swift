@@ -252,7 +252,7 @@ public final class DiskOutboxQueue {
             expiresAtMs: old.expiresAtMs,
             lastError: lastError,
             createdAtMs: old.createdAtMs,
-            updatedAtMs: retryAtMs
+            updatedAtMs: old.updatedAtMs
         )
         try writeStoreUnlocked(store)
     }

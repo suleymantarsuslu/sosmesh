@@ -16,36 +16,25 @@ public enum PermissionGateNotificationAuthorization: Equatable {
     case ephemeral
 }
 
-public enum PermissionGateLocationAuthorization: Equatable {
-    case notDetermined
-    case whenInUse
-    case denied
-    case restricted
-}
-
 public struct PermissionGateSnapshot: Equatable {
     public var bluetoothAuthorization: PermissionGateBluetoothAuthorization
     public var bluetoothPoweredOn: Bool
     public var notificationAuthorization: PermissionGateNotificationAuthorization
-    public var locationAuthorization: PermissionGateLocationAuthorization
 
     public init(
         bluetoothAuthorization: PermissionGateBluetoothAuthorization,
         bluetoothPoweredOn: Bool,
-        notificationAuthorization: PermissionGateNotificationAuthorization,
-        locationAuthorization: PermissionGateLocationAuthorization
+        notificationAuthorization: PermissionGateNotificationAuthorization
     ) {
         self.bluetoothAuthorization = bluetoothAuthorization
         self.bluetoothPoweredOn = bluetoothPoweredOn
         self.notificationAuthorization = notificationAuthorization
-        self.locationAuthorization = locationAuthorization
     }
 }
 
 public enum PermissionGateStep: String, CaseIterable, Equatable {
     case bluetooth
     case notifications
-    case location
 }
 
 public enum PermissionGateBlockReason: Equatable {
@@ -84,17 +73,6 @@ public enum PermissionGateEvaluator {
         case .denied:
             return .blocked(step: .notifications, reason: .denied)
         case .authorized, .provisional, .ephemeral:
-            break
-        }
-
-        switch snapshot.locationAuthorization {
-        case .notDetermined:
-            return .blocked(step: .location, reason: .notDetermined)
-        case .denied:
-            return .blocked(step: .location, reason: .denied)
-        case .restricted:
-            return .blocked(step: .location, reason: .restricted)
-        case .whenInUse:
             break
         }
 

@@ -29,12 +29,6 @@ struct PermissionGateView: View {
                     bodyKey: "gate.step.notifications.body",
                     isActive: activeStep == .notifications
                 )
-                gateStepCard(
-                    step: .location,
-                    titleKey: "gate.step.location.title",
-                    bodyKey: "gate.step.location.body",
-                    isActive: activeStep == .location
-                )
 
                 if case .blocked(let step, let reason) = appModel.permissionGateStatus {
                     statusBanner(step: step, reason: reason)
@@ -103,7 +97,6 @@ struct PermissionGateView: View {
         switch step {
         case .bluetooth: return "gate.action.allow_bluetooth"
         case .notifications: return "gate.action.allow_notifications"
-        case .location: return "gate.action.allow_location"
         }
     }
 

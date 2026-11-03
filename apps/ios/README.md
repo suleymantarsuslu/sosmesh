@@ -54,7 +54,7 @@ swiftlint lint --strict
 
 ### Permission gate
 
-1. Onboarding disclaimer → **PermissionGateView** (Bluetooth authorization + powered on, notifications, When-In-Use location).
+1. Onboarding disclaimer → **PermissionGateView** (Bluetooth authorization + powered on, notifications). **Location is not required** (SOS uses `locationStatus: UNKNOWN` without GPS).
 2. Reddedilen izinlerde **Ayarları aç**; `scenePhase == .active` iken yeniden değerlendirilir.
 3. Kapı mantığı: `SOSMeshCore/PermissionGate.swift` — unit test: `PermissionGateEvaluatorTests`.
 

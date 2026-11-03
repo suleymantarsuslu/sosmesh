@@ -1,15 +1,6 @@
 import Foundation
 import SOSMeshContracts
 
-public enum DevTestCryptoConfig {
-    public static let keyId = "dev-test-001"
-    public static let serverPublicKey = "BFu/Jxfj3txqvjTtUW7BTYK3iX0E/ysPPwPNk091o1c="
-
-    public static func config() -> CryptoConfig {
-        CryptoConfig(keyId: keyId, serverPublicKey: serverPublicKey)
-    }
-}
-
 public struct IosSosComposeRequest: Sendable {
     public var note: String
     public var languageTag: String
@@ -35,7 +26,7 @@ public struct IosComposedSosMessage: Sendable {
 public struct IosSosMessageComposer: Sendable {
     private let cryptoConfig: CryptoConfig
 
-    public init(cryptoConfig: CryptoConfig = DevTestCryptoConfig.config()) {
+    public init(cryptoConfig: CryptoConfig) {
         self.cryptoConfig = cryptoConfig
     }
 

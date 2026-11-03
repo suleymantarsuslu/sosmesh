@@ -1,5 +1,6 @@
 import SwiftUI
 import SOSMeshCore
+import SOSMeshContracts
 
 @MainActor
 final class AppModel: ObservableObject {
@@ -28,7 +29,7 @@ final class AppModel: ObservableObject {
     private var restorationMachine = BleRestorationStateMachine()
     private let roleSelector = BleRoleSelector()
     private let permissionProbe: AppPermissionProbing
-    private let composer = IosSosMessageComposer()
+    private let composer: IosSosMessageComposer?
     private var outboxService: SosOutboxService?
     private let receivedInboxStore = ReceivedSosInbox()
     private var meshRadio: BleMeshRadioPort?
@@ -36,6 +37,12 @@ final class AppModel: ObservableObject {
 
     init(permissionProbe: AppPermissionProbing = LiveAppPermissionProbe()) {
         self.permissionProbe = permissionProbe
+        composer = try? IosSosMessageComposer(cryptoConfig: SosCryptoConfiguration.loadComposerConfig())
+        permissionProbe.onGateRefreshRequested = { [weak self] in
+            Task { @MainActor in
+                await self?.refreshPermissionGate()
+            }
+        }
     }
 
     var permissionGateCleared: Bool {
@@ -60,8 +67,7 @@ final class AppModel: ObservableObject {
             snapshot = PermissionGateSnapshot(
                 bluetoothAuthorization: simulatePermissionsDenied ? .denied : snapshot.bluetoothAuthorization,
                 bluetoothPoweredOn: !simulateBluetoothOff,
-                notificationAuthorization: simulatePermissionsDenied ? .denied : snapshot.notificationAuthorization,
-                locationAuthorization: simulateLocationUnavailable ? .denied : snapshot.locationAuthorization
+                notificationAuthorization: simulatePermissionsDenied ? .denied : snapshot.notificationAuthorization
             )
         }
         #endif
@@ -81,13 +87,14 @@ final class AppModel: ObservableObject {
             permissionProbe.primeBluetoothAuthorization()
         case .notifications:
             await permissionProbe.requestNotifications()
-        case .location:
-            permissionProbe.requestLocationWhenInUse()
         }
         await refreshPermissionGate()
     }
 
     func submitSos(note: String, languageTag: String) async throws {
+        guard let composer else {
+            throw SosCryptoConfigurationError.releaseEncryptionNotConfigured
+        }
         try ensureOutbox()
         let nowMs = Int64(Date().timeIntervalSince1970 * 1000)
         let composed = try composer.compose(
@@ -155,7 +162,7 @@ final class AppModel: ObservableObject {
         let state = CrossPlatformPlatformState(
             bluetoothEnabled: snapshot.bluetoothPoweredOn,
             blePermissionsGranted: snapshot.bluetoothAuthorization == .allowed,
-            locationAvailable: snapshot.locationAuthorization == .whenInUse,
+            locationAvailable: true,
             networkValidated: false,
             batteryLevelPercent: 100,
             relayOptIn: relayEnabled,
@@ -168,10 +175,8 @@ final class AppModel: ObservableObject {
     private func ensureOutbox() throws {
         if outboxService != nil { return }
         let root = sourceRoot()
-        let path = URL(fileURLWithPath: NSTemporaryDirectory())
-            .appendingPathComponent("sosmesh-outbox-\(Bundle.main.bundleIdentifier ?? "ios").json")
-            .path
-        outboxService = try SosOutboxService(storePath: path, sourceRoot: root)
+        let fileURL = try OutboxStorePaths.applicationSupportOutboxFileURL()
+        outboxService = try SosOutboxService(storePath: fileURL.path, sourceRoot: root)
     }
 
     private func requireOutbox() throws -> SosOutboxService {
@@ -211,10 +216,8 @@ final class AppModel: ObservableObject {
     }
 }
 
-#if DEBUG
 extension AppModel {
     static func preview(snapshot: PermissionGateSnapshot) -> AppModel {
         AppModel(permissionProbe: StubAppPermissionProbe(snapshot: snapshot))
     }
 }
-#endif

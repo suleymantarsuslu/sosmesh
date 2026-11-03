@@ -67,7 +67,7 @@ final class BleTransferGateTests: XCTestCase {
         XCTAssertEqual(receiver.getState(), .failed)
         XCTAssertFalse(senderCompleted)
         let entries = try outbox.listEntries()
-        XCTAssertTrue(entries.isEmpty || entries.allSatisfy { $0.state != "PEER_RECEIVED" })
+        XCTAssertEqual(entries.count, 0)
         XCTAssertTrue(outbound.nacks.contains(where: { $0.reason == .digestInvalid }))
     }
 
@@ -120,12 +120,24 @@ final class BleTransferGateTests: XCTestCase {
         XCTAssertEqual(entry.state, "PEER_RECEIVED")
     }
 
-    func testRelayCannotDecryptOpaquePayload() {
+    func testRelayStoresMetadataWithoutPlaintextNote() throws {
         let inbox = ReceivedSosInbox()
         let router = BleIncomingPayloadRouter(inbox: inbox, nowMs: { 1 })
-        let opaque = Data(repeating: 0xAB, count: 64)
-        router.onCompleted(payload: opaque)
-        XCTAssertTrue(inbox.list().isEmpty)
+        let secretNote = "PLAINTEXT_MUST_NOT_APPEAR_IN_RELAY_STORE"
+        let config = CryptoConfig(
+            keyId: "dev-test-001",
+            serverPublicKey: "BFu/Jxfj3txqvjTtUW7BTYK3iX0E/ysPPwPNk091o1c="
+        )
+        let composed = try IosSosMessageComposer(cryptoConfig: config).compose(
+            IosSosComposeRequest(note: secretNote, languageTag: "en", nowMs: 1_700_000_000_000)
+        )
+        let wire = composed.wirePayload
+        let wireText = try XCTUnwrap(String(data: wire, encoding: .utf8))
+        XCTAssertFalse(wireText.contains(secretNote), "Wire JSON must not embed SOS plaintext")
+        router.onCompleted(payload: wire)
+        let stored = try XCTUnwrap(inbox.list().first)
+        XCTAssertEqual(stored.sosId, composed.message.id)
+        XCTAssertEqual(stored.digest, composed.digest)
     }
 
     private func sourceRoot() -> String {

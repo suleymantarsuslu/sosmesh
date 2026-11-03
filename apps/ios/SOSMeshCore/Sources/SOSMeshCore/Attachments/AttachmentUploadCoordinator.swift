@@ -75,12 +75,16 @@ public final class AttachmentUploadCoordinator {
         case .noNetwork:
             notifyStatus(attachment.id, .waiting)
             
-        case .httpError(let code, let message), .error(let message):
+        case .httpError(let code, let message):
             let error = NSError(domain: "AttachmentUpload", code: code, userInfo: [NSLocalizedDescriptionKey: message])
             notifyStatus(attachment.id, .failed(error))
             if code >= 400 && code < 500 {
                 try? queue.dequeue(id: attachment.id)
             }
+
+        case .error(let message):
+            let error = NSError(domain: "AttachmentUpload", code: 0, userInfo: [NSLocalizedDescriptionKey: message])
+            notifyStatus(attachment.id, .failed(error))
         }
     }
     

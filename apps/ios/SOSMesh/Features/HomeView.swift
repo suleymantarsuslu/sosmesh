@@ -503,12 +503,12 @@ struct SosSendView: View {
         
         let baseURL = IngestConfig.production(deviceId: "").baseURL
         let coordinator = AttachmentUploadCoordinator(queue: queue, baseURL: baseURL)
-        coordinator.onStatusChange = { [weak self] id, status in
-            if self?.attachmentIds.contains(id) == true {
+        coordinator.onStatusChange = { id, status in
+            if self.attachmentIds.contains(id) {
                 if id.contains("jpg") {
-                    self?.attachmentStatuses["photo"] = status
+                    self.attachmentStatuses["photo"] = status
                 } else {
-                    self?.attachmentStatuses["audio"] = status
+                    self.attachmentStatuses["audio"] = status
                 }
             }
         }

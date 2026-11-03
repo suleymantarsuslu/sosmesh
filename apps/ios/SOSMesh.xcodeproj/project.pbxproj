@@ -47,6 +47,7 @@
 		A3100370000000000000001 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
 		A3100380000000000000001 /* SOSMesh.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = SOSMesh.entitlements; sourceTree = "<group>"; };
 		A3100390000000000000001 /* PrivacyInfo.xcprivacy */ = {isa = PBXFileReference; lastKnownFileType = text.xml; path = PrivacyInfo.xcprivacy; sourceTree = "<group>"; };
+		A3100998000000000000001 /* state-transitions.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; name = state-transitions.json; path = ../../packages/fixtures/transport/state-transitions.json; sourceTree = SOURCE_ROOT; };
 		A3100400000000000000001 /* Localizable.strings */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; path = SOSMesh/tr.lproj/Localizable.strings; sourceTree = SOURCE_ROOT; };
 		A3100410000000000000001 /* Localizable.strings */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; path = SOSMesh/en.lproj/Localizable.strings; sourceTree = SOURCE_ROOT; };
 		A3100420000000000000001 /* InfoPlist.strings */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; path = SOSMesh/tr.lproj/InfoPlist.strings; sourceTree = SOURCE_ROOT; };
@@ -74,7 +75,7 @@
 		A3780020000000000000001 = {isa = PBXGroup; children = (A3100350000000000000001 /* SOSMeshWatchWidgetsBundle.swift */, A3100360000000000000001 /* SOSMeshComplicationWidget.swift */); name = SOSMeshWatchWidgets; path = ../watchos/SOSMeshWatchWidgets; sourceTree = "<group>"; };
 		A3180020000000000000001 = {isa = PBXGroup; children = (A3100010000000000000001 /* SOSMeshApp.swift */, A3100020000000000000001 /* AppModel.swift */, A3100030000000000000001 /* RootTabView.swift */, A3180040000000000000001 /* Features */, A3180060000000000000001 /* DesignSystem */, A3780030000000000000001 /* Companion */, A3180070000000000000001 /* Permissions */, A3180080000000000000001 /* Crypto */, A3180090000000000000001 /* Storage */, A3100400000000000000001 /* Localizable.strings */, A3100410000000000000001 /* Localizable.strings */, A3100440000000000000001 /* Assets.xcassets */, A3100370000000000000001 /* Info.plist */, A3100380000000000000001 /* SOSMesh.entitlements */, A3100390000000000000001 /* PrivacyInfo.xcprivacy */); path = SOSMesh; sourceTree = "<group>"; };
 		A3180050000000000000001 = {isa = PBXGroup; children = (A3100260000000000000001 /* SOSMeshCoreLinkTests.swift */, A3100270000000000000001 /* LocalizationCompletenessTests.swift */, A3100280000000000000001 /* AppModelPermissionGateTests.swift */, A3100290000000000000001 /* EmergencyCall112LinkTests.swift */, A3100300000000000000001 /* SosCryptoConfigurationErrorTests.swift */); path = SOSMeshTests; sourceTree = "<group>"; };
-		A3180000000000000000001 = {isa = PBXGroup; children = (A3180020000000000000001 /* SOSMesh */, A3180030000000000000001 /* CoreBLE */, A3780010000000000000001 /* SOSMeshWatch */, A3780020000000000000001 /* SOSMeshWatchWidgets */, A3180050000000000000001 /* SOSMeshTests */, A3180010000000000000001 /* Products */); sourceTree = "<group>"; };
+		A3180000000000000000001 = {isa = PBXGroup; children = (A3100998000000000000001 /* state-transitions.json */, A3180020000000000000001 /* SOSMesh */, A3180030000000000000001 /* CoreBLE */, A3780010000000000000001 /* SOSMeshWatch */, A3780020000000000000001 /* SOSMeshWatchWidgets */, A3180050000000000000001 /* SOSMeshTests */, A3180010000000000000001 /* Products */); sourceTree = "<group>"; };
 		A3160000000000000000001 /* SOSMeshApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = A3100010000000000000001 /* SOSMeshApp.swift */; };
 		A3160010000000000000001 /* AppModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = A3100020000000000000001 /* AppModel.swift */; };
 		A3160020000000000000001 /* RootTabView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A3100030000000000000001 /* RootTabView.swift */; };
@@ -130,6 +131,7 @@
 		A3151010000000000000001 /* SOSMeshCore */ = {isa = XCSwiftPackageProductDependency; productName = SOSMeshCore; package = A3150010000000000000001 /* SOSMeshCore */; };
 		A3751030000000000000001 /* SOSMeshCore */ = {isa = XCSwiftPackageProductDependency; productName = SOSMeshCore; package = A3150010000000000000001 /* SOSMeshCore */; };
 		A3151020000000000000001 /* SOSMeshContracts */ = {isa = XCSwiftPackageProductDependency; productName = SOSMeshContracts; package = A3150020000000000000001 /* contracts-swift */; };
+		A3166998000000000000001 /* state-transitions.json in CopyFiles */ = {isa = PBXBuildFile; fileRef = A3100998000000000000001 /* state-transitions.json */; };
 		A3166000000000000000001 /* PrivacyInfo.xcprivacy in Resources */ = {isa = PBXBuildFile; fileRef = A3100390000000000000001 /* PrivacyInfo.xcprivacy */; };
 		A3166010000000000000001 /* Localizable.strings in Resources */ = {isa = PBXBuildFile; fileRef = A3100400000000000000001 /* Localizable.strings */; };
 		A3166020000000000000001 /* Localizable.strings in Resources */ = {isa = PBXBuildFile; fileRef = A3100410000000000000001 /* Localizable.strings */; };
@@ -145,6 +147,7 @@
 		A3170020000000000000001 /* Sources */ = {isa = PBXSourcesBuildPhase; buildActionMask = 2147483647; files = (A3165000000000000000001 /* in Sources */, A3165010000000000000001 /* in Sources */, A3165020000000000000001 /* in Sources */, A3165030000000000000001 /* in Sources */, A3165040000000000000001 /* in Sources */); runOnlyForDeploymentPostprocessing = 0; };
 		A3770010000000000000001 /* Sources */ = {isa = PBXSourcesBuildPhase; buildActionMask = 2147483647; files = (A3760000000000000000001 /* in Sources */, A3760010000000000000001 /* in Sources */, A3760020000000000000001 /* in Sources */, A3760030000000000000001 /* in Sources */); runOnlyForDeploymentPostprocessing = 0; };
 		A3770040000000000000001 /* Sources */ = {isa = PBXSourcesBuildPhase; buildActionMask = 2147483647; files = (A3761000000000000000001 /* in Sources */, A3761010000000000000001 /* in Sources */); runOnlyForDeploymentPostprocessing = 0; };
+		A3170998000000000000001 /* Bundle transport fixture */ = {isa = PBXCopyFilesBuildPhase; buildActionMask = 2147483647; dstPath = "packages/fixtures/transport"; dstSubfolderSpec = 7; files = (A3166998000000000000001 /* state-transitions.json in CopyFiles */); runOnlyForDeploymentPostprocessing = 0; };
 		A3170030000000000000001 /* Resources */ = {isa = PBXResourcesBuildPhase; buildActionMask = 2147483647; files = (A3166000000000000000001 /* in Resources */, A3166010000000000000001 /* in Resources */, A3166020000000000000001 /* in Resources */, A3166030000000000000001 /* in Resources */, A3166040000000000000001 /* in Resources */, A3166050000000000000001 /* in Resources */); runOnlyForDeploymentPostprocessing = 0; };
 		A3170040000000000000001 /* Frameworks */ = {isa = PBXFrameworksBuildPhase; buildActionMask = 2147483647; files = (A3167010000000000000001 /* SOSMeshCore in Frameworks */, A3167020000000000000001 /* SOSMeshContracts in Frameworks */, A3767200000000000000001 /* WatchConnectivity in Frameworks */); runOnlyForDeploymentPostprocessing = 0; };
 		A3170050000000000000001 /* Frameworks */ = {isa = PBXFrameworksBuildPhase; buildActionMask = 2147483647; files = (A3167030000000000000001 /* SOSMeshCore in Frameworks */); runOnlyForDeploymentPostprocessing = 0; };
@@ -155,7 +158,7 @@
 A3130010000000000000001 /* SOSMesh-iOS */ = {
 	isa = PBXNativeTarget;
 	buildConfigurationList = A3140010000000000000001 /* Build configuration list for PBXNativeTarget "SOSMesh-iOS" */;
-	buildPhases = (A3170010000000000000001 /* Sources */, A3170040000000000000001 /* Frameworks */, A3170030000000000000001 /* Resources */);
+	buildPhases = (A3170010000000000000001 /* Sources */, A3170040000000000000001 /* Frameworks */, A3170030000000000000001 /* Resources */, A3170998000000000000001 /* Bundle transport fixture */);
 	buildRules = ();
 	dependencies = ();
 	name = "SOSMesh-iOS";

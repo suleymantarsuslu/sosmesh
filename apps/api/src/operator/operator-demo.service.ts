@@ -13,6 +13,7 @@ import { tmpdir } from 'node:os';
 import { PrismaService } from '../prisma/prisma.service';
 import { AiJobQueueService } from '../ai/ai-job-queue.service';
 import { LocalDiskStorageService } from '../media/local-disk-storage.service';
+import { PhotoValidatorService } from '../ai/vision/photo-validator.service';
 import { DeliveryState, IncidentState, LocationStatus } from '@prisma/client';
 
 const execAsync = promisify(exec);
@@ -36,7 +37,8 @@ export class OperatorDemoService {
   constructor(
     private readonly prisma: PrismaService,
     private readonly aiJobQueue: AiJobQueueService,
-    private readonly mediaStorage: LocalDiskStorageService
+    private readonly mediaStorage: LocalDiskStorageService,
+    private readonly photoValidator: PhotoValidatorService
   ) {}
 
   async createSyntheticSos(
@@ -150,9 +152,21 @@ export class OperatorDemoService {
     }
 
     if (request.photoBuffer && request.photoMime) {
-      const stored = await this.mediaStorage.store({
+      // Validate and sanitize photo (strips EXIF/GPS, downscales if needed)
+      const validated = await this.photoValidator.validateAndSanitize({
         buffer: request.photoBuffer,
-        mimeType: request.photoMime,
+        source: 'online', // Demo uploads are online
+      });
+
+      if (!validated.valid) {
+        const reason = 'reason' in validated ? validated.reason : 'unknown';
+        throw new BadRequestException(`Photo validation failed: ${reason}`);
+      }
+
+      const stored = await this.mediaStorage.store({
+        buffer: validated.buffer,
+        mimeType: validated.mime,
+        sha256: validated.sha256,
       });
       photoStorageKey = stored.storageKey;
       photoSha256 = stored.sha256;
@@ -169,6 +183,7 @@ export class OperatorDemoService {
           storageKey: photoStorageKey,
           sha256: photoSha256,
           sizeBytes: photoSizeBytes,
+          mime: validated.mime, // Update with sanitized mime type
         },
       });
     }

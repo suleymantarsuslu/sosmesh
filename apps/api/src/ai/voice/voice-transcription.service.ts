@@ -65,7 +65,6 @@ export class VoiceTranscriptionService {
       return { success: false, reason: 'not_found' };
     }
 
-    const estimatedHours = (attachment.durationMs ?? 0) / 3_600_000;
     const estimatedCost = this.metaClient.computeAsrCost(attachment.durationMs ?? 0);
 
     const reservation = await this.budgetGuard.reserve(estimatedCost, 'muse-voice-transcribe-1.0');

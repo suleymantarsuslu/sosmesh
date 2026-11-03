@@ -12,6 +12,8 @@ import { FusionService } from './fusion/fusion.service';
 import { SosPlaintextSource, SOS_PLAINTEXT_SOURCE } from './sos-plaintext-source';
 import { PrismaService } from '../prisma/prisma.service';
 import { Inject } from '@nestjs/common';
+import { VisionAnalysisService } from './vision/vision-analysis.service';
+import { LocalDiskStorageService } from '../media/local-disk-storage.service';
 import { VoiceTranscriptionService } from './voice/voice-transcription.service';
 
 @Injectable()
@@ -24,6 +26,8 @@ export class AiJobRunnerService {
     private readonly triage: TriageV2Service,
     private readonly fusion: FusionService,
     private readonly prisma: PrismaService,
+    private readonly vision: VisionAnalysisService,
+    private readonly storage: LocalDiskStorageService,
     @Inject(SOS_PLAINTEXT_SOURCE) private readonly plaintextSource: SosPlaintextSource,
     private readonly voiceTranscription: VoiceTranscriptionService
   ) {}
@@ -83,8 +87,7 @@ export class AiJobRunnerService {
           await this.processTranscribe(job);
           break;
         case 'vision':
-          this.logger.warn({ msg: 'Vision not implemented yet', jobId: job.id });
-          await this.queue.complete(job.id);
+          await this.processVision(job);
           break;
         case 'fusion':
           await this.processFusion(job);
@@ -244,6 +247,76 @@ export class AiJobRunnerService {
       triageJobId: result.triageJobId,
     });
     await this.queue.complete(job.id);
+  }
+
+  private async processVision(job: AiJob): Promise<void> {
+    if (!job.attachmentId) {
+      await this.queue.fail(job.id, 'Missing attachmentId');
+      return;
+    }
+
+    const attachmentId = job.attachmentId;
+
+    // Get attachment with incident context
+    const attachment = await this.prisma.attachment.findUnique({
+      where: { id: attachmentId },
+      select: {
+        id: true,
+        storageKey: true,
+        mime: true,
+        kind: true,
+        incident: {
+          select: {
+            sosMessages: {
+              select: {
+                operatorDisplayText: true,
+                noteText: true,
+              },
+              take: 1,
+              orderBy: { receivedAt: 'desc' },
+            },
+          },
+        },
+      },
+    });
+
+    if (!attachment) {
+      await this.queue.fail(job.id, 'Attachment not found');
+      return;
+    }
+
+    if (attachment.kind !== 'photo') {
+      await this.queue.fail(job.id, `Not a photo: kind=${attachment.kind}`);
+      return;
+    }
+
+    // Retrieve image from storage
+    const imageBuffer = await this.storage.retrieve(attachment.storageKey);
+
+    if (!imageBuffer) {
+      await this.queue.fail(job.id, 'Image not found in storage');
+      return;
+    }
+
+    // Get incident context for better analysis
+    const sosMessage = attachment.incident.sosMessages[0];
+    const incidentContext =
+      sosMessage?.noteText || sosMessage?.operatorDisplayText || undefined;
+
+    // Run vision analysis
+    const result = await this.vision.analyzePhoto({
+      attachmentId: attachment.id,
+      imageBuffer,
+      mimeType: attachment.mime,
+      incidentContext,
+    });
+
+    if (result.success) {
+      await this.queue.complete(job.id);
+    } else {
+      const errorMsg = 'error' in result ? result.error : 'unknown_error';
+      await this.queue.fail(job.id, errorMsg);
+    }
   }
 
   private sleep(ms: number): Promise<void> {

@@ -12,6 +12,8 @@ import { OperatorCasesService } from './operator-cases.service';
 import { OperatorCaseActionsService } from './operator-case-actions.service';
 import { OperatorAiController, OperatorCaseAiController } from './operator-ai.controller';
 import { OperatorAiService } from './operator-ai.service';
+import { OperatorAttachmentsController } from './operator-attachments.controller';
+import { OperatorAttachmentsService } from './operator-attachments.service';
 import { OperatorDemoController } from './operator-demo.controller';
 import { OperatorDemoService } from './operator-demo.service';
 import { LocalDiskStorageService } from '../media/local-disk-storage.service';
@@ -25,6 +27,7 @@ import { OperatorCopilotController } from './operator-copilot.controller';
     OperatorPanelController,
     OperatorAiController,
     OperatorCaseAiController,
+    OperatorAttachmentsController,
     OperatorDemoController,
     OperatorFusionController,
     OperatorCopilotController,
@@ -37,6 +40,7 @@ import { OperatorCopilotController } from './operator-copilot.controller';
     OperatorCasesService,
     OperatorCaseActionsService,
     OperatorAiService,
+    OperatorAttachmentsService,
     OperatorDemoService,
     LocalDiskStorageService,
   ],

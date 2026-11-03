@@ -15,6 +15,7 @@ import {
 import type { AssignmentPreviewRoute } from '../assignment/types';
 import type { OperatorCaseRow } from '../case-list/types';
 import { isMapTestMode, osmAttribution, resolveMapStyle } from './map-config';
+import { useOperatorPreferences } from '../../components/operator/OperatorPreferencesProvider';
 
 type Props = {
   rows: OperatorCaseRow[];
@@ -39,6 +40,13 @@ function metersToPixels(lat: number, meters: number, zoomLevel: number): number 
   return meters / metersPerPixel;
 }
 
+function getSeverityColor(priority: number): string {
+  if (priority <= 1) return '#dc2626';
+  if (priority <= 2) return '#ea580c';
+  if (priority <= 3) return '#d97706';
+  return '#65a30d';
+}
+
 export function OperatorMap({
   rows,
   selectedId,
@@ -48,6 +56,7 @@ export function OperatorMap({
   assignmentPreview,
 }: Props) {
   const testMode = isMapTestMode();
+  const { t } = useOperatorPreferences();
   const plottable = useMemo(
     () => rows.filter((row) => hasPlottableCoordinates(row)),
     [rows]
@@ -126,8 +135,20 @@ export function OperatorMap({
     );
   }
 
+  if (plottable.length === 0) {
+    return (
+      <div className="operator-map-wrap operator-map-wrap--empty" data-testid="operator-map">
+        <div className="operator-map__empty-state">
+          <div className="operator-map__empty-icon">🗺️</div>
+          <h3 className="operator-map__empty-title">{t('web.cases.mapNoCases')}</h3>
+          <p className="operator-map__empty-hint">{t('web.cases.mapNoCasesHint')}</p>
+        </div>
+      </div>
+    );
+  }
+
   return (
-    <div className="operator-map-wrap" data-testid="operator-map">
+    <div className="operator-map-wrap operator-map-wrap--modern" data-testid="operator-map">
       <Map
         mapLib={maplibregl}
         initialViewState={{
@@ -147,8 +168,8 @@ export function OperatorMap({
               <Marker key={`cluster-${props.cluster_id}`} latitude={lat} longitude={lng} anchor="center">
                 <button
                   type="button"
-                  className="operator-map__cluster"
-                  aria-label={`Küme ${props.point_count} vaka`}
+                  className="operator-map__cluster operator-map__cluster--modern"
+                  aria-label={t('web.cases.mapLegendCluster').replace('{{count}}', props.point_count?.toString() || '0')}
                   onClick={() => {
                     if (props.cluster_id != null) {
                       onZoomChange(Math.min(index.getClusterExpansionZoom(props.cluster_id), 18));
@@ -170,6 +191,8 @@ export function OperatorMap({
             zoom
           );
           const opacity = accuracyVisualOpacity(row.accuracyMeters);
+          const pinColor = getSeverityColor(row.priority);
+          const isSelected = selectedId === row.incidentId;
           return (
             <Marker
               key={row.incidentId}
@@ -190,10 +213,13 @@ export function OperatorMap({
                 <button
                   type="button"
                   className={
-                    selectedId === row.incidentId
-                      ? 'operator-map__pin operator-map__pin--selected'
-                      : 'operator-map__pin'
+                    isSelected
+                      ? 'operator-map__pin operator-map__pin--modern operator-map__pin--selected'
+                      : 'operator-map__pin operator-map__pin--modern'
                   }
+                  style={{
+                    backgroundColor: isSelected ? '#1d4ed8' : pinColor,
+                  }}
                   aria-label={`Vaka öncelik ${row.priority}`}
                   data-testid={`map-pin-${row.incidentId.slice(0, 8)}`}
                   onClick={() => onSelect(row.incidentId)}
@@ -205,6 +231,43 @@ export function OperatorMap({
           );
         })}
       </Map>
+      
+      <div className="operator-map__legend" data-testid="map-legend">
+        <h3 className="operator-map__legend-title">{t('web.cases.mapLegendTitle')}</h3>
+        <dl className="operator-map__legend-items">
+          <div className="operator-map__legend-item">
+            <dt>
+              <span className="operator-map__legend-pin" style={{ backgroundColor: '#dc2626' }} />
+            </dt>
+            <dd>{t('web.cases.mapLegendCritical')} (P1)</dd>
+          </div>
+          <div className="operator-map__legend-item">
+            <dt>
+              <span className="operator-map__legend-pin" style={{ backgroundColor: '#ea580c' }} />
+            </dt>
+            <dd>{t('web.cases.mapLegendHigh')} (P2)</dd>
+          </div>
+          <div className="operator-map__legend-item">
+            <dt>
+              <span className="operator-map__legend-pin" style={{ backgroundColor: '#d97706' }} />
+            </dt>
+            <dd>{t('web.cases.mapLegendMedium')} (P3)</dd>
+          </div>
+          <div className="operator-map__legend-item">
+            <dt>
+              <span className="operator-map__legend-pin" style={{ backgroundColor: '#65a30d' }} />
+            </dt>
+            <dd>{t('web.cases.mapLegendLow')} (P4+)</dd>
+          </div>
+          <div className="operator-map__legend-item">
+            <dt>
+              <span className="operator-map__legend-pin operator-map__legend-pin--selected" />
+            </dt>
+            <dd>{t('web.cases.mapLegendSelected')}</dd>
+          </div>
+        </dl>
+      </div>
+
       <p className="operator-map__attribution">{osmAttribution()}</p>
       {assignmentPreview ? (
         <p className="operator-map__preview" data-testid="assignment-map-preview">

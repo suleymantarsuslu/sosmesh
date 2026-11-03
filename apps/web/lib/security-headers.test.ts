@@ -26,4 +26,30 @@ describe('ADIM 43 web security headers', () => {
     expect(routes[0].source).toBe('/:path*');
     expect(routes[0].headers.length).toBeGreaterThanOrEqual(4);
   });
+
+  it('includes worker-src and child-src for MapLibre blob workers', () => {
+    const csp = securityHeaders.find((row) => row.key === 'Content-Security-Policy');
+    expect(csp?.value).toContain("worker-src 'self' blob:");
+    expect(csp?.value).toContain('child-src blob:');
+  });
+
+  it('includes tile origin in connect-src for MapLibre tile fetching', () => {
+    const csp = securityHeaders.find((row) => row.key === 'Content-Security-Policy');
+    expect(csp?.value).toMatch(/connect-src [^;]*https:\/\/tile\.openstreetmap\.org/);
+  });
+
+  it('does not include localhost in production CSP', () => {
+    const originalEnv = process.env.NODE_ENV;
+    process.env.NODE_ENV = 'production';
+    
+    delete require.cache[require.resolve('./security-headers.js')];
+    const { securityHeaders: prodHeaders } = require('./security-headers.js') as {
+      securityHeaders: { key: string; value: string }[];
+    };
+    
+    const csp = prodHeaders.find((row) => row.key === 'Content-Security-Policy');
+    expect(csp?.value).not.toContain('http://localhost:*');
+    
+    process.env.NODE_ENV = originalEnv;
+  });
 });

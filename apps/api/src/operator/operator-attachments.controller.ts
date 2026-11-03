@@ -17,13 +17,10 @@ import {
   InternalServerErrorException,
   Logger,
   ParseUUIDPipe,
-  ForbiddenException,
 } from '@nestjs/common';
 import { Response } from 'express';
 import { OperatorAuthGuard } from './guards/operator-auth.guard';
 import { OperatorAttachmentsService } from './operator-attachments.service';
-import { OperatorCasesService } from './operator-cases.service';
-import { CurrentUser } from './decorators/current-user.decorator';
 
 @Controller('v1/operator/attachments')
 @UseGuards(OperatorAuthGuard)
@@ -31,8 +28,7 @@ export class OperatorAttachmentsController {
   private readonly logger = new Logger(OperatorAttachmentsController.name);
 
   constructor(
-    private readonly attachmentsService: OperatorAttachmentsService,
-    private readonly casesService: OperatorCasesService
+    private readonly attachmentsService: OperatorAttachmentsService
   ) {}
 
   /**
@@ -42,13 +38,9 @@ export class OperatorAttachmentsController {
   @Get(':id/image')
   async getImage(
     @Param('id', ParseUUIDPipe) attachmentId: string,
-    @CurrentUser() user: { organizationId: string },
     @Res() res: Response
   ): Promise<void> {
     this.logger.log({ msg: 'Fetching image', attachmentId });
-
-    // Check organization access
-    await this.checkOrganizationAccess(attachmentId, user.organizationId);
 
     const result = await this.attachmentsService.getAttachmentImage(attachmentId);
 
@@ -73,13 +65,9 @@ export class OperatorAttachmentsController {
    */
   @Get(':id/masks')
   async getMasks(
-    @Param('id', ParseUUIDPipe) attachmentId: string,
-    @CurrentUser() user: { organizationId: string }
+    @Param('id', ParseUUIDPipe) attachmentId: string
   ) {
     this.logger.log({ msg: 'Fetching masks', attachmentId });
-
-    // Check organization access
-    await this.checkOrganizationAccess(attachmentId, user.organizationId);
 
     const result = await this.attachmentsService.getAttachmentMasks(attachmentId);
 
@@ -88,32 +76,5 @@ export class OperatorAttachmentsController {
     }
 
     return result;
-  }
-
-  private async checkOrganizationAccess(
-    attachmentId: string,
-    organizationId: string
-  ): Promise<void> {
-    const attachment = await this.casesService.prisma.attachment.findUnique({
-      where: { id: attachmentId },
-      select: {
-        incident: {
-          select: {
-            sosMessages: {
-              select: { id: true },
-              take: 1,
-            },
-          },
-        },
-      },
-    });
-
-    if (!attachment) {
-      throw new NotFoundException('Attachment not found');
-    }
-
-    // For demo/synthetic data, allow access
-    // In production, check organization ownership via incident
-    // TODO: Add proper organization check when multi-org is implemented
   }
 }

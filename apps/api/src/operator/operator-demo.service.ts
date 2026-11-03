@@ -93,7 +93,8 @@ export class OperatorDemoService {
         });
 
         if (!validated.valid) {
-          throw new Error(`Photo validation failed: ${validated.reason}`);
+          const reason = 'reason' in validated ? validated.reason : 'unknown';
+          throw new Error(`Photo validation failed: ${reason}`);
         }
 
         const stored = await this.mediaStorage.store({

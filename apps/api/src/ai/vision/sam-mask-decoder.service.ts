@@ -1,22 +1,37 @@
 /**
  * SAM Mask Decoder Service
- * Decodes SAM 3.1 one_bit masks to PNG with transparency
- * 
- * Mask placement: mask is placed at box's (x1, y1), not at mask's (x, y)
- * The x/y in mask metadata is always 0,0
- * Masks are downscaled to fit the box, so resize mask to box dimensions
+ * Decodes SAM 3.1 `one_bit` masks (Meta SAM wire format) to PNG with transparency.
+ *
+ * Decoding is delegated to Meta's official parser (@meta-sam/parser), which implements the
+ * base85 + arithmetic-coded `one_bit` format. The mask is placed at the box's (x1, y1) by the
+ * caller; masks are downscaled relative to the box, so the PNG is resized to box dimensions.
+ *
+ * Wire format is `data=H,W,<payload>` (rows first). Rows stored before the parser regex was
+ * fixed have width/height swapped, so the orientation is resolved from the box aspect ratio
+ * and verified by the decoder (a wrong H/W pair fails strict payload validation).
  */
 
 import { Injectable } from '@nestjs/common';
 import sharp from 'sharp';
 
-const BASE85_ALPHABET = '0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz!#$%&()*+-;<=>?@^_`{|}~';
+type MetaSamParser = typeof import('@meta-sam/parser');
+
+// Prevents TypeScript (module=commonjs) from rewriting import() into require().
+const nativeImport = new Function('specifier', 'return import(specifier)') as (
+  specifier: string
+) => Promise<MetaSamParser>;
 
 @Injectable()
 export class SamMaskDecoderService {
+  private parser: MetaSamParser | null = null;
+
   /**
    * Decode one_bit mask to PNG data URL
    * Returns PNG with transparency at box dimensions
+   *
+   * @param maskData   stored mask data (marker + payload)
+   * @param maskWidth  stored mask width (may be swapped with height for legacy rows)
+   * @param maskHeight stored mask height
    */
   async decodeMaskToPng(
     maskData: string,
@@ -25,117 +40,89 @@ export class SamMaskDecoderService {
     boxWidth: number,
     boxHeight: number
   ): Promise<string> {
-    // Parse encoding marker and base85 data
-    if (maskData.length < 2) {
+    if (typeof maskData !== 'string' || maskData.length < 2) {
       throw new Error('Invalid mask data');
     }
-
-    const encoding = maskData[0];
-    if (encoding !== '!') {
-      throw new Error(`Unsupported mask encoding: ${encoding}`);
+    if (maskData[0] !== '!') {
+      throw new Error(`Unsupported mask encoding: ${maskData[0]}`);
     }
 
-    const base85Data = maskData.substring(1);
+    const { raster, width, height } = await this.decodeRaster(
+      maskData,
+      maskWidth,
+      maskHeight,
+      boxWidth,
+      boxHeight
+    );
 
-    // Decode base85 to binary
-    const decoded = this.decodeBase85(base85Data);
-
-    // Convert to boolean array (one_bit encoding)
-    const bits = this.bytesToBits(decoded);
-
-    // Create mask raster
-    const maskRaster = new Uint8Array(maskWidth * maskHeight * 4); // RGBA
-
-    for (let y = 0; y < maskHeight; y++) {
-      for (let x = 0; x < maskWidth; x++) {
-        const bitIndex = y * maskWidth + x;
-        const isSet = bitIndex < bits.length && bits[bitIndex];
-
-        const pixelIndex = (y * maskWidth + x) * 4;
-        maskRaster[pixelIndex] = 255;     // R - white
-        maskRaster[pixelIndex + 1] = 255; // G - white
-        maskRaster[pixelIndex + 2] = 255; // B - white
-        maskRaster[pixelIndex + 3] = isSet ? 255 : 0; // A - fully opaque or transparent
-      }
+    const rgba = Buffer.alloc(width * height * 4, 255);
+    for (let i = 0; i < raster.length; i++) {
+      rgba[i * 4 + 3] = raster[i] ? 255 : 0;
     }
 
-    // Resize mask to box dimensions if needed
-    let finalBuffer = await sharp(maskRaster, {
-      raw: {
-        width: maskWidth,
-        height: maskHeight,
-        channels: 4,
-      },
-    })
-      .png()
-      .toBuffer();
-
-    // Resize to box dimensions
-    if (maskWidth !== boxWidth || maskHeight !== boxHeight) {
-      finalBuffer = await sharp(finalBuffer)
-        .resize(boxWidth, boxHeight, {
-          fit: 'fill',
-          kernel: 'nearest',
-        })
-        .png()
-        .toBuffer();
+    let image = sharp(rgba, { raw: { width, height, channels: 4 } });
+    if (width !== boxWidth || height !== boxHeight) {
+      image = image.resize(boxWidth, boxHeight, { fit: 'fill', kernel: 'nearest' });
     }
-
-    // Convert to data URL
-    return `data:image/png;base64,${finalBuffer.toString('base64')}`;
+    const png = await image.png().toBuffer();
+    return `data:image/png;base64,${png.toString('base64')}`;
   }
 
-  private decodeBase85(base85: string): Uint8Array {
-    const result: number[] = [];
-    let accumulator = 0;
-    let count = 0;
+  private async decodeRaster(
+    maskData: string,
+    storedWidth: number,
+    storedHeight: number,
+    boxWidth: number,
+    boxHeight: number
+  ): Promise<{ raster: Uint8Array; width: number; height: number }> {
+    const parser = await this.loadParser();
 
-    for (let i = 0; i < base85.length; i++) {
-      const char = base85[i];
-      const value = BASE85_ALPHABET.indexOf(char);
+    // Candidate orientations: as stored, and swapped (legacy rows stored H,W as W,H).
+    const candidates = [
+      { width: storedWidth, height: storedHeight },
+      { width: storedHeight, height: storedWidth },
+    ];
+    // Prefer the orientation whose aspect ratio matches the box aspect ratio.
+    const boxAspect = boxWidth / boxHeight;
+    candidates.sort(
+      (a, b) =>
+        Math.abs(Math.log(a.width / a.height / boxAspect)) -
+        Math.abs(Math.log(b.width / b.height / boxAspect))
+    );
 
-      if (value === -1) {
-        throw new Error(`Invalid base85 character: ${char}`);
-      }
-
-      accumulator = accumulator * 85 + value;
-      count++;
-
-      if (count === 5) {
-        // Decode 5 base85 chars -> 4 bytes
-        result.push((accumulator >> 24) & 0xff);
-        result.push((accumulator >> 16) & 0xff);
-        result.push((accumulator >> 8) & 0xff);
-        result.push(accumulator & 0xff);
-
-        accumulator = 0;
-        count = 0;
-      }
-    }
-
-    // Handle remaining bytes
-    if (count > 0) {
-      for (let i = count; i < 5; i++) {
-        accumulator = accumulator * 85 + 84; // Pad with 'u' (84)
-      }
-
-      for (let i = 0; i < count - 1; i++) {
-        result.push((accumulator >> (24 - i * 8)) & 0xff);
+    let lastError: unknown;
+    for (const candidate of candidates) {
+      try {
+        const raster = parser.decodeMaskToRaster({
+          encoding: 'one_bit',
+          width: candidate.width,
+          height: candidate.height,
+          payload: maskData,
+        });
+        return { raster, width: candidate.width, height: candidate.height };
+      } catch (error) {
+        lastError = error;
       }
     }
-
-    return new Uint8Array(result);
+    throw lastError instanceof Error ? lastError : new Error('Failed to decode mask');
   }
 
-  private bytesToBits(bytes: Uint8Array): boolean[] {
-    const bits: boolean[] = [];
-
-    for (const byte of bytes) {
-      for (let i = 7; i >= 0; i--) {
-        bits.push((byte & (1 << i)) !== 0);
-      }
+  /**
+   * @meta-sam/parser is ESM-only. Node >= 20.19 / 22.12 can require() it; older runtimes
+   * throw ERR_REQUIRE_ESM, in which case fall back to a native dynamic import.
+   */
+  private async loadParser(): Promise<MetaSamParser> {
+    if (this.parser) {
+      return this.parser;
     }
-
-    return bits;
+    try {
+      this.parser = await import('@meta-sam/parser');
+    } catch (error) {
+      if ((error as NodeJS.ErrnoException).code !== 'ERR_REQUIRE_ESM') {
+        throw error;
+      }
+      this.parser = await nativeImport('@meta-sam/parser');
+    }
+    return this.parser;
   }
 }

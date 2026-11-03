@@ -63,4 +63,12 @@ describe('SAM Output Parser', () => {
     expect(segments[0].id).toBe('3');
     expect(segments[0].confidence).toBeNull();
   });
+  it('should store mask height/width from data=H,W (rows first)', () => {
+    const samOutput = `<0f>0<|box;x1=10;y1=20;x2=60;y2=170;w=640;h=480;c=0.9|><|mask;x=0;y=0;c=0.9;data=151,51,!ABCDEFGHIJabcdefghij123456789XYZ|>`;
+    const segments = (client as any).parseSamOutput(samOutput);
+
+    expect(segments).toHaveLength(1);
+    expect(segments[0].mask?.height).toBe(151);
+    expect(segments[0].mask?.width).toBe(51);
+  });
 });

@@ -520,7 +520,7 @@ export class MetaModelClient {
 
     let match;
     while ((match = segmentRegex.exec(text)) !== null) {
-      const [, id, x1, y1, x2, y2, w, h, confidence, maskX, maskY, , maskW, maskH, maskData] = match;
+      const [, id, x1, y1, x2, y2, w, h, confidence, maskX, maskY, , maskRows, maskCols, maskData] = match;
 
       const box: SamBoundingBox = {
         x1: parseFloat(x1),
@@ -536,8 +536,9 @@ export class MetaModelClient {
         mask = {
           x: parseInt(maskX, 10),
           y: parseInt(maskY, 10),
-          width: parseInt(maskW, 10),
-          height: parseInt(maskH, 10),
+          // SAM wire format is data=H,W,<payload> (rows first, then columns)
+          width: parseInt(maskCols, 10),
+          height: parseInt(maskRows, 10),
           encoding: maskData[0],
           data: maskData,
         };

@@ -11,7 +11,7 @@ const config: Config = {
     }],
   },
   transformIgnorePatterns: [
-    'node_modules/(?!(@noble/curves|@noble/hashes|@noble/ciphers|@sosmesh/contracts)/)',
+    'node_modules/(?!(@noble/curves|@noble/hashes|@noble/ciphers|@sosmesh/contracts|@meta-sam/parser|\\.pnpm/@meta-sam\\+parser@[^/]+/node_modules/@meta-sam/parser)/)',
   ],
   extensionsToTreatAsEsm: ['.ts'],
   moduleNameMapper: {

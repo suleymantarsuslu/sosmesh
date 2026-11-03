@@ -179,21 +179,25 @@ export function OperatorShell({
       </aside>
       <div className="operator-main-wrap">
         <DemoModeBanner visible={demoMode} />
-        <header className="operator-topbar">
-          <div className="operator-topbar__brand-mobile">
-            <SosMeshLogo size={32} />
-          </div>
-          <Button
-            variant="ghost"
-            className="operator-mobile-menu"
+        <header className="operator-topbar" data-testid="operator-topbar">
+          <button
+            type="button"
+            className="ui-button ui-button--ghost operator-hamburger"
             aria-expanded={drawerOpen}
             aria-controls="operator-mobile-nav"
+            aria-label={t('web.shell.mobileMenu')}
             data-testid="operator-hamburger"
+            data-topbar-item="menu"
             onClick={() => setDrawerOpen(true)}
           >
-            {t('web.shell.mobileMenu')}
-          </Button>
-          <div className="operator-topbar__search-wrap">
+            <span className="operator-hamburger__icon" aria-hidden>
+              ☰
+            </span>
+          </button>
+          <div className="operator-topbar__brand-mobile" data-topbar-item="logo">
+            <SosMeshLogo size={32} />
+          </div>
+          <div className="operator-topbar__search-wrap" data-topbar-item="search">
             <input
               type="search"
               className="operator-topbar__search"
@@ -213,10 +217,13 @@ export function OperatorShell({
           </div>
           <OperatorTopbarOverflow incidents={context?.incidents ?? []} />
           <div className="operator-topbar__controls">
-            <LocaleSwitcher className="operator-topbar__locale" testId="operator-topbar-locale" />
+            <LocaleSwitcher
+              className="operator-topbar__locale operator-topbar__locale--desktop"
+              testId="operator-topbar-locale"
+            />
             <button
               type="button"
-              className="ui-button ui-button--ghost operator-topbar__theme"
+              className="ui-button ui-button--ghost operator-topbar__theme operator-topbar__theme--desktop"
               onClick={() => setTheme(theme === 'light' ? 'dark' : 'light')}
               data-testid="operator-topbar-theme"
             >
@@ -228,6 +235,8 @@ export function OperatorShell({
                 className="ui-button ui-button--ghost operator-user-menu__trigger"
                 aria-expanded={userMenuOpen}
                 aria-haspopup="menu"
+                aria-label={user.displayName || user.email || t('web.shell.defaultUser')}
+                data-topbar-item="user"
                 onClick={() => setUserMenuOpen((open) => !open)}
               >
                 <span className="operator-user-menu__avatar" aria-hidden>

@@ -120,6 +120,31 @@ test.describe('Web modern screenshots', () => {
       expect(overflow).toBe(false);
     };
 
+    const assertTopbarInViewport = async (page) => {
+      const offenders = await page.evaluate(() => {
+        const bar = document.querySelector('[data-testid="operator-topbar"]');
+        if (!bar) {
+          return [];
+        }
+        const viewportWidth = document.documentElement.clientWidth;
+        const items = bar.querySelectorAll('[data-topbar-item]');
+        const problems = [];
+        items.forEach((el) => {
+          const rect = el.getBoundingClientRect();
+          if (rect.right > viewportWidth + 0.5 || rect.left < -0.5) {
+            problems.push({
+              item: el.getAttribute('data-topbar-item'),
+              left: rect.left,
+              right: rect.right,
+              viewportWidth,
+            });
+          }
+        });
+        return problems;
+      });
+      expect(offenders).toEqual([]);
+    };
+
     const { context: opCtx, page: opPage } = await freshEnglishContext(browser);
 
     await opPage.setViewportSize({ width: 375, height: 812 });
@@ -135,6 +160,7 @@ test.describe('Web modern screenshots', () => {
     await opPage.goto('/operator/dashboard');
     await expect(opPage.getByTestId('operator-dashboard')).toBeVisible();
     await assertNoHorizontalOverflow(opPage);
+    await assertTopbarInViewport(opPage);
     await opPage.screenshot({
       path: path.join(ARTIFACTS, 'operator-dashboard-en-375.png'),
       fullPage: true,
@@ -152,17 +178,9 @@ test.describe('Web modern screenshots', () => {
     await opPage.goto('/operator/cases');
     await expect(opPage.getByTestId('operator-cases-view')).toBeVisible();
     await assertNoHorizontalOverflow(opPage);
+    await assertTopbarInViewport(opPage);
     await opPage.screenshot({
       path: path.join(ARTIFACTS, 'operator-cases-en-375.png'),
-      fullPage: true,
-    });
-
-    await opPage.setViewportSize({ width: 768, height: 1024 });
-    await opPage.goto('/operator/dashboard');
-    await expect(opPage.getByTestId('operator-dashboard')).toBeVisible();
-    await assertNoHorizontalOverflow(opPage);
-    await opPage.screenshot({
-      path: path.join(ARTIFACTS, 'operator-dashboard-en-768.png'),
       fullPage: true,
     });
 

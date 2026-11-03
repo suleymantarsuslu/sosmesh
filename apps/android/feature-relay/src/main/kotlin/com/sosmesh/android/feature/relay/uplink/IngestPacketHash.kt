@@ -20,10 +20,17 @@ object IngestPacketHash {
         when (value) {
             is JsonNull -> "null"
             is JsonPrimitive -> {
-                if (value.isString) {
-                    JsonPrimitive(value.content).toString()
-                } else {
-                    value.toString()
+                when {
+                    value.isString -> JsonPrimitive(value.content).toString()
+                    else -> {
+                        val content = value.content
+                        val doubleValue = content.toDoubleOrNull()
+                        if (doubleValue != null) {
+                            canonicalizeNumber(doubleValue)
+                        } else {
+                            content
+                        }
+                    }
                 }
             }
             is JsonArray -> value.joinToString(prefix = "[", postfix = "]", separator = ",") { stableStringify(it) }
@@ -33,5 +40,13 @@ object IngestPacketHash {
                     "${JsonPrimitive(key)}:${stableStringify(value.getValue(key))}"
                 }
             }
+        }
+
+    private fun canonicalizeNumber(value: Double): String =
+        when {
+            value.isNaN() -> "null"
+            value.isInfinite() -> "null"
+            value == value.toLong().toDouble() -> value.toLong().toString()
+            else -> value.toString()
         }
 }

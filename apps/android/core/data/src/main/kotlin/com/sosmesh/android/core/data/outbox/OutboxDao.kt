@@ -23,6 +23,33 @@ interface OutboxDao {
     @Update
     fun update(entity: OutboxEntity)
 
+    @Query(
+        """
+        UPDATE outbox SET state = :state, updated_at = :nowMs, last_error = :lastError
+        WHERE sos_id = :sosId AND digest = :digest
+        """,
+    )
+    fun updateStateFields(
+        sosId: String,
+        digest: String,
+        state: String,
+        nowMs: Long,
+        lastError: String?,
+    ): Int
+
+    @Query(
+        """
+        UPDATE outbox SET retry_at = :retryAtMs, last_error = :lastError
+        WHERE sos_id = :sosId AND digest = :digest
+        """,
+    )
+    fun setRetryAtFields(
+        sosId: String,
+        digest: String,
+        retryAtMs: Long,
+        lastError: String?,
+    ): Int
+
     @Query("DELETE FROM outbox WHERE expires_at <= :nowMs")
     fun deleteExpired(nowMs: Long): Int
 
@@ -43,4 +70,13 @@ interface OutboxDao {
         """,
     )
     fun listDueRelayUpload(nowMs: Long): List<OutboxEntity>
+
+    @Query(
+        """
+        SELECT * FROM outbox
+        WHERE retry_at <= :nowMs AND state = 'LOCAL_SAVED' AND origin = 'android'
+        ORDER BY created_at ASC
+        """,
+    )
+    fun listDueAndroidPeerSend(nowMs: Long): List<OutboxEntity>
 }

@@ -16,6 +16,7 @@ dependencies {
     implementation("org.xerial:sqlite-jdbc:3.44.1.0")
     testImplementation(kotlin("test"))
     testImplementation("org.junit.jupiter:junit-jupiter:5.10.1")
+    testImplementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.7.3")
     testImplementation("org.json:json:20231013")
 }
 

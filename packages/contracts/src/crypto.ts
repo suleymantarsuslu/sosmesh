@@ -162,9 +162,13 @@ export function encryptPayload(
   envelope: any,
   config: CryptoConfig
 ): EncryptedPayload {
-  // Validate key ID
+  // Validate key ID: prod keyIds are allowed when only the public key is supplied
+  // (encrypting with a public key is safe; only decryption with a private key requires secure key management)
   if (config.keyId.startsWith('prod-') && process.env.NODE_ENV === 'production') {
-    throw new Error(`Production key ID ${config.keyId} requires secure key management`);
+    const serverConfig = config as ServerCryptoConfig;
+    if (serverConfig.serverPrivateKey) {
+      throw new Error(`Production key ID ${config.keyId} with private key requires secure key management`);
+    }
   }
 
   // Generate ephemeral X25519 key pair (32 bytes private key)

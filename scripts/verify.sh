@@ -9,6 +9,12 @@ SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 REPO_ROOT="$(cd "$SCRIPT_DIR/.." && pwd)"
 REPORTS_DIR="$REPO_ROOT/reports"
 
+# Read port configuration from environment
+API_PORT="${API_PORT:-3001}"
+WEB_PORT="${WEB_PORT:-3000}"
+export API_PORT
+export WEB_PORT
+
 # Colors
 RED='\033[0;31m'
 GREEN='\033[0;32m'
@@ -17,6 +23,7 @@ NC='\033[0m' # No Color
 
 echo "=== SOSMesh Quality Gate Verification ==="
 echo "Started: $(date -u +%Y-%m-%dT%H:%M:%SZ)"
+echo "Ports: API=${API_PORT}, WEB=${WEB_PORT}"
 echo ""
 
 # Prepare reports directory
@@ -127,12 +134,21 @@ fi
 
 release_dev_ports() {
   local port
-  for port in 3000 3001; do
-    if command -v fuser >/dev/null 2>&1; then
-      fuser -k "${port}/tcp" 2>/dev/null || true
-    fi
+  for port in $WEB_PORT $API_PORT; do
     if lsof -ti:"$port" >/dev/null 2>&1; then
-      lsof -ti:"$port" | xargs -r kill -9 2>/dev/null || true
+      local pids
+      pids=$(lsof -ti:"$port")
+      for pid in $pids; do
+        if [ -n "${GITHUB_WORKSPACE:-}" ]; then
+          local pid_cwd
+          pid_cwd=$(readlink -f "/proc/$pid/cwd" 2>/dev/null || echo "")
+          if [[ "$pid_cwd" == "$GITHUB_WORKSPACE"* ]] || [[ "$pid_cwd" == "$REPO_ROOT"* ]]; then
+            kill -9 "$pid" 2>/dev/null || true
+          fi
+        else
+          kill -9 "$pid" 2>/dev/null || true
+        fi
+      done
     fi
   done
   sleep 2
@@ -143,13 +159,13 @@ release_dev_ports
 
 # 7. Web a11y test
 echo "7/18: pnpm test:a11y:web"
-# Ensure port 3000 is free before starting
+# Ensure WEB_PORT is free before starting
 PORT_CHECK_FAILED=false
-if lsof -ti:3000 >/dev/null 2>&1; then
-  echo -e "${YELLOW}Port 3000 is still in use before a11y-web test. Cleaning up...${NC}"
+if lsof -ti:"$WEB_PORT" >/dev/null 2>&1; then
+  echo -e "${YELLOW}Port $WEB_PORT is still in use before a11y-web test. Cleaning up...${NC}"
   release_dev_ports
-  if lsof -ti:3000 >/dev/null 2>&1; then
-    echo -e "${RED}❌ Failed to free port 3000${NC}" | tee "$REPORTS_DIR/a11y-web.log"
+  if lsof -ti:"$WEB_PORT" >/dev/null 2>&1; then
+    echo -e "${RED}❌ Failed to free port $WEB_PORT${NC}" | tee "$REPORTS_DIR/a11y-web.log"
     PORT_CHECK_FAILED=true
   fi
 fi

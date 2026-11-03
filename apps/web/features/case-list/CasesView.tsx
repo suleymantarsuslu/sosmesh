@@ -38,6 +38,7 @@ function feedEventToCase(event: FeedEvent, existing?: OperatorCaseRow): Operator
     latitude: event.latitude,
     longitude: event.longitude,
     accuracyMeters: existing?.accuracyMeters ?? null,
+    locationApproximate: existing?.locationApproximate ?? false,
     receivedAt: event.occurredAt,
     source: existing?.source ?? 'feed',
   };

@@ -30,6 +30,7 @@ export type OperatorCaseDetail = OperatorCaseRow & {
     latitude: number | null;
     longitude: number | null;
     accuracyMeters: number | null;
+    locationApproximate: boolean;
   };
   ai: OperatorAiSuggestion | null;
   timeline: {

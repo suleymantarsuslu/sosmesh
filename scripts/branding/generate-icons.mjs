@@ -211,24 +211,32 @@ async function adaptiveForegroundLayer(source, size) {
 
 /** Simulate adaptive icon as launchers draw it: bg + fg, circular mask at 72/108 diameter. */
 async function renderLauncherVisiblePreview(foregroundPng, size, bgRgb) {
-  const fgBuf = await sharp(foregroundPng).png().toBuffer();
+  const fgBuf = await sharp(foregroundPng).ensureAlpha().raw().toBuffer({ resolveWithObject: true });
   const visibleRadius = (size / 2) * LAUNCHER_VISIBLE_RATIO;
-  const circleMask = Buffer.from(
-    `<svg width="${size}" height="${size}" xmlns="http://www.w3.org/2000/svg">
-      <circle cx="${size / 2}" cy="${size / 2}" r="${visibleRadius}" fill="white"/>
-    </svg>`
-  );
-
-  return sharp({
-    create: {
-      width: size,
-      height: size,
-      channels: 3,
-      background: bgRgb,
-    },
-  })
-    .composite([{ input: fgBuf }])
-    .composite([{ input: circleMask, blend: 'dest-in' }]);
+  const cx = size / 2;
+  const cy = size / 2;
+  const out = Buffer.alloc(size * size * 3);
+  for (let y = 0; y < size; y += 1) {
+    for (let x = 0; x < size; x += 1) {
+      const dist = Math.hypot(x + 0.5 - cx, y + 0.5 - cy);
+      const o = (y * size + x) * 3;
+      if (dist > visibleRadius) {
+        out[o] = 0;
+        out[o + 1] = 0;
+        out[o + 2] = 0;
+        continue;
+      }
+      const fi = (y * size + x) * 4;
+      const a = fgBuf.data[fi + 3] / 255;
+      const r = Math.round(fgBuf.data[fi] * a + bgRgb.r * (1 - a));
+      const g = Math.round(fgBuf.data[fi + 1] * a + bgRgb.g * (1 - a));
+      const b = Math.round(fgBuf.data[fi + 2] * a + bgRgb.b * (1 - a));
+      out[o] = r;
+      out[o + 1] = g;
+      out[o + 2] = b;
+    }
+  }
+  return sharp(out, { raw: { width: size, height: size, channels: 3 } });
 }
 
 /**

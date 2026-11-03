@@ -10,6 +10,7 @@ import { createHash } from 'node:crypto';
 import { AiJobQueueService } from '../ai/ai-job-queue.service';
 import { PrismaService } from '../prisma/prisma.service';
 import { OperatorFeedService } from '../events/operator-feed.service';
+import { DeviceUploadTokenService } from '../media/device-upload-token.service';
 import { RELAY_ANOMALY_THRESHOLD, RELAY_ANOMALY_WINDOW_MS } from './ingest.constants';
 import type { IngestRequestDto, IngestResponseDto } from './dto/ingest-request.dto';
 import { parseEnvelopeGeo } from './envelope-location';
@@ -33,7 +34,8 @@ export class IngestService {
     private readonly operatorFeed: OperatorFeedService,
     private readonly aiJobQueue: AiJobQueueService,
     private readonly metrics: SosMeshMetricsService,
-    private readonly events: StructuredEventLogger
+    private readonly events: StructuredEventLogger,
+    private readonly uploadToken: DeviceUploadTokenService
   ) {}
 
   async processIngest(
@@ -112,6 +114,7 @@ export class IngestService {
     if (!packetHash) {
       throw new Error('Stored SOS message is missing packet_hash for receipt signing');
     }
+    const uploadToken = this.uploadToken.generateToken(message.messageId, packetHash);
     return {
       receipt: {
         ackType: 'SERVER_ACCEPTED',
@@ -123,6 +126,7 @@ export class IngestService {
           packetHash,
           timestamp
         ),
+        uploadToken,
       },
     };
   }

@@ -78,6 +78,16 @@
 "gate.hint.open_settings" = "Permission was denied. Open Settings to allow access, then return to SOSMesh.";
 "gate.hint.bluetooth_unsupported" = "Bluetooth is not available on this device.";
 "sos.note.placeholder" = "Optional note (no real PII)";
+"sos.attach.photo" = "Add photo";
+"sos.attach.voice" = "Record voice note";
+"sos.voice.recording" = "Recording";
+"sos.voice.stop" = "Stop";
+"sos.voice.delete" = "Delete";
+"sos.voice.duration" = "Duration: %@";
+"sos.attach.uploading" = "Uploading...";
+"sos.attach.uploaded" = "Uploaded";
+"sos.attach.failed" = "Upload failed";
+"sos.attach.online_only" = "Attachments are only available when online";
 "settings.debug.fault_simulation" = "Debug fault simulation";
 "settings.debug.use_fault_simulation" = "Use simulated faults";
 "settings.debug.simulate_bluetooth_off" = "Simulate Bluetooth off";

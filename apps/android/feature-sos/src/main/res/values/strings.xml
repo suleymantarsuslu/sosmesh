@@ -42,4 +42,14 @@
     <string name="sos_location_aging">Location is aging</string>
     <string name="sos_location_stale">Location is stale — pick manually</string>
     <string name="sos_secondary_continue_hint">Fill in details, then continue</string>
+    <string name="sos_attach_photo">Add photo</string>
+    <string name="sos_attach_voice">Record voice note</string>
+    <string name="sos_voice_recording">Recording</string>
+    <string name="sos_voice_stop">Stop</string>
+    <string name="sos_voice_delete">Delete</string>
+    <string name="sos_voice_duration">Duration: %1$s</string>
+    <string name="sos_attach_uploading">Uploading...</string>
+    <string name="sos_attach_uploaded">Uploaded</string>
+    <string name="sos_attach_failed">Upload failed</string>
+    <string name="sos_attach_online_only">Attachments are only available when online</string>
 </resources>

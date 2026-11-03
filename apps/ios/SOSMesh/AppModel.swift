@@ -16,6 +16,7 @@ final class AppModel: ObservableObject {
         .blocked(step: .bluetooth, reason: .notDetermined)
     @Published private(set) var outboxEntries: [OutboxEntryMeta] = []
     @Published private(set) var receivedInbox: [ReceivedSosRecord] = []
+    @Published var lastUploadToken: String?
 
     /// Debug-only fault injection (not the default data path).
     #if DEBUG
@@ -243,7 +244,7 @@ final class AppModel: ObservableObject {
         )
         
         switch result {
-        case .success:
+        case .success(let receipt):
             let nowMs = Int64(Date().timeIntervalSince1970 * 1000)
             if let service = try? requireOutbox(),
                let entry = try? service.listEntries().first(where: { $0.sosId == sosId && $0.digest == digest }) {
@@ -254,6 +255,7 @@ final class AppModel: ObservableObject {
                     nowMs: nowMs
                 )
                 await MainActor.run {
+                    self.lastUploadToken = receipt.uploadToken
                     Task { await self.reloadOutbox() }
                 }
             }

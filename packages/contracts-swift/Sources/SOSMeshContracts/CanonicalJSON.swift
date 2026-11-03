@@ -82,25 +82,26 @@ enum CanonicalJSON {
         throw CryptoError.invalidInput("Unsupported JSON type for canonical encoding")
     }
 
-    /// `JSON.stringify` string escaping (UTF-16 code units; lone surrogates as `\uXXXX`).
+    /// `JSON.stringify` string escaping (UTF-16 code units via NSString; lone surrogates as `\uXXXX`).
     private static func escapeJSONString(_ value: String) -> String {
+        let ns = value as NSString
+        let length = ns.length
         var out = ""
         out.reserveCapacity(value.count + 8)
-        var index = value.utf16.startIndex
-        while index < value.utf16.endIndex {
-            let unit = value.utf16[index]
-            if isHighSurrogate(unit),
-               value.utf16.index(after: index) < value.utf16.endIndex {
-                let nextIndex = value.utf16.index(after: index)
-                let nextUnit = value.utf16[nextIndex]
+        var index = 0
+        while index < length {
+            let unit = ns.character(at: index)
+            if isHighSurrogate(unit), index + 1 < length {
+                let nextUnit = ns.character(at: index + 1)
                 if isLowSurrogate(nextUnit) {
-                    out.append(String(utf16CodeUnits: [unit, nextUnit], count: 2))
-                    index = value.utf16.index(after: nextIndex)
+                    var pair: [unichar] = [unit, nextUnit]
+                    out.append(String(utf16CodeUnits: pair, count: 2))
+                    index += 2
                     continue
                 }
             }
-            appendEscapedUTF16Unit(unit, to: &out)
-            index = value.utf16.index(after: index)
+            appendEscapedUTF16Unit(UTF16.CodeUnit(unit), to: &out)
+            index += 1
         }
         return out
     }

@@ -7,12 +7,15 @@ enum CanonicalJsonFixtureInput {
     static func decode(_ encoded: Any) throws -> Any {
         if let dict = encoded as? [String: Any] {
             if dict.count == 1, let units = dict[utf16StringTag] as? [NSNumber] {
-                var utf16 = [UTF16.CodeUnit]()
+                var utf16 = [unichar]()
                 utf16.reserveCapacity(units.count)
                 for unit in units {
-                    utf16.append(UTF16.CodeUnit(truncatingIfNeeded: unit.intValue))
+                    utf16.append(unichar(truncatingIfNeeded: unit.intValue))
                 }
-                return String(decoding: utf16, as: UTF16.self)
+                return utf16.withUnsafeBufferPointer { buffer in
+                    guard let base = buffer.baseAddress else { return "" }
+                    return NSString(characters: base, length: buffer.count) as String
+                }
             }
             var out = [String: Any]()
             for (key, value) in dict {

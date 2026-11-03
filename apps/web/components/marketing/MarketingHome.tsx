@@ -17,11 +17,31 @@ const NAV_SECTIONS = [
 ] as const;
 
 const FEATURES = [
-  { titleKey: 'web.marketing.featureOfflineTitle', bodyKey: 'web.marketing.featureOfflineBody' },
-  { titleKey: 'web.marketing.featureCryptoTitle', bodyKey: 'web.marketing.featureCryptoBody' },
-  { titleKey: 'web.marketing.featureStatesTitle', bodyKey: 'web.marketing.featureStatesBody' },
-  { titleKey: 'web.marketing.featureWatchTitle', bodyKey: 'web.marketing.featureWatchBody' },
-  { titleKey: 'web.marketing.featurePanelTitle', bodyKey: 'web.marketing.featurePanelBody' },
+  {
+    icon: '⬡',
+    titleKey: 'web.marketing.featureOfflineTitle',
+    bodyKey: 'web.marketing.featureOfflineBody',
+  },
+  {
+    icon: '🔒',
+    titleKey: 'web.marketing.featureCryptoTitle',
+    bodyKey: 'web.marketing.featureCryptoBody',
+  },
+  {
+    icon: '↝',
+    titleKey: 'web.marketing.featureStatesTitle',
+    bodyKey: 'web.marketing.featureStatesBody',
+  },
+  {
+    icon: '⌚',
+    titleKey: 'web.marketing.featureWatchTitle',
+    bodyKey: 'web.marketing.featureWatchBody',
+  },
+  {
+    icon: '▣',
+    titleKey: 'web.marketing.featurePanelTitle',
+    bodyKey: 'web.marketing.featurePanelBody',
+  },
 ] as const;
 
 const FAQ = [
@@ -31,6 +51,44 @@ const FAQ = [
   { q: 'web.marketing.faq4Q', a: 'web.marketing.faq4A' },
   { q: 'web.marketing.faq5Q', a: 'web.marketing.faq5A' },
 ] as const;
+
+function MarketingMesh() {
+  return (
+    <svg
+      className="marketing-hero__mesh"
+      viewBox="0 0 400 320"
+      aria-hidden
+      focusable="false"
+    >
+      <defs>
+        <linearGradient id="meshGlow" x1="0%" y1="0%" x2="100%" y2="100%">
+          <stop offset="0%" stopColor="rgba(255,90,90,0.35)" />
+          <stop offset="100%" stopColor="rgba(120,180,255,0.2)" />
+        </linearGradient>
+      </defs>
+      <g stroke="url(#meshGlow)" strokeWidth="1" fill="none" opacity="0.85">
+        <circle cx="200" cy="160" r="48" />
+        <circle cx="80" cy="90" r="28" />
+        <circle cx="320" cy="70" r="32" />
+        <circle cx="340" cy="220" r="36" />
+        <circle cx="70" cy="240" r="30" />
+        <line x1="200" y1="160" x2="80" y2="90" />
+        <line x1="200" y1="160" x2="320" y2="70" />
+        <line x1="200" y1="160" x2="340" y2="220" />
+        <line x1="200" y1="160" x2="70" y2="240" />
+        <line x1="80" y1="90" x2="320" y2="70" />
+        <line x1="340" y1="220" x2="70" y2="240" />
+      </g>
+      <g fill="rgba(255,255,255,0.9)">
+        <circle cx="200" cy="160" r="5" />
+        <circle cx="80" cy="90" r="4" />
+        <circle cx="320" cy="70" r="4" />
+        <circle cx="340" cy="220" r="4" />
+        <circle cx="70" cy="240" r="4" />
+      </g>
+    </svg>
+  );
+}
 
 export function MarketingHome() {
   const { t } = useOperatorPreferences();
@@ -80,109 +138,144 @@ export function MarketingHome() {
         </div>
       </header>
 
-      <section className="marketing-section marketing-hero" id="hero" data-testid="marketing-hero">
-        <div className="marketing-hero__grid">
-          <SosMeshLogo size={96} priority />
-          <div>
-            <h1 className="marketing-hero__title">{t('web.marketing.heroTitle')}</h1>
-            <p className="marketing-hero__lead">{t('web.marketing.heroLead')}</p>
-            <div
-              className="warning-banner marketing-home__not112"
-              role="note"
-              data-testid="marketing-not112-banner"
+      <section className="marketing-hero" id="hero" data-testid="marketing-hero">
+        <div className="marketing-hero__backdrop" aria-hidden />
+        <MarketingMesh />
+        <div className="marketing-hero__content">
+          <SosMeshLogo size={72} priority className="marketing-hero__logo" />
+          <h1 className="marketing-hero__title">{t('web.marketing.heroTitle')}</h1>
+          <p className="marketing-hero__lead">{t('web.marketing.heroLead')}</p>
+          <div
+            className="warning-banner marketing-home__not112 marketing-hero__not112"
+            role="note"
+            data-testid="marketing-not112-banner"
+          >
+            <p>
+              <strong>{t('web.marketing.not112Important')}</strong>{' '}
+              {t('web.marketing.not112Body')}
+            </p>
+          </div>
+          <div className="marketing-home__actions marketing-hero__actions">
+            <Link
+              className="ui-button ui-button--primary"
+              href="/operator/login"
+              data-testid="marketing-operator-login"
             >
-              <p>
-                <strong>{t('web.marketing.not112Important')}</strong>{' '}
-                {t('web.marketing.not112Body')}
-              </p>
-            </div>
-            <div className="marketing-home__actions">
-              <Link
-                className="ui-button ui-button--primary"
-                href="/operator/login"
-                data-testid="marketing-operator-login"
-              >
-                {t('web.marketing.operatorLoginCta')}
-              </Link>
-            </div>
+              {t('web.marketing.operatorLoginCta')}
+            </Link>
+            <a className="ui-button ui-button--ghost marketing-hero__secondary" href="#how-it-works">
+              {t('web.marketing.heroExploreCta')}
+            </a>
           </div>
         </div>
       </section>
 
       <section
-        className="marketing-section"
+        className="marketing-section marketing-section--alt"
         id="how-it-works"
         data-testid="marketing-how-it-works"
       >
-        <h2 className="marketing-section__title">{t('web.marketing.howTitle')}</h2>
-        <p>{t('web.marketing.howIntro')}</p>
-        <ol className="marketing-steps">
-          {[1, 2, 3, 4].map((step) => (
-            <li key={step} className="marketing-step">
-              <h3>{t(`web.marketing.howStep${step}Title` as 'web.marketing.howStep1Title')}</h3>
-              <p>{t(`web.marketing.howStep${step}Body` as 'web.marketing.howStep1Body')}</p>
-            </li>
-          ))}
-        </ol>
+        <div className="marketing-section__inner">
+          <h2 className="marketing-section__title">{t('web.marketing.howTitle')}</h2>
+          <p className="marketing-section__intro">{t('web.marketing.howIntro')}</p>
+          <ol className="marketing-flow">
+            {[1, 2, 3, 4].map((step) => (
+              <li key={step} className="marketing-flow__step">
+                <span className="marketing-flow__index">{step}</span>
+                <div>
+                  <h3>{t(`web.marketing.howStep${step}Title` as 'web.marketing.howStep1Title')}</h3>
+                  <p>{t(`web.marketing.howStep${step}Body` as 'web.marketing.howStep1Body')}</p>
+                </div>
+              </li>
+            ))}
+          </ol>
+        </div>
       </section>
 
       <section className="marketing-section" id="features" data-testid="marketing-features">
-        <h2 className="marketing-section__title">{t('web.marketing.featuresTitle')}</h2>
-        <div className="marketing-cards">
-          {FEATURES.map((feature) => (
-            <article key={feature.titleKey} className="marketing-card">
-              <h3>{t(feature.titleKey)}</h3>
-              <p>{t(feature.bodyKey)}</p>
-            </article>
+        <div className="marketing-section__inner">
+          <h2 className="marketing-section__title">{t('web.marketing.featuresTitle')}</h2>
+          <div className="marketing-cards">
+            {FEATURES.map((feature) => (
+              <article key={feature.titleKey} className="marketing-card">
+                <span className="marketing-card__icon" aria-hidden>
+                  {feature.icon}
+                </span>
+                <h3>{t(feature.titleKey)}</h3>
+                <p>{t(feature.bodyKey)}</p>
+              </article>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      <section
+        className="marketing-section marketing-section--alt"
+        id="platforms"
+        data-testid="marketing-platforms"
+      >
+        <div className="marketing-section__inner">
+          <h2 className="marketing-section__title">{t('web.marketing.platformsTitle')}</h2>
+          <ul className="marketing-platforms">
+            <li>{t('web.marketing.platformAndroid')}</li>
+            <li>{t('web.marketing.platformWear')}</li>
+            <li>{t('web.marketing.platformIos')}</li>
+            <li>{t('web.marketing.platformWatchOs')}</li>
+            <li>{t('web.marketing.platformWeb')}</li>
+          </ul>
+        </div>
+      </section>
+
+      <section className="marketing-section" id="security" data-testid="marketing-security">
+        <div className="marketing-section__inner marketing-section__inner--narrow">
+          <h2 className="marketing-section__title">{t('web.marketing.securityTitle')}</h2>
+          <p>{t('web.marketing.securityBody1')}</p>
+          <p>{t('web.marketing.securityBody2')}</p>
+          <p>{t('web.marketing.securityBody3')}</p>
+        </div>
+      </section>
+
+      <section
+        className="marketing-section marketing-section--alt"
+        id="limitations"
+        data-testid="marketing-limitations"
+      >
+        <div className="marketing-section__inner">
+          <h2 className="marketing-section__title">{t('web.marketing.limitsTitle')}</h2>
+          <ul className="marketing-limits">
+            <li>{t('web.marketing.limit112')}</li>
+            <li>{t('web.marketing.limitApple')}</li>
+            <li>{t('web.marketing.limitWatch')}</li>
+            <li>{t('web.marketing.limitBle')}</li>
+            <li>{t('web.marketing.limitAi')}</li>
+            <li>{t('web.marketing.limitPrototype')}</li>
+          </ul>
+        </div>
+      </section>
+
+      <section className="marketing-section marketing-faq" id="faq" data-testid="marketing-faq">
+        <div className="marketing-section__inner">
+          <h2 className="marketing-section__title">{t('web.marketing.faqTitle')}</h2>
+          {FAQ.map((item) => (
+            <details key={item.q}>
+              <summary>{t(item.q)}</summary>
+              <p>{t(item.a)}</p>
+            </details>
           ))}
         </div>
       </section>
 
-      <section className="marketing-section" id="platforms" data-testid="marketing-platforms">
-        <h2 className="marketing-section__title">{t('web.marketing.platformsTitle')}</h2>
-        <ul className="marketing-platforms">
-          <li>{t('web.marketing.platformAndroid')}</li>
-          <li>{t('web.marketing.platformWear')}</li>
-          <li>{t('web.marketing.platformIos')}</li>
-          <li>{t('web.marketing.platformWatchOs')}</li>
-          <li>{t('web.marketing.platformWeb')}</li>
-        </ul>
-      </section>
-
-      <section className="marketing-section" id="security" data-testid="marketing-security">
-        <h2 className="marketing-section__title">{t('web.marketing.securityTitle')}</h2>
-        <p>{t('web.marketing.securityBody1')}</p>
-        <p>{t('web.marketing.securityBody2')}</p>
-        <p>{t('web.marketing.securityBody3')}</p>
-      </section>
-
-      <section className="marketing-section" id="limitations" data-testid="marketing-limitations">
-        <h2 className="marketing-section__title">{t('web.marketing.limitsTitle')}</h2>
-        <ul className="marketing-limits">
-          <li>{t('web.marketing.limit112')}</li>
-          <li>{t('web.marketing.limitApple')}</li>
-          <li>{t('web.marketing.limitWatch')}</li>
-          <li>{t('web.marketing.limitBle')}</li>
-          <li>{t('web.marketing.limitAi')}</li>
-          <li>{t('web.marketing.limitPrototype')}</li>
-        </ul>
-      </section>
-
-      <section className="marketing-section marketing-faq" id="faq" data-testid="marketing-faq">
-        <h2 className="marketing-section__title">{t('web.marketing.faqTitle')}</h2>
-        {FAQ.map((item) => (
-          <details key={item.q}>
-            <summary>{t(item.q)}</summary>
-            <p>{t(item.a)}</p>
-          </details>
-        ))}
-      </section>
-
       <footer className="marketing-footer" data-testid="marketing-footer">
-        <p>
-          <strong>{t('web.marketing.not112Important')}</strong> {t('web.marketing.footerNot112')}
-        </p>
-        <p>{t('web.marketing.footerNote')}</p>
+        <div className="marketing-footer__inner">
+          <div className="marketing-footer__brand">
+            <SosMeshLogo size={36} />
+            <strong>{t('web.shell.brand')}</strong>
+          </div>
+          <p>
+            <strong>{t('web.marketing.not112Important')}</strong> {t('web.marketing.footerNot112')}
+          </p>
+          <p>{t('web.marketing.footerNote')}</p>
+        </div>
       </footer>
     </div>
   );

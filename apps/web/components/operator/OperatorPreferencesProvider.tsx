@@ -68,16 +68,16 @@ function readStored(): StoredPreferences {
 
 export function OperatorPreferencesProvider({ children }: { children: ReactNode }) {
   const [locale, setLocaleState] = useState<OperatorLocale>(DEFAULT_LOCALE);
-  const [theme, setThemeState] = useState<'light' | 'dark'>('light');
+  const [theme, setThemeState] = useState<'light' | 'dark'>('dark');
   const [savedViews, setSavedViews] = useState<SavedView[]>([]);
   const [activeIncidentId, setActiveIncidentId] = useState<string | null>(null);
 
   useEffect(() => {
     const stored = readStored();
-    if (stored.locale) {
+    if (stored.locale === 'en' || stored.locale === 'tr') {
       setLocaleState(stored.locale);
     }
-    if (stored.theme) {
+    if (stored.theme === 'light' || stored.theme === 'dark') {
       setThemeState(stored.theme);
     }
     if (stored.savedViews) {

@@ -9,7 +9,12 @@ import './design-system.css';
 import './operator.css';
 import './marketing.css';
 
+const siteUrl =
+  process.env.NEXT_PUBLIC_SITE_URL ??
+  (process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : 'http://localhost:3000');
+
 export const metadata: Metadata = {
+  metadataBase: new URL(siteUrl),
   title: translate(DEFAULT_LOCALE, 'web.marketing.metaTitle'),
   description: translate(DEFAULT_LOCALE, 'web.marketing.metaDescription'),
   openGraph: {
@@ -27,6 +32,12 @@ export default function RootLayout({
   return (
     <html lang={DEFAULT_LOCALE} suppressHydrationWarning>
       <head>
+        <link rel="preconnect" href="https://fonts.googleapis.com" />
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
+        <link
+          href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap"
+          rel="stylesheet"
+        />
         <link rel="stylesheet" href="/tokens.css" />
       </head>
       <body>

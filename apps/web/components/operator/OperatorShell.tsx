@@ -16,7 +16,6 @@ import { OperatorLiveStatus } from './OperatorLiveStatus';
 import { useOperatorPreferences } from './OperatorPreferencesProvider';
 import { OrgHeader } from './OrgHeader';
 import { SavedViewsMenu } from './SavedViewsMenu';
-import { ThemeLocaleControls } from './ThemeLocaleControls';
 import { useOrganizationContext } from './useOrganizationContext';
 
 type NavConfig = { href: string; labelKey: string; roles?: string[] };
@@ -65,7 +64,7 @@ export function OperatorShell({
 }) {
   const pathname = usePathname();
   const router = useRouter();
-  const { t } = useOperatorPreferences();
+  const { t, theme, setTheme } = useOperatorPreferences();
   const { context } = useOrganizationContext();
   const [paletteOpen, setPaletteOpen] = useState(false);
   const [drawerOpen, setDrawerOpen] = useState(false);
@@ -157,10 +156,8 @@ export function OperatorShell({
             ))}
           </ul>
         </nav>
-        <ThemeLocaleControls />
-        <div className="operator-user">
-          <p>{user.displayName || user.email || t('web.shell.defaultUser')}</p>
-          <Button variant="ghost" onClick={logout}>
+        <div className="operator-sidebar__footer">
+          <Button variant="ghost" onClick={logout} className="operator-sidebar__logout">
             {t('web.shell.logout')}
           </Button>
         </div>
@@ -180,15 +177,43 @@ export function OperatorShell({
           >
             {t('web.shell.mobileMenu')}
           </Button>
-          <OperatorLiveStatus />
-          <IncidentSwitcher incidents={context?.incidents ?? []} />
-          <Suspense fallback={null}>
-            <SavedViewsMenu />
-          </Suspense>
-          <Button variant="ghost" onClick={() => setPaletteOpen(true)}>
-            {t('web.shell.commandShortcut')}
-          </Button>
-          <LocaleSwitcher className="operator-topbar__locale" testId="operator-topbar-locale" />
+          <div className="operator-topbar__search-wrap">
+            <input
+              type="search"
+              className="operator-topbar__search"
+              placeholder={t('web.shell.commandPlaceholder')}
+              aria-label={t('web.shell.commandPlaceholder')}
+              onFocus={() => setPaletteOpen(true)}
+              onClick={() => setPaletteOpen(true)}
+              readOnly
+            />
+          </div>
+          <div className="operator-topbar__cluster">
+            <OperatorLiveStatus />
+            <IncidentSwitcher incidents={context?.incidents ?? []} />
+            <Suspense fallback={null}>
+              <SavedViewsMenu />
+            </Suspense>
+          </div>
+          <div className="operator-topbar__controls">
+            <LocaleSwitcher className="operator-topbar__locale" testId="operator-topbar-locale" />
+            <button
+              type="button"
+              className="ui-button ui-button--ghost operator-topbar__theme"
+              onClick={() => setTheme(theme === 'light' ? 'dark' : 'light')}
+              data-testid="operator-topbar-theme"
+            >
+              {theme === 'light' ? t('web.shell.themeDark') : t('web.shell.themeLight')}
+            </button>
+            <div className="operator-topbar__user" data-testid="operator-topbar-user">
+              <span className="operator-topbar__user-name">
+                {user.displayName || user.email || t('web.shell.defaultUser')}
+              </span>
+              <Button variant="ghost" onClick={logout} className="operator-topbar__logout">
+                {t('web.shell.logout')}
+              </Button>
+            </div>
+          </div>
         </header>
         <main id="operator-main" className="operator-main" tabIndex={-1}>
           {children}

@@ -5,11 +5,17 @@ export function apiBaseUrl(): string {
 }
 
 export function isE2eMock(): boolean {
-  if (process.env.OPERATOR_E2E_MOCK === '1' && process.env.NODE_ENV === 'production') {
+  if (process.env.OPERATOR_E2E_MOCK !== '1') {
+    return false;
+  }
+  if (process.env.SOSMESH_SCREENSHOT_CAPTURE === '1') {
+    return true;
+  }
+  if (process.env.NODE_ENV === 'production') {
     console.warn(
       '[SOSMesh] OPERATOR_E2E_MOCK is set but ignored in production (mock disabled).'
     );
     return false;
   }
-  return process.env.OPERATOR_E2E_MOCK === '1';
+  return true;
 }

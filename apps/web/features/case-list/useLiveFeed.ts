@@ -61,61 +61,64 @@ export function useLiveFeed(onEvent?: (event: FeedEvent) => void) {
   useEffect(() => {
     let closed = false;
     let pollTimer: number | undefined;
+    let eventSource: EventSource | undefined;
+    let sseFailures = 0;
+    const MAX_SSE_FAILURES = 3;
 
     const startPolling = () => {
+      if (pollTimer) return;
       pollOnce();
       pollTimer = window.setInterval(pollOnce, 8000);
+      setState((prev) => ({ ...prev, mode: 'polling' }));
     };
 
-    const parseSseChunk = (buffer: string): string => {
-      const events: FeedEvent[] = [];
-      const parts = buffer.split('\n\n');
-      const remainder = parts.pop() ?? '';
-      for (const part of parts) {
-        const dataLine = part.split('\n').find((line) => line.startsWith('data: '));
-        if (!dataLine) {
-          continue;
-        }
-        try {
-          events.push(JSON.parse(dataLine.slice(6)) as FeedEvent);
-        } catch {
-          // ignore malformed chunk
-        }
+    const stopPolling = () => {
+      if (pollTimer) {
+        window.clearInterval(pollTimer);
+        pollTimer = undefined;
       }
-      if (events.length > 0) {
-        ingestEvents(events);
-      }
-      return remainder;
     };
 
-    const connectSse = async () => {
+    const connectSse = () => {
+      if (eventSource || closed) return;
+
       try {
-        const res = await fetch('/api/operator/events/stream', {
-          headers: { Accept: 'text/event-stream' },
-          cache: 'no-store',
-        });
-        if (!res.ok || !res.body) {
-          startPolling();
-          return;
-        }
-        setState((prev) => ({ ...prev, connected: true, mode: 'sse' }));
-        const reader = res.body.getReader();
-        const decoder = new TextDecoder();
-        let buffer = '';
-        while (!closed) {
-          const { done, value } = await reader.read();
-          if (done) {
-            break;
+        const url = new URL('/api/operator/events/stream', window.location.origin);
+        url.searchParams.set('after', afterRef.current);
+        eventSource = new EventSource(url.toString());
+
+        eventSource.onopen = () => {
+          sseFailures = 0;
+          stopPolling();
+          setState((prev) => ({ ...prev, connected: true, mode: 'sse' }));
+        };
+
+        eventSource.addEventListener('incident_message', (e: MessageEvent) => {
+          try {
+            const event = JSON.parse(e.data) as FeedEvent;
+            ingestEvents([event]);
+          } catch {
+            // ignore malformed event
           }
-          buffer += decoder.decode(value, { stream: true });
-          buffer = parseSseChunk(buffer);
-        }
-        if (!closed) {
-          setState((prev) => ({ ...prev, connected: false, stale: true }));
-          startPolling();
-        }
+        });
+
+        eventSource.onerror = () => {
+          setState((prev) => ({ ...prev, connected: false }));
+          eventSource?.close();
+          eventSource = undefined;
+          sseFailures += 1;
+
+          if (sseFailures >= MAX_SSE_FAILURES) {
+            if (!closed) {
+              startPolling();
+            }
+          } else if (!closed) {
+            setTimeout(() => connectSse(), 2000 * sseFailures);
+          }
+        };
       } catch {
-        if (!closed) {
+        sseFailures += 1;
+        if (sseFailures >= MAX_SSE_FAILURES && !closed) {
           startPolling();
         }
       }
@@ -135,6 +138,9 @@ export function useLiveFeed(onEvent?: (event: FeedEvent) => void) {
 
     return () => {
       closed = true;
+      if (eventSource) {
+        eventSource.close();
+      }
       if (pollTimer) {
         window.clearInterval(pollTimer);
       }

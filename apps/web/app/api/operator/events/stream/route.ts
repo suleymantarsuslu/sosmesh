@@ -1,9 +1,12 @@
-import { NextResponse } from 'next/server';
+import { type NextRequest, NextResponse } from 'next/server';
 
 import { apiBaseUrl, isE2eMock } from '../../../../../lib/config';
 import { getSessionToken } from '../../../../../lib/session';
 
-export async function GET() {
+export const dynamic = 'force-dynamic';
+export const runtime = 'nodejs';
+
+export async function GET(request: NextRequest) {
   if (isE2eMock()) {
     const { mockSseResponse } = await import('../../../../../lib/e2e-mock-cases');
     return mockSseResponse();
@@ -12,10 +15,16 @@ export async function GET() {
   if (!token) {
     return NextResponse.json({ code: 'UNAUTHORIZED' }, { status: 401 });
   }
-  const upstream = await fetch(`${apiBaseUrl()}/v1/operator/events?after=0`, {
+
+  const after = request.nextUrl.searchParams.get('after') ?? '0';
+  const lastEventId = request.headers.get('Last-Event-ID');
+  const afterParam = lastEventId && /^\d+$/.test(lastEventId) ? lastEventId : after;
+
+  const upstream = await fetch(`${apiBaseUrl()}/v1/operator/events?after=${encodeURIComponent(afterParam)}`, {
     headers: {
       Authorization: `Bearer ${token}`,
       Accept: 'text/event-stream',
+      ...(lastEventId ? { 'Last-Event-ID': lastEventId } : {}),
     },
     cache: 'no-store',
   });
@@ -26,7 +35,8 @@ export async function GET() {
     status: 200,
     headers: {
       'Content-Type': 'text/event-stream',
-      'Cache-Control': 'no-cache',
+      'Cache-Control': 'no-cache, no-transform',
+      'X-Accel-Buffering': 'no',
       Connection: 'keep-alive',
     },
   });

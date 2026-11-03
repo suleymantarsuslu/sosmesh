@@ -30,7 +30,10 @@ export function useLiveFeed(onEvent?: (event: FeedEvent) => void) {
     if (batch.length === 0) {
       return;
     }
-    afterRef.current = batch[batch.length - 1].id;
+    const lastId = batch[batch.length - 1].id;
+    if (/^\d+$/.test(lastId)) {
+      afterRef.current = lastId;
+    }
     setState((prev) => ({
       ...prev,
       events: [...prev.events, ...batch].slice(-500),

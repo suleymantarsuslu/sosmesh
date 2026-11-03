@@ -17,10 +17,13 @@ export function OperatorLiveStatus() {
           setConnected(false);
           return;
         }
-        const body = (await res.json()) as { events?: { seq: string }[] };
+        const body = (await res.json()) as { events?: { id: string }[] };
         const events = body.events ?? [];
         if (events.length > 0) {
-          after = events[events.length - 1].seq;
+          const lastId = events[events.length - 1].id;
+          if (/^\d+$/.test(lastId)) {
+            after = lastId;
+          }
         }
         setConnected(true);
       } catch {

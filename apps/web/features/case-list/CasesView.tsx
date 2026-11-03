@@ -1,7 +1,7 @@
 'use client';
 
 import Link from 'next/link';
-import { useCallback, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
 import { CaseDetailPanel } from './CaseDetailPanel';
 import { CaseDrawer } from './CaseDrawer';
@@ -24,6 +24,15 @@ type TimelineEntry = {
   source: string;
   createdAt: string;
 };
+
+function formatTimeAgo(ms: number): string {
+  const seconds = Math.floor(ms / 1000);
+  if (seconds < 60) return `${seconds}s`;
+  const minutes = Math.floor(seconds / 60);
+  if (minutes < 60) return `${minutes}m`;
+  const hours = Math.floor(minutes / 60);
+  return `${hours}h`;
+}
 
 function feedEventToCase(event: FeedEvent, existing?: OperatorCaseRow): OperatorCaseRow {
   return {
@@ -48,11 +57,17 @@ export function CasesView({ initialCases }: { initialCases: OperatorCaseRow[] })
   const { activeIncidentId, t } = useOperatorPreferences();
   const [cases, setCases] = useState<OperatorCaseRow[]>(initialCases);
   const [filters, setFilters] = useState(defaultCaseFilters());
+  const [now, setNow] = useState(Date.now());
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [timeline, setTimeline] = useState<TimelineEntry[]>([]);
   const [mapZoom, setMapZoom] = useState(6);
   const [assignmentPreview, setAssignmentPreview] = useState<AssignmentPreviewRoute | null>(null);
   const mapRef = useRef<OperatorMapHandle>(null);
+
+  useEffect(() => {
+    const timer = window.setInterval(() => setNow(Date.now()), 1000);
+    return () => window.clearInterval(timer);
+  }, []);
 
   const refreshCases = useCallback(async () => {
     const params = new URLSearchParams({ limit: '100' });
@@ -139,10 +154,21 @@ export function CasesView({ initialCases }: { initialCases: OperatorCaseRow[] })
   return (
     <div className="cases-view cases-view--modern" data-testid="operator-cases-view">
       <div className="cases-view__filters-bar">
-        <div className="cases-view__live-badge" role="status" data-testid="live-feed-status">
+        <div 
+          className={`cases-view__live-badge ${
+            !feed.connected ? 'cases-view__live-badge--disconnected' : 
+            feed.mode === 'sse' ? 'cases-view__live-badge--connected' : 
+            'cases-view__live-badge--polling'
+          }`} 
+          role="status" 
+          data-testid="live-feed-status"
+        >
           <span className={`cases-view__live-indicator ${feed.connected ? 'cases-view__live-indicator--connected' : ''}`} aria-hidden="true" />
-          {feed.connected ? t('web.cases.liveConnected') : t('web.cases.liveFallback')}
-          {feed.stale ? ` — ${t('web.cases.liveStale')}` : ''}
+          {!feed.connected ? t('web.cases.liveDisconnected') :
+           feed.mode === 'sse' ? t('web.cases.liveConnected') :
+           t('web.cases.livePolling')}
+          {feed.connected && feed.lastEventAt && (Date.now() - feed.lastEventAt > 30000) && 
+            ` (${t('web.cases.liveUpdatedAgo').replace('{{time}}', formatTimeAgo(now - feed.lastEventAt))})`}
         </div>
         <CaseFilters filters={filters} onChange={setFilters} />
         <button type="button" className="cases-view__refresh-button" onClick={() => refreshCases()} aria-label={t('web.cases.refreshList')}>

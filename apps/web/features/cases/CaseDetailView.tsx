@@ -4,16 +4,32 @@ import { useState } from 'react';
 
 import { DeliveryStateBadge } from '../../components/cases/DeliveryStateBadge';
 import { useOperatorPreferences } from '../../components/operator/OperatorPreferencesProvider';
-import { AiSuggestionPanel } from './AiSuggestionPanel';
+import { AiIntelligencePanel } from '../ai/AiIntelligencePanel';
+import type {
+  AiTriageView,
+  TranscriptView,
+  SparkVisionView,
+  SamVisionView,
+  IncidentLinkSuggestionView,
+} from '../ai/types';
 import { AssignmentPreviewPanel } from '../assignment/AssignmentPreviewPanel';
 import { REVIEW_STATUS_OPTIONS, type OperatorCaseDetail } from './types';
 
+type AiData = {
+  triage: AiTriageView | null;
+  transcript: TranscriptView | null;
+  sparkVision: SparkVisionView | null;
+  samVision: SamVisionView | null;
+  linkSuggestions: IncidentLinkSuggestionView[];
+};
+
 type Props = {
   detail: OperatorCaseDetail;
+  aiData: AiData | null;
   onRefresh: () => Promise<void>;
 };
 
-export function CaseDetailView({ detail, onRefresh }: Props) {
+export function CaseDetailView({ detail, aiData, onRefresh }: Props) {
   const { t, locale } = useOperatorPreferences();
   const dateLocale = locale === 'tr' ? 'tr-TR' : 'en-GB';
   const [version, setVersion] = useState(detail.version);
@@ -134,7 +150,18 @@ export function CaseDetailView({ detail, onRefresh }: Props) {
         </button>
       </section>
 
-      <AiSuggestionPanel ai={detail.ai} />
+      {aiData && (
+        <AiIntelligencePanel
+          incidentId={detail.incidentId}
+          triage={aiData.triage}
+          transcript={aiData.transcript}
+          sparkVision={aiData.sparkVision}
+          samVision={aiData.samVision}
+          linkSuggestions={aiData.linkSuggestions}
+          isSynthetic={false}
+          onRefresh={onRefresh}
+        />
+      )}
 
       <AssignmentPreviewPanel incidentId={detail.incidentId} caseCoordinates={caseCoordinates} />
 

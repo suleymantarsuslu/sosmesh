@@ -4,9 +4,25 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 
 import { CaseDetailView } from './CaseDetailView';
 import type { OperatorCaseDetail } from './types';
+import type {
+  AiTriageView,
+  TranscriptView,
+  SparkVisionView,
+  SamVisionView,
+  IncidentLinkSuggestionView,
+} from '../ai/types';
+
+type AiData = {
+  triage: AiTriageView | null;
+  transcript: TranscriptView | null;
+  sparkVision: SparkVisionView | null;
+  samVision: SamVisionView | null;
+  linkSuggestions: IncidentLinkSuggestionView[];
+};
 
 export function CaseDetailClient({ incidentId }: { incidentId: string }) {
   const [detail, setDetail] = useState<OperatorCaseDetail | null>(null);
+  const [aiData, setAiData] = useState<AiData | null>(null);
   const [error, setError] = useState<string | null>(null);
   const seenSent = useRef(false);
 
@@ -22,20 +38,44 @@ export function CaseDetailClient({ incidentId }: { incidentId: string }) {
     setError(null);
   }, [incidentId]);
 
+  const loadAiData = useCallback(async () => {
+    try {
+      const res = await fetch(`/api/operator/cases/${incidentId}/ai`, { cache: 'no-store' });
+      if (res.ok) {
+        const data = (await res.json()) as AiData;
+        setAiData(data);
+      }
+    } catch {
+      setAiData({
+        triage: null,
+        transcript: null,
+        sparkVision: null,
+        samVision: null,
+        linkSuggestions: [],
+      });
+    }
+  }, [incidentId]);
+
   const recordSeen = useCallback(async () => {
     await fetch(`/api/operator/cases/${incidentId}/seen`, { method: 'POST' });
   }, [incidentId]);
 
+  const refresh = useCallback(async () => {
+    await loadDetail();
+    await loadAiData();
+  }, [loadDetail, loadAiData]);
+
   useEffect(() => {
     void (async () => {
       await loadDetail();
+      await loadAiData();
       if (!seenSent.current) {
         seenSent.current = true;
         await recordSeen();
-        await loadDetail();
+        await refresh();
       }
     })();
-  }, [loadDetail, recordSeen]);
+  }, [loadDetail, loadAiData, recordSeen, refresh]);
 
   if (error) {
     return (
@@ -47,5 +87,5 @@ export function CaseDetailClient({ incidentId }: { incidentId: string }) {
   if (!detail) {
     return <p>Yükleniyor…</p>;
   }
-  return <CaseDetailView detail={detail} onRefresh={loadDetail} />;
+  return <CaseDetailView detail={detail} aiData={aiData} onRefresh={refresh} />;
 }

@@ -26,6 +26,8 @@ node_modules/
 docs/release/SHA256SUMS
 docs/release/sbom.cdx.json
 
+# Build outputs
+build/
 dist/
 out/
 .next/

@@ -11,9 +11,11 @@ import { BudgetGuardService } from './budget-guard.service';
 import { AiJobQueueService } from './ai-job-queue.service';
 import { AiJobRunnerService } from './ai-job-runner.service';
 import { TriageV2Service } from './triage-v2.service';
+import { VisionModule } from './vision/vision.module';
+import { LocalDiskStorageService } from '../media/local-disk-storage.service';
 
 @Module({
-  imports: [PrismaModule],
+  imports: [PrismaModule, VisionModule],
   providers: [
     AiJobService,
     MetaModelClient,
@@ -21,6 +23,7 @@ import { TriageV2Service } from './triage-v2.service';
     AiJobQueueService,
     AiJobRunnerService,
     TriageV2Service,
+    LocalDiskStorageService,
     { provide: AI_PROVIDER_OVERRIDE, useValue: null },
     { provide: SOS_PLAINTEXT_SOURCE, useClass: ServerKeyPlaintextSource },
   ],
@@ -31,6 +34,7 @@ import { TriageV2Service } from './triage-v2.service';
     AiJobQueueService,
     AiJobRunnerService,
     TriageV2Service,
+    VisionModule,
   ],
 })
 export class AiModule {}

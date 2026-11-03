@@ -2,9 +2,21 @@
 <resources>
     <string name="permission_screen_title">Permissions and safety</string>
     <string name="permission_disclaimer_not112">SOSMesh is not a replacement for 112. Always call 112 in emergencies.</string>
+    <string name="permission_gate_title">Permissions before you start</string>
+    <string name="permission_gate_intro">SOSMesh needs Bluetooth and (on your Android version) notification permission to send SOS to nearby devices without internet. The app stays locked until all required permissions are granted.</string>
     <string name="permission_bluetooth_rationale">Bluetooth: SOSMesh uses Bluetooth Low Energy to share SOS messages with nearby devices without internet. Without this permission, mesh scan cannot start.</string>
-    <string name="permission_location_rationale">Location (legacy scan): On Android 11 and below, BLE scanning may require location permission.</string>
-    <string name="permission_notification_rationale">Notifications: Optional alerts when your SOS status changes.</string>
+    <string name="permission_bluetooth_scan_rationale">Bluetooth scan (BLUETOOTH_SCAN): Required to discover nearby SOSMesh devices.</string>
+    <string name="permission_bluetooth_connect_rationale">Bluetooth connect (BLUETOOTH_CONNECT): Required to open a GATT session to a discovered device.</string>
+    <string name="permission_bluetooth_advertise_rationale">Bluetooth advertise (BLUETOOTH_ADVERTISE): Required so other devices can find you.</string>
+    <string name="permission_location_rationale">Location: On Android 11 and below, BLE scanning may require location permission.</string>
+    <string name="permission_notification_rationale">Notifications (POST_NOTIFICATIONS): Required for the foreground mesh connection notification when relay mode is on. This is not operator read.</string>
+    <string name="permission_bluetooth_adapter_off">Bluetooth is off. Turn it on for nearby device transfer.</string>
+    <string name="permission_location_services_off">Location services are off. Enable location for BLE scan on this Android version.</string>
+    <string name="permission_enable_bluetooth_button">Turn on Bluetooth</string>
+    <string name="permission_enable_location_services_button">Open location settings</string>
+    <string name="permission_call_112_button">Call 112</string>
+    <string name="permission_gate_status_granted">Status: granted</string>
+    <string name="permission_gate_status_missing">Status: missing</string>
     <string name="permission_request_button">Grant permission</string>
     <string name="permission_open_settings_button">Open settings</string>
     <string name="background_no_guarantee">No guarantee of continuous background connection or rescue.</string>

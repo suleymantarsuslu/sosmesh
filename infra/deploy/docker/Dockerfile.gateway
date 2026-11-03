@@ -1,0 +1,5 @@
+# Path-routing nginx gateway for the VULUT/Coolify stack (TLS is terminated by Traefik).
+FROM nginx:1.27-alpine
+RUN apk add --no-cache wget
+COPY infra/deploy/nginx/vulut.conf /etc/nginx/conf.d/default.conf
+EXPOSE 80

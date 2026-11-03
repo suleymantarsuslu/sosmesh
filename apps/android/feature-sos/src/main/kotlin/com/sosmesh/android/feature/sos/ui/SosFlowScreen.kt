@@ -1,6 +1,7 @@
 package com.sosmesh.android.feature.sos.ui
 
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.defaultMinSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -33,8 +34,10 @@ import com.sosmesh.android.core.design.components.SosScrollableScreenContent
 import com.sosmesh.android.core.design.components.SosStatusCard
 import com.sosmesh.android.core.design.theme.SosSpacing
 import com.sosmesh.android.core.model.SosType
+import com.sosmesh.android.core.permissions.ui.EmergencyCall112Button
 import com.sosmesh.android.feature.sos.R
 import com.sosmesh.android.feature.sos.SosFormUiState
+import com.sosmesh.android.feature.sos.SosPeerDeliveryHint
 import com.sosmesh.android.feature.sos.SosWizardStep
 
 @Composable
@@ -85,7 +88,10 @@ fun SosFlowScreen(
                     contentModifier = contentModifier,
                 )
             SosWizardStep.DONE ->
-                SosDoneScreen(contentModifier = contentModifier)
+                SosDoneScreen(
+                    peerDeliveryHint = state.peerDeliveryHint,
+                    contentModifier = contentModifier,
+                )
         }
     }
 }
@@ -106,6 +112,7 @@ private fun SosFormScreen(
     SosScrollableScreenContent(contentModifier) {
         OfflineBadge()
         SosNot112Banner(disclaimerText = stringResource(R.string.sos_not112_disclaimer))
+        EmergencyCall112Button(modifier = Modifier.fillMaxWidth(), testTag = "sos_call_112_button")
         Text(text = stringResource(R.string.sos_secondary_continue_hint), style = MaterialTheme.typography.bodySmall)
         Text(text = stringResource(R.string.sos_type_label), style = MaterialTheme.typography.titleMedium)
         Row(
@@ -214,9 +221,24 @@ private fun SosPreviewScreen(
 }
 
 @Composable
-private fun SosDoneScreen(contentModifier: Modifier) {
+private fun SosDoneScreen(
+    peerDeliveryHint: SosPeerDeliveryHint,
+    contentModifier: Modifier,
+) {
     SosScrollableScreenContent(contentModifier) {
-        SosEmptyState(message = stringResource(R.string.sos_saved_local))
+        Column(verticalArrangement = Arrangement.spacedBy(SosSpacing.sm)) {
+            SosEmptyState(message = stringResource(R.string.sos_saved_local))
+            val detail =
+                when (peerDeliveryHint) {
+                    SosPeerDeliveryHint.NONE,
+                    SosPeerDeliveryHint.TRANSFER_STARTED,
+                    -> stringResource(R.string.sos_peer_delivery_started)
+                    SosPeerDeliveryHint.WAITING_FOR_PEER -> stringResource(R.string.sos_peer_delivery_waiting)
+                    SosPeerDeliveryHint.PERMISSIONS_REQUIRED -> stringResource(R.string.sos_peer_delivery_permissions)
+                    SosPeerDeliveryHint.BLOCKED -> stringResource(R.string.sos_peer_delivery_blocked)
+                }
+            Text(text = detail, style = MaterialTheme.typography.bodyMedium)
+        }
     }
 }
 

@@ -32,7 +32,7 @@ class RelayUploadExecutor
         private val outbox: OutboxQueueAdapter,
         private val uplink: RelayIngestUplink,
     ) {
-        fun runUploadCycle(
+        suspend fun runUploadCycle(
             nowMs: Long,
             networkConnected: Boolean,
             battery: RelayBatterySnapshot,

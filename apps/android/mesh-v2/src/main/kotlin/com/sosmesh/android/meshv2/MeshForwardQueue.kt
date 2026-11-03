@@ -42,31 +42,46 @@ class MeshForwardQueue(
 ) {
     private val items = ArrayDeque<MeshForwardQueueItem>()
     private var lastEviction: MeshForwardEvictionReason? = null
+    private val lock = Any()
 
     fun enqueue(
         item: MeshForwardQueueItem,
         batteryQuotaAllowsEnqueue: Boolean,
-    ): MeshForwardQueueSnapshot {
-        if (!batteryQuotaAllowsEnqueue) {
-            lastEviction = MeshForwardEvictionReason.BatteryQuota
-            return snapshot()
+    ): MeshForwardQueueSnapshot =
+        synchronized(lock) {
+            if (!batteryQuotaAllowsEnqueue) {
+                lastEviction = MeshForwardEvictionReason.BatteryQuota
+                return snapshotLocked()
+            }
+            items.addLast(item)
+            items.sortWith(
+                compareBy<MeshForwardQueueItem> { it.envelope.ttlHops }
+                    .thenBy { it.envelope.copyCount }
+                    .thenBy { it.enqueuedAtMs },
+            )
+            while (items.size > maxDepth) {
+                items.removeLast()
+                lastEviction = MeshForwardEvictionReason.QueueCapacity
+            }
+            snapshotLocked()
         }
-        items.addLast(item)
-        items.sortWith(
-            compareBy<MeshForwardQueueItem> { it.envelope.ttlHops }
-                .thenBy { it.envelope.copyCount }
-                .thenBy { it.enqueuedAtMs },
-        )
-        while (items.size > maxDepth) {
-            items.removeLast()
-            lastEviction = MeshForwardEvictionReason.QueueCapacity
-        }
-        return snapshot()
-    }
 
-    fun pollNext(): MeshForwardQueueItem? = items.removeFirstOrNull()
+    fun pollNext(): MeshForwardQueueItem? =
+        synchronized(lock) {
+            items.removeFirstOrNull()
+        }
+
+    fun peekNext(): MeshForwardQueueItem? =
+        synchronized(lock) {
+            items.firstOrNull()
+        }
 
     fun snapshot(): MeshForwardQueueSnapshot =
+        synchronized(lock) {
+            snapshotLocked()
+        }
+
+    private fun snapshotLocked(): MeshForwardQueueSnapshot =
         MeshForwardQueueSnapshot(
             depth = items.size,
             lastEviction = lastEviction,

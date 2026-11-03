@@ -24,6 +24,7 @@ import com.sosmesh.android.core.design.components.SosScreenScaffold
 import com.sosmesh.android.core.design.components.SosScrollableScreenContent
 import com.sosmesh.android.core.design.components.SosStatusCard
 import com.sosmesh.android.core.design.theme.SosSpacing
+import com.sosmesh.android.core.permissions.ui.EmergencyCall112Button
 
 @Composable
 fun HomeRoute(
@@ -39,7 +40,29 @@ fun HomeRoute(
     LaunchedEffect(Unit) {
         viewModel.refreshPlatform()
     }
+    HomeScreen(
+        state = state,
+        onOpenPermissions = onOpenPermissions,
+        onOpenRadioDebug = onOpenRadioDebug,
+        onOpenSos = onOpenSos,
+        onOpenStatus = onOpenStatus,
+        onOpenRelay = onOpenRelay,
+        onOpenSettings = onOpenSettings,
+        onExpressSos = { viewModel.expressSaveSos() },
+    )
+}
 
+@Composable
+internal fun HomeScreen(
+    state: HomeUiState,
+    onOpenPermissions: () -> Unit,
+    onOpenRadioDebug: () -> Unit,
+    onOpenSos: () -> Unit,
+    onOpenStatus: () -> Unit,
+    onOpenRelay: () -> Unit,
+    onOpenSettings: () -> Unit,
+    onExpressSos: () -> Unit,
+) {
     SosScreenScaffold(
         title = stringResource(R.string.home_title),
         showLogoInTopBar = true,
@@ -56,12 +79,13 @@ fun HomeRoute(
                         com.sosmesh.android.core.permissions.R.string.permission_disclaimer_not112,
                     ),
             )
+            EmergencyCall112Button(modifier = Modifier.fillMaxWidth(), testTag = "home_call_112_button")
             PlatformSelfRepairCard(hint = state.platformHint, onOpenPermissions = onOpenPermissions)
             CrossPlatformFaultCard(hint = state.crossPlatformFault, onOpenPermissions = onOpenPermissions)
             SosExpressSosButton(
                 label = stringResource(R.string.home_express_sos_cta),
                 contentDescription = stringResource(R.string.home_express_sos_content_description),
-                onClick = { viewModel.expressSaveSos() },
+                onClick = onExpressSos,
             )
             state.expressSavedMessageId?.let {
                 SosStatusCard {

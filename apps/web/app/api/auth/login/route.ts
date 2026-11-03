@@ -50,12 +50,17 @@ export async function POST(request: NextRequest) {
 
   const apiUrl = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:3001';
   const origin = request.headers.get('origin') ?? request.nextUrl.origin;
+  const headers: Record<string, string> = {
+    'Content-Type': 'application/json',
+    Origin: origin,
+  };
+  const xForwardedFor = request.headers.get('x-forwarded-for');
+  if (xForwardedFor) {
+    headers['X-Forwarded-For'] = xForwardedFor;
+  }
   const apiRes = await fetch(`${apiUrl}/v1/auth/login`, {
     method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      Origin: origin,
-    },
+    headers,
     body: JSON.stringify({ email, password }),
   });
   const data = await apiRes.json();

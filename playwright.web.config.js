@@ -69,12 +69,12 @@ module.exports = defineConfig({
     },
   },
   use: {
-    baseURL: 'http://localhost:3000',
+    baseURL: `http://localhost:${process.env.WEB_PORT || 3000}`,
     trace: 'retain-on-failure',
   },
   webServer: {
-    command: 'cd apps/web && npx next dev --port 3000',
-    url: 'http://localhost:3000',
+    command: `cd apps/web && npx next dev --port ${process.env.WEB_PORT || 3000}`,
+    url: `http://localhost:${process.env.WEB_PORT || 3000}`,
     reuseExistingServer: !process.env.CI,
     timeout: 120000,
     env: {
@@ -82,6 +82,7 @@ module.exports = defineConfig({
       OPERATOR_E2E_MOCK: '1',
       NEXT_PUBLIC_MAP_TEST_MODE: '1',
       JWT_SECRET: 'test-operator-jwt-signing-key-16',
+      PORT: process.env.WEB_PORT || '3000',
       [e2ePassKey]: e2ePassword,
     },
   },

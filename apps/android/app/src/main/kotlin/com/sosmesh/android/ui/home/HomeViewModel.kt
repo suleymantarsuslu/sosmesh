@@ -1,6 +1,8 @@
 package com.sosmesh.android.ui.home
 
+import android.util.Log
 import androidx.lifecycle.ViewModel
+import androidx.lifecycle.viewModelScope
 import com.sosmesh.android.core.platform.CrossPlatformFaultEvaluator
 import com.sosmesh.android.core.platform.CrossPlatformFaultHint
 import com.sosmesh.android.core.platform.CrossPlatformFaultState
@@ -8,10 +10,12 @@ import com.sosmesh.android.core.platform.PlatformUserHint
 import com.sosmesh.android.feature.sos.ExpressSosSaver
 import com.sosmesh.android.platform.MeshPlatformSignalBridge
 import dagger.hilt.android.lifecycle.HiltViewModel
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
+import kotlinx.coroutines.launch
 import javax.inject.Inject
 
 data class HomeUiState(
@@ -51,10 +55,16 @@ class HomeViewModel
             }
         }
 
-        fun expressSaveSos(nowMs: Long = System.currentTimeMillis()): String {
-            val messageId = expressSosSaver.save(nowMs)
-            _uiState.update { it.copy(expressSavedMessageId = messageId) }
-            return messageId
+        fun expressSaveSos(nowMs: Long = System.currentTimeMillis()) {
+            viewModelScope.launch {
+                runCatching { expressSosSaver.save(nowMs) }
+                    .onSuccess { messageId ->
+                        _uiState.update { it.copy(expressSavedMessageId = messageId) }
+                    }.onFailure { throwable ->
+                        if (throwable is CancellationException) throw throwable
+                        Log.e("HomeViewModel", "express_sos_failed", throwable)
+                    }
+            }
         }
 
         fun clearExpressResult() {

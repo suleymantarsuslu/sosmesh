@@ -3,6 +3,7 @@ package com.sosmesh.android.core.data.outbox
 import androidx.room.Room
 import androidx.test.core.app.ApplicationProvider
 import com.sosmesh.contracts.transport.EnqueueInput
+import kotlinx.coroutines.runBlocking
 import org.junit.After
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
@@ -34,38 +35,40 @@ class OutboxAdim47CapacityTest {
     }
 
     @Test
-    fun pendingEnvelopeQueue_holds1000DistinctRows() {
-        repeat(1000) { index ->
-            adapter.enqueue(
-                EnqueueInput(
-                    sosId = "adim47-$index",
-                    digest = "digest-$index",
-                    origin = "android-adim47",
-                    encryptedBlobBase64 = "YQ==",
-                ),
-                nowMs = index.toLong(),
-            )
+    fun pendingEnvelopeQueue_holds1000DistinctRows() =
+        runBlocking {
+            repeat(1000) { index ->
+                adapter.enqueue(
+                    EnqueueInput(
+                        sosId = "adim47-$index",
+                        digest = "digest-$index",
+                        origin = "android-adim47",
+                        encryptedBlobBase64 = "YQ==",
+                    ),
+                    nowMs = index.toLong(),
+                )
+            }
+            assertEquals(1000, adapter.listAll().size)
         }
-        assertEquals(1000, adapter.listAll().size)
-    }
 
     @Test
-    fun ttlPurge_simulatesLowStorageRecovery() {
-        repeat(200) { index ->
-            adapter.enqueue(
-                EnqueueInput(
-                    sosId = "ttl-$index",
-                    digest = "d-$index",
-                    origin = "android-adim47",
-                    encryptedBlobBase64 = "Yg==",
-                    retentionMs = 1_000,
-                ),
-                nowMs = 0,
-            )
+    fun ttlPurge_simulatesLowStorageRecovery() =
+        runBlocking {
+            repeat(200) { index ->
+                adapter.enqueue(
+                    EnqueueInput(
+                        sosId = "ttl-$index",
+                        digest = "d-$index",
+                        origin = "android-adim47",
+                        encryptedBlobBase64 = "Yg==",
+                        retentionMs = 1_000,
+                    ),
+                    nowMs = 0,
+                )
+            }
+            assertEquals(200, adapter.listAll().size)
+            val purged = adapter.purgeExpired(nowMs = 2_000)
+            assertEquals(200, purged)
+            assertTrue(adapter.listAll().isEmpty())
         }
-        assertEquals(200, adapter.listAll().size)
-        val purged = adapter.purgeExpired(nowMs = 2_000)
-        assertEquals(200, purged)
-        assertTrue(adapter.listAll().isEmpty())
-    }
 }

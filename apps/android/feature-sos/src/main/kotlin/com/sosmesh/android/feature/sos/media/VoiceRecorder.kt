@@ -80,4 +80,12 @@ class VoiceRecorder(private val context: Context) {
     fun cleanup() {
         stopRecording(save = false)
     }
+    
+    private fun createMediaRecorder(): MediaRecorder {
+        return if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+            MediaRecorder(context)
+        } else {
+            MediaRecorder()
+        }
+    }
 }

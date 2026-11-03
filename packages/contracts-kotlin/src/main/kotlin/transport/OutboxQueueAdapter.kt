@@ -52,6 +52,18 @@ interface OutboxQueueAdapter {
         lastError: String?,
     )
 
+    suspend fun setUploadRetryAt(
+        sosId: String,
+        digest: String,
+        retryAtMs: Long,
+        lastError: String?,
+    )
+
+    suspend fun clearUploadRetry(
+        sosId: String,
+        digest: String,
+    )
+
     suspend fun countDueForSend(
         nowMs: Long,
         paused: Boolean,

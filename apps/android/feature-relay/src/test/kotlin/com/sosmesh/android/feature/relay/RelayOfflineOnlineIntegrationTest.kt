@@ -150,7 +150,7 @@ class RelayOfflineOnlineIntegrationTest {
                     signature = Base64.getEncoder().encodeToString(signer.sign()),
                 )
             return if (verifier.verify(receipt, messageId, packetHash)) {
-                RelayIngestResult.Success
+                RelayIngestResult.Success(null)
             } else {
                 RelayIngestResult.InvalidReceipt
             }

@@ -16,6 +16,7 @@ final class AppModel: ObservableObject {
         .blocked(step: .bluetooth, reason: .notDetermined)
     @Published private(set) var outboxEntries: [OutboxEntryMeta] = []
     @Published private(set) var receivedInbox: [ReceivedSosRecord] = []
+    @Published var lastUploadToken: String?
 
     /// Debug-only fault injection (not the default data path).
     #if DEBUG
@@ -38,6 +39,8 @@ final class AppModel: ObservableObject {
     private var meshRadio: BleMeshRadioPort?
     private var meshTickTimer: Timer?
     private var ingestUploader: IngestUploader?
+    private let locationManager = SosLocationManager()
+    private var uploadsInFlight = Set<String>()
 
     init(
         permissionProbe: AppPermissionProbing? = nil,
@@ -76,6 +79,7 @@ final class AppModel: ObservableObject {
     }
 
     func refreshPermissionGate() async {
+        Task { await retryPendingServerUploads() }
         var snapshot = await permissionProbe.captureSnapshot()
         #if DEBUG
         if useFaultSimulationOverrides {
@@ -106,14 +110,17 @@ final class AppModel: ObservableObject {
         await refreshPermissionGate()
     }
 
-    func submitSos(note: String, languageTag: String) async throws {
+    func submitSos(note: String, languageTag: String) async throws -> String {
         guard let composer else {
             throw SosCryptoConfigurationError.releaseEncryptionNotConfigured
         }
         try ensureOutbox()
         let nowMs = Int64(Date().timeIntervalSince1970 * 1000)
+        
+        let location = await locationManager.requestLocationAsync(timeoutMs: 2000)
+        
         let composed = try composer.compose(
-            IosSosComposeRequest(note: note, languageTag: languageTag, nowMs: nowMs)
+            IosSosComposeRequest(note: note, languageTag: languageTag, nowMs: nowMs, location: location)
         )
         let service = try requireOutbox()
         _ = try service.enqueueLocalSos(
@@ -143,6 +150,8 @@ final class AppModel: ObservableObject {
         
         _ = try? meshRadio?.connectFirstPeerIfNeeded()
         meshRadio?.tick(nowMs: nowMs)
+        
+        return composed.message.id
     }
 
     func reloadOutbox() async {
@@ -222,6 +231,25 @@ final class AppModel: ObservableObject {
         return outboxService
     }
     
+    /// Re-attempts the online upload for own SOS entries still waiting in LOCAL_SAVED (launch / foreground).
+    private func retryPendingServerUploads() async {
+        guard let service = try? requireOutbox(),
+              let entries = try? service.listEntries() else { return }
+        for entry in entries where entry.state == "LOCAL_SAVED" && entry.origin == "ios" {
+            guard !uploadsInFlight.contains(entry.sosId),
+                  let data = Data(base64Encoded: entry.encryptedBlobBase64),
+                  let object = try? JSONSerialization.jsonObject(with: data) as? [String: Any] else { continue }
+            uploadsInFlight.insert(entry.sosId)
+            await attemptServerUpload(
+                sosId: entry.sosId,
+                digest: entry.digest,
+                encryptedBlobBase64: entry.encryptedBlobBase64,
+                sosMessage: object
+            )
+            uploadsInFlight.remove(entry.sosId)
+        }
+    }
+
     private func attemptServerUpload(
         sosId: String,
         digest: String,
@@ -244,10 +272,11 @@ final class AppModel: ObservableObject {
         )
         
         switch result {
-        case .success:
+        case .success(let receipt):
             let nowMs = Int64(Date().timeIntervalSince1970 * 1000)
             if let service = try? requireOutbox(),
                let entry = try? service.listEntries().first(where: { $0.sosId == sosId && $0.digest == digest }) {
+                let wasPending = entry.state == "LOCAL_SAVED"
                 _ = try? service.markServerAccepted(
                     sosId: sosId,
                     digest: digest,
@@ -255,12 +284,47 @@ final class AppModel: ObservableObject {
                     nowMs: nowMs
                 )
                 await MainActor.run {
+                    self.lastUploadToken = receipt.uploadToken
                     Task { await self.reloadOutbox() }
+                    
+                    if wasPending, UIApplication.shared.applicationState != .active {
+                        Task {
+                            await SosNotificationManager.shared.notifyServerAccepted(sosId: sosId)
+                        }
+                    }
+                }
+                
+                if let uploadToken = receipt.uploadToken {
+                    Task {
+                        await self.processAttachmentUploads(sosId: sosId, uploadToken: uploadToken)
+                    }
                 }
             }
         case .noNetwork, .httpError, .invalidReceipt, .error:
             break
         }
+    }
+    
+    private func processAttachmentUploads(sosId: String, uploadToken: String) async {
+        guard let baseDir = try? FileManager.default.url(
+            for: .applicationSupportDirectory,
+            in: .userDomainMask,
+            appropriateFor: nil,
+            create: true
+        ).appendingPathComponent("sosmesh") else {
+            return
+        }
+        
+        guard let queue = try? AttachmentQueue(baseDir: baseDir) else {
+            return
+        }
+        
+        try? queue.setUploadToken(uploadToken, forSosId: sosId)
+        
+        let deviceId = UIDevice.current.identifierForVendor?.uuidString ?? UUID().uuidString
+        let config = IngestConfig.production(deviceId: deviceId)
+        let coordinator = AttachmentUploadCoordinator(queue: queue, baseURL: config.baseURL)
+        await coordinator.processSosAttachments(sosId: sosId)
     }
 
     private func sourceRoot() -> String {

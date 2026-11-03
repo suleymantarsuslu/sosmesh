@@ -17,4 +17,7 @@ data class OutboxEntity(
     val last_error: String?,
     val created_at: Long,
     val updated_at: Long,
+    val upload_retry_at: Long?,
+    val upload_last_error: String?,
+    val upload_attempts: Int,
 )

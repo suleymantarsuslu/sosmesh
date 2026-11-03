@@ -24,25 +24,43 @@ export class TenantScopeService {
 
     if (this.isOrgCoordinator(user)) {
       return {
-        assignments: {
-          some: {
-            team: {
-              organizationId: user.organizationId,
+        OR: [
+          {
+            assignments: {
+              some: {
+                team: {
+                  organizationId: user.organizationId,
+                },
+              },
             },
           },
-        },
+          {
+            assignments: {
+              none: {},
+            },
+          },
+        ],
       };
     }
 
     return {
-      assignments: {
-        some: {
-          teamId: user.teamId,
-          team: {
-            organizationId: user.organizationId,
+      OR: [
+        {
+          assignments: {
+            some: {
+              teamId: user.teamId,
+              team: {
+                organizationId: user.organizationId,
+              },
+            },
           },
         },
-      },
+        {
+          assignments: {
+            none: {},
+          },
+        },
+      ],
     };
   }
 

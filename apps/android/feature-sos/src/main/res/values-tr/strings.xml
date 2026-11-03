@@ -42,4 +42,14 @@
     <string name="sos_peer_delivery_waiting">Yakındaki cihaz veya GATT oturumu bekleniyor; izinler açıkken tekrar denenecek.</string>
     <string name="sos_peer_delivery_permissions">Bluetooth izinleri gerekli. Ayarlar → İzinler bölümünden verin; sunucu/operatör okundu anlamına gelmez.</string>
     <string name="sos_peer_delivery_blocked">Şu an aktarılamadı; outbox otomatik yeniden dener.</string>
+    <string name="sos_attach_photo">Fotoğraf ekle</string>
+    <string name="sos_attach_voice">Sesli not kaydet</string>
+    <string name="sos_voice_recording">Kaydediliyor</string>
+    <string name="sos_voice_stop">Durdur</string>
+    <string name="sos_voice_delete">Sil</string>
+    <string name="sos_voice_duration">Süre: %1$s</string>
+    <string name="sos_attach_uploading">Yükleniyor...</string>
+    <string name="sos_attach_uploaded">Yüklendi</string>
+    <string name="sos_attach_failed">Yükleme başarısız</string>
+    <string name="sos_attach_online_only">Ekler yalnızca çevrimiçiyken kullanılabilir</string>
 </resources>

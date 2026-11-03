@@ -105,7 +105,8 @@ class HttpRelayIngestUplink
                     signature = receiptObj["signature"]?.jsonPrimitive?.content ?: return RelayIngestResult.InvalidReceipt,
                 )
             return if (receiptVerifier.verify(receipt, expectedMessageId, expectedPacketHash)) {
-                RelayIngestResult.Success
+                val uploadToken = receiptObj["uploadToken"]?.jsonPrimitive?.content
+                RelayIngestResult.Success(uploadToken)
             } else {
                 RelayIngestResult.InvalidReceipt
             }

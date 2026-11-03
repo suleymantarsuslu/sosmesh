@@ -32,6 +32,14 @@
 	<string>Bluetooth: SOSMesh, internet olmadan yakındaki cihazlara SOS iletmek için Bluetooth Low Energy kullanır.</string>
 	<key>NSBluetoothPeripheralUsageDescription</key>
 	<string>Bluetooth: SOSMesh relay modunda yakın cihazlara hizmet sunmak için BLE kullanır.</string>
+	<key>NSLocationWhenInUseUsageDescription</key>
+	<string>Konum: SOS zarfına yaklaşık konum eklemek isteğe bağlıdır; reddedebilirsiniz.</string>
+	<key>NSCameraUsageDescription</key>
+	<string>SOSMesh can attach photos to your SOS to help operators understand the situation.</string>
+	<key>NSMicrophoneUsageDescription</key>
+	<string>SOSMesh can attach voice notes to your SOS to help operators understand the situation.</string>
+	<key>NSPhotoLibraryUsageDescription</key>
+	<string>SOSMesh can attach photos from your library to your SOS to help operators understand the situation.</string>
 	<key>UIBackgroundModes</key>
 	<array>
 		<string>bluetooth-central</string>

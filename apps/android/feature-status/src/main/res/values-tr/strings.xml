@@ -14,6 +14,7 @@
     <string name="status_timeline_desc_local">Mesajınız cihazınızda kaydedildi; yakındaki cihaz aranıyor.</string>
     <string name="status_timeline_desc_peer">Yakındaki bir cihaz aldı; internete ulaşması bekleniyor.</string>
     <string name="status_timeline_desc_server">Sunucuya ulaştı; operatör panelinde görünür.</string>
+    <string name="status_timeline_desc_uploading">Sunucuya gönderiliyor…</string>
     <string name="status_timeline_desc_operator">Operatör gördü.</string>
     <string name="status_timeline_desc_case">Vaka işlemde.</string>
     <string name="status_evidence_created">Kayıt zamanı (UTC): %1$s</string>

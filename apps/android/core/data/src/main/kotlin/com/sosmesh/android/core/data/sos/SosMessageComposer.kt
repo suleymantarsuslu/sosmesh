@@ -77,10 +77,12 @@ class SosMessageComposer(
 
         val envelopeLocation =
             if (request.location.isKnown) {
+                val lat = requireNotNull(request.location.latitude)
+                val lng = requireNotNull(request.location.longitude)
                 Location(
-                    latitude = requireNotNull(request.location.latitude),
-                    longitude = requireNotNull(request.location.longitude),
-                    accuracy = request.location.accuracyMeters,
+                    latitude = roundCoordinate(lat),
+                    longitude = roundCoordinate(lng),
+                    accuracy = request.location.accuracyMeters?.let { coarseAccuracy(it) },
                 )
             } else {
                 null
@@ -138,10 +140,10 @@ class SosMessageComposer(
                 val lng = requireNotNull(location.longitude)
                 val map =
                     linkedMapOf<String, Any?>(
-                        "latitude" to lat,
-                        "longitude" to lng,
+                        "latitude" to roundCoordinate(lat),
+                        "longitude" to roundCoordinate(lng),
                     )
-                location.accuracyMeters?.let { map["accuracy"] = it }
+                location.accuracyMeters?.let { map["accuracy"] = coarseAccuracy(it) }
                 map
             } else {
                 null
@@ -152,6 +154,14 @@ class SosMessageComposer(
             "location" to locationMap,
             "priority" to 1,
         )
+    }
+
+    private fun roundCoordinate(coord: Double): Double {
+        return (coord * 100.0).let { if (it.isFinite()) kotlin.math.round(it) / 100.0 else coord }
+    }
+
+    private fun coarseAccuracy(accuracyMeters: Double): Double {
+        return maxOf(accuracyMeters, 1000.0)
     }
 
     private fun normalizeLanguage(tag: String): String =

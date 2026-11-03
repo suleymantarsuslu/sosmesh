@@ -1,17 +1,26 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
-import { Prisma, ResourceKind } from '@prisma/client';
+import { ForbiddenException, Injectable, NotFoundException } from '@nestjs/common';
+import { Prisma, ResourceKind, UserRole } from '@prisma/client';
 
 import { PrismaService } from '../prisma/prisma.service';
 import { IncidentScopeService } from '../organization/incident-scope.service';
 import { OperatorRequestUser } from '../operator/guards/operator-auth.guard';
+import { CreateTeamDto } from './dto/create-team.dto';
+import { UpdateTeamDto } from './dto/update-team.dto';
+import { UpdateResourceDto } from './dto/update-resource.dto';
 
 export type TeamSummary = {
   id: string;
   name: string;
+  type: string | null;
+  capacity: number | null;
+  contactInfo: string | null;
+  status: string | null;
   zoneCode: string | null;
   organizationId: string;
   resourceCount: number;
   openTaskCount: number;
+  createdAt: string;
+  updatedAt: string;
 };
 
 export type ResourceDto = {
@@ -33,6 +42,15 @@ export class TeamsResourcesService {
     private readonly prisma: PrismaService,
     private readonly scope: IncidentScopeService
   ) {}
+
+  private assertCanModifyTeams(user: OperatorRequestUser): void {
+    if (user.role !== UserRole.COORDINATOR && user.role !== UserRole.ADMIN) {
+      throw new ForbiddenException({
+        code: 'FORBIDDEN',
+        message: 'Only coordinators and admins can modify teams',
+      });
+    }
+  }
 
   async listTeams(user: OperatorRequestUser): Promise<{ items: TeamSummary[] }> {
     const where = this.scope.teamWhere(user);
@@ -57,11 +75,178 @@ export class TeamsResourcesService {
       items: teams.map((team) => ({
         id: team.id,
         name: team.name,
+        type: team.type,
+        capacity: team.capacity,
+        contactInfo: team.contactInfo,
+        status: team.status,
         zoneCode: team.zoneCode,
         organizationId: team.organizationId,
         resourceCount: team._count.resources,
         openTaskCount: openByTeam.get(team.id) ?? 0,
+        createdAt: team.createdAt.toISOString(),
+        updatedAt: team.updatedAt.toISOString(),
       })),
+    };
+  }
+
+  async createTeam(
+    user: OperatorRequestUser,
+    input: CreateTeamDto
+  ): Promise<TeamSummary> {
+    this.assertCanModifyTeams(user);
+
+    const orgId = user.organizationId;
+    if (!orgId && user.role !== UserRole.ADMIN) {
+      throw new ForbiddenException({
+        code: 'FORBIDDEN',
+        message: 'No organization context',
+      });
+    }
+
+    if (!orgId) {
+      throw new ForbiddenException({
+        code: 'FORBIDDEN',
+        message: 'Admin users must specify an organization',
+      });
+    }
+
+    const team = await this.prisma.$transaction(async (tx) => {
+      const created = await tx.team.create({
+        data: {
+          organizationId: orgId,
+          name: input.name,
+          type: input.type,
+          capacity: input.capacity,
+          contactInfo: input.contactInfo,
+          status: input.status,
+          zoneCode: input.zoneCode,
+        },
+        include: {
+          _count: { select: { resources: true, workTasks: true } },
+        },
+      });
+
+      await tx.auditLog.create({
+        data: {
+          actorId: user.sub,
+          action: 'team.create',
+          detailsJson: {
+            teamId: created.id,
+            before: null,
+            after: {
+              name: created.name,
+              type: created.type,
+              status: created.status,
+              zoneCode: created.zoneCode,
+            },
+          },
+        },
+      });
+
+      return created;
+    });
+
+    return {
+      id: team.id,
+      name: team.name,
+      type: team.type,
+      capacity: team.capacity,
+      contactInfo: team.contactInfo,
+      status: team.status,
+      zoneCode: team.zoneCode,
+      organizationId: team.organizationId,
+      resourceCount: team._count.resources,
+      openTaskCount: 0,
+      createdAt: team.createdAt.toISOString(),
+      updatedAt: team.updatedAt.toISOString(),
+    };
+  }
+
+  async updateTeam(
+    user: OperatorRequestUser,
+    teamId: string,
+    input: UpdateTeamDto
+  ): Promise<TeamSummary> {
+    this.assertCanModifyTeams(user);
+
+    const scopeWhere = this.scope.teamWhere(user);
+    const existing = await this.prisma.team.findFirst({
+      where: { id: teamId, ...scopeWhere },
+    });
+
+    if (!existing) {
+      throw new NotFoundException({ code: 'NOT_FOUND', message: 'Team not found' });
+    }
+
+    const team = await this.prisma.$transaction(async (tx) => {
+      const before = {
+        name: existing.name,
+        type: existing.type,
+        capacity: existing.capacity,
+        contactInfo: existing.contactInfo,
+        status: existing.status,
+        zoneCode: existing.zoneCode,
+      };
+
+      const updated = await tx.team.update({
+        where: { id: teamId },
+        data: {
+          ...(input.name !== undefined ? { name: input.name } : {}),
+          ...(input.type !== undefined ? { type: input.type } : {}),
+          ...(input.capacity !== undefined ? { capacity: input.capacity } : {}),
+          ...(input.contactInfo !== undefined ? { contactInfo: input.contactInfo } : {}),
+          ...(input.status !== undefined ? { status: input.status } : {}),
+          ...(input.zoneCode !== undefined ? { zoneCode: input.zoneCode } : {}),
+        },
+        include: {
+          _count: { select: { resources: true, workTasks: true } },
+        },
+      });
+
+      await tx.auditLog.create({
+        data: {
+          actorId: user.sub,
+          action: 'team.update',
+          detailsJson: {
+            teamId,
+            before,
+            after: {
+              name: updated.name,
+              type: updated.type,
+              capacity: updated.capacity,
+              contactInfo: updated.contactInfo,
+              status: updated.status,
+              zoneCode: updated.zoneCode,
+            },
+          },
+        },
+      });
+
+      return updated;
+    });
+
+    const openCounts = await this.prisma.workTask.groupBy({
+      by: ['teamId'],
+      where: {
+        teamId,
+        status: { in: ['PROPOSED', 'ASSIGNED', 'ACCEPTED'] },
+      },
+      _count: { _all: true },
+    });
+
+    return {
+      id: team.id,
+      name: team.name,
+      type: team.type,
+      capacity: team.capacity,
+      contactInfo: team.contactInfo,
+      status: team.status,
+      zoneCode: team.zoneCode,
+      organizationId: team.organizationId,
+      resourceCount: team._count.resources,
+      openTaskCount: openCounts[0]?._count._all ?? 0,
+      createdAt: team.createdAt.toISOString(),
+      updatedAt: team.updatedAt.toISOString(),
     };
   }
 
@@ -177,6 +362,98 @@ export class TeamsResourcesService {
 
     const list = await this.listResources(user, {});
     const found = list.items.find((item) => item.id === row.id);
+    if (!found) {
+      throw new NotFoundException({ code: 'NOT_FOUND', message: 'Resource not found' });
+    }
+    return found;
+  }
+
+  async updateResource(
+    user: OperatorRequestUser,
+    resourceId: string,
+    input: UpdateResourceDto
+  ): Promise<ResourceDto> {
+    if (user.role !== UserRole.COORDINATOR && user.role !== UserRole.ADMIN) {
+      throw new ForbiddenException({
+        code: 'FORBIDDEN',
+        message: 'Only coordinators and admins can modify resources',
+      });
+    }
+
+    const scopeWhere = this.scope.resourceWhere(user);
+    const existing = await this.prisma.resource.findFirst({
+      where: { id: resourceId, ...scopeWhere },
+    });
+
+    if (!existing) {
+      throw new NotFoundException({ code: 'NOT_FOUND', message: 'Resource not found' });
+    }
+
+    if (input.teamId !== undefined) {
+      if (input.teamId) {
+        const teamOk = await this.scope.canAccessTeam(user, input.teamId, this.prisma);
+        if (!teamOk) {
+          throw new NotFoundException({ code: 'NOT_FOUND', message: 'Team not found' });
+        }
+      }
+    }
+
+    const resource = await this.prisma.$transaction(async (tx) => {
+      const before = {
+        kind: existing.kind,
+        name: existing.name,
+        capacity: existing.capacity,
+        zoneCode: existing.zoneCode,
+        teamId: existing.teamId,
+        isActive: existing.isActive,
+        availableFrom: existing.availableFrom?.toISOString() ?? null,
+        availableUntil: existing.availableUntil?.toISOString() ?? null,
+      };
+
+      const updated = await tx.resource.update({
+        where: { id: resourceId },
+        data: {
+          ...(input.kind !== undefined ? { kind: input.kind } : {}),
+          ...(input.name !== undefined ? { name: input.name } : {}),
+          ...(input.capacity !== undefined ? { capacity: input.capacity } : {}),
+          ...(input.zoneCode !== undefined ? { zoneCode: input.zoneCode } : {}),
+          ...(input.teamId !== undefined ? { teamId: input.teamId } : {}),
+          ...(input.isActive !== undefined ? { isActive: input.isActive } : {}),
+          ...(input.availableFrom !== undefined
+            ? { availableFrom: input.availableFrom ? new Date(input.availableFrom) : null }
+            : {}),
+          ...(input.availableUntil !== undefined
+            ? { availableUntil: input.availableUntil ? new Date(input.availableUntil) : null }
+            : {}),
+        },
+      });
+
+      await tx.auditLog.create({
+        data: {
+          actorId: user.sub,
+          action: 'resource.update',
+          detailsJson: {
+            resourceId,
+            before,
+            after: {
+              kind: updated.kind,
+              name: updated.name,
+              capacity: updated.capacity,
+              zoneCode: updated.zoneCode,
+              teamId: updated.teamId,
+              isActive: updated.isActive,
+              availableFrom: updated.availableFrom?.toISOString() ?? null,
+              availableUntil: updated.availableUntil?.toISOString() ?? null,
+            },
+          },
+        },
+      });
+
+      return updated;
+    });
+
+    const list = await this.listResources(user, {});
+    const found = list.items.find((item) => item.id === resource.id);
     if (!found) {
       throw new NotFoundException({ code: 'NOT_FOUND', message: 'Resource not found' });
     }

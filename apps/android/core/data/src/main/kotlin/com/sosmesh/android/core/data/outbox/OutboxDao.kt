@@ -83,11 +83,36 @@ interface OutboxDao {
     @Query(
         """
         SELECT * FROM outbox
-        WHERE retry_at <= :nowMs AND state = 'LOCAL_SAVED'
+        WHERE (upload_retry_at IS NULL OR upload_retry_at <= :nowMs)
+        AND state IN ('LOCAL_SAVED', 'PEER_RECEIVED')
         AND (origin = 'android' OR origin = 'wear_os')
-        AND (last_error IS NULL OR last_error != 'needs_review')
+        AND (upload_last_error IS NULL OR upload_last_error != 'needs_review')
         ORDER BY created_at ASC
         """,
     )
     fun listDueOwnUpload(nowMs: Long): List<OutboxEntity>
+
+    @Query(
+        """
+        UPDATE outbox SET upload_retry_at = :retryAtMs, upload_last_error = :lastError, upload_attempts = upload_attempts + 1
+        WHERE sos_id = :sosId AND digest = :digest
+        """,
+    )
+    fun setUploadRetryAtFields(
+        sosId: String,
+        digest: String,
+        retryAtMs: Long,
+        lastError: String?,
+    ): Int
+
+    @Query(
+        """
+        UPDATE outbox SET upload_last_error = NULL, upload_retry_at = NULL
+        WHERE sos_id = :sosId AND digest = :digest
+        """,
+    )
+    fun clearUploadRetryFields(
+        sosId: String,
+        digest: String,
+    ): Int
 }

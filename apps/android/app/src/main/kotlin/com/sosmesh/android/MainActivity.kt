@@ -79,7 +79,9 @@ private fun SosMeshNavHost(onHighContrastChanged: () -> Unit) {
             RadioDebugRoute(onBack = { navController.popBackStack() })
         }
         composable("sos") {
-            SosRoute()
+            SosRoute(
+                onNavigateToStatus = { navController.navigate("status") },
+            )
         }
         composable("status") {
             StatusRoute()

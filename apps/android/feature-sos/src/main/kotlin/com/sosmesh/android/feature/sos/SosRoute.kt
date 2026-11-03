@@ -9,6 +9,7 @@ import com.sosmesh.android.feature.sos.ui.SosFlowScreen
 
 @Composable
 fun SosRoute(
+    onNavigateToStatus: () -> Unit = {},
     modifier: Modifier = Modifier,
     viewModel: SosFormViewModel = hiltViewModel(),
 ) {
@@ -22,9 +23,15 @@ fun SosRoute(
         onManualToggle = viewModel::setUseManualLocation,
         onManualLat = viewModel::setManualLat,
         onManualLng = viewModel::setManualLng,
+        onPhotoSelected = viewModel::setPhotoUri,
+        onVoiceRecorded = viewModel::setVoiceFile,
+        onStartRecording = { viewModel.setRecording(true) },
+        onStopRecording = { viewModel.setRecording(false) },
         onContinue = viewModel::goToPreview,
         onBackFromPreview = viewModel::backFromPreview,
-        onConfirm = { viewModel.confirmAndSave() },
+        onConfirm = viewModel::confirmAndSave,
+        onNavigateToStatus = onNavigateToStatus,
+        onDismissConfirmation = viewModel::dismissConfirmationDialog,
         modifier = modifier,
     )
 }

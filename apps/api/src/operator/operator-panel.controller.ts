@@ -1,6 +1,7 @@
 import {
   Controller,
   Get,
+  Headers,
   NotFoundException,
   Param,
   Query,
@@ -19,6 +20,7 @@ import { RolesGuard } from './guards/roles.guard';
 import { IncidentScopeService } from '../organization/incident-scope.service';
 import { OperatorDashboardService } from './operator-dashboard.service';
 import { OperatorCasesService } from './operator-cases.service';
+import { LocaleContentService } from '../ai/locale-content.service';
 import {
   parseListOperatorCasesQuery,
 } from './dto/list-operator-cases.query';
@@ -32,7 +34,8 @@ export class OperatorPanelController {
     private readonly prisma: PrismaService,
     private readonly scope: IncidentScopeService,
     private readonly dashboard: OperatorDashboardService,
-    private readonly cases: OperatorCasesService
+    private readonly cases: OperatorCasesService,
+    private readonly localeContent: LocaleContentService
   ) {}
 
   @Get('dashboard/stats')
@@ -102,8 +105,14 @@ export class OperatorPanelController {
   }
 
   @Get('cases/:incidentId')
-  async getCase(@Req() req: OperatorRequest, @Param('incidentId') incidentId: string) {
-    const detail = await this.cases.getCaseDetail(req.operatorUser, incidentId);
+  async getCase(
+    @Req() req: OperatorRequest,
+    @Param('incidentId') incidentId: string,
+    @Query('locale') localeParam?: string,
+    @Headers('accept-language') acceptLanguage?: string
+  ) {
+    const locale = this.localeContent.resolveLocale(localeParam, acceptLanguage);
+    const detail = await this.cases.getCaseDetail(req.operatorUser, incidentId, locale);
     if (!detail) {
       throw new NotFoundException({
         code: 'NOT_FOUND',

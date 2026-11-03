@@ -7,6 +7,8 @@ import { OperatorRequestUser } from './guards/operator-auth.guard';
 import { IncidentScopeService } from '../organization/incident-scope.service';
 import { ListOperatorCasesQuery } from './dto/list-operator-cases.query';
 import { TranscriptView } from '../ai/contracts/transcript-view';
+import { MessageTranslationService } from '../ai/message-translation.service';
+import { OperatorLocale } from '../ai/locale-content.service';
 
 export type OperatorCaseRow = {
   incidentId: string;
@@ -36,6 +38,8 @@ export type OperatorCaseDetail = OperatorCaseRow & {
   version: number;
   reviewStatus: string;
   originalText: string | null;
+  translatedText: string | null;
+  detectedLanguage: string | null;
   verifiedMetadata: {
     personCount: number | null;
     locationStatus: string;
@@ -57,7 +61,8 @@ export type OperatorCaseDetail = OperatorCaseRow & {
 export class OperatorCasesService {
   constructor(
     private readonly prisma: PrismaService,
-    private readonly scope: IncidentScopeService
+    private readonly scope: IncidentScopeService,
+    private readonly messageTranslation: MessageTranslationService
   ) {}
 
   async listCases(user: OperatorRequestUser, query: ListOperatorCasesQuery) {
@@ -148,7 +153,8 @@ export class OperatorCasesService {
 
   async getCaseDetail(
     user: OperatorRequestUser,
-    incidentId: string
+    incidentId: string,
+    locale: OperatorLocale = 'tr'
   ): Promise<OperatorCaseDetail | null> {
     const allowed = await this.scope.canAccessIncident(user, incidentId, this.prisma);
     if (!allowed) {
@@ -235,11 +241,29 @@ export class OperatorCasesService {
         createdAt: a.transcript!.createdAt.toISOString(),
       }));
 
+    const originalText = message.noteText ?? message.operatorDisplayText;
+    let translatedText: string | null = null;
+    let detectedLanguage: string | null = null;
+
+    if (originalText) {
+      const translation = await this.messageTranslation.translateMessage(
+        message.id,
+        originalText,
+        locale
+      );
+      if (translation) {
+        translatedText = translation.translatedText;
+        detectedLanguage = translation.detectedLanguage;
+      }
+    }
+
     return {
       ...base,
       version: message.incident.version,
       reviewStatus: message.incident.reviewStatus,
-      originalText: message.noteText ?? message.operatorDisplayText,
+      originalText,
+      translatedText,
+      detectedLanguage,
       verifiedMetadata: {
         personCount: message.personCount,
         locationStatus: message.locationStatus,

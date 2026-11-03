@@ -27,8 +27,9 @@ final class CanonicalJSONVectorTests: XCTestCase {
 
         for entry in cases {
             let name = try XCTUnwrap(entry["name"] as? String)
-            let inputAny = entry["input"] ?? NSNull()
-            let parsed = try parseFixtureInput(inputAny)
+            let encodedInput = entry["input"] ?? NSNull()
+            let logicalInput = try CanonicalJsonFixtureInput.decode(encodedInput)
+            let parsed = try parseFixtureInput(logicalInput)
             let expected = try XCTUnwrap(entry["expected"] as? String)
             let encoded = try CanonicalJSON.encode(parsed)
             XCTAssertEqual(encoded, expected, "[\(name)] CanonicalJSON.encode mismatch")

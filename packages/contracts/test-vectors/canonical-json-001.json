@@ -94,7 +94,11 @@
   },
   {
     "name": "string-lone-surrogate",
-    "input": "\ud800",
+    "input": {
+      "__canonicalJsonUtf16String": [
+        55296
+      ]
+    },
     "expected": "\"\\ud800\""
   },
   {

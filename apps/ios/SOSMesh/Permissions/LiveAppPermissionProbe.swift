@@ -1,20 +1,20 @@
 import CoreBluetooth
-import CoreLocation
 import Foundation
 import SOSMeshCore
 import UserNotifications
 
 @MainActor
 protocol AppPermissionProbing: AnyObject {
+    var onGateRefreshRequested: (() -> Void)? { get set }
     func captureSnapshot() async -> PermissionGateSnapshot
     func primeBluetoothAuthorization()
+    func primeBluetoothAuthorizationIfAlreadyAuthorized()
     func requestNotifications() async
-    func requestLocationWhenInUse()
 }
 
 @MainActor
-final class LiveAppPermissionProbe: NSObject, AppPermissionProbing, CLLocationManagerDelegate {
-    private var locationManager: CLLocationManager?
+final class LiveAppPermissionProbe: NSObject, AppPermissionProbing, CBCentralManagerDelegate {
+    var onGateRefreshRequested: (() -> Void)?
     private var bluetoothWarmupManager: CBCentralManager?
 
     func captureSnapshot() async -> PermissionGateSnapshot {
@@ -23,32 +23,29 @@ final class LiveAppPermissionProbe: NSObject, AppPermissionProbing, CLLocationMa
         return PermissionGateSnapshot(
             bluetoothAuthorization: mapBluetoothAuthorization(CBManager.authorization),
             bluetoothPoweredOn: btState == .poweredOn,
-            notificationAuthorization: notifications,
-            locationAuthorization: mapLocationAuthorization(
-                locationManager?.authorizationStatus ?? CLLocationManager().authorizationStatus
-            )
+            notificationAuthorization: notifications
         )
     }
 
     func primeBluetoothAuthorization() {
         if bluetoothWarmupManager == nil {
-            bluetoothWarmupManager = CBCentralManager(delegate: nil, queue: nil, options: [
+            bluetoothWarmupManager = CBCentralManager(delegate: self, queue: .main, options: [
                 CBCentralManagerOptionShowPowerAlertKey: false,
             ])
         }
+    }
+
+    func primeBluetoothAuthorizationIfAlreadyAuthorized() {
+        guard CBManager.authorization == .allowedAlways else { return }
+        primeBluetoothAuthorization()
     }
 
     func requestNotifications() async {
         _ = try? await UNUserNotificationCenter.current().requestAuthorization(options: [.alert, .badge, .sound])
     }
 
-    func requestLocationWhenInUse() {
-        if locationManager == nil {
-            let manager = CLLocationManager()
-            manager.delegate = self
-            locationManager = manager
-        }
-        locationManager?.requestWhenInUseAuthorization()
+    func centralManagerDidUpdateState(_ central: CBCentralManager) {
+        onGateRefreshRequested?()
     }
 
     private func fetchNotificationAuthorization() async -> PermissionGateNotificationAuthorization {
@@ -79,21 +76,11 @@ final class LiveAppPermissionProbe: NSObject, AppPermissionProbing, CLLocationMa
         @unknown default: return .unsupported
         }
     }
-
-    private func mapLocationAuthorization(_ status: CLAuthorizationStatus) -> PermissionGateLocationAuthorization {
-        switch status {
-        case .notDetermined: return .notDetermined
-        case .authorizedWhenInUse, .authorizedAlways: return .whenInUse
-        case .denied: return .denied
-        case .restricted: return .restricted
-        @unknown default: return .denied
-        }
-    }
 }
 
-#if DEBUG
 @MainActor
 final class StubAppPermissionProbe: AppPermissionProbing {
+    var onGateRefreshRequested: (() -> Void)?
     var snapshot: PermissionGateSnapshot
 
     init(snapshot: PermissionGateSnapshot) {
@@ -102,7 +89,6 @@ final class StubAppPermissionProbe: AppPermissionProbing {
 
     func captureSnapshot() async -> PermissionGateSnapshot { snapshot }
     func primeBluetoothAuthorization() {}
+    func primeBluetoothAuthorizationIfAlreadyAuthorized() {}
     func requestNotifications() async {}
-    func requestLocationWhenInUse() {}
 }
-#endif

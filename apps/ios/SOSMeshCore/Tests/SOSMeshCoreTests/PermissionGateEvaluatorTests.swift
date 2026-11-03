@@ -6,8 +6,7 @@ final class PermissionGateEvaluatorTests: XCTestCase {
         let snapshot = PermissionGateSnapshot(
             bluetoothAuthorization: .allowed,
             bluetoothPoweredOn: true,
-            notificationAuthorization: .authorized,
-            locationAuthorization: .whenInUse
+            notificationAuthorization: .authorized
         )
         XCTAssertEqual(PermissionGateEvaluator.evaluate(snapshot), .cleared)
         XCTAssertTrue(PermissionGateEvaluator.isCleared(.cleared))
@@ -17,8 +16,7 @@ final class PermissionGateEvaluatorTests: XCTestCase {
         let snapshot = PermissionGateSnapshot(
             bluetoothAuthorization: .notDetermined,
             bluetoothPoweredOn: true,
-            notificationAuthorization: .authorized,
-            locationAuthorization: .whenInUse
+            notificationAuthorization: .authorized
         )
         XCTAssertEqual(
             PermissionGateEvaluator.evaluate(snapshot),
@@ -30,8 +28,7 @@ final class PermissionGateEvaluatorTests: XCTestCase {
         let snapshot = PermissionGateSnapshot(
             bluetoothAuthorization: .denied,
             bluetoothPoweredOn: true,
-            notificationAuthorization: .authorized,
-            locationAuthorization: .whenInUse
+            notificationAuthorization: .authorized
         )
         let status = PermissionGateEvaluator.evaluate(snapshot)
         XCTAssertEqual(status, .blocked(step: .bluetooth, reason: .denied))
@@ -42,8 +39,7 @@ final class PermissionGateEvaluatorTests: XCTestCase {
         let snapshot = PermissionGateSnapshot(
             bluetoothAuthorization: .allowed,
             bluetoothPoweredOn: false,
-            notificationAuthorization: .authorized,
-            locationAuthorization: .whenInUse
+            notificationAuthorization: .authorized
         )
         let status = PermissionGateEvaluator.evaluate(snapshot)
         XCTAssertEqual(status, .blocked(step: .bluetooth, reason: .bluetoothPoweredOff))
@@ -54,33 +50,18 @@ final class PermissionGateEvaluatorTests: XCTestCase {
         let snapshot = PermissionGateSnapshot(
             bluetoothAuthorization: .allowed,
             bluetoothPoweredOn: true,
-            notificationAuthorization: .denied,
-            locationAuthorization: .whenInUse
+            notificationAuthorization: .denied
         )
         let status = PermissionGateEvaluator.evaluate(snapshot)
         XCTAssertEqual(status, .blocked(step: .notifications, reason: .denied))
         XCTAssertTrue(PermissionGateEvaluator.needsOpenSettings(status))
     }
 
-    func testLocationNotDetermined_blocksLocationStep() {
-        let snapshot = PermissionGateSnapshot(
-            bluetoothAuthorization: .allowed,
-            bluetoothPoweredOn: true,
-            notificationAuthorization: .authorized,
-            locationAuthorization: .notDetermined
-        )
-        XCTAssertEqual(
-            PermissionGateEvaluator.evaluate(snapshot),
-            .blocked(step: .location, reason: .notDetermined)
-        )
-    }
-
     func testProvisionalNotifications_passesGate() {
         let snapshot = PermissionGateSnapshot(
             bluetoothAuthorization: .allowed,
             bluetoothPoweredOn: true,
-            notificationAuthorization: .provisional,
-            locationAuthorization: .whenInUse
+            notificationAuthorization: .provisional
         )
         XCTAssertEqual(PermissionGateEvaluator.evaluate(snapshot), .cleared)
     }

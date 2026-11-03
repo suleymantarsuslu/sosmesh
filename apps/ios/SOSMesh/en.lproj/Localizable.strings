@@ -12,6 +12,7 @@
 "sos.confirm.title" = "Send SOS";
 "sos.confirm.message" = "Are you sure you want to send SOS?";
 "sos.confirm.yes" = "Yes, send";
+"sos.error.release_encryption_not_configured" = "SOS encryption is not configured. This build cannot send SOS; call 112 in an emergency.";
 "status.title" = "Message status";
 "status.empty" = "No SOS sent yet";
 "status.timeline.1" = "SAVED ON DEVICE";
@@ -66,11 +67,8 @@
 "gate.step.bluetooth.body" = "SOSMesh uses Bluetooth Low Energy to discover nearby devices and send SOS without internet.";
 "gate.step.notifications.title" = "Notifications";
 "gate.step.notifications.body" = "Notifications inform you about SOS delivery progress on this device.";
-"gate.step.location.title" = "Location (While Using the App)";
-"gate.step.location.body" = "Approximate location is added to the SOS envelope. No sensitive health data is collected.";
 "gate.action.allow_bluetooth" = "Continue with Bluetooth";
 "gate.action.allow_notifications" = "Allow notifications";
-"gate.action.allow_location" = "Allow location";
 "gate.action.open_settings" = "Open Settings";
 "gate.action.open_settings.hint" = "Opens iOS Settings for SOSMesh permissions";
 "gate.action.call112" = "Call 112";

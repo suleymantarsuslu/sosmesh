@@ -12,7 +12,7 @@ final class BleTransferGateTests: XCTestCase {
         let receiver = BleTransferReceiver(transport: receiverT, config: BleTransferConfig(), clock: clock)
         let sender = BleTransferSender(
             transport: senderT,
-            config: BleTransferConfig(maxRetries: 2, chunkTimeoutMs: 300),
+            config: BleTransferConfig(chunkTimeoutMs: 300, maxRetries: 2),
             clock: clock,
             rng: rng
         )
@@ -36,17 +36,17 @@ final class BleTransferGateTests: XCTestCase {
         let rng = SeededBleTransferRng(seed: 9)
         let outbound = RecordingOutbound()
         let (senderT, receiverT) = linkedPair(outbound: outbound) { wire in
-            corruptLastChunkDigestIfPresent(wire)
+            self.corruptLastChunkDigestIfPresent(wire)
         }
         let sender = BleTransferSender(
             transport: senderT,
-            config: BleTransferConfig(maxRetries: 3, chunkTimeoutMs: 400),
+            config: BleTransferConfig(chunkTimeoutMs: 400, maxRetries: 3),
             clock: clock,
             rng: rng
         )
         let receiver = BleTransferReceiver(
             transport: receiverT,
-            config: BleTransferConfig(maxRetries: 3, chunkTimeoutMs: 400),
+            config: BleTransferConfig(chunkTimeoutMs: 400, maxRetries: 3),
             clock: clock
         )
         let tmp = URL(fileURLWithPath: NSTemporaryDirectory())
@@ -56,18 +56,17 @@ final class BleTransferGateTests: XCTestCase {
         let tracker = SosPeerDeliveryTracker(outbox: outbox)
         tracker.active = SosPeerDeliveryTracker.ActiveTransfer(sosId: "sos-gate", digest: "digest-gate")
         tracker.attachSenderListener(sender)
-        var senderCompleted = false
-        receiver.setListener(QuietReceiverListener())
-        sender.setListener(CompletionCapture { senderCompleted = true })
+        let receiverListener = QuietReceiverListener()
+        receiver.setListener(receiverListener)
         sender.startTransfer(Data(repeating: UInt8(ascii: "X"), count: 320))
         for _ in 0 ..< 2_000 {
-            if receiver.getState() == .failed || senderCompleted { break }
+            if receiver.getState() == .failed || sender.getState() == .completed { break }
             clock.advance(10)
         }
-        XCTAssertEqual(receiver.getState(), .failed)
-        XCTAssertFalse(senderCompleted)
+        XCTAssertEqual(receiver.getState(), BleTransferState.failed)
+        XCTAssertNotEqual(sender.getState(), .completed)
         let entries = try outbox.listEntries()
-        XCTAssertTrue(entries.isEmpty || entries.allSatisfy { $0.state != "PEER_RECEIVED" })
+        XCTAssertEqual(entries.count, 0)
         XCTAssertTrue(outbound.nacks.contains(where: { $0.reason == .digestInvalid }))
     }
 
@@ -75,17 +74,16 @@ final class BleTransferGateTests: XCTestCase {
         let clock = SimulatedBleTransferClock()
         let rng = SeededBleTransferRng(seed: 3)
         let channel = MockBleTransferChannel(packetLoss: 0, duplicateRate: 0, rng: rng)
-        let outbound = RecordingOutbound()
-        let (senderT, receiverT) = linkedPair(outbound: outbound)
+        let (senderT, receiverT) = channel.createTransportPair()
         let sender = BleTransferSender(
             transport: senderT,
-            config: BleTransferConfig(maxRetries: 5, chunkTimeoutMs: 400),
+            config: BleTransferConfig(chunkTimeoutMs: 400, maxRetries: 5),
             clock: clock,
             rng: rng
         )
         let receiver = BleTransferReceiver(
             transport: receiverT,
-            config: BleTransferConfig(maxRetries: 5, chunkTimeoutMs: 400),
+            config: BleTransferConfig(chunkTimeoutMs: 400, maxRetries: 5),
             clock: clock
         )
         let tmp = URL(fileURLWithPath: NSTemporaryDirectory())
@@ -105,27 +103,38 @@ final class BleTransferGateTests: XCTestCase {
         tracker.active = SosPeerDeliveryTracker.ActiveTransfer(sosId: "s1", digest: "d1")
         tracker.attachSenderListener(sender)
         var received: Data?
-        receiver.setListener(PayloadCapture { received = $0 })
-        var senderDone = false
-        sender.setListener(CompletionCapture { senderDone = true })
+        let receiverListener = PayloadCapture { received = $0 }
+        receiver.setListener(receiverListener)
         sender.startTransfer(Data("PAYLOAD".utf8))
-        for _ in 0 ..< 5_000 {
+        for _ in 0 ..< 300 {
+            clock.advance(10)
             channel.drain()
-            if senderDone, received != nil { break }
-            clock.advance(5)
+            if sender.getState() == .completed { break }
         }
-        XCTAssertTrue(senderDone)
+        XCTAssertEqual(sender.getState(), .completed)
         XCTAssertEqual(received, Data("PAYLOAD".utf8))
         let entry = try XCTUnwrap(try outbox.listEntries().first)
         XCTAssertEqual(entry.state, "PEER_RECEIVED")
     }
 
-    func testRelayCannotDecryptOpaquePayload() {
+    func testRelayCannotDecryptOpaquePayload() throws {
         let inbox = ReceivedSosInbox()
         let router = BleIncomingPayloadRouter(inbox: inbox, nowMs: { 1 })
-        let opaque = Data(repeating: 0xAB, count: 64)
-        router.onCompleted(payload: opaque)
-        XCTAssertTrue(inbox.list().isEmpty)
+        let secretNote = "PLAINTEXT_MUST_NOT_APPEAR_IN_RELAY_STORE"
+        let config = CryptoConfig(
+            keyId: "dev-test-001",
+            serverPublicKey: "BFu/Jxfj3txqvjTtUW7BTYK3iX0E/ysPPwPNk091o1c="
+        )
+        let composed = try IosSosMessageComposer(cryptoConfig: config).compose(
+            IosSosComposeRequest(note: secretNote, languageTag: "en", nowMs: 1_700_000_000_000)
+        )
+        let wire = composed.wirePayload
+        let wireText = try XCTUnwrap(String(data: wire, encoding: .utf8))
+        XCTAssertFalse(wireText.contains(secretNote), "Wire JSON must not embed SOS plaintext")
+        router.onCompleted(payload: wire)
+        let stored = try XCTUnwrap(inbox.list().first)
+        XCTAssertEqual(stored.sosId, composed.message.id)
+        XCTAssertEqual(stored.digest, composed.digest)
     }
 
     private func sourceRoot() -> String {
@@ -174,8 +183,13 @@ final class BleTransferGateTests: XCTestCase {
         guard BleChunkFlags.lastChunk.has(flags: chunk.header.flags), chunk.payload.count >= 32 else { return wire }
         var mutated = chunk.payload
         mutated[mutated.count - 1] ^= 0xFF
-        let corrupted = BleTransferChunk(header: chunk.header, payload: mutated)
-        return BleChunkCodec.serializeChunk(corrupted)
+        let header = BleTransferChunkHeader(
+            seq: chunk.header.seq,
+            total: chunk.header.total,
+            crc32: BleChunkCodec.calculateCrc32(mutated),
+            flags: chunk.header.flags
+        )
+        return BleChunkCodec.serializeChunk(BleTransferChunk(header: header, payload: mutated))
     }
 
     private final class BridgeWriter: GattOutboundWriting {

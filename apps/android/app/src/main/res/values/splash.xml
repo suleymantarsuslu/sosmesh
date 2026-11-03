@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <style name="Theme.SOSMesh.Splash" parent="Theme.SplashScreen">
+        <item name="windowSplashScreenBackground">@color/splash_background</item>
+        <item name="windowSplashScreenAnimatedIcon">@drawable/ic_sosmesh_logo</item>
+        <item name="postSplashScreenTheme">@style/Theme.SOSMesh</item>
+    </style>
+    <color name="splash_background">#0F172A</color>
+</resources>

@@ -81,7 +81,10 @@ export function OperatorShell({
         {t('a11y.skipToMain')}
       </a>
       <aside className="operator-sidebar" aria-label={t('a11y.menu')}>
-        <div className="operator-brand">{t('web.shell.brand')}</div>
+        <div className="operator-brand">
+          <img src="/icons/icon-192.png" alt="" />
+          {t('web.shell.brand')}
+        </div>
         <OrgHeader
           organizationName={context?.organization?.name ?? null}
           teamName={context?.team?.name ?? null}

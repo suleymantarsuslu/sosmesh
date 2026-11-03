@@ -1,42 +1,42 @@
 :root {
   /* Light mode (default) */
-  --color-light-sos: #D32F2F;
-  --color-light-danger: #C62828;
-  --color-light-warning: #F57C00;
-  --color-light-success: #2E7D32;
-  --color-light-offline: #616161;
-  --color-light-info: #1976D2;
+  --color-light-sos: #DC2626;
+  --color-light-danger: #DC2626;
+  --color-light-warning: #F59E0B;
+  --color-light-success: #10B981;
+  --color-light-offline: #64748B;
+  --color-light-info: #38BDF8;
   --color-light-surface-primary: #FFFFFF;
-  --color-light-surface-secondary: #F5F5F5;
-  --color-light-surface-tertiary: #E0E0E0;
-  --color-light-text-primary: #212121;
-  --color-light-text-secondary: #616161;
-  --color-light-text-disabled: #616161;
+  --color-light-surface-secondary: #F8FAFC;
+  --color-light-surface-tertiary: #F1F5F9;
+  --color-light-text-primary: #0F172A;
+  --color-light-text-secondary: #475569;
+  --color-light-text-disabled: #94A3B8;
   --color-light-text-onSos: #FFFFFF;
   --color-light-text-onDanger: #FFFFFF;
   --color-light-text-onSuccess: #FFFFFF;
-  --color-light-border: #BDBDBD;
-  --color-light-focus: #1976D2;
+  --color-light-border: #E2E8F0;
+  --color-light-focus: #38BDF8;
 
   /* Dark mode */
-  --color-dark-sos: #EF5350;
-  --color-dark-danger: #EF5350;
-  --color-dark-warning: #FFA726;
-  --color-dark-success: #66BB6A;
-  --color-dark-offline: #9E9E9E;
-  --color-dark-info: #1976D2;
-  --color-dark-surface-primary: #121212;
-  --color-dark-surface-secondary: #1E1E1E;
-  --color-dark-surface-tertiary: #2C2C2C;
-  --color-dark-text-primary: #FFFFFF;
-  --color-dark-text-secondary: #B0B0B0;
-  --color-dark-text-disabled: #B0B0B0;
-  --color-dark-text-onSos: #000000;
-  --color-dark-text-onDanger: #000000;
+  --color-dark-sos: #EF4444;
+  --color-dark-danger: #EF4444;
+  --color-dark-warning: #FBBF24;
+  --color-dark-success: #10B981;
+  --color-dark-offline: #94A3B8;
+  --color-dark-info: #7DD3FC;
+  --color-dark-surface-primary: #0F172A;
+  --color-dark-surface-secondary: #1E293B;
+  --color-dark-surface-tertiary: #334155;
+  --color-dark-text-primary: #F1F5F9;
+  --color-dark-text-secondary: #94A3B8;
+  --color-dark-text-disabled: #64748B;
+  --color-dark-text-onSos: #FFFFFF;
+  --color-dark-text-onDanger: #FFFFFF;
   --color-dark-text-onSuccess: #000000;
   --color-dark-text-onWarning: #000000;
-  --color-dark-border: #424242;
-  --color-dark-focus: #64B5F6;
+  --color-dark-border: #334155;
+  --color-dark-focus: #7DD3FC;
 }
 
 html[data-theme="light"], :root {

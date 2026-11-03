@@ -2,14 +2,20 @@ package com.sosmesh.android.ui.home
 
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Info
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.FilledTonalButton
+import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.stringResource
@@ -18,6 +24,7 @@ import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.dp
 import com.sosmesh.android.R
 import com.sosmesh.android.core.platform.CrossPlatformFaultHint
+import com.sosmesh.android.ui.theme.SosSpacing
 
 @Composable
 fun CrossPlatformFaultCard(
@@ -49,24 +56,40 @@ fun CrossPlatformFaultCard(
                 .semantics {
                     contentDescription = "cross_platform_fault_card"
                 },
-        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.errorContainer),
+        colors =
+            CardDefaults.cardColors(
+                containerColor = MaterialTheme.colorScheme.tertiaryContainer,
+                contentColor = MaterialTheme.colorScheme.onTertiaryContainer,
+            ),
+        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
     ) {
         Column(
-            modifier = Modifier.padding(16.dp),
-            verticalArrangement = Arrangement.spacedBy(8.dp),
+            modifier = Modifier.padding(SosSpacing.md),
+            verticalArrangement = Arrangement.spacedBy(SosSpacing.sm),
         ) {
-            Text(
-                text = stringResource(titleRes),
-                style = MaterialTheme.typography.titleSmall,
-                modifier = Modifier.semantics { contentDescription = "cross_platform_fault_title" },
-            )
+            Row(
+                horizontalArrangement = Arrangement.spacedBy(SosSpacing.sm),
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
+                Icon(
+                    imageVector = Icons.Default.Info,
+                    contentDescription = null,
+                    modifier = Modifier.size(20.dp),
+                    tint = MaterialTheme.colorScheme.tertiary,
+                )
+                Text(
+                    text = stringResource(titleRes),
+                    style = MaterialTheme.typography.titleMedium,
+                    modifier = Modifier.semantics { contentDescription = "cross_platform_fault_title" },
+                )
+            }
             Text(
                 text = stringResource(messageRes),
                 style = MaterialTheme.typography.bodyMedium,
                 modifier = Modifier.semantics { contentDescription = ariaText },
             )
             if (hint == CrossPlatformFaultHint.FIX_PERMISSIONS || hint == CrossPlatformFaultHint.FIX_BLUETOOTH) {
-                OutlinedButton(onClick = onOpenPermissions, modifier = Modifier.fillMaxWidth()) {
+                FilledTonalButton(onClick = onOpenPermissions, modifier = Modifier.fillMaxWidth()) {
                     Text(stringResource(R.string.platform_self_repair_action))
                 }
             }

@@ -218,11 +218,15 @@ private fun SosDoneScreen(modifier: Modifier = Modifier) {
 
 @Composable
 private fun OfflineBadge() {
-    Surface(color = MaterialTheme.colorScheme.errorContainer) {
+    Surface(
+        color = MaterialTheme.colorScheme.errorContainer,
+        shape = MaterialTheme.shapes.small,
+    ) {
         Text(
             text = stringResource(R.string.sos_offline_badge),
             modifier = Modifier.padding(horizontal = 12.dp, vertical = 6.dp),
             style = MaterialTheme.typography.labelLarge,
+            color = MaterialTheme.colorScheme.onErrorContainer,
         )
     }
 }
@@ -245,12 +249,22 @@ private fun LocationFreshnessBadge(location: LocationSnapshot) {
         color =
             when (tier) {
                 LocationFreshnessTier.STALE -> MaterialTheme.colorScheme.errorContainer
-                LocationFreshnessTier.AGING -> MaterialTheme.colorScheme.secondaryContainer
-                else -> MaterialTheme.colorScheme.surfaceVariant
+                LocationFreshnessTier.AGING -> MaterialTheme.colorScheme.tertiaryContainer
+                else -> MaterialTheme.colorScheme.primaryContainer
             },
+        shape = MaterialTheme.shapes.small,
         modifier = Modifier.testTag("sos_location_freshness"),
     ) {
-        Text(text = label, modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp))
+        Text(
+            text = label,
+            modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp),
+            color =
+                when (tier) {
+                    LocationFreshnessTier.STALE -> MaterialTheme.colorScheme.onErrorContainer
+                    LocationFreshnessTier.AGING -> MaterialTheme.colorScheme.onTertiaryContainer
+                    else -> MaterialTheme.colorScheme.onPrimaryContainer
+                },
+        )
     }
 }
 

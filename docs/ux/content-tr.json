@@ -231,6 +231,8 @@
       "accuracyGood": "İyi (±{{meters}}m)",
       "accuracyFair": "Orta (±{{meters}}m)",
       "accuracyPoor": "Zayıf (±{{meters}}m)",
+      "locationApproximate": "Yaklaşık konum (~1 km)",
+      "locationApproximateShort": "~1 km",
       "selectCase": "Vaka seç {{id}}",
       "unknownLocationTitle": "Bilinmeyen Konum Kuyruğu",
       "unknownLocationHint": "Koordinatsız vakalar"

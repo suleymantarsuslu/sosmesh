@@ -146,7 +146,14 @@ export function CaseDetailView({ detail, aiData, onRefresh }: Props) {
           </div>
           <div>
             <dt>{t('web.cases.locationStatus')}</dt>
-            <dd>{detail.verifiedMetadata.locationStatus}</dd>
+            <dd>
+              {detail.verifiedMetadata.locationStatus}
+              {detail.verifiedMetadata.locationApproximate && (
+                <span className="case-detail__location-badge" title={t('web.cases.locationApproximate')}>
+                  {t('web.cases.locationApproximateShort')}
+                </span>
+              )}
+            </dd>
           </div>
         </dl>
         <button

@@ -96,6 +96,11 @@ export function CaseListPanel({ rows, selectedId, onSelect }: Props) {
                         P{row.priority}
                       </span>
                       <DeliveryStateBadge state={row.deliveryState} />
+                      {row.locationApproximate && (
+                        <span className="case-list-panel__location-badge" title={t('web.cases.locationApproximate')}>
+                          {t('web.cases.locationApproximateShort')}
+                        </span>
+                      )}
                     </div>
                     <span className="case-list-panel__accuracy">
                       {formatAccuracy(row.accuracyMeters, t)}

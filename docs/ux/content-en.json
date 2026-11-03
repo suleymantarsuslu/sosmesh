@@ -231,6 +231,8 @@
       "accuracyGood": "Good (±{{meters}}m)",
       "accuracyFair": "Fair (±{{meters}}m)",
       "accuracyPoor": "Poor (±{{meters}}m)",
+      "locationApproximate": "Approximate location (~1 km)",
+      "locationApproximateShort": "~1 km",
       "selectCase": "Select case {{id}}",
       "unknownLocationTitle": "Unknown Location Queue",
       "unknownLocationHint": "Cases without coordinates"

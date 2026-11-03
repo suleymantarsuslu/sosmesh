@@ -1571,6 +1571,24 @@ html[data-theme='dark'] .case-drawer {
   font-weight: 600;
 }
 
+.case-detail__location-badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.125rem var(--space-2, 0.5rem);
+  border-radius: 999px;
+  font-size: var(--type-fontSize-xs, 0.75rem);
+  font-weight: 500;
+  background: rgb(234 179 8 / 0.15);
+  color: rgb(161 98 7);
+  border: 1px solid rgb(234 179 8 / 0.3);
+  margin-left: var(--space-2, 0.5rem);
+}
+
+html[data-theme='dark'] .case-detail__location-badge {
+  background: rgb(234 179 8 / 0.2);
+  color: rgb(250 204 21);
+}
+
 .case-ai-panel__badge {
   display: inline-block;
   margin-left: var(--space-2, 0.5rem);

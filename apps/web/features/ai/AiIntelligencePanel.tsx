@@ -158,10 +158,11 @@ export function AiIntelligencePanel({
         {linkSuggestions.length > 0 && (
           <FusionSuggestionsCard
             incidentId={incidentId}
-          suggestions={linkSuggestions}
-          onRefresh={onRefresh}
-        />
-      )}
+            suggestions={linkSuggestions}
+            onRefresh={onRefresh}
+          />
+        )}
+      </div>
     </section>
   );
 }

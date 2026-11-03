@@ -253,7 +253,7 @@ export class OperatorCasesService {
 
     const attachmentSummaries: OperatorAttachmentSummary[] = attachments.map((att) => ({
       id: att.id,
-      kind: att.kind as 'audio' | 'photo',
+      kind: att.kind === 'image' ? 'photo' : (att.kind as 'audio' | 'photo'),
       mime: att.mime,
       sizeBytes: att.sizeBytes,
       durationMs: att.durationMs,

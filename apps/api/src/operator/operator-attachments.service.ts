@@ -64,7 +64,7 @@ export class OperatorAttachmentsService {
       return { found: false };
     }
 
-    if (attachment.kind !== 'photo') {
+    if (attachment.kind !== 'photo' && attachment.kind !== 'image') {
       this.logger.warn({
         msg: 'Requested image for non-photo attachment',
         attachmentId,

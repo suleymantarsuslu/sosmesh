@@ -1,32 +1,33 @@
 #!/usr/bin/env node
 /**
- * Voice Rescue smoke test
+ * Voice Rescue smoke test - Direct Meta API check
  * Work Package B - Voice Rescue
  * 
- * Creates a synthetic TR emergency audio and sends to the API
- * Requires: MODEL_API_KEY env var (not included)
+ * Direct test: convertToWav + Meta transcribe (no API/DB needed)
+ * Requires: MODEL_API_KEY env var
  * 
  * Usage: MODEL_API_KEY=xxx node scripts/ai-smoke/voice.mjs
  */
 
 import { spawn } from 'node:child_process';
-import { writeFile, unlink, readFile } from 'node:fs/promises';
+import { writeFile, unlink, readFile, readdir } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
+import { randomUUID } from 'node:crypto';
 
-const API_BASE = process.env.API_BASE_URL ?? 'http://localhost:3001';
 const MODEL_API_KEY = process.env.MODEL_API_KEY;
+const META_BASE_URL = process.env.META_BASE_URL ?? 'https://api.meta.ai/v1';
 
 if (!MODEL_API_KEY) {
   console.error('ERROR: MODEL_API_KEY environment variable not set');
   process.exit(1);
 }
 
-async function generateSyntheticAudio() {
+async function generateTurkishEmergencyAudio() {
   const text = 'Yardım edin. Enkaz altında üç kişi mahsur kaldık. Yaralılar var. Acil yardım lazım.';
-  const outputPath = join(tmpdir(), 'sosmesh-smoke-voice.wav');
+  const outputPath = join(tmpdir(), `sosmesh-smoke-${randomUUID()}.wav`);
 
-  console.log('Generating synthetic Turkish emergency audio...');
+  console.log('Generating Turkish emergency audio with espeak-ng...');
 
   return new Promise((resolve, reject) => {
     const espeak = spawn('espeak-ng', [
@@ -36,48 +37,41 @@ async function generateSyntheticAudio() {
       text,
     ], {
       stdio: ['ignore', 'pipe', 'pipe'],
-    });
-
-    let stderr = '';
-
-    espeak.stderr.on('data', (chunk) => {
-      stderr += chunk.toString();
+      timeout: 10000,
     });
 
     espeak.on('error', (error) => {
-      if (error.message.includes('ENOENT')) {
-        console.warn('WARNING: espeak-ng not found, creating fallback sine wave');
-        createFallbackWav(outputPath).then(resolve).catch(reject);
-      } else {
-        reject(error);
-      }
+      reject(new Error(`espeak-ng not available: ${error.message}`));
     });
 
     espeak.on('exit', (code) => {
       if (code === 0) {
         resolve(outputPath);
       } else {
-        console.warn('WARNING: espeak-ng failed, creating fallback sine wave');
-        createFallbackWav(outputPath).then(resolve).catch(reject);
+        reject(new Error(`espeak-ng failed with code ${code}`));
       }
     });
   });
 }
 
-async function createFallbackWav(outputPath) {
-  console.log('Creating fallback synthetic audio (sine wave)...');
-  
+async function convertToWav16kHz(inputPath) {
+  const outputPath = join(tmpdir(), `sosmesh-converted-${randomUUID()}.wav`);
+
+  console.log('Converting to WAV 16kHz mono 16-bit...');
+
   return new Promise((resolve, reject) => {
     const ffmpeg = spawn('ffmpeg', [
-      '-f', 'lavfi',
-      '-i', 'sine=frequency=440:duration=3',
+      '-i', inputPath,
       '-ac', '1',
       '-ar', '16000',
       '-c:a', 'pcm_s16le',
+      '-map_metadata', '-1',
+      '-f', 'wav',
       '-y',
       outputPath,
     ], {
       stdio: ['ignore', 'pipe', 'pipe'],
+      timeout: 30000,
     });
 
     ffmpeg.on('error', (error) => {
@@ -88,142 +82,110 @@ async function createFallbackWav(outputPath) {
       if (code === 0) {
         resolve(outputPath);
       } else {
-        reject(new Error(`ffmpeg exited with code ${code}`));
+        reject(new Error(`ffmpeg failed with code ${code}`));
       }
     });
   });
 }
 
-async function createTestIncident() {
-  console.log('Creating test incident...');
+async function transcribeWithMeta(wavPath) {
+  console.log('Calling Meta Voice Transcribe API...');
 
-  const response = await fetch(`${API_BASE}/v1/operator/demo/sos`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({
-      displayText: 'SYNTHETIC VOICE TEST: Enkaz altında 3 kişi mahsur',
-      sosType: 'TRAPPED',
-      priority: 4,
-      personCount: 3,
-      synthetic: true,
-    }),
-  });
+  const wavBuffer = await readFile(wavPath);
 
-  if (!response.ok) {
-    const text = await response.text();
-    throw new Error(`Demo SOS failed: ${response.status} ${text}`);
-  }
+  const requestJson = {
+    model: 'muse-voice-transcribe-1.0',
+    audioEncoding: 'WAV',
+    mode: 'PUSH_TO_TALK',
+    languageBias: ['Turkish', 'English'],
+    keywords: ['enkaz', 'yaralı', 'yangın', 'sel', 'yardım', 'mahsur', 'acil'],
+  };
 
-  const data = await response.json();
-  return data.incidentId;
-}
+  const formData = new FormData();
+  const requestBlob = new Blob([JSON.stringify(requestJson)], { type: 'application/json' });
+  const audioBlob = new Blob([wavBuffer], { type: 'audio/wav' });
+  
+  formData.append('request', requestBlob, 'request.json');
+  formData.append('audio', audioBlob, 'audio.wav');
 
-async function uploadAudio(incidentId, audioPath) {
-  console.log(`Uploading audio to case ${incidentId}...`);
-
-  const audioBuffer = await readFile(audioPath);
-  const base64Audio = audioBuffer.toString('base64');
-
-  const response = await fetch(`${API_BASE}/v1/operator/cases/${incidentId}/attachments`, {
+  const response = await fetch(`${META_BASE_URL}/asr/transcribe`, {
     method: 'POST',
     headers: {
-      'Content-Type': 'application/json',
-      'Authorization': 'Bearer test-operator-token',
+      'Authorization': `Bearer ${MODEL_API_KEY}`,
     },
-    body: JSON.stringify({
-      audioBase64: base64Audio,
-      mimeType: 'audio/wav',
-      synthetic: true,
-    }),
+    body: formData,
   });
 
   if (!response.ok) {
     const text = await response.text();
-    throw new Error(`Audio upload failed: ${response.status} ${text}`);
+    throw new Error(`Meta API failed: ${response.status} ${text}`);
   }
 
-  const data = await response.json();
-  return data;
-}
-
-async function waitForTranscription(incidentId, maxWaitMs = 60000) {
-  console.log('Waiting for transcription job...');
-
-  const start = Date.now();
-  let lastStatus = 'unknown';
-
-  while (Date.now() - start < maxWaitMs) {
-    const response = await fetch(`${API_BASE}/v1/operator/cases/${incidentId}/detail`, {
-      headers: {
-        'Authorization': 'Bearer test-operator-token',
-      },
-    });
-
-    if (response.ok) {
-      const data = await response.json();
-      
-      if (data.transcripts && data.transcripts.length > 0) {
-        return data.transcripts[0];
-      }
-
-      if (data.ai?.status) {
-        if (lastStatus !== data.ai.status) {
-          console.log(`  AI status: ${data.ai.status}`);
-          lastStatus = data.ai.status;
-        }
-      }
-    }
-
-    await new Promise((resolve) => setTimeout(resolve, 2000));
-  }
-
-  return null;
+  return response.json();
 }
 
 async function main() {
-  console.log('=== SOSMesh Voice Rescue Smoke Test ===\n');
-  console.log(`API: ${API_BASE}`);
-  console.log('Model API Key: [REDACTED]\n');
+  console.log('=== SOSMesh Voice Rescue Direct Model Check ===\n');
+  console.log(`Meta API: ${META_BASE_URL}`);
+  console.log('Model: muse-voice-transcribe-1.0');
+  console.log('Key: [REDACTED]\n');
 
-  let audioPath = null;
+  let originalPath = null;
+  let convertedPath = null;
 
   try {
-    audioPath = await generateSyntheticAudio();
-    console.log(`✓ Generated synthetic audio: ${audioPath}\n`);
+    // Generate Turkish emergency audio with espeak-ng
+    originalPath = await generateTurkishEmergencyAudio();
+    console.log(`✓ Generated Turkish audio: ${originalPath}\n`);
 
-    const incidentId = await createTestIncident();
-    console.log(`✓ Created test incident: ${incidentId}\n`);
+    // Convert to WAV 16kHz mono 16-bit
+    convertedPath = await convertToWav16kHz(originalPath);
+    console.log(`✓ Converted to WAV 16kHz mono 16-bit: ${convertedPath}\n`);
 
-    const uploadResult = await uploadAudio(incidentId, audioPath);
-    console.log(`✓ Audio uploaded`);
-    console.log(`  Attachment ID: ${uploadResult.attachmentId}`);
-    console.log(`  Job ID: ${uploadResult.jobId}`);
-    console.log(`  Duration: ${uploadResult.durationMs}ms`);
-    console.log(`  Size: ${uploadResult.sizeBytes} bytes\n`);
+    // Call Meta transcribe
+    const result = await transcribeWithMeta(convertedPath);
 
-    const transcript = await waitForTranscription(incidentId);
+    console.log('✅ TRANSCRIPTION SUCCESSFUL');
+    console.log(`\nModel: ${result.model ?? 'muse-voice-transcribe-1.0'}`);
+    console.log(`Session ID: ${result.sessionId ?? 'unknown'}`);
+    console.log(`Audio Duration: ${result.audioDurationMs ?? 0}ms`);
+    console.log(`Transcript: "${result.transcript ?? ''}"`);
+    
+    if (result.turns && result.turns.length > 0) {
+      console.log(`Turns: ${result.turns.length}`);
+    }
 
-    if (transcript) {
-      console.log('✓ Transcription completed');
-      console.log(`  Model: ${transcript.model}`);
-      console.log(`  Language: ${transcript.language}`);
-      console.log(`  Transcript: "${transcript.transcript}"`);
-      console.log(`  Audio duration: ${transcript.audioDurationMs}ms\n`);
-      console.log('✅ SMOKE TEST PASSED');
-    } else {
-      console.log('⚠️  Transcription not completed within timeout');
-      console.log('This may indicate a budget limit or API issue');
-      console.log('Check worker logs and AI job status');
+    // Verify expected Turkish keywords
+    const transcript = (result.transcript ?? '').toLowerCase();
+    const expectedWords = ['enkaz', 'mahsur', 'yardım', 'yaralı'];
+    const foundWords = expectedWords.filter(word => transcript.includes(word));
+
+    console.log(`\nExpected keywords found: ${foundWords.length}/${expectedWords.length}`);
+    if (foundWords.length > 0) {
+      console.log(`  Found: ${foundWords.join(', ')}`);
+    }
+
+    if (foundWords.length === 0) {
+      console.log('\n⚠️  WARNING: No Turkish keywords detected');
+      console.log('This may indicate language detection or keyword issues');
       process.exit(1);
     }
+
+    console.log('\n✅ SMOKE TEST PASSED');
   } catch (error) {
     console.error('\n❌ SMOKE TEST FAILED');
-    console.error(error);
+    console.error(error.message);
+    if (error.stack) {
+      console.error('\nStack trace:');
+      console.error(error.stack);
+    }
     process.exit(1);
   } finally {
-    if (audioPath) {
-      await unlink(audioPath).catch(() => {});
-    }
+    // Cleanup
+    const cleanup = [];
+    if (originalPath) cleanup.push(unlink(originalPath).catch(() => {}));
+    if (convertedPath) cleanup.push(unlink(convertedPath).catch(() => {}));
+    await Promise.all(cleanup);
   }
 }
 

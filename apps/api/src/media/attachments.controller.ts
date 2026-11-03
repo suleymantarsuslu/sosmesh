@@ -11,26 +11,40 @@ import {
   Post,
   Get,
   Param,
-  Body,
+  Req,
   UseGuards,
   BadRequestException,
   NotFoundException,
   StreamableFile,
   Header,
   Logger,
+  UseInterceptors,
+  UploadedFile,
+  Inject,
 } from '@nestjs/common';
-import { OperatorAuthGuard } from '../auth/operator-auth.guard';
+import { FileInterceptor } from '@nestjs/platform-express';
+import { OperatorAuthGuard, OperatorRequest } from '../operator/guards/operator-auth.guard';
 import { AudioUploadService } from './audio-upload.service';
 import { PrismaService } from '../prisma/prisma.service';
 import { MediaStorage, MEDIA_STORAGE } from './media-storage.interface';
 import { AiJobQueueService } from '../ai/ai-job-queue.service';
-import { Inject } from '@nestjs/common';
+import { IncidentScopeService } from '../organization/incident-scope.service';
 
-export type UploadAudioDto = {
-  audioBase64: string;
-  mimeType: string;
-  synthetic?: boolean;
-};
+const ALLOWED_AUDIO_MIMES = [
+  'audio/wav',
+  'audio/x-wav',
+  'audio/wave',
+  'audio/mpeg',
+  'audio/mp3',
+  'audio/mp4',
+  'audio/aac',
+  'audio/x-m4a',
+  'audio/ogg',
+  'audio/opus',
+  'audio/webm',
+];
+
+const MAX_AUDIO_SIZE = 15 * 1024 * 1024;
 
 @Controller('v1/operator')
 @UseGuards(OperatorAuthGuard)
@@ -41,16 +55,45 @@ export class AttachmentsController {
     private readonly audioUpload: AudioUploadService,
     private readonly prisma: PrismaService,
     @Inject(MEDIA_STORAGE) private readonly storage: MediaStorage,
-    private readonly jobQueue: AiJobQueueService
+    private readonly jobQueue: AiJobQueueService,
+    private readonly scope: IncidentScopeService
   ) {}
 
   @Post('cases/:caseId/attachments')
+  @UseInterceptors(
+    FileInterceptor('audio', {
+      limits: { fileSize: MAX_AUDIO_SIZE },
+      fileFilter: (req, file, callback) => {
+        if (!ALLOWED_AUDIO_MIMES.includes(file.mimetype)) {
+          callback(
+            new BadRequestException({
+              error: 'invalid_mime',
+              message: `Unsupported audio format: ${file.mimetype}`,
+              allowedMimes: ALLOWED_AUDIO_MIMES,
+            }),
+            false
+          );
+        } else {
+          callback(null, true);
+        }
+      },
+    })
+  )
   async uploadAudio(
+    @Req() req: OperatorRequest,
     @Param('caseId') caseId: string,
-    @Body() dto: UploadAudioDto
+    @UploadedFile() file: Express.Multer.File
   ) {
-    const incident = await this.prisma.incident.findUnique({
-      where: { id: caseId },
+    if (!file) {
+      throw new BadRequestException('Audio file is required');
+    }
+
+    const scopeWhere = this.scope.incidentWhere(req.operatorUser);
+    const incident = await this.prisma.incident.findFirst({
+      where: {
+        id: caseId,
+        ...(scopeWhere ?? {}),
+      },
       include: {
         sosMessages: {
           orderBy: { createdAt: 'desc' },
@@ -63,19 +106,12 @@ export class AttachmentsController {
       throw new NotFoundException('Case not found');
     }
 
-    let buffer: Buffer;
-    try {
-      buffer = Buffer.from(dto.audioBase64, 'base64');
-    } catch {
-      throw new BadRequestException('Invalid base64 audio data');
-    }
-
     const result = await this.audioUpload.upload({
-      buffer,
-      mimeType: dto.mimeType,
+      buffer: file.buffer,
+      mimeType: file.mimetype,
       incidentId: incident.id,
       sosMessageId: incident.sosMessages[0]?.id,
-      synthetic: dto.synthetic ?? false,
+      synthetic: false,
     });
 
     const jobId = await this.jobQueue.enqueue({
@@ -103,12 +139,21 @@ export class AttachmentsController {
 
   @Get('attachments/:attachmentId/audio')
   @Header('Cache-Control', 'private, max-age=3600')
-  async streamAudio(@Param('attachmentId') attachmentId: string) {
-    const attachment = await this.prisma.attachment.findUnique({
-      where: { id: attachmentId },
+  async streamAudio(
+    @Req() req: OperatorRequest,
+    @Param('attachmentId') attachmentId: string
+  ) {
+    const scopeWhere = this.scope.incidentWhere(req.operatorUser);
+
+    const attachment = await this.prisma.attachment.findFirst({
+      where: {
+        id: attachmentId,
+        kind: 'audio',
+        incident: scopeWhere ?? {},
+      },
     });
 
-    if (!attachment || attachment.kind !== 'audio') {
+    if (!attachment) {
       throw new NotFoundException('Audio attachment not found');
     }
 

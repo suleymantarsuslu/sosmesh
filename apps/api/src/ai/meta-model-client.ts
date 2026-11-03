@@ -7,7 +7,6 @@
  */
 
 import { Injectable, Logger } from '@nestjs/common';
-import { FormData, File } from 'undici';
 
 type FetchLike = typeof fetch;
 
@@ -43,6 +42,7 @@ export type SparkJsonResponse = {
 export type TranscribeRequest = {
   wavBuffer: Buffer;
   languageBias?: string[];
+  keywords?: string[];
   mode?: 'PUSH_TO_TALK' | 'ENDPOINTING' | 'DIARIZATION';
 };
 
@@ -185,6 +185,7 @@ export class MetaModelClient {
   private readonly samModel: string;
   private readonly apiKey: string;
   private readonly timeoutMs: number;
+  private readonly asrTimeoutMs: number;
   private readonly maxRetries: number;
   private readonly maxTokens: number;
   private readonly circuit: CircuitBreaker;
@@ -200,12 +201,14 @@ export class MetaModelClient {
     this.timeoutMs = Number(process.env.META_TIMEOUT_MS ?? 15000);
     this.maxRetries = Number(process.env.META_MAX_RETRIES ?? 2);
     this.maxTokens = Number(process.env.META_MAX_TOKENS ?? 4096);
+    const asrTimeoutMs = Number(process.env.META_ASR_TIMEOUT_MS ?? 60000);
     this.circuit = new CircuitBreaker(
       Number(process.env.META_CIRCUIT_FAILURE_THRESHOLD ?? 3),
       Number(process.env.META_CIRCUIT_COOLDOWN_MS ?? 30000)
     );
     this.samRateLimiter = new RateLimiter(2, 60);
     this.fetchImpl = fetch;
+    this.asrTimeoutMs = asrTimeoutMs;
 
     // Refuse contributor models
     if (this.sparkModel.endsWith('-contributor') || 
@@ -353,24 +356,28 @@ export class MetaModelClient {
       audioEncoding: 'WAV',
       mode: request.mode ?? 'PUSH_TO_TALK',
       ...(request.languageBias ? { languageBias: request.languageBias } : {}),
+      ...(request.keywords ? { keywords: request.keywords } : {}),
     };
 
     const formData = new FormData();
-    formData.set('request', new File([JSON.stringify(requestJson)], 'request.json', {
-      type: 'application/json',
-    }));
-    formData.set('audio', new File([request.wavBuffer], 'audio.wav', {
-      type: 'audio/wav',
-    }));
+    const requestBlob = new Blob([JSON.stringify(requestJson)], { type: 'application/json' });
+    const audioBlob = new Blob([request.wavBuffer], { type: 'audio/wav' });
+    
+    formData.append('request', requestBlob, 'request.json');
+    formData.append('audio', audioBlob, 'audio.wav');
 
     return this.retryRequest(async () => {
-      const response = await this.callWithTimeout(`${this.baseUrl}/asr/transcribe`, {
-        method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${this.apiKey}`,
+      const response = await this.callWithTimeout(
+        `${this.baseUrl}/asr/transcribe`,
+        {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${this.apiKey}`,
+          },
+          body: formData as unknown as BodyInit,
         },
-        body: formData as unknown as BodyInit,
-      });
+        this.asrTimeoutMs
+      );
 
       if (response.status === 429 || response.status >= 500) {
         return { ok: false, error: `http_${response.status}`, retryable: true };
@@ -586,9 +593,10 @@ export class MetaModelClient {
     return lastResult ?? { ok: false, error: 'max_retries_exceeded', retryable: false } as T;
   }
 
-  private async callWithTimeout(url: string, init: RequestInit): Promise<Response> {
+  private async callWithTimeout(url: string, init: RequestInit, timeoutMs?: number): Promise<Response> {
     const controller = new AbortController();
-    const timer = setTimeout(() => controller.abort(), this.timeoutMs);
+    const timeout = timeoutMs ?? this.timeoutMs;
+    const timer = setTimeout(() => controller.abort(), timeout);
 
     try {
       return await this.fetchImpl(url, {

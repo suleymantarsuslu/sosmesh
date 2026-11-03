@@ -100,36 +100,60 @@ export class AiJobRunnerService {
       return;
     }
 
-    // Get SOS message
+    // Get SOS message if available
     const sosMessage = job.sosMessageId
       ? await this.prisma.sosMessage.findUnique({
           where: { id: job.sosMessageId },
           select: { messageId: true, operatorDisplayText: true, noteText: true },
         })
-      : null;
+      : await this.prisma.sosMessage.findFirst({
+          where: { incidentId: job.incidentId },
+          orderBy: { createdAt: 'desc' },
+          select: { messageId: true, operatorDisplayText: true, noteText: true },
+        });
 
-    if (!sosMessage) {
-      await this.queue.fail(job.id, 'SOS message not found');
-      return;
+    // Try to get plaintext from SOS
+    let plaintext = '';
+
+    if (sosMessage) {
+      if (sosMessage.noteText) {
+        plaintext = sosMessage.noteText;
+      } else {
+        const decrypted = await this.plaintextSource.getPlaintext({
+          incidentId: job.incidentId,
+          messageId: sosMessage.messageId,
+        });
+        if (decrypted) {
+          plaintext = decrypted;
+        } else if (sosMessage.operatorDisplayText) {
+          plaintext = sosMessage.operatorDisplayText;
+        }
+      }
     }
 
-    // Try to get plaintext
-    let plaintext = sosMessage.noteText;
+    // Get latest successful transcript
+    const latestTranscript = await this.prisma.aiTranscript.findFirst({
+      where: {
+        attachment: {
+          incidentId: job.incidentId,
+        },
+      },
+      orderBy: { createdAt: 'desc' },
+      select: { transcript: true },
+    });
+
+    // Combine text and transcript
+    if (latestTranscript?.transcript) {
+      const transcriptText = `\n\n[Voice transcript (machine-generated, may contain errors)]:\n${latestTranscript.transcript}`;
+      if (plaintext) {
+        plaintext = plaintext + transcriptText;
+      } else {
+        plaintext = transcriptText.trim();
+      }
+    }
 
     if (!plaintext) {
-      plaintext = await this.plaintextSource.getPlaintext({
-        incidentId: job.incidentId,
-        messageId: sosMessage.messageId,
-      });
-    }
-
-    // Fall back to operator display text
-    if (!plaintext && sosMessage.operatorDisplayText) {
-      plaintext = sosMessage.operatorDisplayText;
-    }
-
-    if (!plaintext) {
-      await this.queue.requiresReview(job.id, 'No plaintext available');
+      await this.queue.requiresReview(job.id, 'No plaintext or transcript available');
       return;
     }
 

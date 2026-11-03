@@ -80,6 +80,14 @@ export class VoiceTranscriptionService {
       const audioBuffer = await this.storage.retrieve(attachment.storageKey);
 
       if (!audioBuffer) {
+        await this.budgetGuard.reconcile({
+          reservationId: reservation.reservationId,
+          actualUsd: 0,
+          inputTokens: 0,
+          outputTokens: 0,
+          model: 'muse-voice-transcribe-1.0',
+          requestId: 'not_found',
+        });
         return { success: false, reason: 'not_found' };
       }
 
@@ -99,6 +107,16 @@ export class VoiceTranscriptionService {
           msg: 'Audio conversion failed',
           attachmentId,
         });
+
+        await this.budgetGuard.reconcile({
+          reservationId: reservation.reservationId,
+          actualUsd: 0,
+          inputTokens: 0,
+          outputTokens: 0,
+          model: 'muse-voice-transcribe-1.0',
+          requestId: 'conversion_failed',
+        });
+
         return { success: false, reason: 'conversion_failed', error: String(error) };
       }
 
@@ -121,6 +139,7 @@ export class VoiceTranscriptionService {
       const asrRequest = {
         wavBuffer,
         languageBias,
+        keywords,
         mode: 'PUSH_TO_TALK' as const,
       };
 
@@ -179,8 +198,9 @@ export class VoiceTranscriptionService {
         msg: 'Transcription completed',
         transcriptId: transcript.id,
         attachmentId,
-        transcript: asrResponse.transcript.substring(0, 100),
+        transcriptLength: asrResponse.transcript.length,
         language,
+        durationMs: asrResponse.audioDurationMs,
       });
 
       const triageJobId = await this.jobQueue.enqueue({

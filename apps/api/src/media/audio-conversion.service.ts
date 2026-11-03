@@ -8,7 +8,7 @@
 
 import { Injectable, Logger } from '@nestjs/common';
 import { spawn } from 'node:child_process';
-import { createHash } from 'node:crypto';
+import { randomUUID } from 'node:crypto';
 import { unlink, writeFile } from 'node:fs/promises';
 import { join } from 'node:path';
 import { tmpdir } from 'node:os';
@@ -33,7 +33,7 @@ export class AudioConversionService {
    * Enforces 120s max duration
    */
   async convertToWav(request: AudioConversionRequest): Promise<AudioConversionResult> {
-    const tempId = createHash('sha256').update(request.inputBuffer).digest('hex').substring(0, 16);
+    const tempId = randomUUID();
     const inputExt = this.getExtension(request.inputMime);
     const inputPath = join(tmpdir(), `sosmesh-in-${tempId}${inputExt}`);
     const outputPath = join(tmpdir(), `sosmesh-out-${tempId}.wav`);
@@ -68,7 +68,7 @@ export class AudioConversionService {
    * Validate audio duration without conversion
    */
   async validateDuration(buffer: Buffer, mime: string): Promise<number> {
-    const tempId = createHash('sha256').update(buffer).digest('hex').substring(0, 16);
+    const tempId = randomUUID();
     const ext = this.getExtension(mime);
     const path = join(tmpdir(), `sosmesh-probe-${tempId}${ext}`);
 
@@ -101,17 +101,20 @@ export class AudioConversionService {
         if (code === 0) {
           resolve();
         } else {
-          const msg = stderr.substring(0, 500);
-          reject(new Error(`ffmpeg exited with code ${code}: ${msg}`));
+          const lines = stderr.split('\n').filter((line) => !line.includes('configuration:') && !line.includes('lib'));
+          const relevantLines = lines.slice(-10).join('\n').substring(0, 500);
+          reject(new Error(`ffmpeg exited with code ${code}: ${relevantLines}`));
         }
       });
 
-      setTimeout(() => {
+      const timer = setTimeout(() => {
         if (!proc.killed) {
           proc.kill('SIGTERM');
           reject(new Error('ffmpeg timeout'));
         }
       }, this.timeoutMs);
+
+      proc.on('exit', () => clearTimeout(timer));
     });
   }
 
@@ -139,7 +142,15 @@ export class AudioConversionService {
         reject(new Error(`ffprobe spawn failed: ${error.message}`));
       });
 
+      const timer = setTimeout(() => {
+        if (!proc.killed) {
+          proc.kill('SIGTERM');
+          reject(new Error('ffprobe timeout'));
+        }
+      }, 10000);
+
       proc.on('exit', (code) => {
+        clearTimeout(timer);
         if (code === 0) {
           const durationSeconds = parseFloat(stdout.trim());
           if (Number.isNaN(durationSeconds)) {
@@ -151,13 +162,6 @@ export class AudioConversionService {
           reject(new Error(`ffprobe exited with code ${code}`));
         }
       });
-
-      setTimeout(() => {
-        if (!proc.killed) {
-          proc.kill('SIGTERM');
-          reject(new Error('ffprobe timeout'));
-        }
-      }, 10000);
     });
   }
 

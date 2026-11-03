@@ -5,6 +5,7 @@
 
 import { Module } from '@nestjs/common';
 import { PrismaModule } from '../prisma/prisma.module';
+import { OrganizationModule } from '../organization/organization.module';
 import { LocalDiskStorageService } from './local-disk-storage.service';
 import { MEDIA_STORAGE } from './media-storage.interface';
 import { AudioConversionService } from './audio-conversion.service';
@@ -13,7 +14,7 @@ import { AttachmentsController } from './attachments.controller';
 import { AiModule } from '../ai/ai.module';
 
 @Module({
-  imports: [PrismaModule, AiModule],
+  imports: [PrismaModule, OrganizationModule, AiModule],
   providers: [
     {
       provide: MEDIA_STORAGE,

@@ -28,6 +28,10 @@ export function PhotoAnalysisCard({ sparkVision, samVision }: Props) {
 
     const displayWidth = imgRef.current.width;
     const displayHeight = imgRef.current.height;
+    
+    // Ensure we have valid dimensions
+    if (displayWidth === 0 || displayHeight === 0) return;
+    
     canvas.width = displayWidth;
     canvas.height = displayHeight;
 
@@ -35,6 +39,9 @@ export function PhotoAnalysisCard({ sparkVision, samVision }: Props) {
 
     if (!samVision?.segments || samVision.segments.length === 0) return;
 
+    // Draw all elements
+    const drawPromises: Promise<void>[] = [];
+    
     samVision.segments.forEach((segment, idx) => {
       const color = getColor(idx);
       
@@ -43,6 +50,10 @@ export function PhotoAnalysisCard({ sparkVision, samVision }: Props) {
       const boxY = segment.box.y * displayHeight;
       const boxW = segment.box.w * displayWidth;
       const boxH = segment.box.h * displayHeight;
+
+      if (showMasks && segment.maskPng) {
+        drawPromises.push(drawMaskPng(ctx, segment.maskPng, boxX, boxY, boxW, boxH, color));
+      }
 
       if (showBoxes) {
         ctx.strokeStyle = color;
@@ -59,10 +70,6 @@ export function PhotoAnalysisCard({ sparkVision, samVision }: Props) {
         ctx.fillStyle = '#fff';
         ctx.fillText(label, boxX + 4, boxY - 5);
       }
-
-      if (showMasks && segment.maskPng) {
-        drawMaskPng(ctx, segment.maskPng, boxX, boxY, boxW, boxH, color);
-      }
     });
   }, [imageLoaded, showMasks, showBoxes, samVision]);
 
@@ -74,24 +81,28 @@ export function PhotoAnalysisCard({ sparkVision, samVision }: Props) {
     boxW: number,
     boxH: number,
     color: string
-  ) => {
-    const img = new Image();
-    img.onload = () => {
-      ctx.save();
-      ctx.globalAlpha = 0.45;
-      
-      // Draw mask with color tint
-      ctx.globalCompositeOperation = 'source-over';
-      ctx.drawImage(img, boxX, boxY, boxW, boxH);
-      
-      // Apply color tint
-      ctx.globalCompositeOperation = 'source-in';
-      ctx.fillStyle = color;
-      ctx.fillRect(boxX, boxY, boxW, boxH);
-      
-      ctx.restore();
-    };
-    img.src = maskPngDataUrl;
+  ): Promise<void> => {
+    return new Promise((resolve) => {
+      const img = new Image();
+      img.onload = () => {
+        ctx.save();
+        ctx.globalAlpha = 0.45;
+        
+        // Draw mask with color tint
+        ctx.globalCompositeOperation = 'source-over';
+        ctx.drawImage(img, boxX, boxY, boxW, boxH);
+        
+        // Apply color tint
+        ctx.globalCompositeOperation = 'source-in';
+        ctx.fillStyle = color;
+        ctx.fillRect(boxX, boxY, boxW, boxH);
+        
+        ctx.restore();
+        resolve();
+      };
+      img.onerror = () => resolve(); // Resolve even on error to not block
+      img.src = maskPngDataUrl;
+    });
   };
 
   const getColor = (idx: number): string => {

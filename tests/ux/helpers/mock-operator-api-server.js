@@ -9,6 +9,7 @@ const { sign } = require(path.join(
   __dirname,
   '../../../apps/web/node_modules/jsonwebtoken'
 ));
+const sharp = require('sharp');
 
 const PORT = Number(process.env.PORT || 3001);
 const JWT_SECRET =
@@ -71,6 +72,37 @@ function loginUser(email, password) {
     };
   }
   return null;
+}
+
+// Generate synthetic test image with shapes (800x600)
+async function generateTestImage() {
+  const width = 800;
+  const height = 600;
+  
+  // Create base image with gray background
+  const svg = `
+    <svg width="${width}" height="${height}">
+      <rect width="${width}" height="${height}" fill="#808080"/>
+      <circle cx="200" cy="250" r="60" fill="#4a4a4a" stroke="#000" stroke-width="2"/>
+      <rect x="300" y="250" width="200" height="150" fill="#666" stroke="#000" stroke-width="2"/>
+      <circle cx="180" cy="230" r="10" fill="#fff"/>
+      <circle cx="220" cy="230" r="10" fill="#fff"/>
+    </svg>
+  `;
+  
+  return sharp(Buffer.from(svg)).jpeg({ quality: 80 }).toBuffer();
+}
+
+// Generate mask PNG for a bounding box
+async function generateMaskPng(width, height) {
+  // Create a simple mask shape (white on transparent)
+  const svg = `
+    <svg width="${width}" height="${height}">
+      <ellipse cx="${width/2}" cy="${height/2}" rx="${width*0.4}" ry="${height*0.45}" fill="white"/>
+    </svg>
+  `;
+  
+  return sharp(Buffer.from(svg)).png().toBuffer();
 }
 
 const server = http.createServer(async (req, res) => {
@@ -139,7 +171,7 @@ const server = http.createServer(async (req, res) => {
     sendJson(res, 200, {
       incidentId,
       state: 'PENDING',
-      reviewStatus: 'SEEN',
+      reviewStatus: 'REVIEWED',
       version: 1,
       originalText: 'Help! Three people trapped under collapsed building at downtown area. Building is unstable, need immediate rescue.',
       verifiedMetadata: {
@@ -182,6 +214,11 @@ const server = http.createServer(async (req, res) => {
   // AI endpoint must come BEFORE the catch-all 404
   if (url.pathname.match(/^\/v1\/operator\/cases\/[^/]+\/ai$/) && req.method === 'GET') {
     const incidentId = url.pathname.split('/')[4];
+    
+    // Generate mask PNGs
+    const mask1 = await generateMaskPng(120, 150);
+    const mask2 = await generateMaskPng(200, 180);
+    
     sendJson(res, 200, {
       triage: {
         status: 'completed',
@@ -256,15 +293,15 @@ const server = http.createServer(async (req, res) => {
             id: 'seg-1',
             concept: 'person',
             confidence: 0.95,
-            box: { x: 0.1875, y: 0.333, w: 0.125, h: 0.333 },
-            maskPng: 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAgAAAAICAYAAADED76LAAAADklEQVQYlWP8//8/AwAI/wL9IG0bxgAAAABJRU5ErkJggg=='
+            box: { x: 0.15, y: 0.25, w: 0.15, h: 0.25 },
+            maskPng: 'data:image/png;base64,' + mask1.toString('base64')
           },
           {
             id: 'seg-2',
             concept: 'debris',
             confidence: 0.87,
-            box: { x: 0.375, y: 0.417, w: 0.25, h: 0.333 },
-            maskPng: 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAgAAAAICAYAAADED76LAAAADklEQVQYlWNgYGD4DwABAQEBAKN+PQAAAABJRU5ErkJggg=='
+            box: { x: 0.375, y: 0.30, w: 0.25, h: 0.30 },
+            maskPng: 'data:image/png;base64,' + mask2.toString('base64')
           }
         ],
         analyzedAt: new Date().toISOString()
@@ -326,11 +363,10 @@ const server = http.createServer(async (req, res) => {
   }
 
   if (url.pathname.match(/^\/v1\/operator\/attachments\/[^/]+\/image$/) && req.method === 'GET') {
-    // Return an 800x600 placeholder PNG for screenshots
-    // This is a minimal PNG with gray background to make the overlay visible
-    const png = Buffer.from('iVBORw0KGgoAAAANSUhEUgAAAyAAAAJYCAIAAAAVFBUnAAAAEklEQVR4nGNgGAWjYBSMAggAAAbQAAExk/sKAAAAAElFTkSuQmCC', 'base64');
-    res.writeHead(200, { 'Content-Type': 'image/png', 'Content-Length': png.length });
-    res.end(png);
+    // Return generated synthetic JPEG
+    const jpeg = await generateTestImage();
+    res.writeHead(200, { 'Content-Type': 'image/jpeg', 'Content-Length': jpeg.length });
+    res.end(jpeg);
     return;
   }
 

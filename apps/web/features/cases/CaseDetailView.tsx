@@ -13,7 +13,7 @@ import type {
   IncidentLinkSuggestionView,
 } from '../ai/types';
 import { AssignmentPreviewPanel } from '../assignment/AssignmentPreviewPanel';
-import { REVIEW_STATUS_OPTIONS, type OperatorCaseDetail } from './types';
+import { getReviewStatusOptions, type OperatorCaseDetail } from './types';
 
 type AiData = {
   triage: AiTriageView | null;
@@ -168,7 +168,7 @@ export function CaseDetailView({ detail, aiData, onRefresh }: Props) {
       <section aria-labelledby="case-actions-title">
         <h2 id="case-actions-title">{t('web.cases.operatorStatusTitle')}</h2>
         <div className="case-detail__review-actions">
-          {REVIEW_STATUS_OPTIONS.map((option) => (
+          {getReviewStatusOptions(t).map((option) => (
             <button
               key={option.value}
               type="button"

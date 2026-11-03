@@ -92,15 +92,36 @@ test.describe('AI Panel WP-E Screenshots', () => {
     await expect(page.getByTestId('ai-photo-card')).toBeVisible({ timeout: 10000 });
     
     // Verify canvas overlay is present
-    await expect(page.getByTestId('ai-photo-canvas')).toBeVisible({ timeout: 5000 });
+    const canvas = page.getByTestId('ai-photo-canvas');
+    await expect(canvas).toBeVisible({ timeout: 5000 });
     
     // Verify at least one concept label (person or debris from mock data)
     const conceptLabel = page.locator('[data-testid="ai-photo-card"]').locator('text=/person|debris/i');
     await expect(conceptLabel.first()).toBeVisible({ timeout: 5000 });
     
-    await page.screenshot({
-      path: join(SCREENSHOTS_DIR, 'photo-sam-overlay-1440.png'),
-      fullPage: true
+    // Wait for image to fully load and canvas to be drawn
+    await page.waitForTimeout(1000);
+    
+    // Check that canvas has actual content (not blank)
+    const hasContent = await canvas.evaluate((el) => {
+      const ctx = (el as HTMLCanvasElement).getContext('2d');
+      if (!ctx) return false;
+      const imageData = ctx.getImageData(0, 0, el.width, el.height);
+      const data = imageData.data;
+      let nonZeroPixels = 0;
+      for (let i = 0; i < data.length; i += 4) {
+        // Check if pixel is not fully transparent
+        if (data[i + 3] > 0) nonZeroPixels++;
+      }
+      const nonZeroRatio = nonZeroPixels / (el.width * el.height);
+      return nonZeroRatio > 0.05; // At least 5% non-transparent pixels
+    });
+    
+    expect(hasContent).toBe(true);
+    
+    // Screenshot just the photo card element
+    await page.getByTestId('ai-photo-card').screenshot({
+      path: join(SCREENSHOTS_DIR, 'photo-sam-overlay-1440.png')
     });
   });
 
@@ -117,13 +138,33 @@ test.describe('AI Panel WP-E Screenshots', () => {
     await expect(page.getByTestId('ai-photo-card')).toBeVisible({ timeout: 10000 });
     
     // Verify canvas and concept label
-    await expect(page.getByTestId('ai-photo-canvas')).toBeVisible({ timeout: 5000 });
+    const canvas = page.getByTestId('ai-photo-canvas');
+    await expect(canvas).toBeVisible({ timeout: 5000 });
     const conceptLabel = page.locator('[data-testid="ai-photo-card"]').locator('text=/person|debris/i');
     await expect(conceptLabel.first()).toBeVisible({ timeout: 5000 });
     
-    await page.screenshot({
-      path: join(SCREENSHOTS_DIR, 'photo-sam-overlay-375.png'),
-      fullPage: true
+    // Wait for image to fully load
+    await page.waitForTimeout(1000);
+    
+    // Check canvas has content
+    const hasContent = await canvas.evaluate((el) => {
+      const ctx = (el as HTMLCanvasElement).getContext('2d');
+      if (!ctx) return false;
+      const imageData = ctx.getImageData(0, 0, el.width, el.height);
+      const data = imageData.data;
+      let nonZeroPixels = 0;
+      for (let i = 0; i < data.length; i += 4) {
+        if (data[i + 3] > 0) nonZeroPixels++;
+      }
+      const nonZeroRatio = nonZeroPixels / (el.width * el.height);
+      return nonZeroRatio > 0.05;
+    });
+    
+    expect(hasContent).toBe(true);
+    
+    // Screenshot just the photo card element
+    await page.getByTestId('ai-photo-card').screenshot({
+      path: join(SCREENSHOTS_DIR, 'photo-sam-overlay-375.png')
     });
   });
 

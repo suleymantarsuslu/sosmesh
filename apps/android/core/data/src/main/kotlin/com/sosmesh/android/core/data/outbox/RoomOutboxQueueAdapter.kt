@@ -7,7 +7,6 @@ import com.sosmesh.contracts.transport.OutboxEntryMeta
 import com.sosmesh.contracts.transport.OutboxQueueAdapter
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.withContext
 import javax.inject.Inject
 import javax.inject.Singleton
@@ -20,28 +19,36 @@ class RoomOutboxQueueAdapter
         @OutboxDefaultRetention private val defaultRetentionMs: Long,
         @IoDispatcher private val ioDispatcher: CoroutineDispatcher = Dispatchers.IO,
     ) : OutboxQueueAdapter {
-        override fun enqueue(
+        override suspend fun enqueue(
             input: EnqueueInput,
             nowMs: Long,
-        ): OutboxEntryMeta = runOnIo { enqueueOnDao(input, nowMs) }
+        ): OutboxEntryMeta =
+            withContext(ioDispatcher) {
+                enqueueOnDao(input, nowMs)
+            }
 
-        override fun getByKey(
+        override suspend fun getByKey(
             sosId: String,
             digest: String,
-        ): OutboxEntryMeta? = runOnIo { dao.getByKey(sosId, digest)?.toMeta() }
+        ): OutboxEntryMeta? =
+            withContext(ioDispatcher) {
+                dao.getByKey(sosId, digest)?.toMeta()
+            }
 
-        override fun listAll(): List<OutboxEntryMeta> =
-            runOnIo { dao.listAll().map { it.toMeta() } }
+        override suspend fun listAll(): List<OutboxEntryMeta> =
+            withContext(ioDispatcher) {
+                dao.listAll().map { it.toMeta() }
+            }
 
-        override fun updateState(
+        override suspend fun updateState(
             sosId: String,
             digest: String,
             state: String,
             nowMs: Long,
             lastError: String?,
         ): OutboxEntryMeta? =
-            runOnIo {
-                val existing = dao.getByKey(sosId, digest) ?: return@runOnIo null
+            withContext(ioDispatcher) {
+                val existing = dao.getByKey(sosId, digest) ?: return@withContext null
                 val updated =
                     existing.copy(
                         state = state,
@@ -52,29 +59,28 @@ class RoomOutboxQueueAdapter
                 updated.toMeta()
             }
 
-        override fun setRetryAt(
+        override suspend fun setRetryAt(
             sosId: String,
             digest: String,
             retryAtMs: Long,
             lastError: String?,
         ) {
-            runOnIo {
-                val existing = dao.getByKey(sosId, digest) ?: return@runOnIo
+            withContext(ioDispatcher) {
+                val existing = dao.getByKey(sosId, digest) ?: return@withContext
                 dao.update(
                     existing.copy(
                         retry_at = retryAtMs,
                         last_error = lastError,
-                        updated_at = retryAtMs,
                     ),
                 )
             }
         }
 
-        override fun countDueForSend(
+        override suspend fun countDueForSend(
             nowMs: Long,
             paused: Boolean,
         ): Int =
-            runOnIo {
+            withContext(ioDispatcher) {
                 if (paused) {
                     0
                 } else {
@@ -82,7 +88,10 @@ class RoomOutboxQueueAdapter
                 }
             }
 
-        override fun purgeExpired(nowMs: Long): Int = runOnIo { dao.deleteExpired(nowMs) }
+        override suspend fun purgeExpired(nowMs: Long): Int =
+            withContext(ioDispatcher) {
+                dao.deleteExpired(nowMs)
+            }
 
         override fun close() {
             // Room database lifecycle managed by Hilt singleton.
@@ -111,8 +120,6 @@ class RoomOutboxQueueAdapter
             dao.insert(entity)
             return dao.getByKey(input.sosId, input.digest)!!.toMeta()
         }
-
-        private fun <T> runOnIo(block: suspend () -> T): T = runBlocking(ioDispatcher) { block() }
 
         private fun OutboxEntity.toMeta(): OutboxEntryMeta =
             OutboxEntryMeta(

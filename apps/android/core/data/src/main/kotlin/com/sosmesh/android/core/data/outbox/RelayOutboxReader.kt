@@ -4,7 +4,7 @@ import com.sosmesh.android.core.data.di.IoDispatcher
 import com.sosmesh.contracts.transport.OutboxEntryMeta
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.withContext
 import javax.inject.Inject
 import javax.inject.Singleton
 
@@ -15,8 +15,8 @@ class RelayOutboxReader
         private val dao: OutboxDao,
         @IoDispatcher private val ioDispatcher: CoroutineDispatcher = Dispatchers.IO,
     ) {
-        fun listDueRelayUpload(nowMs: Long): List<OutboxEntryMeta> =
-            runOnIo {
+        suspend fun listDueRelayUpload(nowMs: Long): List<OutboxEntryMeta> =
+            withContext(ioDispatcher) {
                 dao.listDueRelayUpload(nowMs).map { entity ->
                     OutboxEntryMeta(
                         sosId = entity.sos_id,
@@ -33,8 +33,8 @@ class RelayOutboxReader
                 }
             }
 
-        fun countPendingRelayUpload(nowMs: Long): Int =
-            runOnIo { dao.listDueRelayUpload(nowMs).size }
-
-        private fun <T> runOnIo(block: suspend () -> T): T = runBlocking(ioDispatcher) { block() }
+        suspend fun countPendingRelayUpload(nowMs: Long): Int =
+            withContext(ioDispatcher) {
+                dao.listDueRelayUpload(nowMs).size
+            }
     }

@@ -46,6 +46,7 @@ dependencies {
     implementation(project(":contracts-kotlin"))
     implementation(project(":core:model"))
     implementation(project(":core:data"))
+    implementation(project(":core:permissions"))
 
     implementation("androidx.core:core-ktx:1.12.0")
     implementation("androidx.lifecycle:lifecycle-runtime-compose:2.7.0")

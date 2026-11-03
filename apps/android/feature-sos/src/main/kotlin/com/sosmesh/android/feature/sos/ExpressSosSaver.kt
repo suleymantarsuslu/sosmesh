@@ -1,8 +1,11 @@
 package com.sosmesh.android.feature.sos
 
+import com.sosmesh.android.core.data.mesh.SosPeerDeliveryKickResult
 import com.sosmesh.android.core.data.mesh.SosPeerDeliveryPort
 import com.sosmesh.android.core.data.sos.SosComposeRequest
 import com.sosmesh.android.core.model.SosType
+import com.sosmesh.android.core.permissions.BleMeshReadiness
+import com.sosmesh.android.core.permissions.PermissionFlowCoordinator
 import com.sosmesh.android.feature.sos.location.SosLocationProvider
 import java.util.Locale
 import javax.inject.Inject
@@ -16,6 +19,8 @@ class ExpressSosSaver
         private val locationProvider: SosLocationProvider,
         private val submitRepository: SosSubmitRepository,
         private val peerDelivery: SosPeerDeliveryPort,
+        private val bleMeshReadiness: BleMeshReadiness,
+        private val permissionFlowCoordinator: PermissionFlowCoordinator,
     ) {
         suspend fun save(nowMs: Long = System.currentTimeMillis()): String {
             val composed =
@@ -29,7 +34,9 @@ class ExpressSosSaver
                         nowMs = nowMs,
                     ),
                 )
-            peerDelivery.kickOffAfterLocalSave(nowMs, foregroundVisible = true)
+            if (bleMeshReadiness.canRunBleMeshFeatures()) {
+                peerDelivery.kickOffAfterLocalSave(nowMs, foregroundVisible = true)
+            }
             return composed.message.id
         }
     }

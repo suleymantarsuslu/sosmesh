@@ -3,7 +3,9 @@ package com.sosmesh.android.core.protocol
 import com.sosmesh.android.core.ble.BleMeshRadio
 import com.sosmesh.android.core.ble.BleRadioError
 import com.sosmesh.android.core.ble.GattUiConnectionState
+import com.sosmesh.android.core.data.di.IoDispatcher
 import com.sosmesh.android.core.data.outbox.SosOutboxReader
+import com.sosmesh.android.core.permissions.BleMeshReadiness
 import com.sosmesh.android.core.permissions.PermissionFlowCoordinator
 import com.sosmesh.ble.BleProtocol
 import com.sosmesh.contracts.transport.OutboxEntryMeta
@@ -11,6 +13,8 @@ import com.sosmesh.contracts.transport.OutboxQueueAdapter
 import java.util.Base64
 import javax.inject.Inject
 import javax.inject.Singleton
+import kotlinx.coroutines.CoroutineDispatcher
+import kotlinx.coroutines.withContext
 
 sealed class SosPeerDeliveryCycleResult {
     data object Idle : SosPeerDeliveryCycleResult()
@@ -42,15 +46,25 @@ class SosPeerDeliveryOrchestrator
         private val engine: BleTransferEnginePort,
         private val radio: BleMeshRadio,
         private val permissions: PermissionFlowCoordinator,
+        private val bleMeshReadiness: BleMeshReadiness,
+        @IoDispatcher private val ioDispatcher: CoroutineDispatcher,
     ) {
         @Volatile
         private var discoveryActive: Boolean = false
 
-        fun runCycle(
+        suspend fun runCycle(
+            nowMs: Long,
+            foregroundVisible: Boolean,
+        ): SosPeerDeliveryCycleResult =
+            withContext(ioDispatcher) {
+                runCycleOnIo(nowMs, foregroundVisible)
+            }
+
+        private suspend fun runCycleOnIo(
             nowMs: Long,
             foregroundVisible: Boolean,
         ): SosPeerDeliveryCycleResult {
-            if (!permissions.allGranted()) {
+            if (!bleMeshReadiness.canRunBleMeshFeatures()) {
                 return SosPeerDeliveryCycleResult.PermissionsMissing(permissions.missingPermissions())
             }
             val due = outboxReader.listDueAndroidPeerSend(nowMs).firstOrNull()
@@ -116,7 +130,7 @@ class SosPeerDeliveryOrchestrator
             return computed == entry.digest
         }
 
-        private fun scheduleRetry(
+        private suspend fun scheduleRetry(
             entry: OutboxEntryMeta,
             retryAtMs: Long,
             reason: String,
@@ -124,7 +138,7 @@ class SosPeerDeliveryOrchestrator
             outbox.setRetryAt(entry.sosId, entry.digest, retryAtMs, reason)
         }
 
-        private fun mapRadioFailure(
+        private suspend fun mapRadioFailure(
             error: Throwable,
             entry: OutboxEntryMeta,
             nowMs: Long,

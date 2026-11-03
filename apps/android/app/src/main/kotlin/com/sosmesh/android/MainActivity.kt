@@ -9,7 +9,6 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.platform.LocalContext
 import androidx.navigation.compose.NavHost
@@ -34,12 +33,15 @@ class MainActivity : ComponentActivity() {
         setContent {
             val context = LocalContext.current
             var highContrast by remember { mutableStateOf(readHighContrast(context)) }
-            var permissionGatePassed by rememberSaveable { mutableStateOf(false) }
+            var appUnlocked by remember { mutableStateOf(false) }
             SosMeshTheme(highContrast = highContrast) {
                 Surface {
-                    if (!permissionGatePassed) {
-                        PermissionGateRoute(onGatePassed = { permissionGatePassed = true })
-                    } else {
+                    PermissionGateRoute(
+                        gateVisible = !appUnlocked,
+                        onGatePassed = { appUnlocked = true },
+                        onGateBlocked = { appUnlocked = false },
+                    )
+                    if (appUnlocked) {
                         SosMeshNavHost(
                             onHighContrastChanged = { highContrast = readHighContrast(context) },
                         )

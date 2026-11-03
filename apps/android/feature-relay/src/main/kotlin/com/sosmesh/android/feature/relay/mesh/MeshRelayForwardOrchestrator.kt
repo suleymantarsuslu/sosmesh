@@ -3,12 +3,16 @@ package com.sosmesh.android.feature.relay.mesh
 import com.sosmesh.android.core.ble.BleMeshRadio
 import com.sosmesh.android.core.ble.BleRadioError
 import com.sosmesh.android.core.ble.GattUiConnectionState
+import com.sosmesh.android.core.data.di.IoDispatcher
+import com.sosmesh.android.core.permissions.BleMeshReadiness
 import com.sosmesh.android.core.permissions.PermissionFlowCoordinator
 import com.sosmesh.android.core.protocol.BleTransferEnginePort
 import com.sosmesh.android.core.protocol.TransferState
 import com.sosmesh.android.meshv2.MeshV2RelayCoordinator
 import javax.inject.Inject
 import javax.inject.Singleton
+import kotlinx.coroutines.CoroutineDispatcher
+import kotlinx.coroutines.withContext
 
 sealed class MeshRelayForwardCycleResult {
     data object Idle : MeshRelayForwardCycleResult()
@@ -39,12 +43,19 @@ class MeshRelayForwardOrchestrator
         private val engine: BleTransferEnginePort,
         private val radio: BleMeshRadio,
         private val permissions: PermissionFlowCoordinator,
+        private val bleMeshReadiness: BleMeshReadiness,
+        @IoDispatcher private val ioDispatcher: CoroutineDispatcher,
     ) {
         @Volatile
         private var discoveryActive: Boolean = false
 
-        fun runForwardCycle(foregroundVisible: Boolean): MeshRelayForwardCycleResult {
-            if (!permissions.allGranted()) {
+        suspend fun runForwardCycle(foregroundVisible: Boolean): MeshRelayForwardCycleResult =
+            withContext(ioDispatcher) {
+                runForwardCycleOnIo(foregroundVisible)
+            }
+
+        private fun runForwardCycleOnIo(foregroundVisible: Boolean): MeshRelayForwardCycleResult {
+            if (!bleMeshReadiness.canRunBleMeshFeatures()) {
                 return MeshRelayForwardCycleResult.PermissionsMissing(permissions.missingPermissions())
             }
             val handoff = meshV2RelayCoordinator.peekForwardHandoff()

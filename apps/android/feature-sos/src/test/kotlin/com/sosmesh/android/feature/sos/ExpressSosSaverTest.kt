@@ -50,16 +50,18 @@ class ExpressSosSaverTest {
                 DefaultSosLocationProvider({ false }, { null }),
                 repository,
                 NoOpSosPeerDeliveryPort,
+                testGrantAllBleMeshReadiness(),
+                testGrantAllPermissionCoordinator(),
             )
     }
 
     private object NoOpSosPeerDeliveryPort : SosPeerDeliveryPort {
-        override fun kickOffAfterLocalSave(
+        override suspend fun kickOffAfterLocalSave(
             nowMs: Long,
             foregroundVisible: Boolean,
         ): SosPeerDeliveryKickResult = SosPeerDeliveryKickResult.Idle
 
-        override fun runPendingCycle(
+        override suspend fun runPendingCycle(
             nowMs: Long,
             foregroundVisible: Boolean,
         ): SosPeerDeliveryKickResult = SosPeerDeliveryKickResult.Idle

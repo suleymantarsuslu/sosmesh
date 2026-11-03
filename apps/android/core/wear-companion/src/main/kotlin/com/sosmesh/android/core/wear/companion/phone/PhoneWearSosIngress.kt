@@ -25,7 +25,7 @@ class PhoneWearSosIngress
         private val composer: SosMessageComposer,
         private val outbox: OutboxQueueAdapter,
     ) {
-        fun handleCreatePayload(
+        suspend fun handleCreatePayload(
             payload: ByteArray,
             nowMs: Long,
         ): PhoneWearIngressResult {

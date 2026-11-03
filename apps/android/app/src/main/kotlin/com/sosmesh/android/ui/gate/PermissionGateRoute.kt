@@ -44,7 +44,9 @@ interface PermissionGateEntryPoint {
 
 @Composable
 fun PermissionGateRoute(
+    gateVisible: Boolean,
     onGatePassed: () -> Unit,
+    onGateBlocked: () -> Unit = {},
     modifier: Modifier = Modifier,
 ) {
     val context = LocalContext.current
@@ -87,6 +89,8 @@ fun PermissionGateRoute(
         uiState = buildUiState()
         if (uiState.evaluation.canEnterApp) {
             onGatePassed()
+        } else {
+            onGateBlocked()
         }
     }
 
@@ -129,29 +133,31 @@ fun PermissionGateRoute(
             refreshGate()
         }
 
-    PermissionGateScreen(
-        state = uiState,
-        onRequestRuntimePermissions = {
-            val missing = coordinator.missingPermissions()
-            if (missing.isEmpty()) {
-                refreshGate()
-            } else {
-                permissionLauncher.launch(missing.toTypedArray())
-            }
-        },
-        onOpenSettings = {
-            context.startActivity(AppSettingsIntents.applicationDetails(context))
-        },
-        onEnableBluetooth = {
-            val intent = Intent(BluetoothAdapter.ACTION_REQUEST_ENABLE)
-            bluetoothLauncher.launch(intent)
-        },
-        onOpenLocationSettings = {
-            context.startActivity(LocationSettingsIntents.locationSourceSettings())
-        },
-        onCallEmergency = {
-            context.startActivity(EmergencyDialIntents.dial112(context))
-        },
-        modifier = modifier,
-    )
+    if (gateVisible) {
+        PermissionGateScreen(
+            state = uiState,
+            onRequestRuntimePermissions = {
+                val missing = coordinator.missingPermissions()
+                if (missing.isEmpty()) {
+                    refreshGate()
+                } else {
+                    permissionLauncher.launch(missing.toTypedArray())
+                }
+            },
+            onOpenSettings = {
+                context.startActivity(AppSettingsIntents.applicationDetails(context))
+            },
+            onEnableBluetooth = {
+                val intent = Intent(BluetoothAdapter.ACTION_REQUEST_ENABLE)
+                bluetoothLauncher.launch(intent)
+            },
+            onOpenLocationSettings = {
+                context.startActivity(LocationSettingsIntents.locationSourceSettings())
+            },
+            onCallEmergency = {
+                context.startActivity(EmergencyDialIntents.dial112(context))
+            },
+            modifier = modifier,
+        )
+    }
 }

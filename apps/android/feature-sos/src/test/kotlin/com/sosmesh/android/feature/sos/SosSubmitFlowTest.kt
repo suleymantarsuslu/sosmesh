@@ -61,55 +61,47 @@ class SosSubmitFlowTest {
         db.close()
     }
 
+    private fun viewModel(): SosFormViewModel =
+        SosFormViewModel(
+            DefaultSosLocationProvider({ false }, { null }),
+            repository,
+            NoOpPeerDelivery,
+            testGrantAllBleMeshReadiness(),
+            testGrantAllPermissionCoordinator(),
+        )
+
     @Test
     fun locationDenied_savesUnknownLocationToOutbox() =
         runBlocking {
-            val viewModel =
-                SosFormViewModel(
-                    locationProvider =
-                        DefaultSosLocationProvider(
-                            hasLocationPermission = { false },
-                            gpsSnapshot = { null },
-                        ),
-                    submitRepository = repository,
-                    peerDelivery = NoOpPeerDelivery,
-                )
-            viewModel.setPersonCountText("1")
-            viewModel.goToPreview()
-            viewModel.performSaveAfterPreview(nowMs = 1_700_000_000_000L)
+            val vm = viewModel()
+            vm.setPersonCountText("1")
+            vm.goToPreview()
+            vm.performSaveAfterPreview(nowMs = 1_700_000_000_000L)
             assertEquals(1, adapter.listAll().size)
             val entry = adapter.listAll().single()
             assertEquals("LOCAL_SAVED", entry.state)
             assertEquals("android", entry.origin)
-            assertTrue(!viewModel.effectiveLocation().isKnown)
+            assertTrue(!vm.effectiveLocation().isKnown)
         }
 
     @Test
-    fun backFromPreview_leavesOutboxEmpty() {
-        val viewModel =
-            SosFormViewModel(
-                DefaultSosLocationProvider({ false }, { null }),
-                repository,
-                NoOpPeerDelivery,
-            )
-        viewModel.goToPreview()
-        viewModel.backFromPreview()
-        assertEquals(0, adapter.listAll().size)
-    }
+    fun backFromPreview_leavesOutboxEmpty() =
+        runBlocking {
+            val viewModel = viewModel()
+            viewModel.goToPreview()
+            viewModel.backFromPreview()
+            assertEquals(0, adapter.listAll().size)
+        }
 
     @Test
-    fun invalidPersonCount_blocksOutbox() {
-        val viewModel =
-            SosFormViewModel(
-                DefaultSosLocationProvider({ false }, { null }),
-                repository,
-                NoOpPeerDelivery,
-            )
-        viewModel.setPersonCountText("0")
-        viewModel.goToPreview()
-        viewModel.confirmAndSave()
-        assertEquals(0, adapter.listAll().size)
-    }
+    fun invalidPersonCount_blocksOutbox() =
+        runBlocking {
+            val viewModel = viewModel()
+            viewModel.setPersonCountText("0")
+            viewModel.goToPreview()
+            viewModel.confirmAndSave()
+            assertEquals(0, adapter.listAll().size)
+        }
 
     @Test
     fun confirm_writesSchemaValidMessage() =
@@ -128,12 +120,12 @@ class SosSubmitFlowTest {
         }
 
     private object NoOpPeerDelivery : SosPeerDeliveryPort {
-        override fun kickOffAfterLocalSave(
+        override suspend fun kickOffAfterLocalSave(
             nowMs: Long,
             foregroundVisible: Boolean,
         ): SosPeerDeliveryKickResult = SosPeerDeliveryKickResult.Idle
 
-        override fun runPendingCycle(
+        override suspend fun runPendingCycle(
             nowMs: Long,
             foregroundVisible: Boolean,
         ): SosPeerDeliveryKickResult = SosPeerDeliveryKickResult.Idle

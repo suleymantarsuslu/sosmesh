@@ -7,10 +7,15 @@ import com.sosmesh.android.core.permissions.PermissionFlowCoordinator
 import com.sosmesh.android.core.permissions.PermissionStatusReader
 import com.sosmesh.android.core.protocol.BleTransferEnginePort
 import com.sosmesh.android.core.protocol.TransferState
+import com.sosmesh.android.feature.relay.testBleMeshReadiness
+import com.sosmesh.android.feature.relay.testGrantAllBleMeshReadiness
+import com.sosmesh.android.feature.relay.testGrantAllPermissionCoordinator
+import com.sosmesh.android.feature.relay.testIoDispatcher
 import com.sosmesh.android.meshv2.MeshForwardQueue
 import com.sosmesh.android.meshv2.MeshRouteSelector
 import com.sosmesh.android.meshv2.MeshV2RelayAction
 import com.sosmesh.android.meshv2.MeshV2RelayCoordinator
+import kotlinx.coroutines.runBlocking
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
 import org.junit.Before
@@ -38,28 +43,74 @@ class MeshRelayForwardOrchestratorTest {
                 meshV2RelayCoordinator = meshV2,
                 engine = engine,
                 radio = radio,
-                permissions = grantAllPermissions(),
+                permissions = testGrantAllPermissionCoordinator(),
+                bleMeshReadiness = testGrantAllBleMeshReadiness(),
+                ioDispatcher = testIoDispatcher(),
             )
     }
 
     @Test
-    fun forwardCycle_sendsOpaqueBytesWithoutOutboundTrackerFields() {
-        val payload =
-            """
-            {
-              "protocolVersion": 2,
-              "messageId": "fwd-1",
-              "hopCount": 0,
-              "maxHops": 5,
-              "ttlHops": 2,
-              "copyCount": 1,
-              "maxCopyCount": 3,
-              "originCreatedAt": "2026-11-01T12:00:00Z",
-              "opaqueCiphertextBase64": "AQIDBA==",
-              "hopChainReceipt": { "relayDeviceIdHashes": [] }
-            }
-            """.trimIndent().toByteArray()
-        val ingest =
+    fun forwardCycle_sendsOpaqueBytesWithoutOutboundTrackerFields() =
+        runBlocking {
+            val payload =
+                """
+                {
+                  "protocolVersion": 2,
+                  "messageId": "fwd-1",
+                  "hopCount": 0,
+                  "maxHops": 5,
+                  "ttlHops": 2,
+                  "copyCount": 1,
+                  "maxCopyCount": 3,
+                  "originCreatedAt": "2026-11-01T12:00:00Z",
+                  "opaqueCiphertextBase64": "AQIDBA==",
+                  "hopChainReceipt": { "relayDeviceIdHashes": [] }
+                }
+                """.trimIndent().toByteArray()
+            val ingest =
+                meshV2.onWirePayload(
+                    payload = payload,
+                    relayDeviceIdHash = relayHash,
+                    nowMs = 1L,
+                    batteryQuotaAllowsForward = true,
+                    uplinkInternetAvailable = false,
+                )
+            assertEquals(MeshV2RelayAction.QueuedForForward, ingest.action)
+            radio.gattState = GattUiConnectionState.READY
+            val result = orchestrator.runForwardCycle(foregroundVisible = true)
+            assertEquals(MeshRelayForwardCycleResult.ForwardStarted, result)
+            assertEquals(1, engine.opaqueCalls.size)
+            assertTrue(engine.opaqueCalls.single().isNotEmpty())
+        }
+
+    @Test
+    fun permissionsMissing_blocksForward() =
+        runBlocking {
+            val deniedPermissions = permissionsMissing("android.permission.BLUETOOTH_CONNECT")
+            val denied =
+                MeshRelayForwardOrchestrator(
+                    meshV2RelayCoordinator = meshV2,
+                    engine = engine,
+                    radio = radio,
+                    permissions = deniedPermissions,
+                    bleMeshReadiness = testBleMeshReadiness(deniedPermissions),
+                    ioDispatcher = testIoDispatcher(),
+                )
+            val payload =
+                """
+                {
+                  "protocolVersion": 2,
+                  "messageId": "fwd-2",
+                  "hopCount": 0,
+                  "maxHops": 5,
+                  "ttlHops": 2,
+                  "copyCount": 1,
+                  "maxCopyCount": 3,
+                  "originCreatedAt": "2026-11-01T12:00:00Z",
+                  "opaqueCiphertextBase64": "AQIDBA==",
+                  "hopChainReceipt": { "relayDeviceIdHashes": [] }
+                }
+                """.trimIndent().toByteArray()
             meshV2.onWirePayload(
                 payload = payload,
                 relayDeviceIdHash = relayHash,
@@ -67,49 +118,10 @@ class MeshRelayForwardOrchestratorTest {
                 batteryQuotaAllowsForward = true,
                 uplinkInternetAvailable = false,
             )
-        assertEquals(MeshV2RelayAction.QueuedForForward, ingest.action)
-        radio.gattState = GattUiConnectionState.READY
-        val result = orchestrator.runForwardCycle(foregroundVisible = true)
-        assertEquals(MeshRelayForwardCycleResult.ForwardStarted, result)
-        assertEquals(1, engine.opaqueCalls.size)
-        assertTrue(engine.opaqueCalls.single().isNotEmpty())
-    }
-
-    @Test
-    fun permissionsMissing_blocksForward() {
-        val denied =
-            MeshRelayForwardOrchestrator(
-                meshV2RelayCoordinator = meshV2,
-                engine = engine,
-                radio = radio,
-                permissions = permissionsMissing("android.permission.BLUETOOTH_CONNECT"),
-            )
-        val payload =
-            """
-            {
-              "protocolVersion": 2,
-              "messageId": "fwd-2",
-              "hopCount": 0,
-              "maxHops": 5,
-              "ttlHops": 2,
-              "copyCount": 1,
-              "maxCopyCount": 3,
-              "originCreatedAt": "2026-11-01T12:00:00Z",
-              "opaqueCiphertextBase64": "AQIDBA==",
-              "hopChainReceipt": { "relayDeviceIdHashes": [] }
-            }
-            """.trimIndent().toByteArray()
-        meshV2.onWirePayload(
-            payload = payload,
-            relayDeviceIdHash = relayHash,
-            nowMs = 1L,
-            batteryQuotaAllowsForward = true,
-            uplinkInternetAvailable = false,
-        )
-        val result = denied.runForwardCycle(foregroundVisible = true)
-        assertTrue(result is MeshRelayForwardCycleResult.PermissionsMissing)
-        assertEquals(0, engine.opaqueCalls.size)
-    }
+            val result = denied.runForwardCycle(foregroundVisible = true)
+            assertTrue(result is MeshRelayForwardCycleResult.PermissionsMissing)
+            assertEquals(0, engine.opaqueCalls.size)
+        }
 
     private class FakeEngine : BleTransferEnginePort {
         val opaqueCalls = mutableListOf<ByteArray>()
@@ -154,17 +166,6 @@ class MeshRelayForwardOrchestratorTest {
 
         override fun tickGattReconnect(): Result<Unit>? = null
     }
-
-    private fun grantAllPermissions(): PermissionFlowCoordinator =
-        PermissionFlowCoordinator(
-            sdkInt = 33,
-            statusReader =
-                object : PermissionStatusReader {
-                    override fun isGranted(permission: String): Boolean = true
-
-                    override fun shouldShowRationale(permission: String): Boolean = false
-                },
-        )
 
     private fun permissionsMissing(vararg denied: String): PermissionFlowCoordinator {
         val deniedSet = denied.toSet()

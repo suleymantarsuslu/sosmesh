@@ -2,11 +2,14 @@ package com.sosmesh.android.feature.relay
 
 import com.sosmesh.android.core.protocol.ErrorCode
 import androidx.test.core.app.ApplicationProvider
+import com.sosmesh.android.core.data.di.OutboxIoScope
 import com.sosmesh.android.feature.relay.uplink.RelayIdentityProvider
 import com.sosmesh.android.feature.relay.upload.RelayUploadCommands
 import com.sosmesh.android.meshv2.MeshForwardQueue
 import com.sosmesh.android.meshv2.MeshRouteSelector
 import com.sosmesh.android.meshv2.MeshV2RelayCoordinator
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.runBlocking
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
 import org.junit.Before
@@ -41,12 +44,13 @@ class PeerDeliveryReceiveOrchestrationTest {
     }
 
     @Test
-    fun onCompleted_storesRelayOutboxWithoutDecrypt() {
-        val wire = javaClass.classLoader!!.getResourceAsStream("valid-sos.json")!!.readBytes()
-        handler.onCompleted(wire)
-        assertEquals(1, outbox.enqueued.size)
-        assertEquals("relay", outbox.enqueued.single().origin)
-    }
+    fun onCompleted_storesRelayOutboxWithoutDecrypt() =
+        runBlocking {
+            val wire = javaClass.classLoader!!.getResourceAsStream("valid-sos.json")!!.readBytes()
+            handler.onCompleted(wire)
+            assertEquals(1, outbox.enqueued.size)
+            assertEquals("relay", outbox.enqueued.single().origin)
+        }
 
     @Test
     fun onFailed_doesNotEnqueue() {
@@ -57,7 +61,7 @@ class PeerDeliveryReceiveOrchestrationTest {
     private class RecordingOutbox : com.sosmesh.contracts.transport.OutboxQueueAdapter {
         val enqueued = mutableListOf<com.sosmesh.contracts.transport.EnqueueInput>()
 
-        override fun enqueue(
+        override suspend fun enqueue(
             input: com.sosmesh.contracts.transport.EnqueueInput,
             nowMs: Long,
         ): com.sosmesh.contracts.transport.OutboxEntryMeta {
@@ -76,14 +80,14 @@ class PeerDeliveryReceiveOrchestrationTest {
             )
         }
 
-        override fun getByKey(
+        override suspend fun getByKey(
             sosId: String,
             digest: String,
         ): com.sosmesh.contracts.transport.OutboxEntryMeta? = null
 
-        override fun listAll(): List<com.sosmesh.contracts.transport.OutboxEntryMeta> = emptyList()
+        override suspend fun listAll(): List<com.sosmesh.contracts.transport.OutboxEntryMeta> = emptyList()
 
-        override fun updateState(
+        override suspend fun updateState(
             sosId: String,
             digest: String,
             state: String,
@@ -91,19 +95,19 @@ class PeerDeliveryReceiveOrchestrationTest {
             lastError: String?,
         ): com.sosmesh.contracts.transport.OutboxEntryMeta? = null
 
-        override fun setRetryAt(
+        override suspend fun setRetryAt(
             sosId: String,
             digest: String,
             retryAtMs: Long,
             lastError: String?,
         ) = Unit
 
-        override fun countDueForSend(
+        override suspend fun countDueForSend(
             nowMs: Long,
             paused: Boolean,
         ): Int = 0
 
-        override fun purgeExpired(nowMs: Long): Int = 0
+        override suspend fun purgeExpired(nowMs: Long): Int = 0
 
         override fun close() = Unit
     }
@@ -127,5 +131,6 @@ private fun relayHandler(
         registrar = registrar,
         meshV2RelayCoordinator = meshV2RelayCoordinator,
         relayIdentityProvider = RelayIdentityProvider(context),
+        outboxIoScope = OutboxIoScope(Dispatchers.Unconfined),
     )
 }

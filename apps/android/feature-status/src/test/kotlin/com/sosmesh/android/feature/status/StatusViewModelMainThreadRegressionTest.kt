@@ -11,6 +11,7 @@ import com.sosmesh.android.core.data.outbox.RoomOutboxQueueAdapter
 import com.sosmesh.contracts.transport.EnqueueInput
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.test.UnconfinedTestDispatcher
 import kotlinx.coroutines.test.resetMain
 import kotlinx.coroutines.test.setMain
@@ -34,32 +35,33 @@ class StatusViewModelMainThreadRegressionTest {
     private lateinit var viewModel: StatusViewModel
 
     @Before
-    fun setUp() {
-        Dispatchers.setMain(UnconfinedTestDispatcher())
-        val context = ApplicationProvider.getApplicationContext<android.content.Context>()
-        db =
-            Room.inMemoryDatabaseBuilder(context, OutboxDatabase::class.java)
-                .build()
-        val fixture =
-            AndroidStateTransitionLoader.load(
-                javaClass.classLoader!!.getResourceAsStream("state-transitions.json")!!,
+    fun setUp() =
+        runBlocking {
+            Dispatchers.setMain(UnconfinedTestDispatcher())
+            val context = ApplicationProvider.getApplicationContext<android.content.Context>()
+            db =
+                Room.inMemoryDatabaseBuilder(context, OutboxDatabase::class.java)
+                    .build()
+            val fixture =
+                AndroidStateTransitionLoader.load(
+                    javaClass.classLoader!!.getResourceAsStream("state-transitions.json")!!,
+                )
+            val adapter = RoomOutboxQueueAdapter(db.outboxDao(), fixture.defaultRetentionMs, Dispatchers.IO)
+            adapter.enqueue(
+                EnqueueInput(
+                    sosId = "status-vm-test",
+                    digest = "d",
+                    origin = "android",
+                    encryptedBlobBase64 = "e30=",
+                ),
+                nowMs = 1L,
             )
-        val adapter = RoomOutboxQueueAdapter(db.outboxDao(), fixture.defaultRetentionMs, Dispatchers.IO)
-        adapter.enqueue(
-            EnqueueInput(
-                sosId = "status-vm-test",
-                digest = "d",
-                origin = "android",
-                encryptedBlobBase64 = "e30=",
-            ),
-            nowMs = 1L,
-        )
-        viewModel =
-            StatusViewModel(
-                outbox = adapter,
-                peerDelivery = NoOpPeerDeliveryPort,
-            )
-    }
+            viewModel =
+                StatusViewModel(
+                    outbox = adapter,
+                    peerDelivery = NoOpPeerDeliveryPort,
+                )
+        }
 
     @After
     fun tearDown() {
@@ -74,12 +76,12 @@ class StatusViewModelMainThreadRegressionTest {
     }
 
     private object NoOpPeerDeliveryPort : SosPeerDeliveryPort {
-        override fun kickOffAfterLocalSave(
+        override suspend fun kickOffAfterLocalSave(
             nowMs: Long,
             foregroundVisible: Boolean,
         ): SosPeerDeliveryKickResult = SosPeerDeliveryKickResult.Idle
 
-        override fun runPendingCycle(
+        override suspend fun runPendingCycle(
             nowMs: Long,
             foregroundVisible: Boolean,
         ): SosPeerDeliveryKickResult = SosPeerDeliveryKickResult.Idle

@@ -20,6 +20,7 @@ import com.sosmesh.android.feature.relay.upload.RelayUploadCommands
 import com.sosmesh.android.meshv2.MeshForwardQueue
 import com.sosmesh.android.meshv2.MeshRouteSelector
 import com.sosmesh.android.meshv2.MeshV2RelayCoordinator
+import kotlinx.coroutines.runBlocking
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
@@ -62,7 +63,9 @@ class RelaySessionControllerTest {
                     ),
                 engine = NoOpTransferEngine(),
                 radio = radio,
-                permissions = grantAllPermissions(),
+                permissions = testGrantAllPermissionCoordinator(),
+                bleMeshReadiness = testGrantAllBleMeshReadiness(),
+                ioDispatcher = testIoDispatcher(),
             )
         controller =
             RelaySessionController(
@@ -72,37 +75,41 @@ class RelaySessionControllerTest {
                 foreground,
                 upload,
                 meshForward,
+                testIoDispatcher(),
             )
     }
 
     @Test
-    fun toggleOff_doesNotStartScanOrUpload() {
-        settings.setRelayEnabled(false)
-        controller.refresh(RelayBatterySnapshot(80, false), screenVisible = true, nowMs = 100L)
-        assertEquals(0, radio.startCount)
-        assertEquals(0, upload.scheduleCount)
-        assertEquals(0, foreground.startCount)
-    }
+    fun toggleOff_doesNotStartScanOrUpload() =
+        runBlocking {
+            settings.setRelayEnabled(false)
+            controller.refresh(RelayBatterySnapshot(80, false), screenVisible = true, nowMs = 100L)
+            assertEquals(0, radio.startCount)
+            assertEquals(0, upload.scheduleCount)
+            assertEquals(0, foreground.startCount)
+        }
 
     @Test
-    fun toggleOn_startsForegroundScanAndUploadSchedule() {
-        settings.setRelayEnabled(true)
-        val status = controller.refresh(RelayBatterySnapshot(80, false), screenVisible = true, nowMs = 100L)
-        assertTrue(status.running)
-        assertEquals(1, radio.startCount)
-        assertEquals(1, upload.scheduleCount)
-        assertEquals(1, foreground.startCount)
-    }
+    fun toggleOn_startsForegroundScanAndUploadSchedule() =
+        runBlocking {
+            settings.setRelayEnabled(true)
+            val status = controller.refresh(RelayBatterySnapshot(80, false), screenVisible = true, nowMs = 100L)
+            assertTrue(status.running)
+            assertEquals(1, radio.startCount)
+            assertEquals(1, upload.scheduleCount)
+            assertEquals(1, foreground.startCount)
+        }
 
     @Test
-    fun batteryLow_stopsSessionAndShowsReason() {
-        settings.setRelayEnabled(true)
-        controller.refresh(RelayBatterySnapshot(80, false), screenVisible = true, nowMs = 100L)
-        val status = controller.refresh(RelayBatterySnapshot(5, false), screenVisible = true, nowMs = 200L)
-        assertFalse(status.running)
-        assertEquals(RelayPauseReason.BatteryBelowThreshold, status.pauseReason)
-        assertTrue(radio.stopCount >= 1)
-    }
+    fun batteryLow_stopsSessionAndShowsReason() =
+        runBlocking {
+            settings.setRelayEnabled(true)
+            controller.refresh(RelayBatterySnapshot(80, false), screenVisible = true, nowMs = 100L)
+            val status = controller.refresh(RelayBatterySnapshot(5, false), screenVisible = true, nowMs = 200L)
+            assertFalse(status.running)
+            assertEquals(RelayPauseReason.BatteryBelowThreshold, status.pauseReason)
+            assertTrue(radio.stopCount >= 1)
+        }
 
     private class TrackingBleMeshRadio : BleMeshRadio {
         var startCount = 0
@@ -149,17 +156,6 @@ class RelaySessionControllerTest {
 
         override fun senderState(): TransferState = TransferState.IDLE
     }
-
-    private fun grantAllPermissions(): PermissionFlowCoordinator =
-        PermissionFlowCoordinator(
-            sdkInt = 33,
-            statusReader =
-                object : PermissionStatusReader {
-                    override fun isGranted(permission: String): Boolean = true
-
-                    override fun shouldShowRationale(permission: String): Boolean = false
-                },
-        )
 
     private class RecordingUploadCommands : RelayUploadCommands {
         var scheduleCount = 0

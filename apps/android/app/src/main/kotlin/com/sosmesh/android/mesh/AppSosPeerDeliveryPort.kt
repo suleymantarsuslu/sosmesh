@@ -13,12 +13,12 @@ class AppSosPeerDeliveryPort
     constructor(
         private val orchestrator: SosPeerDeliveryOrchestrator,
     ) : SosPeerDeliveryPort {
-        override fun kickOffAfterLocalSave(
+        override suspend fun kickOffAfterLocalSave(
             nowMs: Long,
             foregroundVisible: Boolean,
         ): SosPeerDeliveryKickResult = orchestrator.runCycle(nowMs, foregroundVisible).toKickResult()
 
-        override fun runPendingCycle(
+        override suspend fun runPendingCycle(
             nowMs: Long,
             foregroundVisible: Boolean,
         ): SosPeerDeliveryKickResult = orchestrator.runCycle(nowMs, foregroundVisible).toKickResult()

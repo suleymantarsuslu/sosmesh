@@ -59,6 +59,8 @@ class SosFormViewModel
         private val locationProvider: SosLocationProvider,
         private val submitRepository: SosSubmitRepository,
         private val peerDelivery: SosPeerDeliveryPort,
+        private val bleMeshReadiness: com.sosmesh.android.core.permissions.BleMeshReadiness,
+        private val permissionFlowCoordinator: com.sosmesh.android.core.permissions.PermissionFlowCoordinator,
     ) : ViewModel() {
         private val _uiState = MutableStateFlow(SosFormUiState())
         val uiState: StateFlow<SosFormUiState> = _uiState.asStateFlow()
@@ -141,7 +143,12 @@ class SosFormViewModel
                         nowMs = nowMs,
                     ),
                 )
-            val delivery = peerDelivery.kickOffAfterLocalSave(nowMs, foregroundVisible = true)
+            val delivery =
+                if (bleMeshReadiness.canRunBleMeshFeatures()) {
+                    peerDelivery.kickOffAfterLocalSave(nowMs, foregroundVisible = true)
+                } else {
+                    SosPeerDeliveryKickResult.PermissionsMissing(permissionFlowCoordinator.missingPermissions())
+                }
             _uiState.update {
                 it.copy(
                     step = SosWizardStep.DONE,

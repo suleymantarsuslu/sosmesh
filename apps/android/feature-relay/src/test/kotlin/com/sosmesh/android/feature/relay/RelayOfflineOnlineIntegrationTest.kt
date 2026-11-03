@@ -20,6 +20,8 @@ import com.sosmesh.contracts.transport.EnqueueInput
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.jsonObject
 import kotlinx.serialization.json.jsonPrimitive
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.runBlocking
 import org.junit.After
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNotNull
@@ -53,7 +55,7 @@ class RelayOfflineOnlineIntegrationTest {
             AndroidStateTransitionLoader.load(
                 javaClass.classLoader!!.getResourceAsStream("state-transitions.json")!!,
             )
-        adapter = RoomOutboxQueueAdapter(db.outboxDao(), fixture.defaultRetentionMs)
+        adapter = RoomOutboxQueueAdapter(db.outboxDao(), fixture.defaultRetentionMs, Dispatchers.IO)
         reader = RelayOutboxReader(db.outboxDao(), kotlinx.coroutines.Dispatchers.IO)
         settings = MutableRelaySettings(relayEnabled = true)
         val budget = RelayHourlyDataBudget(context)
@@ -69,43 +71,44 @@ class RelayOfflineOnlineIntegrationTest {
     }
 
     @Test
-    fun networkRestored_singleVerifiedUpload_setsServerAccepted() {
-        val wire = javaClass.classLoader!!.getResourceAsStream("valid-sos.json")!!.readBytes()
-        val blob = Base64.getEncoder().encodeToString(wire)
-        val root = Json.parseToJsonElement(String(wire)).jsonObject
-        val sosId = root["id"]!!.jsonPrimitive.content
+    fun networkRestored_singleVerifiedUpload_setsServerAccepted() =
+        runBlocking {
+            val wire = javaClass.classLoader!!.getResourceAsStream("valid-sos.json")!!.readBytes()
+            val blob = Base64.getEncoder().encodeToString(wire)
+            val root = Json.parseToJsonElement(String(wire)).jsonObject
+            val sosId = root["id"]!!.jsonPrimitive.content
 
-        adapter.enqueue(
-            EnqueueInput(
-                sosId = sosId,
-                digest = "offline-online-digest",
-                origin = "relay",
-                encryptedBlobBase64 = blob,
-            ),
-            nowMs = 100L,
-        )
-
-        val offline =
-            executor.runUploadCycle(
-                nowMs = 200L,
-                networkConnected = false,
-                battery = RelayBatterySnapshot(90, false),
+            adapter.enqueue(
+                EnqueueInput(
+                    sosId = sosId,
+                    digest = "offline-online-digest",
+                    origin = "relay",
+                    encryptedBlobBase64 = blob,
+                ),
+                nowMs = 100L,
             )
-        assertNotNull(offline.scheduledRetryMs)
-        assertEquals(0, offline.uploaded)
-        assertEquals(0, scriptedUplink.uploadCallCount)
 
-        val online =
-            executor.runUploadCycle(
-                nowMs = 70_000L,
-                networkConnected = true,
-                battery = RelayBatterySnapshot(90, false),
-            )
-        assertEquals(1, scriptedUplink.uploadCallCount)
-        assertEquals(1, online.uploaded)
-        val entry = adapter.getByKey(sosId, "offline-online-digest")
-        assertEquals("SERVER_ACCEPTED", entry!!.state)
-    }
+            val offline =
+                executor.runUploadCycle(
+                    nowMs = 200L,
+                    networkConnected = false,
+                    battery = RelayBatterySnapshot(90, false),
+                )
+            assertNotNull(offline.scheduledRetryMs)
+            assertEquals(0, offline.uploaded)
+            assertEquals(0, scriptedUplink.uploadCallCount)
+
+            val online =
+                executor.runUploadCycle(
+                    nowMs = 70_000L,
+                    networkConnected = true,
+                    battery = RelayBatterySnapshot(90, false),
+                )
+            assertEquals(1, scriptedUplink.uploadCallCount)
+            assertEquals(1, online.uploaded)
+            val entry = adapter.getByKey(sosId, "offline-online-digest")
+            assertEquals("SERVER_ACCEPTED", entry!!.state)
+        }
 
     private class ScriptedVerifiedUplink : RelayIngestUplink {
         var uploadCallCount: Int = 0

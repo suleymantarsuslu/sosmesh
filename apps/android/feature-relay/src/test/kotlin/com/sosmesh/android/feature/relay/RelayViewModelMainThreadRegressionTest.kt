@@ -76,7 +76,9 @@ class RelayViewModelMainThreadRegressionTest {
                     ),
                 engine = NoOpTransferEngine(),
                 radio = radio,
-                permissions = grantAllPermissions(),
+                permissions = testGrantAllPermissionCoordinator(),
+                bleMeshReadiness = testGrantAllBleMeshReadiness(),
+                ioDispatcher = testIoDispatcher(),
             )
         val session =
             RelaySessionController(
@@ -86,6 +88,7 @@ class RelayViewModelMainThreadRegressionTest {
                 NoOpForegroundLauncher(),
                 NoOpUploadCommands(),
                 meshForward,
+                testIoDispatcher(),
             )
         viewModel =
             RelayViewModel(
@@ -111,16 +114,7 @@ class RelayViewModelMainThreadRegressionTest {
             assertEquals(0, viewModel.uiState.value.pendingUploadCount)
         }
 
-    private fun grantAllPermissions(): PermissionFlowCoordinator =
-        PermissionFlowCoordinator(
-            sdkInt = 33,
-            statusReader =
-                object : PermissionStatusReader {
-                    override fun isGranted(permission: String): Boolean = true
-
-                    override fun shouldShowRationale(permission: String): Boolean = false
-                },
-        )
+    private fun grantAllPermissions(): PermissionFlowCoordinator = testGrantAllPermissionCoordinator()
 
     private class NoOpTransferEngine : BleTransferEnginePort {
         override fun sendOutbound(

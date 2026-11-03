@@ -13,6 +13,8 @@ import com.sosmesh.android.core.permissions.PermissionFlowCoordinator
 import com.sosmesh.android.core.permissions.PermissionStatusReader
 import com.sosmesh.contracts.transport.EnqueueInput
 import com.sosmesh.ble.BleProtocol
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.runBlocking
 import org.junit.After
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
@@ -44,8 +46,8 @@ class SosPeerDeliveryOrchestratorTest {
             AndroidStateTransitionLoader.load(
                 javaClass.classLoader!!.getResourceAsStream("state-transitions.json")!!,
             )
-        adapter = RoomOutboxQueueAdapter(db.outboxDao(), fixture.defaultRetentionMs)
-        reader = SosOutboxReader(db.outboxDao(), kotlinx.coroutines.Dispatchers.IO)
+        adapter = RoomOutboxQueueAdapter(db.outboxDao(), fixture.defaultRetentionMs, Dispatchers.IO)
+        reader = SosOutboxReader(db.outboxDao(), Dispatchers.IO)
         radio = FakeRadio()
         engine = FakeEngine()
         orchestrator =
@@ -54,7 +56,9 @@ class SosPeerDeliveryOrchestratorTest {
                 outbox = adapter,
                 engine = engine,
                 radio = radio,
-                permissions = grantAllPermissions(),
+                permissions = testGrantAllPermissionCoordinator(),
+                bleMeshReadiness = testGrantAllBleMeshReadiness(),
+                ioDispatcher = testIoDispatcher(),
             )
     }
 
@@ -64,60 +68,67 @@ class SosPeerDeliveryOrchestratorTest {
     }
 
     @Test
-    fun permissionsMissing_doesNotStartDiscovery() {
-        val denied =
-            SosPeerDeliveryOrchestrator(
-                outboxReader = reader,
-                outbox = adapter,
-                engine = engine,
-                radio = radio,
-                permissions = permissionsMissing("android.permission.BLUETOOTH_SCAN"),
+    fun permissionsMissing_doesNotStartDiscovery() =
+        runBlocking {
+            val deniedPermissions = permissionsMissing("android.permission.BLUETOOTH_SCAN")
+            val denied =
+                SosPeerDeliveryOrchestrator(
+                    outboxReader = reader,
+                    outbox = adapter,
+                    engine = engine,
+                    radio = radio,
+                    permissions = deniedPermissions,
+                    bleMeshReadiness = testBleMeshReadiness(deniedPermissions),
+                    ioDispatcher = testIoDispatcher(),
+                )
+            enqueueAndroidPayload("sos-1", byteArrayOf(1, 2, 3), nowMs = 1L)
+            val result = denied.runCycle(nowMs = 1L, foregroundVisible = true)
+            assertTrue(result is SosPeerDeliveryCycleResult.PermissionsMissing)
+            assertEquals(0, radio.startDiscoveryCalls)
+        }
+
+    @Test
+    fun sendDueEntry_triggersTransferWhenGattReady() =
+        runBlocking {
+            val payload = """{"id":"abc","version":1}""".toByteArray()
+            enqueueAndroidPayload("abc", payload, nowMs = 1L)
+            radio.gattState = GattUiConnectionState.READY
+            val result = orchestrator.runCycle(nowMs = 1L, foregroundVisible = true)
+            assertEquals(SosPeerDeliveryCycleResult.TransferStarted, result)
+            assertEquals(1, engine.sendOutboundCalls.size)
+            assertEquals("abc", engine.sendOutboundCalls.single().sosId)
+            assertTrue(payload.contentEquals(engine.sendOutboundCalls.single().payload))
+        }
+
+    @Test
+    fun digestMismatch_schedulesRetryWithoutSend() =
+        runBlocking {
+            adapter.enqueue(
+                EnqueueInput(
+                    sosId = "bad",
+                    digest = "wrong-digest",
+                    origin = "android",
+                    encryptedBlobBase64 = Base64.getEncoder().encodeToString(byteArrayOf(9)),
+                ),
+                1L,
             )
-        enqueueAndroidPayload("sos-1", byteArrayOf(1, 2, 3), nowMs = 1L)
-        val result = denied.runCycle(nowMs = 1L, foregroundVisible = true)
-        assertTrue(result is SosPeerDeliveryCycleResult.PermissionsMissing)
-        assertEquals(0, radio.startDiscoveryCalls)
-    }
+            radio.gattState = GattUiConnectionState.READY
+            val result = orchestrator.runCycle(nowMs = 10L, foregroundVisible = true)
+            assertTrue(result is SosPeerDeliveryCycleResult.Blocked)
+            assertEquals(0, engine.sendOutboundCalls.size)
+            assertEquals("digest_mismatch", adapter.getByKey("bad", "wrong-digest")?.lastError)
+        }
 
     @Test
-    fun sendDueEntry_triggersTransferWhenGattReady() {
-        val payload = """{"id":"abc","version":1}""".toByteArray()
-        enqueueAndroidPayload("abc", payload, nowMs = 1L)
-        radio.gattState = GattUiConnectionState.READY
-        val result = orchestrator.runCycle(nowMs = 1L, foregroundVisible = true)
-        assertEquals(SosPeerDeliveryCycleResult.TransferStarted, result)
-        assertEquals(1, engine.sendOutboundCalls.size)
-        assertEquals("abc", engine.sendOutboundCalls.single().sosId)
-        assertTrue(payload.contentEquals(engine.sendOutboundCalls.single().payload))
-    }
+    fun senderBusy_skipsSecondSend() =
+        runBlocking {
+            enqueueAndroidPayload("a", byteArrayOf(1), nowMs = 1L)
+            engine.senderStateValue = TransferState.SENDING
+            val result = orchestrator.runCycle(nowMs = 1L, foregroundVisible = true)
+            assertEquals(SosPeerDeliveryCycleResult.SenderBusy, result)
+        }
 
-    @Test
-    fun digestMismatch_schedulesRetryWithoutSend() {
-        adapter.enqueue(
-            EnqueueInput(
-                sosId = "bad",
-                digest = "wrong-digest",
-                origin = "android",
-                encryptedBlobBase64 = Base64.getEncoder().encodeToString(byteArrayOf(9)),
-            ),
-            1L,
-        )
-        radio.gattState = GattUiConnectionState.READY
-        val result = orchestrator.runCycle(nowMs = 10L, foregroundVisible = true)
-        assertTrue(result is SosPeerDeliveryCycleResult.Blocked)
-        assertEquals(0, engine.sendOutboundCalls.size)
-        assertEquals("digest_mismatch", adapter.getByKey("bad", "wrong-digest")?.lastError)
-    }
-
-    @Test
-    fun senderBusy_skipsSecondSend() {
-        enqueueAndroidPayload("a", byteArrayOf(1), nowMs = 1L)
-        engine.senderStateValue = TransferState.SENDING
-        val result = orchestrator.runCycle(nowMs = 1L, foregroundVisible = true)
-        assertEquals(SosPeerDeliveryCycleResult.SenderBusy, result)
-    }
-
-    private fun enqueueAndroidPayload(
+    private suspend fun enqueueAndroidPayload(
         sosId: String,
         payload: ByteArray,
         nowMs: Long,
@@ -189,17 +200,6 @@ class SosPeerDeliveryOrchestratorTest {
 
         override fun tickGattReconnect(): Result<Unit>? = null
     }
-
-    private fun grantAllPermissions(): PermissionFlowCoordinator =
-        PermissionFlowCoordinator(
-            sdkInt = 33,
-            statusReader =
-                object : PermissionStatusReader {
-                    override fun isGranted(permission: String): Boolean = true
-
-                    override fun shouldShowRationale(permission: String): Boolean = false
-                },
-        )
 
     private fun permissionsMissing(vararg denied: String): PermissionFlowCoordinator {
         val deniedSet = denied.toSet()

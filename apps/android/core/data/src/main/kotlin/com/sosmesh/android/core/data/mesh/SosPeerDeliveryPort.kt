@@ -4,12 +4,12 @@ package com.sosmesh.android.core.data.mesh
  * Starts or advances BLE peer delivery for locally saved SOS outbox rows (origin android).
  */
 interface SosPeerDeliveryPort {
-    fun kickOffAfterLocalSave(
+    suspend fun kickOffAfterLocalSave(
         nowMs: Long,
         foregroundVisible: Boolean,
     ): SosPeerDeliveryKickResult
 
-    fun runPendingCycle(
+    suspend fun runPendingCycle(
         nowMs: Long,
         foregroundVisible: Boolean,
     ): SosPeerDeliveryKickResult

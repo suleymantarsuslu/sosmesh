@@ -179,36 +179,7 @@ const server = http.createServer(async (req, res) => {
     return;
   }
 
-  if (url.pathname.startsWith('/v1/operator/cases/') && req.method === 'GET') {
-    sendJson(res, 404, { code: 'NOT_FOUND' });
-    return;
-  }
-
-  if (url.pathname === '/v1/operator/events' && req.method === 'GET') {
-    sendJson(res, 200, { events: [] });
-    return;
-  }
-
-  if (url.pathname === '/v1/auth/me' && req.method === 'GET') {
-    sendJson(res, 401, { code: 'UNAUTHORIZED' });
-    return;
-  }
-
-  // AI endpoints for screenshots
-  if (url.pathname === '/v1/operator/ai/status' && req.method === 'GET') {
-    sendJson(res, 200, {
-      enabled: true,
-      circuitState: 'closed',
-      budgetUsedToday: 12.50,
-      budgetTotalLimit: 150,
-      budgetDailyLimit: 30,
-      lastAnalysisAt: new Date().toISOString(),
-      queueDepth: 2,
-      modelsAvailable: { spark: true, asr: true, sam: true },
-    });
-    return;
-  }
-
+  // AI endpoint must come BEFORE the catch-all 404
   if (url.pathname.match(/^\/v1\/operator\/cases\/[^/]+\/ai$/) && req.method === 'GET') {
     const incidentId = url.pathname.split('/')[4];
     sendJson(res, 200, {
@@ -319,6 +290,37 @@ const server = http.createServer(async (req, res) => {
           createdAt: new Date(Date.now() - 300000).toISOString()
         }
       ]
+    });
+    return;
+  }
+
+  // Catch-all for unmatched /v1/operator/cases/* paths
+  if (url.pathname.startsWith('/v1/operator/cases/') && req.method === 'GET') {
+    sendJson(res, 404, { code: 'NOT_FOUND' });
+    return;
+  }
+
+  if (url.pathname === '/v1/operator/events' && req.method === 'GET') {
+    sendJson(res, 200, { events: [] });
+    return;
+  }
+
+  if (url.pathname === '/v1/auth/me' && req.method === 'GET') {
+    sendJson(res, 401, { code: 'UNAUTHORIZED' });
+    return;
+  }
+
+  // AI dashboard status endpoint
+  if (url.pathname === '/v1/operator/ai/status' && req.method === 'GET') {
+    sendJson(res, 200, {
+      enabled: true,
+      circuitState: 'closed',
+      budgetUsedToday: 12.50,
+      budgetTotalLimit: 150,
+      budgetDailyLimit: 30,
+      lastAnalysisAt: new Date().toISOString(),
+      queueDepth: 2,
+      modelsAvailable: { spark: true, asr: true, sam: true },
     });
     return;
   }

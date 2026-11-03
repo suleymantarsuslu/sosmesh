@@ -43,8 +43,8 @@ test.describe('AI Panel WP-E Screenshots', () => {
     // Verify not on login page
     await expect(page.getByTestId('login-form')).not.toBeVisible();
     
-    // Wait for AI panel content to be visible
-    await expect(page.locator('h2').filter({ hasText: /AI Intelligence|Yapay Zeka/ })).toBeVisible({ timeout: 10000 });
+    // Wait for AI intelligence panel
+    await expect(page.getByTestId('ai-intelligence-panel')).toBeVisible({ timeout: 10000 });
     await expect(page.getByTestId('ai-triage-card')).toBeVisible({ timeout: 5000 });
     
     // Verify triage summary is loaded
@@ -66,8 +66,8 @@ test.describe('AI Panel WP-E Screenshots', () => {
     // Verify not on login page
     await expect(page.getByTestId('login-form')).not.toBeVisible();
     
-    // Wait for AI panel content
-    await expect(page.locator('h2').filter({ hasText: /AI Intelligence|Yapay Zeka/ })).toBeVisible({ timeout: 10000 });
+    // Wait for AI intelligence panel
+    await expect(page.getByTestId('ai-intelligence-panel')).toBeVisible({ timeout: 10000 });
     await expect(page.getByTestId('ai-triage-card')).toBeVisible({ timeout: 5000 });
     
     const triageSummary = page.locator('[data-testid="ai-triage-card"]').locator('text=/trapped|collapse|building/i');

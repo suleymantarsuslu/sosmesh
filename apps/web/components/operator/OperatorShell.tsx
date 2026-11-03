@@ -14,6 +14,7 @@ import { IncidentSwitcher } from './IncidentSwitcher';
 import { MobileNavDrawer } from './MobileNavDrawer';
 import { OperatorLiveStatus } from './OperatorLiveStatus';
 import { useOperatorPreferences } from './OperatorPreferencesProvider';
+import { OperatorTopbarOverflow } from './OperatorTopbarOverflow';
 import { OrgHeader } from './OrgHeader';
 import { SavedViewsMenu } from './SavedViewsMenu';
 import { useOrganizationContext } from './useOrganizationContext';
@@ -102,7 +103,11 @@ export function OperatorShell({
   };
 
   const items = useMemo(
-    () => navItemsForRole(user.role, t),
+    () =>
+      navItemsForRole(user.role, t).map((item) => ({
+        ...item,
+        icon: NAV_ICONS[item.href] ?? '•',
+      })),
     [user.role, t]
   );
 
@@ -183,6 +188,7 @@ export function OperatorShell({
             className="operator-mobile-menu"
             aria-expanded={drawerOpen}
             aria-controls="operator-mobile-nav"
+            data-testid="operator-hamburger"
             onClick={() => setDrawerOpen(true)}
           >
             {t('web.shell.mobileMenu')}
@@ -198,13 +204,14 @@ export function OperatorShell({
               readOnly
             />
           </div>
-          <div className="operator-topbar__cluster">
-            <OperatorLiveStatus />
+          <OperatorLiveStatus />
+          <div className="operator-topbar__cluster operator-topbar__cluster--desktop">
             <IncidentSwitcher incidents={context?.incidents ?? []} />
             <Suspense fallback={null}>
               <SavedViewsMenu />
             </Suspense>
           </div>
+          <OperatorTopbarOverflow incidents={context?.incidents ?? []} />
           <div className="operator-topbar__controls">
             <LocaleSwitcher className="operator-topbar__locale" testId="operator-topbar-locale" />
             <button
@@ -258,6 +265,9 @@ export function OperatorShell({
         open={drawerOpen}
         onClose={() => setDrawerOpen(false)}
         items={items}
+        organizationName={context?.organization?.name ?? null}
+        teamName={context?.team?.name ?? null}
+        role={user.role}
       />
     </div>
   );

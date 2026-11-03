@@ -205,6 +205,7 @@
       "incidentSwitcher": "Incident switcher",
       "incidentAll": "All incidents",
       "mobileMenu": "Open menu",
+      "overflowMenu": "More",
       "nav": {
         "dashboard": "Dashboard",
         "cases": "Map / Cases",

@@ -8,19 +8,26 @@ import { SosMeshLogo } from '../brand/SosMeshLogo';
 import { Button } from '../ui/Button';
 
 import { useOperatorPreferences } from './OperatorPreferencesProvider';
+import { OrgHeader } from './OrgHeader';
 
-type NavItem = { href: string; label: string };
+type NavItem = { href: string; label: string; icon?: string };
 
 export function MobileNavDrawer({
   id,
   open,
   onClose,
   items,
+  organizationName,
+  teamName,
+  role,
 }: {
   id?: string;
   open: boolean;
   onClose: () => void;
   items: NavItem[];
+  organizationName?: string | null;
+  teamName?: string | null;
+  role?: string;
 }) {
   const pathname = usePathname();
   const { t } = useOperatorPreferences();
@@ -30,6 +37,7 @@ export function MobileNavDrawer({
     if (!open) {
       return undefined;
     }
+    document.body.classList.add('operator-drawer-open');
     const closeButton = document.querySelector<HTMLButtonElement>(
       '[data-testid="mobile-nav-close"]'
     );
@@ -41,7 +49,10 @@ export function MobileNavDrawer({
       }
     };
     window.addEventListener('keydown', onKeyDown);
-    return () => window.removeEventListener('keydown', onKeyDown);
+    return () => {
+      document.body.classList.remove('operator-drawer-open');
+      window.removeEventListener('keydown', onKeyDown);
+    };
   }, [open, onClose]);
 
   if (!open) {
@@ -52,10 +63,11 @@ export function MobileNavDrawer({
     <div className="operator-drawer-backdrop" role="presentation" onClick={onClose}>
       <aside
         id={id}
-        className="operator-drawer"
+        className="operator-drawer operator-drawer--nav"
         role="dialog"
         aria-modal="true"
         aria-labelledby={titleId}
+        data-testid="operator-mobile-nav-drawer"
         onClick={(event) => event.stopPropagation()}
       >
         <div className="operator-drawer__header">
@@ -71,7 +83,8 @@ export function MobileNavDrawer({
             {t('a11y.closeMenu')}
           </Button>
         </div>
-        <nav>
+        <OrgHeader organizationName={organizationName ?? null} teamName={teamName ?? null} role={role ?? ''} />
+        <nav className="operator-drawer__nav">
           <ul>
             {items.map((item) => (
               <li key={item.href}>
@@ -80,7 +93,12 @@ export function MobileNavDrawer({
                   aria-current={pathname === item.href ? 'page' : undefined}
                   onClick={onClose}
                 >
-                  {item.label}
+                  {item.icon ? (
+                    <span className="operator-nav-icon" aria-hidden>
+                      {item.icon}
+                    </span>
+                  ) : null}
+                  <span>{item.label}</span>
                 </Link>
               </li>
             ))}

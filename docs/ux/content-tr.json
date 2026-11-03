@@ -205,6 +205,7 @@
       "incidentSwitcher": "Olay seçici",
       "incidentAll": "Tüm olaylar",
       "mobileMenu": "Menüyü aç",
+      "overflowMenu": "Diğer",
       "nav": {
         "dashboard": "Panel",
         "cases": "Harita / Vakalar",

@@ -110,4 +110,62 @@ test.describe('Web modern screenshots', () => {
     });
     await opCtx.close();
   });
+
+  test('capture responsive operator panel screenshots', async ({ browser }) => {
+    const assertNoHorizontalOverflow = async (page) => {
+      const overflow = await page.evaluate(() => {
+        const root = document.documentElement;
+        return root.scrollWidth > root.clientWidth + 1;
+      });
+      expect(overflow).toBe(false);
+    };
+
+    const { context: opCtx, page: opPage } = await freshEnglishContext(browser);
+
+    await opPage.setViewportSize({ width: 375, height: 812 });
+    await opPage.goto('/operator/login');
+    await expect(opPage.getByTestId('operator-login-page')).toBeVisible();
+    await assertNoHorizontalOverflow(opPage);
+    await opPage.screenshot({
+      path: path.join(ARTIFACTS, 'operator-login-en-375.png'),
+      fullPage: true,
+    });
+
+    await loginAsOperator(opPage);
+    await opPage.goto('/operator/dashboard');
+    await expect(opPage.getByTestId('operator-dashboard')).toBeVisible();
+    await assertNoHorizontalOverflow(opPage);
+    await opPage.screenshot({
+      path: path.join(ARTIFACTS, 'operator-dashboard-en-375.png'),
+      fullPage: true,
+    });
+
+    await opPage.getByTestId('operator-hamburger').click();
+    await expect(opPage.getByTestId('operator-mobile-nav-drawer')).toBeVisible();
+    await assertNoHorizontalOverflow(opPage);
+    await opPage.screenshot({
+      path: path.join(ARTIFACTS, 'operator-dashboard-en-375-drawer-open.png'),
+      fullPage: true,
+    });
+    await opPage.getByTestId('mobile-nav-close').click();
+
+    await opPage.goto('/operator/cases');
+    await expect(opPage.getByTestId('operator-cases-view')).toBeVisible();
+    await assertNoHorizontalOverflow(opPage);
+    await opPage.screenshot({
+      path: path.join(ARTIFACTS, 'operator-cases-en-375.png'),
+      fullPage: true,
+    });
+
+    await opPage.setViewportSize({ width: 768, height: 1024 });
+    await opPage.goto('/operator/dashboard');
+    await expect(opPage.getByTestId('operator-dashboard')).toBeVisible();
+    await assertNoHorizontalOverflow(opPage);
+    await opPage.screenshot({
+      path: path.join(ARTIFACTS, 'operator-dashboard-en-768.png'),
+      fullPage: true,
+    });
+
+    await opCtx.close();
+  });
 });

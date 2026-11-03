@@ -19,6 +19,9 @@ export function applyTestIngestEnv(): void {
   if (!process.env.INGEST_RATE_LIMIT_MAX) {
     process.env.INGEST_RATE_LIMIT_MAX = '500';
   }
+  if (!process.env.DEVICE_UPLOAD_TOKEN_SECRET) {
+    process.env.DEVICE_UPLOAD_TOKEN_SECRET = Buffer.from('test-upload-token-secret-32bytes!').toString('base64');
+  }
 }
 
 export function testIngestPublicKey() {

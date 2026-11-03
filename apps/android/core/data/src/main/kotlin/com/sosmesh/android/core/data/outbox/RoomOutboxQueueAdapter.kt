@@ -48,15 +48,16 @@ class RoomOutboxQueueAdapter
             lastError: String?,
         ): OutboxEntryMeta? =
             withContext(ioDispatcher) {
-                val existing = dao.getByKey(sosId, digest) ?: return@withContext null
                 val updated =
-                    existing.copy(
+                    dao.updateStateFields(
+                        sosId = sosId,
+                        digest = digest,
                         state = state,
-                        updated_at = nowMs,
-                        last_error = lastError,
+                        nowMs = nowMs,
+                        lastError = lastError,
                     )
-                dao.update(updated)
-                updated.toMeta()
+                if (updated == 0) return@withContext null
+                dao.getByKey(sosId, digest)?.toMeta()
             }
 
         override suspend fun setRetryAt(
@@ -66,12 +67,11 @@ class RoomOutboxQueueAdapter
             lastError: String?,
         ) {
             withContext(ioDispatcher) {
-                val existing = dao.getByKey(sosId, digest) ?: return@withContext
-                dao.update(
-                    existing.copy(
-                        retry_at = retryAtMs,
-                        last_error = lastError,
-                    ),
+                dao.setRetryAtFields(
+                    sosId = sosId,
+                    digest = digest,
+                    retryAtMs = retryAtMs,
+                    lastError = lastError,
                 )
             }
         }
@@ -118,7 +118,8 @@ class RoomOutboxQueueAdapter
                     updated_at = nowMs,
                 )
             dao.insert(entity)
-            return dao.getByKey(input.sosId, input.digest)!!.toMeta()
+            return dao.getByKey(input.sosId, input.digest)?.toMeta()
+                ?: error("outbox row missing immediately after insert")
         }
 
         private fun OutboxEntity.toMeta(): OutboxEntryMeta =

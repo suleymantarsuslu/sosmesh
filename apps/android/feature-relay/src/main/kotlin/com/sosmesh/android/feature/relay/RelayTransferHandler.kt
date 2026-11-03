@@ -20,7 +20,7 @@ class RelayTransferHandler
         private val outboxIoScope: OutboxIoScope,
     ) : BleTransferReceiver.Listener {
         override fun onCompleted(payload: ByteArray) {
-            outboxIoScope.launch {
+            outboxIoScope.launchOutboxWork {
                 val nowMs = System.currentTimeMillis()
                 val meshResult =
                     meshV2RelayCoordinator.onWirePayload(

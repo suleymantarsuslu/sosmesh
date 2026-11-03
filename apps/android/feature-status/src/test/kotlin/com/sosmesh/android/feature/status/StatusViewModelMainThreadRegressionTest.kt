@@ -32,36 +32,21 @@ class StatusViewModelMainThreadRegressionTest {
     val instantTaskExecutorRule = InstantTaskExecutorRule()
 
     private lateinit var db: OutboxDatabase
-    private lateinit var viewModel: StatusViewModel
+    private lateinit var adapter: RoomOutboxQueueAdapter
 
     @Before
-    fun setUp() =
-        runBlocking {
-            Dispatchers.setMain(UnconfinedTestDispatcher())
-            val context = ApplicationProvider.getApplicationContext<android.content.Context>()
-            db =
-                Room.inMemoryDatabaseBuilder(context, OutboxDatabase::class.java)
-                    .build()
-            val fixture =
-                AndroidStateTransitionLoader.load(
-                    javaClass.classLoader!!.getResourceAsStream("state-transitions.json")!!,
-                )
-            val adapter = RoomOutboxQueueAdapter(db.outboxDao(), fixture.defaultRetentionMs, Dispatchers.IO)
-            adapter.enqueue(
-                EnqueueInput(
-                    sosId = "status-vm-test",
-                    digest = "d",
-                    origin = "android",
-                    encryptedBlobBase64 = "e30=",
-                ),
-                nowMs = 1L,
+    fun setUp() {
+        Dispatchers.setMain(UnconfinedTestDispatcher())
+        val context = ApplicationProvider.getApplicationContext<android.content.Context>()
+        db =
+            Room.inMemoryDatabaseBuilder(context, OutboxDatabase::class.java)
+                .build()
+        val fixture =
+            AndroidStateTransitionLoader.load(
+                javaClass.classLoader!!.getResourceAsStream("state-transitions.json")!!,
             )
-            viewModel =
-                StatusViewModel(
-                    outbox = adapter,
-                    peerDelivery = NoOpPeerDeliveryPort,
-                )
-        }
+        adapter = RoomOutboxQueueAdapter(db.outboxDao(), fixture.defaultRetentionMs, Dispatchers.IO)
+    }
 
     @After
     fun tearDown() {
@@ -70,10 +55,31 @@ class StatusViewModelMainThreadRegressionTest {
     }
 
     @Test
-    fun initRefresh_withoutAllowMainThreadQueries_loadsEntries() {
-        assertEquals(1, viewModel.uiState.value.entries.size)
-        assertEquals("status-vm-test", viewModel.uiState.value.entries.single().sosId)
-    }
+    fun initRefresh_withoutAllowMainThreadQueries_loadsEntries() =
+        runBlocking {
+            runBlocking(Dispatchers.IO) {
+                adapter.enqueue(
+                    EnqueueInput(
+                        sosId = "status-vm-test",
+                        digest = "d",
+                        origin = "android",
+                        encryptedBlobBase64 = "e30=",
+                    ),
+                    nowMs = 1L,
+                )
+            }
+            val viewModel =
+                StatusViewModel(
+                    outbox = adapter,
+                    peerDelivery = NoOpPeerDeliveryPort,
+                )
+            val deadlineMs = System.currentTimeMillis() + 5_000
+            while (viewModel.uiState.value.entries.isEmpty() && System.currentTimeMillis() < deadlineMs) {
+                Thread.sleep(25)
+            }
+            assertEquals(1, viewModel.uiState.value.entries.size)
+            assertEquals("status-vm-test", viewModel.uiState.value.entries.single().sosId)
+        }
 
     private object NoOpPeerDeliveryPort : SosPeerDeliveryPort {
         override suspend fun kickOffAfterLocalSave(

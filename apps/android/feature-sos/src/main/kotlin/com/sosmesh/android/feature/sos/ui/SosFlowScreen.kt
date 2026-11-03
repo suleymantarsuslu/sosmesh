@@ -31,6 +31,7 @@ import com.sosmesh.android.core.data.sos.LocationFreshness
 import com.sosmesh.android.core.data.sos.LocationFreshnessTier
 import com.sosmesh.android.core.data.sos.LocationSnapshot
 import com.sosmesh.android.core.model.SosType
+import com.sosmesh.android.core.permissions.ui.EmergencyCall112Button
 import com.sosmesh.android.feature.sos.R
 import com.sosmesh.android.feature.sos.SosFormUiState
 import com.sosmesh.android.feature.sos.SosPeerDeliveryHint
@@ -103,6 +104,7 @@ private fun SosFormScreen(
     ) {
         OfflineBadge()
         Text(text = stringResource(R.string.sos_not112_disclaimer), style = MaterialTheme.typography.bodySmall)
+        EmergencyCall112Button(modifier = Modifier.fillMaxWidth(), testTag = "sos_call_112_button")
         Text(text = stringResource(R.string.sos_flow_title), style = MaterialTheme.typography.headlineSmall)
         Text(text = stringResource(R.string.sos_secondary_continue_hint), style = MaterialTheme.typography.bodySmall)
         Text(text = stringResource(R.string.sos_type_label), style = MaterialTheme.typography.titleMedium)

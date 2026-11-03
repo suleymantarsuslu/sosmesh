@@ -8,6 +8,7 @@ import com.sosmesh.android.core.platform.CrossPlatformFaultState
 import com.sosmesh.android.core.platform.PlatformUserHint
 import com.sosmesh.android.feature.sos.ExpressSosSaver
 import com.sosmesh.android.platform.MeshPlatformSignalBridge
+import android.util.Log
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -55,8 +56,12 @@ class HomeViewModel
 
         fun expressSaveSos(nowMs: Long = System.currentTimeMillis()) {
             viewModelScope.launch {
-                val messageId = expressSosSaver.save(nowMs)
-                _uiState.update { it.copy(expressSavedMessageId = messageId) }
+                runCatching { expressSosSaver.save(nowMs) }
+                    .onSuccess { messageId ->
+                        _uiState.update { it.copy(expressSavedMessageId = messageId) }
+                    }.onFailure { throwable ->
+                        Log.e("HomeViewModel", "express_sos_failed", throwable)
+                    }
             }
         }
 

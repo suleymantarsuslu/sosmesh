@@ -12,6 +12,8 @@ import com.sosmesh.android.meshv2.MeshV2RelayCoordinator
 import javax.inject.Inject
 import javax.inject.Singleton
 import kotlinx.coroutines.CoroutineDispatcher
+import kotlinx.coroutines.sync.Mutex
+import kotlinx.coroutines.sync.withLock
 import kotlinx.coroutines.withContext
 
 sealed class MeshRelayForwardCycleResult {
@@ -49,9 +51,13 @@ class MeshRelayForwardOrchestrator
         @Volatile
         private var discoveryActive: Boolean = false
 
+        private val cycleMutex = Mutex()
+
         suspend fun runForwardCycle(foregroundVisible: Boolean): MeshRelayForwardCycleResult =
             withContext(ioDispatcher) {
-                runForwardCycleOnIo(foregroundVisible)
+                cycleMutex.withLock {
+                    runForwardCycleOnIo(foregroundVisible)
+                }
             }
 
         private fun runForwardCycleOnIo(foregroundVisible: Boolean): MeshRelayForwardCycleResult {

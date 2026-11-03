@@ -14,6 +14,8 @@ import java.util.Base64
 import javax.inject.Inject
 import javax.inject.Singleton
 import kotlinx.coroutines.CoroutineDispatcher
+import kotlinx.coroutines.sync.Mutex
+import kotlinx.coroutines.sync.withLock
 import kotlinx.coroutines.withContext
 
 sealed class SosPeerDeliveryCycleResult {
@@ -52,12 +54,16 @@ class SosPeerDeliveryOrchestrator
         @Volatile
         private var discoveryActive: Boolean = false
 
+        private val cycleMutex = Mutex()
+
         suspend fun runCycle(
             nowMs: Long,
             foregroundVisible: Boolean,
         ): SosPeerDeliveryCycleResult =
             withContext(ioDispatcher) {
-                runCycleOnIo(nowMs, foregroundVisible)
+                cycleMutex.withLock {
+                    runCycleOnIo(nowMs, foregroundVisible)
+                }
             }
 
         private suspend fun runCycleOnIo(

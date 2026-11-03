@@ -19,6 +19,7 @@ import kotlinx.coroutines.runBlocking
 import org.junit.Rule
 import org.junit.After
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertNotNull
 import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Test
@@ -104,6 +105,26 @@ class SosSubmitFlowTest {
         }
 
     @Test
+    fun peerKickoffFailure_stillReachesDoneWithSavedId() =
+        runBlocking {
+            val vm =
+                SosFormViewModel(
+                    DefaultSosLocationProvider({ false }, { null }),
+                    repository,
+                    ThrowingPeerDelivery,
+                    testGrantAllBleMeshReadiness(),
+                    testGrantAllPermissionCoordinator(),
+                )
+            vm.setPersonCountText("1")
+            vm.goToPreview()
+            vm.performSaveAfterPreview(nowMs = 1_700_000_000_000L)
+            assertEquals(SosWizardStep.DONE, vm.uiState.value.step)
+            assertNotNull(vm.uiState.value.savedMessageId)
+            assertEquals(SosPeerDeliveryHint.BLOCKED, vm.uiState.value.peerDeliveryHint)
+            assertEquals(1, adapter.listAll().size)
+        }
+
+    @Test
     fun confirm_writesSchemaValidMessage() =
         runBlocking {
             repository.submit(
@@ -118,6 +139,18 @@ class SosSubmitFlowTest {
             )
             assertEquals(1, adapter.listAll().size)
         }
+
+    private object ThrowingPeerDelivery : SosPeerDeliveryPort {
+        override suspend fun kickOffAfterLocalSave(
+            nowMs: Long,
+            foregroundVisible: Boolean,
+        ): SosPeerDeliveryKickResult = error("simulated_ble_kickoff_failure")
+
+        override suspend fun runPendingCycle(
+            nowMs: Long,
+            foregroundVisible: Boolean,
+        ): SosPeerDeliveryKickResult = SosPeerDeliveryKickResult.Idle
+    }
 
     private object NoOpPeerDelivery : SosPeerDeliveryPort {
         override suspend fun kickOffAfterLocalSave(

@@ -4,7 +4,6 @@ import com.sosmesh.android.core.data.di.OutboxIoScope
 import com.sosmesh.contracts.transport.OutboxQueueAdapter
 import javax.inject.Inject
 import javax.inject.Singleton
-import kotlinx.coroutines.launch
 
 /**
  * Marks LOCAL_SAVED → PEER_RECEIVED only after sender-side chunk ACKs complete (verified mesh ack).
@@ -29,7 +28,7 @@ class SosPeerDeliveryTracker
                 object : BleTransferSender.Listener {
                     override fun onCompleted() {
                         val ctx = active ?: return
-                        outboxIoScope.launch {
+                        outboxIoScope.launchOutboxWork {
                             outbox.updateState(ctx.sosId, ctx.digest, "PEER_RECEIVED", System.currentTimeMillis(), null)
                         }
                         active = null
@@ -40,7 +39,7 @@ class SosPeerDeliveryTracker
                         message: String,
                     ) {
                         val ctx = active ?: return
-                        outboxIoScope.launch {
+                        outboxIoScope.launchOutboxWork {
                             outbox.setRetryAt(
                                 ctx.sosId,
                                 ctx.digest,

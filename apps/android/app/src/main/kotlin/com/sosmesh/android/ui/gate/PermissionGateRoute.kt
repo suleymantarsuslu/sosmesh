@@ -1,17 +1,14 @@
 package com.sosmesh.android.ui.gate
 
 import android.app.Activity
-import android.bluetooth.BluetoothAdapter
-import android.content.Intent
-import androidx.activity.compose.rememberLauncherForActivityResult
-import androidx.activity.result.contract.ActivityResultContracts
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.DisposableEffect
-import androidx.compose.runtime.LaunchedEffect
+import android.content.Context
+import android.content.ContextWrapper
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalLifecycleOwner
@@ -31,6 +28,12 @@ import dagger.hilt.EntryPoint
 import dagger.hilt.InstallIn
 import dagger.hilt.android.EntryPointAccessors
 import dagger.hilt.components.SingletonComponent
+import android.bluetooth.BluetoothAdapter
+import android.content.Intent
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.runtime.DisposableEffect
+import androidx.compose.runtime.LaunchedEffect
 
 @EntryPoint
 @InstallIn(SingletonComponent::class)
@@ -42,6 +45,13 @@ interface PermissionGateEntryPoint {
     fun bluetoothAdapterPort(): BluetoothAdapterPort
 }
 
+internal fun Context.findActivity(): Activity? =
+    when (this) {
+        is Activity -> this
+        is ContextWrapper -> baseContext.findActivity()
+        else -> null
+    }
+
 @Composable
 fun PermissionGateRoute(
     gateVisible: Boolean,
@@ -50,7 +60,7 @@ fun PermissionGateRoute(
     modifier: Modifier = Modifier,
 ) {
     val context = LocalContext.current
-    val activity = context as Activity
+    val activity = remember(context) { context.findActivity() }
     val entryPoint =
         remember {
             EntryPointAccessors.fromApplication(
@@ -61,7 +71,8 @@ fun PermissionGateRoute(
     val coordinator = remember { entryPoint.permissionFlowCoordinator() }
     val platformBridge = remember { entryPoint.meshPlatformSignalBridge() }
     val bluetoothEnabled = remember { { entryPoint.bluetoothAdapterPort().isEnabled() } }
-    var permanentDenials by remember { mutableStateOf(setOf<String>()) }
+    var permanentDenials by rememberSaveable { mutableStateOf(listOf<String>()) }
+    val permanentDenialSet = remember(permanentDenials) { permanentDenials.toSet() }
 
     fun buildUiState(): PermissionGateUiState {
         val sdkInt = android.os.Build.VERSION.SDK_INT
@@ -72,7 +83,7 @@ fun PermissionGateRoute(
                 missingRuntimePermissions = missing,
                 bluetoothEnabled = bluetoothEnabled(),
                 locationServicesEnabled = platformBridge.locationServicesAvailable(),
-                permanentlyDeniedPermissions = permanentDenials,
+                permanentlyDeniedPermissions = permanentDenialSet,
             )
         val matrix = BlePermissionMatrix.runtimePermissions(sdkInt).permissions.toList()
         val granted = matrix.filterNot { it in missing }.toSet()
@@ -117,9 +128,9 @@ fun PermissionGateRoute(
             val missing = coordinator.missingPermissions()
             missing.forEach { permission ->
                 if (results[permission] != true) {
-                    val canRetry = activity.shouldShowRequestPermissionRationale(permission)
+                    val canRetry = activity?.shouldShowRequestPermissionRationale(permission) ?: false
                     if (!canRetry) {
-                        permanentDenials = permanentDenials + permission
+                        permanentDenials = (permanentDenials + permission).distinct()
                     }
                 }
             }

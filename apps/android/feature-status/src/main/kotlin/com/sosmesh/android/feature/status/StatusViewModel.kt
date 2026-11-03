@@ -5,6 +5,7 @@ import androidx.lifecycle.viewModelScope
 import com.sosmesh.android.core.data.mesh.SosPeerDeliveryPort
 import com.sosmesh.contracts.transport.OutboxEntryMeta
 import com.sosmesh.contracts.transport.OutboxQueueAdapter
+import android.util.Log
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -33,12 +34,16 @@ class StatusViewModel
 
         fun refresh() {
             viewModelScope.launch {
-                peerDelivery.runPendingCycle(System.currentTimeMillis(), foregroundVisible = true)
-                _uiState.value =
-                    StatusUiState(
-                        entries = outbox.listAll().sortedByDescending { it.createdAtMs },
-                        offline = true,
-                    )
+                runCatching {
+                    peerDelivery.runPendingCycle(System.currentTimeMillis(), foregroundVisible = true)
+                    _uiState.value =
+                        StatusUiState(
+                            entries = outbox.listAll().sortedByDescending { it.createdAtMs },
+                            offline = true,
+                        )
+                }.onFailure { throwable ->
+                    Log.e("StatusViewModel", "status_refresh_failed", throwable)
+                }
             }
         }
     }

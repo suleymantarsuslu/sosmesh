@@ -8,7 +8,6 @@ import com.sosmesh.android.core.wear.companion.phone.PhoneWearSosIngress
 import com.sosmesh.android.core.wear.companion.protocol.WearCompanionPaths
 import dagger.hilt.android.AndroidEntryPoint
 import javax.inject.Inject
-import kotlinx.coroutines.launch
 
 @AndroidEntryPoint
 class PhoneWearCompanionListenerService : WearableListenerService() {
@@ -26,7 +25,7 @@ class PhoneWearCompanionListenerService : WearableListenerService() {
             return
         }
         val nowMs = System.currentTimeMillis()
-        outboxIoScope.launch {
+        outboxIoScope.launchOutboxWork {
             val result = ingress.handleCreatePayload(messageEvent.data, nowMs)
             ackSender.sendAck(messageEvent.sourceNodeId, ingress.buildAckBytes(result))
         }

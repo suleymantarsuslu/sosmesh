@@ -10,6 +10,7 @@ import com.sosmesh.android.feature.relay.session.RelaySessionController
 import com.sosmesh.android.feature.relay.settings.RelaySettingsStore
 import com.sosmesh.android.feature.relay.system.RelaySystemConstraints
 import com.sosmesh.android.feature.relay.ui.RelayUiState
+import android.util.Log
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -38,36 +39,40 @@ class RelayViewModel
 
         fun refresh(screenVisible: Boolean) {
             viewModelScope.launch {
-                val nowMs = System.currentTimeMillis()
-                val battery = batteryReader.read()
-                val enabled = settings.isRelayEnabled()
-                val session = sessionController.refresh(battery, screenVisible, nowMs)
-                val pending = outboxReader.countPendingRelayUpload(nowMs)
-                val english = Locale.getDefault().language.startsWith("en")
-                val constraints = systemConstraints.describe(english)
-                val eval =
-                    batteryPolicy.evaluate(
-                        battery,
-                        enabled,
-                        nowMs,
-                        nextUploadPayloadBytes = 0,
-                    )
-                _uiState.value =
-                    RelayUiState(
-                        relayEnabled = enabled,
-                        sessionRunning = session.running,
-                        pendingUploadCount = pending,
-                        batteryLevelPercent = battery.levelPercent,
-                        isCharging = battery.isCharging,
-                        estimatedBatteryImpactPercentPerHour =
-                            batteryPolicy.estimateHourlyBatteryImpactPercent(session.running),
-                        pauseReason = session.pauseReason ?: eval.pauseReason,
-                        batteryThresholdPercent = settings.batteryThresholdPercent(),
-                        hourlyDataLimitMb =
-                            (settings.hourlyDataLimitBytes() / (1024 * 1024)).toInt().coerceAtLeast(1),
-                        systemConstraintSummary = constraints.summary,
-                        systemConstraintDetail = constraints.detail,
-                    )
+                runCatching {
+                    val nowMs = System.currentTimeMillis()
+                    val battery = batteryReader.read()
+                    val enabled = settings.isRelayEnabled()
+                    val session = sessionController.refresh(battery, screenVisible, nowMs)
+                    val pending = outboxReader.countPendingRelayUpload(nowMs)
+                    val english = Locale.getDefault().language.startsWith("en")
+                    val constraints = systemConstraints.describe(english)
+                    val eval =
+                        batteryPolicy.evaluate(
+                            battery,
+                            enabled,
+                            nowMs,
+                            nextUploadPayloadBytes = 0,
+                        )
+                    _uiState.value =
+                        RelayUiState(
+                            relayEnabled = enabled,
+                            sessionRunning = session.running,
+                            pendingUploadCount = pending,
+                            batteryLevelPercent = battery.levelPercent,
+                            isCharging = battery.isCharging,
+                            estimatedBatteryImpactPercentPerHour =
+                                batteryPolicy.estimateHourlyBatteryImpactPercent(session.running),
+                            pauseReason = session.pauseReason ?: eval.pauseReason,
+                            batteryThresholdPercent = settings.batteryThresholdPercent(),
+                            hourlyDataLimitMb =
+                                (settings.hourlyDataLimitBytes() / (1024 * 1024)).toInt().coerceAtLeast(1),
+                            systemConstraintSummary = constraints.summary,
+                            systemConstraintDetail = constraints.detail,
+                        )
+                }.onFailure { throwable ->
+                    Log.e("RelayViewModel", "relay_refresh_failed", throwable)
+                }
             }
         }
 

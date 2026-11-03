@@ -12,6 +12,7 @@ import com.sosmesh.android.core.data.sos.SosDraftValidation
 import com.sosmesh.android.core.data.sos.SosDraftValidator
 import com.sosmesh.android.core.model.SosType
 import com.sosmesh.android.feature.sos.location.SosLocationProvider
+import android.util.Log
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -123,7 +124,10 @@ class SosFormViewModel
         fun confirmAndSave(nowMs: Long = System.currentTimeMillis()) {
             if (!revalidate()) return
             viewModelScope.launch {
-                performSaveAfterPreview(nowMs)
+                runCatching { performSaveAfterPreview(nowMs) }
+                    .onFailure { throwable ->
+                        Log.e("SosFormViewModel", "sos_save_failed", throwable)
+                    }
             }
         }
 
@@ -144,10 +148,14 @@ class SosFormViewModel
                     ),
                 )
             val delivery =
-                if (bleMeshReadiness.canRunBleMeshFeatures()) {
-                    peerDelivery.kickOffAfterLocalSave(nowMs, foregroundVisible = true)
-                } else {
-                    SosPeerDeliveryKickResult.PermissionsMissing(permissionFlowCoordinator.missingPermissions())
+                runCatching {
+                    if (bleMeshReadiness.canRunBleMeshFeatures()) {
+                        peerDelivery.kickOffAfterLocalSave(nowMs, foregroundVisible = true)
+                    } else {
+                        SosPeerDeliveryKickResult.PermissionsMissing(permissionFlowCoordinator.missingPermissions())
+                    }
+                }.getOrElse { error ->
+                    SosPeerDeliveryKickResult.Blocked(error.message ?: "peer_kickoff_failed")
                 }
             _uiState.update {
                 it.copy(

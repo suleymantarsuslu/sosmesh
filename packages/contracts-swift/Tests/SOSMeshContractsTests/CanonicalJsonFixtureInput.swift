@@ -13,8 +13,10 @@ enum CanonicalJsonFixtureInput {
                     utf16.append(unichar(truncatingIfNeeded: unit.intValue))
                 }
                 return utf16.withUnsafeBufferPointer { buffer in
-                    guard let base = buffer.baseAddress else { return "" }
-                    return NSString(characters: base, length: buffer.count) as String
+                    guard let base = buffer.baseAddress else {
+                        return NSString()
+                    }
+                    return NSString(characters: base, length: buffer.count)
                 }
             }
             var out = [String: Any]()

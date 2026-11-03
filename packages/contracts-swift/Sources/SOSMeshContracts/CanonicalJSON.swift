@@ -4,6 +4,11 @@ import Foundation
 ///
 /// SOSMesh envelope objects use string keys only (never integer-like keys such as `"1"` or `"10"`);
 /// JavaScript would enumerate those in numeric order, which we intentionally do not support.
+///
+/// Native Swift `String` cannot represent unpaired UTF-16 surrogates (they become U+FFFD). Production
+/// SOSMesh AAD uses only JSON-parsed envelope fields, which never contain lone surrogates. The
+/// `canonical-json-001` lone-surrogate vector is covered by passing `NSString` built from UTF-16 code
+/// units; `encode` reads those code units without bridging to Swift `String`.
 enum CanonicalJSON {
     static func encode(_ obj: Any) throws -> String {
         try toCanonicalJSON(obj)
@@ -42,13 +47,41 @@ enum CanonicalJSON {
         a.utf16.lexicographicallyPrecedes(b.utf16)
     }
 
+    private static func utf16SortKeys(_ a: Any, _ b: Any) -> Bool {
+        utf16CodeUnits(of: a).lexicographicallyPrecedes(utf16CodeUnits(of: b))
+    }
+
+    private static func utf16CodeUnits(of key: Any) -> [UTF16.CodeUnit] {
+        if let ns = key as? NSString {
+            return nsUtf16CodeUnits(ns)
+        }
+        if let string = key as? String {
+            return Array(string.utf16)
+        }
+        return []
+    }
+
+    private static func nsUtf16CodeUnits(_ ns: NSString) -> [UTF16.CodeUnit] {
+        let length = ns.length
+        var units = [UTF16.CodeUnit]()
+        units.reserveCapacity(length)
+        for index in 0 ..< length {
+            units.append(UTF16.CodeUnit(ns.character(at: index)))
+        }
+        return units
+    }
+
     /// JSON fragment encoder (order matters: `NSNumber` before `Bool` so 0/1 are never booleans).
     private static func toCanonicalJSON(_ obj: Any) throws -> String {
         if obj is NSNull {
             return "null"
         }
+        if obj is NSString {
+            let ns = obj as! NSString
+            return "\"\(escapeJSONString(ns))\""
+        }
         if let string = obj as? String {
-            return "\"\(escapeJSONString(string))\""
+            return "\"\(escapeJSONString(string as NSString))\""
         }
         if let number = obj as? NSNumber {
             if CFGetTypeID(number) == CFBooleanGetTypeID() {
@@ -62,7 +95,16 @@ enum CanonicalJSON {
         if let dict = obj as? [String: Any] {
             let parts = try dict.keys.sorted(by: utf16Sort).map { key in
                 let encoded = try toCanonicalJSON(dict[key]!)
-                return "\"\(escapeJSONString(key))\":\(encoded)"
+                return "\"\(escapeJSONString(key as NSString))\":\(encoded)"
+            }
+            return "{\(parts.joined(separator: ","))}"
+        }
+        if let dict = obj as? [AnyHashable: Any] {
+            let entries = dict.map { (key: $0.key, value: $0.value) }
+            let sorted = entries.sorted { utf16SortKeys($0.key, $1.key) }
+            let parts = try sorted.map { entry in
+                let encoded = try toCanonicalJSON(entry.value)
+                return "\"\(escapeJSONString(jsonObjectKeyAsNSString(entry.key)))\":\(encoded)"
             }
             return "{\(parts.joined(separator: ","))}"
         }
@@ -82,18 +124,27 @@ enum CanonicalJSON {
         throw CryptoError.invalidInput("Unsupported JSON type for canonical encoding")
     }
 
+    private static func jsonObjectKeyAsNSString(_ key: AnyHashable) -> NSString {
+        if let ns = key.base as? NSString {
+            return ns
+        }
+        if let string = key.base as? String {
+            return string as NSString
+        }
+        return String(describing: key.base) as NSString
+    }
+
     /// `JSON.stringify` string escaping (UTF-16 code units via NSString; lone surrogates as `\uXXXX`).
-    private static func escapeJSONString(_ value: String) -> String {
-        let ns = value as NSString
-        let length = ns.length
+    private static func escapeJSONString(_ value: NSString) -> String {
+        let length = value.length
         var out = ""
-        out.reserveCapacity(value.count + 8)
+        out.reserveCapacity(value.length + 8)
         var index = 0
         while index < length {
-            let unit = ns.character(at: index)
-            if isHighSurrogate(unit), index + 1 < length {
-                let nextUnit = ns.character(at: index + 1)
-                if isLowSurrogate(nextUnit) {
+            let unit = value.character(at: index)
+            if isHighSurrogate(UTF16.CodeUnit(unit)), index + 1 < length {
+                let nextUnit = value.character(at: index + 1)
+                if isLowSurrogate(UTF16.CodeUnit(nextUnit)) {
                     var pair: [unichar] = [unit, nextUnit]
                     out.append(String(utf16CodeUnits: pair, count: 2))
                     index += 2

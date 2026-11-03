@@ -4,7 +4,7 @@ import Foundation
 
 final class CanonicalJSONVectorTests: XCTestCase {
     private func parseFixtureInput(_ value: Any) throws -> Any {
-        if value is NSNull || value is String || value is Bool || value is NSNumber {
+        if value is NSNull || value is NSString || value is String || value is Bool || value is NSNumber {
             return value
         }
         if value is Int || value is Int64 || value is Double {

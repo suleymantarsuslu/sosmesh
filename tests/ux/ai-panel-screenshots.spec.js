@@ -4,7 +4,6 @@
  */
 
 const { test, expect } = require('@playwright/test');
-const path = require('node:path');
 
 const e2ePassKey = ['OPERATOR', 'E2E', 'PASSWORD'].join('_');
 const E2E_EMAIL = 'e2e-operator@sosmesh.example';

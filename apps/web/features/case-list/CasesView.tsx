@@ -1,7 +1,7 @@
 'use client';
 
 import Link from 'next/link';
-import { useCallback, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
 import { CaseDetailPanel } from './CaseDetailPanel';
 import { CaseDrawer } from './CaseDrawer';
@@ -12,7 +12,7 @@ import { applyCaseFilters, defaultCaseFilters } from './filter-cases';
 import { hasPlottableCoordinates, isUnknownLocationQueue } from './geo';
 import type { FeedEvent, OperatorCaseRow } from './types';
 import { UnknownLocationQueue } from './UnknownLocationQueue';
-import { useLiveFeed } from './useLiveFeed';
+import { useLiveFeedContext } from '../../components/operator/LiveFeedProvider';
 import { useOperatorPreferences } from '../../components/operator/OperatorPreferencesProvider';
 import { OperatorMap, type OperatorMapHandle } from '../map/OperatorMap';
 import { AssignmentPreviewPanel } from '../assignment/AssignmentPreviewPanel';
@@ -46,6 +46,7 @@ function feedEventToCase(event: FeedEvent, existing?: OperatorCaseRow): Operator
 
 export function CasesView({ initialCases }: { initialCases: OperatorCaseRow[] }) {
   const { activeIncidentId, t } = useOperatorPreferences();
+  const feed = useLiveFeedContext();
   const [cases, setCases] = useState<OperatorCaseRow[]>(initialCases);
   const [filters, setFilters] = useState(defaultCaseFilters());
   const [selectedId, setSelectedId] = useState<string | null>(null);
@@ -82,19 +83,17 @@ export function CasesView({ initialCases }: { initialCases: OperatorCaseRow[] })
     setCases(body.items);
   }, [filters]);
 
-  const onFeedEvent = useCallback(
-    (event: FeedEvent) => {
+  useEffect(() => {
+    const unsubscribe = feed.subscribe((event: FeedEvent) => {
       setCases((prev) => {
         const existing = prev.find((row) => row.incidentId === event.incidentId);
         const nextRow = feedEventToCase(event, existing);
         const without = prev.filter((row) => row.incidentId !== event.incidentId);
         return [nextRow, ...without];
       });
-    },
-    []
-  );
-
-  const feed = useLiveFeed(onFeedEvent);
+    });
+    return unsubscribe;
+  }, [feed]);
 
   const filtered = useMemo(() => {
     const base = applyCaseFilters(cases, filters);
@@ -141,8 +140,9 @@ export function CasesView({ initialCases }: { initialCases: OperatorCaseRow[] })
       <div className="cases-view__filters-bar">
         <div className="cases-view__live-badge" role="status" data-testid="live-feed-status">
           <span className={`cases-view__live-indicator ${feed.connected ? 'cases-view__live-indicator--connected' : ''}`} aria-hidden="true" />
-          {feed.connected ? t('web.cases.liveConnected') : t('web.cases.liveFallback')}
-          {feed.stale ? ` — ${t('web.cases.liveStale')}` : ''}
+          {feed.connected && !feed.stale && t('web.cases.liveStatusConnected')}
+          {feed.connected && feed.stale && t('web.cases.liveStatusStale')}
+          {!feed.connected && t('web.cases.liveStatusDisconnected')}
         </div>
         <CaseFilters filters={filters} onChange={setFilters} />
         <button type="button" className="cases-view__refresh-button" onClick={() => refreshCases()} aria-label={t('web.cases.refreshList')}>

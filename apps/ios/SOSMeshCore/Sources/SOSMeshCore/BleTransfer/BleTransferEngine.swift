@@ -32,6 +32,7 @@ public final class SosPeerDeliveryTracker {
     public var active: ActiveTransfer?
     private let outbox: OutboxQueueUpdating
     private let nowMs: () -> Int64
+    private var senderListenerRetention: TrackerListener?
 
     public init(outbox: OutboxQueueUpdating, nowMs: @escaping () -> Int64 = { Int64(Date().timeIntervalSince1970 * 1000) }) {
         self.outbox = outbox
@@ -39,7 +40,9 @@ public final class SosPeerDeliveryTracker {
     }
 
     public func attachSenderListener(_ sender: BleTransferSender) {
-        sender.setListener(TrackerListener(tracker: self))
+        let listener = TrackerListener(tracker: self)
+        senderListenerRetention = listener
+        sender.setListener(listener)
     }
 
     private final class TrackerListener: BleTransferSender.Listener {

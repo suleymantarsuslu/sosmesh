@@ -56,16 +56,15 @@ final class BleTransferGateTests: XCTestCase {
         let tracker = SosPeerDeliveryTracker(outbox: outbox)
         tracker.active = SosPeerDeliveryTracker.ActiveTransfer(sosId: "sos-gate", digest: "digest-gate")
         tracker.attachSenderListener(sender)
-        var senderCompleted = false
-        receiver.setListener(QuietReceiverListener())
-        sender.setListener(CompletionCapture { senderCompleted = true })
+        let receiverListener = QuietReceiverListener()
+        receiver.setListener(receiverListener)
         sender.startTransfer(Data(repeating: UInt8(ascii: "X"), count: 320))
         for _ in 0 ..< 2_000 {
-            if receiver.getState() == .failed || senderCompleted { break }
+            if receiver.getState() == .failed || sender.getState() == .completed { break }
             clock.advance(10)
         }
         XCTAssertEqual(receiver.getState(), BleTransferState.failed)
-        XCTAssertFalse(senderCompleted)
+        XCTAssertNotEqual(sender.getState(), .completed)
         let entries = try outbox.listEntries()
         XCTAssertEqual(entries.count, 0)
         XCTAssertTrue(outbound.nacks.contains(where: { $0.reason == .digestInvalid }))
@@ -105,16 +104,14 @@ final class BleTransferGateTests: XCTestCase {
         tracker.active = SosPeerDeliveryTracker.ActiveTransfer(sosId: "s1", digest: "d1")
         tracker.attachSenderListener(sender)
         var received: Data?
-        receiver.setListener(PayloadCapture { received = $0 })
-        var senderDone = false
-        sender.setListener(CompletionCapture { senderDone = true })
+        let receiverListener = PayloadCapture { received = $0 }
+        receiver.setListener(receiverListener)
         sender.startTransfer(Data("PAYLOAD".utf8))
         for _ in 0 ..< 5_000 {
-            channel.drain()
-            if senderDone, received != nil { break }
+            if sender.getState() == .completed, received != nil { break }
             clock.advance(5)
         }
-        XCTAssertTrue(senderDone)
+        XCTAssertEqual(sender.getState(), .completed)
         XCTAssertEqual(received, Data("PAYLOAD".utf8))
         let entry = try XCTUnwrap(try outbox.listEntries().first)
         XCTAssertEqual(entry.state, "PEER_RECEIVED")
@@ -186,8 +183,13 @@ final class BleTransferGateTests: XCTestCase {
         guard BleChunkFlags.lastChunk.has(flags: chunk.header.flags), chunk.payload.count >= 32 else { return wire }
         var mutated = chunk.payload
         mutated[mutated.count - 1] ^= 0xFF
-        let corrupted = BleTransferChunk(header: chunk.header, payload: mutated)
-        return BleChunkCodec.serializeChunk(corrupted)
+        let header = BleTransferChunkHeader(
+            seq: chunk.header.seq,
+            total: chunk.header.total,
+            crc32: BleChunkCodec.calculateCrc32(mutated),
+            flags: chunk.header.flags
+        )
+        return BleChunkCodec.serializeChunk(BleTransferChunk(header: header, payload: mutated))
     }
 
     private final class BridgeWriter: GattOutboundWriting {

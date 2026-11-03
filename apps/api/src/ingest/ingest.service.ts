@@ -162,6 +162,7 @@ export class IngestService {
           longitude: geo.longitude,
           accuracyMeters: geo.accuracyMeters,
           priority,
+          encryptedNoteBlob: encryptedPayload || null,
           encryptedPayloadRef: payloadRef,
           packetHash,
           serverReceiptAt: receiptAt,
@@ -205,8 +206,8 @@ export class IngestService {
         needsHumanReview,
       });
       
-      // Enqueue AI job (never delay receipt or throw error)
-      if (process.env.AI_ENABLED !== 'false') {
+      // Enqueue AI job AFTER transaction commits (never delay receipt)
+      if (process.env.AI_ENABLED === 'true') {
         void this.aiJobQueue.enqueue({
           kind: 'triage',
           incidentId,

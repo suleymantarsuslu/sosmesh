@@ -171,6 +171,7 @@ export class OperatorCasesService {
         receivedAt: true,
         personCount: true,
         operatorDisplayText: true,
+        noteText: true,
         incident: { select: { state: true, version: true, reviewStatus: true } },
         messageEvents: {
           select: {
@@ -238,7 +239,7 @@ export class OperatorCasesService {
       ...base,
       version: message.incident.version,
       reviewStatus: message.incident.reviewStatus,
-      originalText: message.operatorDisplayText,
+      originalText: message.noteText ?? message.operatorDisplayText,
       verifiedMetadata: {
         personCount: message.personCount,
         locationStatus: message.locationStatus,

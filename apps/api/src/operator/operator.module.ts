@@ -12,7 +12,9 @@ import { OperatorCasesService } from './operator-cases.service';
 import { OperatorCaseActionsService } from './operator-case-actions.service';
 import { OperatorAiController, OperatorCaseAiController } from './operator-ai.controller';
 import { OperatorAiService } from './operator-ai.service';
-import { DemoSosController } from './demo-sos.controller';
+import { OperatorDemoController } from './operator-demo.controller';
+import { OperatorDemoService } from './operator-demo.service';
+import { LocalDiskStorageService } from '../media/local-disk-storage.service';
 
 @Module({
   imports: [OrganizationModule, AiModule],
@@ -21,7 +23,7 @@ import { DemoSosController } from './demo-sos.controller';
     OperatorPanelController,
     OperatorAiController,
     OperatorCaseAiController,
-    DemoSosController,
+    OperatorDemoController,
   ],
   providers: [
     OperatorAuthGuard,
@@ -31,6 +33,8 @@ import { DemoSosController } from './demo-sos.controller';
     OperatorCasesService,
     OperatorCaseActionsService,
     OperatorAiService,
+    OperatorDemoService,
+    LocalDiskStorageService,
   ],
   exports: [
     OrganizationModule,

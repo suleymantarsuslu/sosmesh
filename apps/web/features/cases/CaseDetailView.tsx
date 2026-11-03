@@ -5,6 +5,7 @@ import { useState } from 'react';
 import { DeliveryStateBadge } from '../../components/cases/DeliveryStateBadge';
 import { useOperatorPreferences } from '../../components/operator/OperatorPreferencesProvider';
 import { AiIntelligencePanel } from '../ai/AiIntelligencePanel';
+import { TranslatedMessageDisplay } from './TranslatedMessageDisplay';
 import type {
   AiTriageView,
   TranscriptView,
@@ -113,9 +114,18 @@ export function CaseDetailView({ detail, aiData, onRefresh }: Props) {
 
       <section aria-labelledby="case-original-title">
         <h2 id="case-original-title">{t('web.cases.originalTitle')}</h2>
-        <p className="case-detail__original" data-testid="case-original-text">
-          {detail.originalText ?? t('web.cases.originalMissing')}
-        </p>
+        {detail.originalText ? (
+          <TranslatedMessageDisplay
+            originalText={detail.originalText}
+            translatedText={detail.translatedText}
+            detectedLanguage={detail.detectedLanguage}
+            aiAvailable={aiData !== null}
+          />
+        ) : (
+          <p className="case-detail__original" data-testid="case-original-missing">
+            {t('web.cases.originalMissing')}
+          </p>
+        )}
       </section>
 
       <section aria-labelledby="case-meta-title">

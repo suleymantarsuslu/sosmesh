@@ -22,6 +22,8 @@ export type OperatorCaseDetail = OperatorCaseRow & {
   version: number;
   reviewStatus: string;
   originalText: string | null;
+  translatedText: string | null;
+  detectedLanguage: string | null;
   verifiedMetadata: {
     personCount: number | null;
     locationStatus: string;

@@ -10,8 +10,10 @@ import { createHash } from 'node:crypto';
 import sharp, { type Sharp, type Metadata } from 'sharp';
 import ExifReader from 'exifreader';
 
-// ONLINE (direct internet upload): 15 MB
-const MEDIA_ONLINE_MAX_IMAGE_BYTES = Number(process.env.MEDIA_ONLINE_MAX_IMAGE_BYTES ?? 15_728_640);
+// ONLINE (direct internet upload): 15 MB (matches voice PR #80)
+const MEDIA_ONLINE_MAX_IMAGE_BYTES = Number(
+  process.env.MEDIA_ONLINE_MAX_IMAGE_BYTES ?? 15_728_640
+);
 // MESH (BLE relay): 16 KB (from mesh-payload-limits.ts)
 const MAX_MESH_OPAQUE_CIPHERTEXT_BYTES = 16_384;
 

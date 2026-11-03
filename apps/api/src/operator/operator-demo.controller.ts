@@ -49,6 +49,10 @@ export class OperatorDemoController {
       throw new BadRequestException('text is required');
     }
 
+    if (text.length > 2000) {
+      throw new BadRequestException('text exceeds 2000 characters');
+    }
+
     const priority = body.priority ? parseInt(body.priority, 10) : 3;
     if (priority < 1 || priority > 5) {
       throw new BadRequestException('priority must be 1-5');
@@ -66,9 +70,6 @@ export class OperatorDemoController {
     if (photo && photo.size > MAX_PHOTO_SIZE) {
       throw new BadRequestException(`Photo file exceeds ${MAX_PHOTO_SIZE / 1024 / 1024} MB`);
     }
-
-    // TODO: Validate audio duration (requires ffprobe or similar)
-    // For now, we trust the size limit as a proxy
 
     const result = await this.demoService.createSyntheticSos({
       text,

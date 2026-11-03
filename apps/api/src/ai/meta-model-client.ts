@@ -579,7 +579,11 @@ export class MetaModelClient {
         this.circuit.recordFailure();
       } catch (error) {
         this.circuit.recordFailure();
-        this.logger.error({ err: error, msg: 'Meta API call failed' });
+        this.logger.error({
+          errorCode: error instanceof Error ? error.constructor.name : 'API_CALL_FAILED',
+          errorName: error instanceof Error ? error.name : 'unknown',
+          msg: 'Meta API call failed',
+        });
       }
     }
 

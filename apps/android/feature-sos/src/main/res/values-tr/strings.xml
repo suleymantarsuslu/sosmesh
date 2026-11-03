@@ -37,4 +37,8 @@
     <string name="sos_location_aging">Konum eskiyor</string>
     <string name="sos_location_stale">Konum eski — manuel seçin</string>
     <string name="sos_secondary_continue_hint">Ayrıntıları doldurduktan sonra devam edin</string>
+    <string name="sos_peer_delivery_started">Yakındaki SOSMesh cihazına BLE ile aktarım başlatıldı. Durum ekranından ilerlemeyi izleyin.</string>
+    <string name="sos_peer_delivery_waiting">Yakındaki cihaz veya GATT oturumu bekleniyor; izinler açıkken tekrar denenecek.</string>
+    <string name="sos_peer_delivery_permissions">Bluetooth izinleri gerekli. Ayarlar → İzinler bölümünden verin; sunucu/operatör okundu anlamına gelmez.</string>
+    <string name="sos_peer_delivery_blocked">Şu an aktarılamadı; outbox otomatik yeniden dener.</string>
 </resources>

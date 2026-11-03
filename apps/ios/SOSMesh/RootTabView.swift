@@ -6,7 +6,15 @@ struct RootTabView: View {
 
     var body: some View {
         Group {
-            if storedDisclaimer || appModel.acceptedDisclaimer {
+            if !(storedDisclaimer || appModel.acceptedDisclaimer) {
+                OnboardingDisclaimerView(onAccept: {
+                    storedDisclaimer = true
+                    appModel.acceptedDisclaimer = true
+                    Task { await appModel.refreshPermissionGate() }
+                })
+            } else if !appModel.permissionGateCleared {
+                PermissionGateView()
+            } else {
                 TabView {
                     HomeView()
                         .tabItem { Label("nav.home", systemImage: "house") }
@@ -17,11 +25,6 @@ struct RootTabView: View {
                     SettingsView()
                         .tabItem { Label("nav.settings", systemImage: "gearshape") }
                 }
-            } else {
-                OnboardingDisclaimerView(onAccept: {
-                    storedDisclaimer = true
-                    appModel.acceptedDisclaimer = true
-                })
             }
         }
         .onAppear {

@@ -1,9 +1,9 @@
 import SwiftUI
 import WidgetKit
 
-/// Timeline copy must stay aligned with `WatchCapabilityMatrix.phoneNotReachableCopy(language: "tr")`.
+/// Timeline copy must stay aligned with `WatchCapabilityMatrix.phoneNotReachableCopy(language: ...)`.
 private enum WatchComplicationCopy {
-    static let unreachableHeadline = "Telefona ulaşılamıyor"
+    static let unreachableHeadline = String(localized: "watch.complication.headline.unreachable")
 }
 
 struct SOSMeshComplicationEntry: TimelineEntry {
@@ -14,7 +14,11 @@ struct SOSMeshComplicationEntry: TimelineEntry {
 
 struct SOSMeshComplicationProvider: TimelineProvider {
     func placeholder(in context: Context) -> SOSMeshComplicationEntry {
-        SOSMeshComplicationEntry(date: Date(), headline: "SOS", detail: "Onay gerekli")
+        SOSMeshComplicationEntry(
+            date: Date(),
+            headline: String(localized: "watch.complication.headline.default"),
+            detail: String(localized: "watch.complication.detail.default")
+        )
     }
 
     func getSnapshot(in context: Context, completion: @escaping (SOSMeshComplicationEntry) -> Void) {
@@ -53,7 +57,7 @@ struct SOSMeshComplicationWidget: Widget {
             SOSMeshComplicationView(entry: entry)
         }
         .configurationDisplayName("SOSMesh SOS")
-        .description("Hızlı SOS kısayolu; iki adımlı onay uygulamada.")
+        .description(String(localized: "watch.complication.description"))
         .supportedFamilies([.accessoryCircular, .accessoryRectangular])
     }
 }

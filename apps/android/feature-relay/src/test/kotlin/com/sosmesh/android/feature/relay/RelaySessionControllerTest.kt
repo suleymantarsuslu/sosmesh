@@ -4,14 +4,21 @@ import androidx.test.core.app.ApplicationProvider
 import com.sosmesh.android.core.ble.BleMeshRadio
 import com.sosmesh.android.core.ble.BleRadioStatus
 import com.sosmesh.android.core.ble.GattUiConnectionState
+import com.sosmesh.android.core.protocol.BleTransferEnginePort
+import com.sosmesh.android.core.protocol.TransferState
 import com.sosmesh.android.feature.relay.battery.RelayBatteryPolicy
 import com.sosmesh.android.feature.relay.battery.RelayBatterySnapshot
 import com.sosmesh.android.feature.relay.battery.RelayPauseReason
+import com.sosmesh.android.feature.relay.mesh.MeshRelayForwardOrchestrator
 import com.sosmesh.android.feature.relay.session.RelayForegroundLauncher
 import com.sosmesh.android.feature.relay.session.RelaySessionController
 import com.sosmesh.android.feature.relay.settings.RelayHourlyDataBudget
 import com.sosmesh.android.feature.relay.settings.RelaySettingsStore
 import com.sosmesh.android.feature.relay.upload.RelayUploadCommands
+import com.sosmesh.android.meshv2.MeshForwardQueue
+import com.sosmesh.android.meshv2.MeshRouteSelector
+import com.sosmesh.android.meshv2.MeshV2RelayCoordinator
+import kotlinx.coroutines.runBlocking
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
@@ -45,6 +52,19 @@ class RelaySessionControllerTest {
         val budget = RelayHourlyDataBudget(context)
         budget.resetForTests()
         val policy = RelayBatteryPolicy(settings, budget)
+        val meshForward =
+            MeshRelayForwardOrchestrator(
+                meshV2RelayCoordinator =
+                    MeshV2RelayCoordinator(
+                        forwardQueue = MeshForwardQueue(maxDepth = 4),
+                        routeSelector = MeshRouteSelector(),
+                    ),
+                engine = NoOpTransferEngine(),
+                radio = radio,
+                permissions = testGrantAllPermissionCoordinator(),
+                bleMeshReadiness = testGrantAllBleMeshReadiness(),
+                ioDispatcher = testIoDispatcher(),
+            )
         controller =
             RelaySessionController(
                 settings,
@@ -52,37 +72,42 @@ class RelaySessionControllerTest {
                 radio,
                 foreground,
                 upload,
+                meshForward,
+                testIoDispatcher(),
             )
     }
 
     @Test
-    fun toggleOff_doesNotStartScanOrUpload() {
-        settings.setRelayEnabled(false)
-        controller.refresh(RelayBatterySnapshot(80, false), screenVisible = true, nowMs = 100L)
-        assertEquals(0, radio.startCount)
-        assertEquals(0, upload.scheduleCount)
-        assertEquals(0, foreground.startCount)
-    }
+    fun toggleOff_doesNotStartScanOrUpload() =
+        runBlocking {
+            settings.setRelayEnabled(false)
+            controller.refresh(RelayBatterySnapshot(80, false), screenVisible = true, nowMs = 100L)
+            assertEquals(0, radio.startCount)
+            assertEquals(0, upload.scheduleCount)
+            assertEquals(0, foreground.startCount)
+        }
 
     @Test
-    fun toggleOn_startsForegroundScanAndUploadSchedule() {
-        settings.setRelayEnabled(true)
-        val status = controller.refresh(RelayBatterySnapshot(80, false), screenVisible = true, nowMs = 100L)
-        assertTrue(status.running)
-        assertEquals(1, radio.startCount)
-        assertEquals(1, upload.scheduleCount)
-        assertEquals(1, foreground.startCount)
-    }
+    fun toggleOn_startsForegroundScanAndUploadSchedule() =
+        runBlocking {
+            settings.setRelayEnabled(true)
+            val status = controller.refresh(RelayBatterySnapshot(80, false), screenVisible = true, nowMs = 100L)
+            assertTrue(status.running)
+            assertEquals(1, radio.startCount)
+            assertEquals(1, upload.scheduleCount)
+            assertEquals(1, foreground.startCount)
+        }
 
     @Test
-    fun batteryLow_stopsSessionAndShowsReason() {
-        settings.setRelayEnabled(true)
-        controller.refresh(RelayBatterySnapshot(80, false), screenVisible = true, nowMs = 100L)
-        val status = controller.refresh(RelayBatterySnapshot(5, false), screenVisible = true, nowMs = 200L)
-        assertFalse(status.running)
-        assertEquals(RelayPauseReason.BatteryBelowThreshold, status.pauseReason)
-        assertTrue(radio.stopCount >= 1)
-    }
+    fun batteryLow_stopsSessionAndShowsReason() =
+        runBlocking {
+            settings.setRelayEnabled(true)
+            controller.refresh(RelayBatterySnapshot(80, false), screenVisible = true, nowMs = 100L)
+            val status = controller.refresh(RelayBatterySnapshot(5, false), screenVisible = true, nowMs = 200L)
+            assertFalse(status.running)
+            assertEquals(RelayPauseReason.BatteryBelowThreshold, status.pauseReason)
+            assertTrue(radio.stopCount >= 1)
+        }
 
     private class TrackingBleMeshRadio : BleMeshRadio {
         var startCount = 0
@@ -112,6 +137,22 @@ class RelaySessionControllerTest {
         override fun connectFirstDiscoveredPeer(): Result<Unit> = Result.success(Unit)
 
         override fun disconnectPeerSession() = Unit
+
+        override fun tickGattReconnect(): Result<Unit>? = null
+    }
+
+    private class NoOpTransferEngine : BleTransferEnginePort {
+        override fun sendOutbound(
+            sosId: String,
+            digest: String,
+            payload: ByteArray,
+        ) = Unit
+
+        override fun sendOpaqueForward(payload: ByteArray) = Unit
+
+        override fun onGattReady() = Unit
+
+        override fun senderState(): TransferState = TransferState.IDLE
     }
 
     private class RecordingUploadCommands : RelayUploadCommands {

@@ -8,7 +8,7 @@ import { PrismaService } from '../prisma/prisma.service';
 import { MetaModelClient } from '../ai/meta-model-client';
 import { BudgetGuardService } from '../ai/budget-guard.service';
 import { AiJobQueueService } from '../ai/ai-job-queue.service';
-import type { AiStatusView, CircuitState } from '../ai/contracts/ai-status-view';
+import type { AiStatusView } from '../ai/contracts/ai-status-view';
 import type { AiTriageView, UrgencySuggestion } from '../ai/contracts/ai-triage-view';
 
 @Injectable()
@@ -21,7 +21,7 @@ export class OperatorAiService {
   ) {}
 
   async getStatus(): Promise<AiStatusView> {
-    const enabled = process.env.AI_ENABLED !== 'false';
+    const enabled = process.env.AI_ENABLED === 'true';
     const hasApiKey = !!process.env.MODEL_API_KEY;
 
     if (!enabled || !hasApiKey) {

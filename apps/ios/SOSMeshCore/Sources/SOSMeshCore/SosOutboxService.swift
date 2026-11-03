@@ -1,7 +1,7 @@
 import Foundation
 import SOSMeshContracts
 
-public struct SosOutboxService: Sendable {
+public final class SosOutboxService: OutboxQueueUpdating, @unchecked Sendable {
     private let queue: DiskOutboxQueue
     private let stateMachine: DeliveryStateMachine
 
@@ -21,6 +21,35 @@ public struct SosOutboxService: Sendable {
 
     public func listEntries() throws -> [OutboxEntryMeta] {
         try queue.listAll()
+    }
+
+    public func updateState(
+        sosId: String,
+        digest: String,
+        state: String,
+        nowMs: Int64,
+        lastError: String?
+    ) throws -> OutboxEntryMeta? {
+        guard let existing = try queue.getByKey(sosId: sosId, digest: digest) else {
+            return nil
+        }
+        _ = try stateMachine.transition(from: existing.state, to: state)
+        return try queue.updateState(
+            sosId: sosId,
+            digest: digest,
+            state: state,
+            nowMs: nowMs,
+            lastError: lastError
+        )
+    }
+
+    public func setRetryAt(
+        sosId: String,
+        digest: String,
+        retryAtMs: Int64,
+        lastError: String?
+    ) throws {
+        try queue.setRetryAt(sosId: sosId, digest: digest, retryAtMs: retryAtMs, lastError: lastError)
     }
 
     @discardableResult

@@ -11,6 +11,7 @@ import { TriageV2Service } from './triage-v2.service';
 import { SosPlaintextSource, SOS_PLAINTEXT_SOURCE } from './sos-plaintext-source';
 import { PrismaService } from '../prisma/prisma.service';
 import { Inject } from '@nestjs/common';
+import { VoiceTranscriptionService } from './voice/voice-transcription.service';
 
 @Injectable()
 export class AiJobRunnerService {
@@ -21,7 +22,8 @@ export class AiJobRunnerService {
     private readonly queue: AiJobQueueService,
     private readonly triage: TriageV2Service,
     private readonly prisma: PrismaService,
-    @Inject(SOS_PLAINTEXT_SOURCE) private readonly plaintextSource: SosPlaintextSource
+    @Inject(SOS_PLAINTEXT_SOURCE) private readonly plaintextSource: SosPlaintextSource,
+    private readonly voiceTranscription: VoiceTranscriptionService
   ) {}
 
   /**
@@ -49,7 +51,11 @@ export class AiJobRunnerService {
 
         await this.processJob(job);
       } catch (error) {
-        this.logger.error({ err: error, msg: 'Job runner error' });
+        this.logger.error({
+          errorCode: error instanceof Error ? error.constructor.name : 'RUNNER_ERROR',
+          errorName: error instanceof Error ? error.name : 'unknown',
+          msg: 'Job runner error',
+        });
         await this.sleep(10000);
       }
     }
@@ -72,8 +78,7 @@ export class AiJobRunnerService {
           await this.processTriage(job);
           break;
         case 'transcribe':
-          this.logger.warn({ msg: 'Transcribe not implemented yet', jobId: job.id });
-          await this.queue.complete(job.id);
+          await this.processTranscribe(job);
           break;
         case 'vision':
           this.logger.warn({ msg: 'Vision not implemented yet', jobId: job.id });
@@ -87,9 +92,14 @@ export class AiJobRunnerService {
           await this.queue.fail(job.id, `Unknown job kind: ${job.kind}`);
       }
     } catch (error) {
-      const errorMessage = error instanceof Error ? error.message : 'unknown_error';
+      const errorMessage = error instanceof Error ? error.message.substring(0, 200) : 'unknown_error';
       await this.queue.fail(job.id, errorMessage);
-      this.logger.error({ err: error, jobId: job.id, msg: 'Job failed' });
+      this.logger.error({
+        errorCode: error instanceof Error ? error.constructor.name : 'JOB_FAILED',
+        message: error instanceof Error ? error.message.substring(0, 200) : 'unknown',
+        jobId: job.id,
+        msg: 'Job failed',
+      });
     }
   }
 
@@ -99,36 +109,60 @@ export class AiJobRunnerService {
       return;
     }
 
-    // Get SOS message
+    // Get SOS message if available
     const sosMessage = job.sosMessageId
       ? await this.prisma.sosMessage.findUnique({
           where: { id: job.sosMessageId },
           select: { messageId: true, operatorDisplayText: true, noteText: true },
         })
-      : null;
+      : await this.prisma.sosMessage.findFirst({
+          where: { incidentId: job.incidentId },
+          orderBy: { createdAt: 'desc' },
+          select: { messageId: true, operatorDisplayText: true, noteText: true },
+        });
 
-    if (!sosMessage) {
-      await this.queue.fail(job.id, 'SOS message not found');
-      return;
+    // Try to get plaintext from SOS
+    let plaintext = '';
+
+    if (sosMessage) {
+      if (sosMessage.noteText) {
+        plaintext = sosMessage.noteText;
+      } else {
+        const decrypted = await this.plaintextSource.getPlaintext({
+          incidentId: job.incidentId,
+          messageId: sosMessage.messageId,
+        });
+        if (decrypted) {
+          plaintext = decrypted;
+        } else if (sosMessage.operatorDisplayText) {
+          plaintext = sosMessage.operatorDisplayText;
+        }
+      }
     }
 
-    // Try to get plaintext
-    let plaintext = sosMessage.noteText;
+    // Get latest successful transcript
+    const latestTranscript = await this.prisma.aiTranscript.findFirst({
+      where: {
+        attachment: {
+          incidentId: job.incidentId,
+        },
+      },
+      orderBy: { createdAt: 'desc' },
+      select: { transcript: true },
+    });
+
+    // Combine text and transcript
+    if (latestTranscript?.transcript) {
+      const transcriptText = `\n\n[Voice transcript (machine-generated, may contain errors)]:\n${latestTranscript.transcript}`;
+      if (plaintext) {
+        plaintext = plaintext + transcriptText;
+      } else {
+        plaintext = transcriptText.trim();
+      }
+    }
 
     if (!plaintext) {
-      plaintext = await this.plaintextSource.getPlaintext({
-        incidentId: job.incidentId,
-        messageId: sosMessage.messageId,
-      });
-    }
-
-    // Fall back to operator display text
-    if (!plaintext && sosMessage.operatorDisplayText) {
-      plaintext = sosMessage.operatorDisplayText;
-    }
-
-    if (!plaintext) {
-      await this.queue.requiresReview(job.id, 'No plaintext available');
+      await this.queue.requiresReview(job.id, 'No plaintext or transcript available');
       return;
     }
 
@@ -138,9 +172,38 @@ export class AiJobRunnerService {
     if (result.success) {
       await this.queue.complete(job.id);
     } else {
-      const errorMsg = 'error' in result ? result.error : 'unknown_error';
+      const errorMsg = 'error' in result ? result.error.substring(0, 200) : 'unknown_error';
       await this.queue.fail(job.id, errorMsg);
     }
+  }
+
+  private async processTranscribe(job: AiJob): Promise<void> {
+    if (!job.attachmentId) {
+      await this.queue.fail(job.id, 'Missing attachmentId');
+      return;
+    }
+
+    const result = await this.voiceTranscription.processTranscription(job.attachmentId);
+
+    if (!result.success) {
+      const errorMsg = ('error' in result ? result.error : undefined) ?? ('reason' in result ? result.reason : 'unknown');
+      const reason = 'reason' in result ? result.reason : 'unknown';
+      
+      if (reason === 'unavailable' || reason === 'budget_exceeded') {
+        await this.queue.requiresReview(job.id, errorMsg);
+      } else {
+        await this.queue.fail(job.id, errorMsg);
+      }
+      return;
+    }
+
+    this.logger.log({
+      msg: 'Transcription job completed',
+      jobId: job.id,
+      transcriptId: result.transcriptId,
+      triageJobId: result.triageJobId,
+    });
+    await this.queue.complete(job.id);
   }
 
   private sleep(ms: number): Promise<void> {

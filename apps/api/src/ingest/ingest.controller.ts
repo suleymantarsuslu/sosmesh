@@ -11,6 +11,7 @@ import type { Request } from 'express';
 
 import { IngestRequestDto, IngestResponseDto } from './dto/ingest-request.dto';
 import { IngestService } from './ingest.service';
+import { getClientKey } from '../common/utils/client-ip.util';
 
 @ApiTags('public')
 @Controller('v1')
@@ -25,7 +26,7 @@ export class IngestController {
     @Body() body: IngestRequestDto,
     @Req() req: Request
   ): Promise<IngestResponseDto> {
-    const clientKey = req.ip ?? req.socket.remoteAddress ?? 'unknown';
+    const clientKey = getClientKey(req);
     const rawBodyBytes = Buffer.byteLength(JSON.stringify(body), 'utf8');
     return this.ingestService.processIngest(body, clientKey, rawBodyBytes);
   }

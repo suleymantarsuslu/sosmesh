@@ -7,7 +7,6 @@ import {
 } from '@prisma/client';
 import { createHash } from 'node:crypto';
 
-import { AiJobService } from '../ai/ai-job.service';
 import { AiJobQueueService } from '../ai/ai-job-queue.service';
 import { PrismaService } from '../prisma/prisma.service';
 import { OperatorFeedService } from '../events/operator-feed.service';
@@ -32,7 +31,6 @@ export class IngestService {
     private readonly rateLimit: IngestRateLimitService,
     private readonly receiptSigner: ReceiptSignerService,
     private readonly operatorFeed: OperatorFeedService,
-    private readonly aiJobs: AiJobService,
     private readonly aiJobQueue: AiJobQueueService,
     private readonly metrics: SosMeshMetricsService,
     private readonly events: StructuredEventLogger
@@ -162,6 +160,7 @@ export class IngestService {
           longitude: geo.longitude,
           accuracyMeters: geo.accuracyMeters,
           priority,
+          encryptedNoteBlob: encryptedPayload || null,
           encryptedPayloadRef: payloadRef,
           packetHash,
           serverReceiptAt: receiptAt,
@@ -205,8 +204,8 @@ export class IngestService {
         needsHumanReview,
       });
       
-      // Enqueue AI job (never delay receipt or throw error)
-      if (process.env.AI_ENABLED !== 'false') {
+      // Enqueue AI job AFTER transaction commits (never delay receipt)
+      if (process.env.AI_ENABLED === 'true') {
         void this.aiJobQueue.enqueue({
           kind: 'triage',
           incidentId,

@@ -8,7 +8,7 @@ const { test, expect } = require('@playwright/test');
 
 test.describe('Web Skeleton Accessibility', () => {
   test('should have no axe violations on homepage (English default)', async ({ page }) => {
-    await page.goto('http://localhost:3000');
+    await page.goto('/');
     await page.waitForLoadState('networkidle');
 
     const accessibilityScanResults = await new AxeBuilder({ page })
@@ -48,7 +48,7 @@ test.describe('Web Skeleton Accessibility', () => {
   });
 
   test('switches homepage copy to Turkish when locale is TR', async ({ page }) => {
-    await page.goto('http://localhost:3000');
+    await page.goto('/');
     await page.getByTestId('locale-switcher-select').selectOption('tr');
     await expect(page.locator('html')).toHaveAttribute('lang', 'tr');
     await expect(page.getByTestId('marketing-operator-login')).toHaveText(

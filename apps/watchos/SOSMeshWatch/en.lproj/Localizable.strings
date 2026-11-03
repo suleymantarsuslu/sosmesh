@@ -1,0 +1,14 @@
+"watch.sos.label" = "Emergency SOS";
+"watch.sos.hint" = "Press and hold, release, then confirm";
+"watch.confirm.send" = "Send";
+"watch.confirm.cancel" = "Cancel";
+"watch.help.title" = "Help";
+"watch.help.link" = "Help";
+"watch.offline.emergency_warning" = "Always call 112 first in emergencies.";
+"watch.complication.headline.unreachable" = "Phone unreachable";
+"watch.complication.headline.default" = "SOS";
+"watch.complication.detail.default" = "Confirmation required";
+"watch.initial.detail" = "Confirm in two steps for emergency.";
+"watch.complication.description" = "Quick SOS shortcut; two-step confirmation in app.";
+"watch.cancel.headline" = "SOS not sent";
+"watch.cancel.detail" = "Cancelled.";

@@ -1,3 +1,4 @@
 "NSBluetoothAlwaysUsageDescription" = "Bluetooth: SOSMesh uses Bluetooth Low Energy to relay SOS messages to nearby devices when the internet is unavailable.";
 "NSBluetoothPeripheralUsageDescription" = "Bluetooth: In relay mode SOSMesh advertises a BLE service for nearby devices.";
 "NSLocationWhenInUseUsageDescription" = "Location: Optional approximate location for the SOS envelope; you may deny and continue.";
+"NSUserNotificationsUsageDescription" = "Notifications: Used for SOS delivery status and important alerts on your device.";

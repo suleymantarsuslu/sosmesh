@@ -8,11 +8,14 @@ import com.sosmesh.android.core.data.outbox.RoomOutboxQueueAdapter
 import com.sosmesh.android.core.data.storage.KeystoreEncryptedStringStore
 import com.sosmesh.android.core.data.storage.SecureStringStore
 import com.sosmesh.contracts.transport.OutboxQueueAdapter
+import dagger.Binds
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
 import dagger.hilt.android.qualifiers.ApplicationContext
 import dagger.hilt.components.SingletonComponent
+import kotlinx.coroutines.CoroutineDispatcher
+import kotlinx.coroutines.Dispatchers
 import javax.inject.Singleton
 
 @Module
@@ -29,16 +32,20 @@ object DataModule {
 
     @Provides
     @Singleton
-    fun provideOutboxQueueAdapter(
-        db: OutboxDatabase,
+    @OutboxDefaultRetention
+    fun provideOutboxDefaultRetentionMs(
         @ApplicationContext context: Context,
-    ): OutboxQueueAdapter {
+    ): Long {
         val fixture =
             AndroidStateTransitionLoader.load(
                 context.assets.open("transport/state-transitions.json"),
             )
-        return RoomOutboxQueueAdapter(db.outboxDao(), fixture.defaultRetentionMs)
+        return fixture.defaultRetentionMs
     }
+
+    @Provides
+    @IoDispatcher
+    fun provideIoDispatcher(): CoroutineDispatcher = Dispatchers.IO
 
     @Provides
     fun provideOutboxDao(db: OutboxDatabase): com.sosmesh.android.core.data.outbox.OutboxDao = db.outboxDao()
@@ -46,4 +53,12 @@ object DataModule {
     @Provides
     @Singleton
     fun provideSecureStringStore(store: KeystoreEncryptedStringStore): SecureStringStore = store
+}
+
+@Module
+@InstallIn(SingletonComponent::class)
+abstract class DataBindingModule {
+    @Binds
+    @Singleton
+    abstract fun bindOutboxQueueAdapter(impl: RoomOutboxQueueAdapter): OutboxQueueAdapter
 }

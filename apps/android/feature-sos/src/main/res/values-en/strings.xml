@@ -1,0 +1,44 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="sos_flow_title">Send SOS</string>
+    <string name="sos_cta_label">SOS</string>
+    <string name="sos_cta_content_description">Send SOS; open form</string>
+    <string name="sos_type_label">Incident type</string>
+    <string name="sos_person_count_label">Number of people</string>
+    <string name="sos_person_unknown">Unknown</string>
+    <string name="sos_note_label">Short note</string>
+    <string name="sos_note_hint">Up to 200 characters</string>
+    <string name="sos_location_label">Location</string>
+    <string name="sos_location_unknown">Location unknown</string>
+    <string name="sos_location_accuracy">Accuracy: %1$.0f m</string>
+    <string name="sos_manual_location">Use manual location</string>
+    <string name="sos_manual_lat">Latitude</string>
+    <string name="sos_manual_lng">Longitude</string>
+    <string name="sos_preview_title">Preview</string>
+    <string name="sos_preview_confirm">Confirm and save</string>
+    <string name="sos_preview_back">Back</string>
+    <string name="sos_continue">Continue</string>
+    <string name="sos_error_person_low">Person count must be at least 1</string>
+    <string name="sos_error_person_high">Person count cannot exceed 99</string>
+    <string name="sos_error_note_long">Note cannot exceed 200 characters</string>
+    <string name="sos_saved_local">Saved on device</string>
+    <string name="sos_peer_delivery_started">BLE transfer to a nearby SOSMesh device has started. Track progress on the status screen.</string>
+    <string name="sos_peer_delivery_waiting">Waiting for a nearby device or GATT session; will retry when permissions allow.</string>
+    <string name="sos_peer_delivery_permissions">Bluetooth permissions are required. Grant them under Settings → Permissions; this is not server or operator read.</string>
+    <string name="sos_peer_delivery_blocked">Could not transfer now; the outbox will retry automatically.</string>
+    <string name="sos_not112_disclaimer">SOSMesh does not replace 112. Call emergency services in an emergency.</string>
+    <string name="sos_consent_title">SOS and data use</string>
+    <string name="sos_consent_body">No account required. Location and message are encrypted; only authorized operators decrypt on the server. Confirm to continue.</string>
+    <string name="sos_consent_accept">Agree and continue</string>
+    <string name="sos_consent_decline">Cancel</string>
+    <string name="sos_type_deprem">Earthquake</string>
+    <string name="sos_type_yangin">Fire</string>
+    <string name="sos_type_sel">Flood</string>
+    <string name="sos_type_yaralanma">Injury</string>
+    <string name="sos_type_diger">Other</string>
+    <string name="sos_offline_badge">Offline</string>
+    <string name="sos_location_fresh">Location is fresh</string>
+    <string name="sos_location_aging">Location is aging</string>
+    <string name="sos_location_stale">Location is stale — pick manually</string>
+    <string name="sos_secondary_continue_hint">Fill in details, then continue</string>
+</resources>

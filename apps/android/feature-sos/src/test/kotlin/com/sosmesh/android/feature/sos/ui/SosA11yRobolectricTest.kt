@@ -43,6 +43,26 @@ class SosA11yRobolectricTest {
         composeRule.onNodeWithTag("sos_call_112_button").assertIsDisplayed()
         composeRule.onNodeWithTag("sos_continue_button").performScrollTo().assertIsDisplayed()
     }
+
+    @Test
+    fun call112Button_isVisibleOnGuidedForm() {
+        composeRule.setContent {
+            SosFlowScreen(
+                state = SosFormUiState(gpsLocation = LocationSnapshot.unknown()),
+                onSelectType = {},
+                onPersonCountChange = {},
+                onPersonUnknownChange = {},
+                onNoteChange = {},
+                onManualToggle = {},
+                onManualLat = {},
+                onManualLng = {},
+                onContinue = {},
+                onBackFromPreview = {},
+                onConfirm = {},
+            )
+        }
+        composeRule.onNodeWithTag("sos_call_112_button").performScrollTo().assertIsDisplayed()
+    }
 }
 
 @RunWith(RobolectricTestRunner::class)

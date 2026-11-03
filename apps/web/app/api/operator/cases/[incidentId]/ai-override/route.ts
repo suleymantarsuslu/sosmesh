@@ -2,8 +2,9 @@ import { NextResponse } from 'next/server';
 
 export async function POST(
   request: Request,
-  { params }: { params: { incidentId: string } }
+  props: { params: Promise<{ incidentId: string }> }
 ) {
+  const params = await props.params;
   try {
     const body = await request.json();
     const apiUrl = process.env.API_URL || 'http://localhost:3001';

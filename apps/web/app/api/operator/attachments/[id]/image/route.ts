@@ -4,8 +4,9 @@ export const dynamic = 'force-dynamic';
 
 export async function GET(
   request: Request,
-  { params }: { params: { id: string } }
+  props: { params: Promise<{ id: string }> }
 ) {
+  const params = await props.params;
   try {
     const apiUrl = process.env.API_URL || 'http://localhost:3001';
     const res = await fetch(`${apiUrl}/v1/operator/attachments/${params.id}/image`, {

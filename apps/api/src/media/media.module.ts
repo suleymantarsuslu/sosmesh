@@ -11,7 +11,10 @@ import { MEDIA_STORAGE } from './media-storage.interface';
 import { AudioConversionService } from './audio-conversion.service';
 import { AudioChunkingService } from './audio-chunking.service';
 import { AudioUploadService } from './audio-upload.service';
+import { ImageUploadService } from './image-upload.service';
 import { AttachmentsController } from './attachments.controller';
+import { DeviceAttachmentsController } from './device-attachments.controller';
+import { DeviceUploadTokenService } from './device-upload-token.service';
 import { AiModule } from '../ai/ai.module';
 
 @Module({
@@ -24,8 +27,10 @@ import { AiModule } from '../ai/ai.module';
     AudioConversionService,
     AudioChunkingService,
     AudioUploadService,
+    ImageUploadService,
+    DeviceUploadTokenService,
   ],
-  controllers: [AttachmentsController],
-  exports: [MEDIA_STORAGE, AudioConversionService, AudioChunkingService, AudioUploadService],
+  controllers: [AttachmentsController, DeviceAttachmentsController],
+  exports: [MEDIA_STORAGE, AudioConversionService, AudioChunkingService, AudioUploadService, ImageUploadService, DeviceUploadTokenService],
 })
 export class MediaModule {}

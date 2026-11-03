@@ -52,6 +52,12 @@ data class SosFormUiState(
     val savedMessageId: String? = null,
     val offlineMode: Boolean = true,
     val peerDeliveryHint: SosPeerDeliveryHint = SosPeerDeliveryHint.NONE,
+    val photoUri: android.net.Uri? = null,
+    val voiceFile: java.io.File? = null,
+    val voiceDuration: Int = 0,
+    val isRecording: Boolean = false,
+    val uploadToken: String? = null,
+    val showConfirmationDialog: Boolean = false,
 )
 
 @HiltViewModel
@@ -63,6 +69,8 @@ class SosFormViewModel
         private val peerDelivery: SosPeerDeliveryPort,
         private val bleMeshReadiness: com.sosmesh.android.core.permissions.BleMeshReadiness,
         private val permissionFlowCoordinator: com.sosmesh.android.core.permissions.PermissionFlowCoordinator,
+        private val pendingStore: com.sosmesh.android.feature.sos.attachment.AttachmentPendingStore,
+        private val notificationManager: com.sosmesh.android.feature.sos.notification.SosDeliveryNotificationManager,
     ) : ViewModel() {
         private val _uiState = MutableStateFlow(SosFormUiState())
         val uiState: StateFlow<SosFormUiState> = _uiState.asStateFlow()
@@ -123,6 +131,18 @@ class SosFormViewModel
             _uiState.update { it.copy(manualLng = value) }
         }
 
+        fun setPhotoUri(uri: android.net.Uri?) {
+            _uiState.update { it.copy(photoUri = uri) }
+        }
+
+        fun setVoiceFile(file: java.io.File?, duration: Int = 0) {
+            _uiState.update { it.copy(voiceFile = file, voiceDuration = duration) }
+        }
+
+        fun setRecording(isRecording: Boolean) {
+            _uiState.update { it.copy(isRecording = isRecording) }
+        }
+
         fun goToPreview() {
             if (!revalidate()) return
             _uiState.update { it.copy(step = SosWizardStep.PREVIEW, validationError = null) }
@@ -159,6 +179,33 @@ class SosFormViewModel
                         nowMs = nowMs,
                     ),
                 )
+            
+            state.photoUri?.let { uri ->
+                val file = java.io.File(uri.path ?: return@let)
+                if (file.exists()) {
+                    pendingStore.add(
+                        com.sosmesh.android.feature.sos.attachment.PendingAttachment(
+                            sosId = composed.message.id,
+                            kind = "image",
+                            filePath = file.absolutePath,
+                            mimeType = "image/jpeg",
+                        ),
+                    )
+                }
+            }
+            state.voiceFile?.let { file ->
+                if (file.exists()) {
+                    pendingStore.add(
+                        com.sosmesh.android.feature.sos.attachment.PendingAttachment(
+                            sosId = composed.message.id,
+                            kind = "audio",
+                            filePath = file.absolutePath,
+                            mimeType = "audio/aac",
+                        ),
+                    )
+                }
+            }
+            
             val delivery =
                 runCatching {
                     if (bleMeshReadiness.canRunBleMeshFeatures()) {
@@ -170,16 +217,24 @@ class SosFormViewModel
                     if (error is CancellationException) throw error
                     SosPeerDeliveryKickResult.Blocked(error.message ?: "peer_kickoff_failed")
                 }
+            notificationManager.trackPendingSos(composed.message.id)
+            
             _uiState.update {
                 it.copy(
                     step = SosWizardStep.DONE,
                     savedMessageId = composed.message.id,
                     peerDeliveryHint = delivery.toHint(),
+                    showConfirmationDialog = true,
                 )
             }
         }
 
+        fun dismissConfirmationDialog() {
+            _uiState.update { it.copy(showConfirmationDialog = false) }
+        }
+
         fun resetFlow() {
+            _uiState.update { it.copy(showConfirmationDialog = false) }
             _uiState.value = SosFormUiState()
             refreshLocation()
         }

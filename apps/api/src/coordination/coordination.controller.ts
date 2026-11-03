@@ -15,6 +15,9 @@ import { ResourceKind, WorkTaskStatus } from '@prisma/client';
 import { OperatorAuthGuard, OperatorRequest } from '../operator/guards/operator-auth.guard';
 import { OperatorCsrfGuard } from '../operator/guards/operator-csrf.guard';
 import { RolesGuard } from '../operator/guards/roles.guard';
+import { CreateTeamDto } from './dto/create-team.dto';
+import { UpdateTeamDto } from './dto/update-team.dto';
+import { UpdateResourceDto } from './dto/update-resource.dto';
 import { LocationShareService } from './location-share.service';
 import { TeamsResourcesService } from './teams-resources.service';
 import { WorkTaskService } from './work-task.service';
@@ -33,6 +36,20 @@ export class CoordinationController {
   @Get('teams')
   listTeams(@Req() req: OperatorRequest) {
     return this.teams.listTeams(req.operatorUser);
+  }
+
+  @Post('teams')
+  createTeam(@Req() req: OperatorRequest, @Body() body: CreateTeamDto) {
+    return this.teams.createTeam(req.operatorUser, body);
+  }
+
+  @Patch('teams/:id')
+  updateTeam(
+    @Req() req: OperatorRequest,
+    @Param('id') id: string,
+    @Body() body: UpdateTeamDto
+  ) {
+    return this.teams.updateTeam(req.operatorUser, id, body);
   }
 
   @Get('resources')
@@ -60,6 +77,15 @@ export class CoordinationController {
     }
   ) {
     return this.teams.upsertResource(req.operatorUser, body);
+  }
+
+  @Patch('resources/:id')
+  updateResource(
+    @Req() req: OperatorRequest,
+    @Param('id') id: string,
+    @Body() body: UpdateResourceDto
+  ) {
+    return this.teams.updateResource(req.operatorUser, id, body);
   }
 
   @Get('tasks')

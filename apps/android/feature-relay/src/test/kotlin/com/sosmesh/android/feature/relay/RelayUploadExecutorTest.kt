@@ -82,7 +82,7 @@ class RelayUploadExecutorTest {
     fun fakeUplink200_updatesState() =
         runBlocking {
             enqueueRelayBlob("ok-1")
-            fakeUplink.nextResult = RelayIngestResult.Success
+            fakeUplink.nextResult = RelayIngestResult.Success(null)
             val summary =
                 executor.runUploadCycle(
                     nowMs = 2_000L,
@@ -155,7 +155,7 @@ class RelayUploadExecutorTest {
             budget.recordSent((limit - 10).toInt(), 4_000L)
             val policy = RelayBatteryPolicy(settings, budget)
             executor = RelayUploadExecutor(settings, policy, budget, reader, adapter, fakeUplink)
-            fakeUplink.nextResult = RelayIngestResult.Success
+            fakeUplink.nextResult = RelayIngestResult.Success(null)
             val summary =
                 executor.runUploadCycle(
                     nowMs = 5_000L,
@@ -188,7 +188,7 @@ class RelayUploadExecutorTest {
         runBlocking {
             settings.relayEnabled = false
             enqueueOwnSosBlob("android-sos-1", origin = "android")
-            fakeUplink.nextResult = RelayIngestResult.Success
+            fakeUplink.nextResult = RelayIngestResult.Success(null)
             val summary =
                 executor.runOwnSosUploadCycle(
                     nowMs = 8_000L,
@@ -205,7 +205,7 @@ class RelayUploadExecutorTest {
         runBlocking {
             settings.relayEnabled = false
             enqueueOwnSosBlob("wear-sos-1", origin = "wear_os")
-            fakeUplink.nextResult = RelayIngestResult.Success
+            fakeUplink.nextResult = RelayIngestResult.Success(null)
             val summary =
                 executor.runOwnSosUploadCycle(
                     nowMs = 9_000L,

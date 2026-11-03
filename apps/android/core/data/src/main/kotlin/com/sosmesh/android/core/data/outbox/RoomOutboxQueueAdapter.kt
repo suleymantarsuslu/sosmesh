@@ -76,6 +76,31 @@ class RoomOutboxQueueAdapter
             }
         }
 
+        override suspend fun setUploadRetryAt(
+            sosId: String,
+            digest: String,
+            retryAtMs: Long,
+            lastError: String?,
+        ) {
+            withContext(ioDispatcher) {
+                dao.setUploadRetryAtFields(
+                    sosId = sosId,
+                    digest = digest,
+                    retryAtMs = retryAtMs,
+                    lastError = lastError,
+                )
+            }
+        }
+
+        override suspend fun clearUploadRetry(
+            sosId: String,
+            digest: String,
+        ) {
+            withContext(ioDispatcher) {
+                dao.clearUploadRetryFields(sosId, digest)
+            }
+        }
+
         override suspend fun countDueForSend(
             nowMs: Long,
             paused: Boolean,
@@ -116,6 +141,9 @@ class RoomOutboxQueueAdapter
                     last_error = null,
                     created_at = nowMs,
                     updated_at = nowMs,
+                    upload_retry_at = null,
+                    upload_last_error = null,
+                    upload_attempts = 0,
                 )
             dao.insert(entity)
             return dao.getByKey(input.sosId, input.digest)?.toMeta()

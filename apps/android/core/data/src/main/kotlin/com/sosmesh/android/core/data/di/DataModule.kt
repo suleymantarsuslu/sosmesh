@@ -27,6 +27,7 @@ object DataModule {
         @ApplicationContext context: Context,
     ): OutboxDatabase =
         Room.databaseBuilder(context, OutboxDatabase::class.java, "sosmesh-outbox")
+            .addMigrations(OutboxDatabase.MIGRATION_1_2)
             .fallbackToDestructiveMigration()
             .build()
 

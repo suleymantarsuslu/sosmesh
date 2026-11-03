@@ -22,12 +22,15 @@ class SosAttachmentUploadScheduler
             uploadToken: String,
             baseUrl: String,
         ) {
+            pendingStore.setUploadToken(sosId, uploadToken, baseUrl)
+            
             val pending = pendingStore.listBySosId(sosId)
             if (pending.isEmpty()) return
 
             pending.forEach { attachment ->
                 val data =
                     Data.Builder()
+                        .putString("sosId", sosId)
                         .putString("uploadToken", uploadToken)
                         .putString("kind", attachment.kind)
                         .putString("filePath", attachment.filePath)
@@ -42,10 +45,37 @@ class SosAttachmentUploadScheduler
                                 .setRequiredNetworkType(NetworkType.CONNECTED)
                                 .build(),
                         )
+                        .addTag("attachment_upload_$sosId")
                         .build()
                 WorkManager.getInstance(context.applicationContext).enqueue(request)
             }
-
-            pendingStore.removeBySosId(sosId)
+        }
+        
+        fun retryPendingUploads() {
+            val allPending = pendingStore.listAll()
+            allPending.forEach { attachment ->
+                if (attachment.uploadToken != null && attachment.baseUrl != null) {
+                    val data =
+                        Data.Builder()
+                            .putString("sosId", attachment.sosId)
+                            .putString("uploadToken", attachment.uploadToken)
+                            .putString("kind", attachment.kind)
+                            .putString("filePath", attachment.filePath)
+                            .putString("mimeType", attachment.mimeType)
+                            .putString("baseUrl", attachment.baseUrl)
+                            .build()
+                    val request =
+                        OneTimeWorkRequestBuilder<com.sosmesh.android.feature.sos.upload.AttachmentUploadWorker>()
+                            .setInputData(data)
+                            .setConstraints(
+                                Constraints.Builder()
+                                    .setRequiredNetworkType(NetworkType.CONNECTED)
+                                    .build(),
+                            )
+                            .addTag("attachment_upload_${attachment.sosId}")
+                            .build()
+                    WorkManager.getInstance(context.applicationContext).enqueue(request)
+                }
+            }
         }
     }

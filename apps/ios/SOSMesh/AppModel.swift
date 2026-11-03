@@ -41,6 +41,9 @@ final class AppModel: ObservableObject {
     private var ingestUploader: IngestUploader?
     private let locationManager = SosLocationManager()
     private var uploadsInFlight = Set<String>()
+    private var attachmentCoordinator: AttachmentUploadCoordinator?
+    private var attachmentQueue: AttachmentQueue?
+    private var backgroundTaskId: UIBackgroundTaskIdentifier = .invalid
 
     init(
         permissionProbe: AppPermissionProbing? = nil,
@@ -70,6 +73,7 @@ final class AppModel: ObservableObject {
             restorationPhase = restorationMachine.phase
         }
         permissionProbe.primeBluetoothAuthorizationIfAlreadyAuthorized()
+        initializeAttachmentCoordinator()
         Task { await refreshPermissionGate() }
     }
 
@@ -178,7 +182,10 @@ final class AppModel: ObservableObject {
     func noteEnteredForeground() {
         try? restorationMachine.apply(.willEnterForeground)
         restorationPhase = restorationMachine.phase
-        Task { await refreshPermissionGate() }
+        Task {
+            await refreshPermissionGate()
+            await attachmentCoordinator?.processQueue()
+        }
     }
 
     private func refreshPlatformHint(from snapshot: PermissionGateSnapshot) {
@@ -305,7 +312,7 @@ final class AppModel: ObservableObject {
         }
     }
     
-    private func processAttachmentUploads(sosId: String, uploadToken: String) async {
+    private func initializeAttachmentCoordinator() {
         guard let baseDir = try? FileManager.default.url(
             for: .applicationSupportDirectory,
             in: .userDomainMask,
@@ -319,12 +326,41 @@ final class AppModel: ObservableObject {
             return
         }
         
-        try? queue.setUploadToken(uploadToken, forSosId: sosId)
+        self.attachmentQueue = queue
         
         let deviceId = UIDevice.current.identifierForVendor?.uuidString ?? UUID().uuidString
         let config = IngestConfig.production(deviceId: deviceId)
         let coordinator = AttachmentUploadCoordinator(queue: queue, baseURL: config.baseURL)
-        await coordinator.processSosAttachments(sosId: sosId)
+        self.attachmentCoordinator = coordinator
+        
+        coordinator.start()
+    }
+    
+    private func processAttachmentUploads(sosId: String, uploadToken: String) async {
+        guard let queue = attachmentQueue else {
+            return
+        }
+        
+        try? queue.setUploadToken(uploadToken, forSosId: sosId)
+        
+        beginBackgroundTask()
+        await attachmentCoordinator?.processSosAttachments(sosId: sosId)
+        endBackgroundTask()
+    }
+    
+    private func beginBackgroundTask() {
+        guard backgroundTaskId == .invalid else { return }
+        
+        backgroundTaskId = UIApplication.shared.beginBackgroundTask { [weak self] in
+            self?.endBackgroundTask()
+        }
+    }
+    
+    private func endBackgroundTask() {
+        guard backgroundTaskId != .invalid else { return }
+        
+        UIApplication.shared.endBackgroundTask(backgroundTaskId)
+        backgroundTaskId = .invalid
     }
 
     private func sourceRoot() -> String {

@@ -8,4 +8,6 @@ data class PendingAttachment(
     val kind: String,
     val filePath: String,
     val mimeType: String,
+    val uploadToken: String? = null,
+    val baseUrl: String? = null,
 )

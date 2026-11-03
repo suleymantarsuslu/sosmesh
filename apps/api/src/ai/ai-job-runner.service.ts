@@ -13,7 +13,7 @@ import { SosPlaintextSource, SOS_PLAINTEXT_SOURCE } from './sos-plaintext-source
 import { PrismaService } from '../prisma/prisma.service';
 import { Inject } from '@nestjs/common';
 import { VisionAnalysisService } from './vision/vision-analysis.service';
-import { LocalDiskStorageService } from '../media/local-disk-storage.service';
+import { MediaStorage, MEDIA_STORAGE } from '../media/media-storage.interface';
 import { VoiceTranscriptionService } from './voice/voice-transcription.service';
 
 @Injectable()
@@ -27,7 +27,7 @@ export class AiJobRunnerService {
     private readonly fusion: FusionService,
     private readonly prisma: PrismaService,
     private readonly vision: VisionAnalysisService,
-    private readonly storage: LocalDiskStorageService,
+    @Inject(MEDIA_STORAGE) private readonly storage: MediaStorage,
     @Inject(SOS_PLAINTEXT_SOURCE) private readonly plaintextSource: SosPlaintextSource,
     private readonly voiceTranscription: VoiceTranscriptionService
   ) {}

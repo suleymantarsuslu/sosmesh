@@ -122,22 +122,20 @@ class SosFormViewModel
             _uiState.update { it.copy(hasPhotoAttachment = hasPhoto) }
         }
 
-        fun startVoiceRecording() {
-            _uiState.update { it.copy(isRecording = true, recordingDurationSeconds = 0) }
+        fun setVoiceAttachment(hasVoice: Boolean, duration: Int = 0) {
+            _uiState.update { it.copy(hasVoiceAttachment = hasVoice, recordingDurationSeconds = duration) }
+        }
+
+        fun setRecording(isRecording: Boolean) {
+            _uiState.update { it.copy(isRecording = isRecording) }
         }
 
         fun updateRecordingDuration(seconds: Int) {
             _uiState.update { it.copy(recordingDurationSeconds = seconds) }
         }
-
-        fun stopVoiceRecording(save: Boolean) {
-            _uiState.update {
-                it.copy(
-                    isRecording = false,
-                    hasVoiceAttachment = save,
-                    recordingDurationSeconds = if (save) it.recordingDurationSeconds else 0
-                )
-            }
+        
+        fun setUploadToken(token: String?) {
+            _uiState.update { it.copy(uploadToken = token) }
         }
 
         fun goToPreview() {

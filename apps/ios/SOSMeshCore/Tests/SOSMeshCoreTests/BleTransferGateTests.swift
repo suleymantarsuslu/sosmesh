@@ -106,9 +106,10 @@ final class BleTransferGateTests: XCTestCase {
         let receiverListener = PayloadCapture { received = $0 }
         receiver.setListener(receiverListener)
         sender.startTransfer(Data("PAYLOAD".utf8))
-        for _ in 0 ..< 5_000 {
+        for _ in 0 ..< 300 {
+            clock.advance(10)
+            channel.drain()
             if sender.getState() == .completed { break }
-            clock.advance(5)
         }
         XCTAssertEqual(sender.getState(), .completed)
         XCTAssertEqual(received, Data("PAYLOAD".utf8))

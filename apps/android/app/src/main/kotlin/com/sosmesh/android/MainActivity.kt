@@ -17,6 +17,7 @@ import androidx.navigation.compose.rememberNavController
 import com.sosmesh.android.feature.relay.RelayRoute
 import com.sosmesh.android.feature.sos.SosRoute
 import com.sosmesh.android.feature.status.StatusRoute
+import com.sosmesh.android.ui.gate.PermissionGateRoute
 import com.sosmesh.android.ui.home.HomeRoute
 import com.sosmesh.android.ui.permissions.PermissionsRoute
 import com.sosmesh.android.ui.radio.RadioDebugRoute
@@ -32,11 +33,19 @@ class MainActivity : ComponentActivity() {
         setContent {
             val context = LocalContext.current
             var highContrast by remember { mutableStateOf(readHighContrast(context)) }
+            var appUnlocked by remember { mutableStateOf(false) }
             SosMeshTheme(highContrast = highContrast) {
                 Surface {
-                    SosMeshNavHost(
-                        onHighContrastChanged = { highContrast = readHighContrast(context) },
+                    PermissionGateRoute(
+                        gateVisible = !appUnlocked,
+                        onGatePassed = { appUnlocked = true },
+                        onGateBlocked = { appUnlocked = false },
                     )
+                    if (appUnlocked) {
+                        SosMeshNavHost(
+                            onHighContrastChanged = { highContrast = readHighContrast(context) },
+                        )
+                    }
                 }
             }
         }

@@ -68,11 +68,15 @@ SOSMesh implements **ephemeral-static ECDH** with **server-pinned public keys** 
 - **Active Keys**: Multiple public keys supported simultaneously (identified by `keyId`)
 
 ### Rotation Process
-1. **Generate New Key Pair**: Operator generates new X25519 keypair with `keyId = "prod-2026-Q4-001"`
-2. **Deploy Public Key**: Push app update with new public key pinned
+1. **Generate New Key Pair**: Operator generates new X25519 keypair with `keyId = "prod-YYYY-MM-{suffix}"` (e.g., `prod-2026-11-a`)
+2. **Deploy Public Key**: Push app update with new public key pinned in client builds
+   - Android: Update `SosReleaseCryptoModule.kt` with new keyId and serverPublicKey
+   - iOS: Update `CryptoConfigProvider.swift` release configuration with new keyId and serverPublicKey
 3. **Update Server Config**: Add new private key to HSM/KMS (old key remains for grace period)
 4. **Monitor Transition**: Track usage of old vs new `keyId` in encrypted payloads
 5. **Retire Old Key**: After grace period, remove old private key from HSM/KMS
+
+**Current Production Key**: `prod-2026-11-a` (deployed Nov 2026)
 
 ### Rotation Triggers
 - **Scheduled**: Every 90 days (planned)

@@ -1,6 +1,6 @@
 # Android SOS BLE transfer testleri (ADIM 15)
 
-Gerçek iki Android cihaz olmadan tablo sonuçları **NOT_TESTED**; JVM simülasyonu gerçek BLE kanıtı sayılmaz.
+Gerçek iki Android cihaz olmadan tablo sonuçları **NOT_TESTED**; JVM simülasyonu gerçek BLE kanıtı sayılmaz. Kısa cihaz prosedürü: [android-device-ble-checklist.md](./android-device-ble-checklist.md).
 
 ## Ön koşullar
 

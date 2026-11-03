@@ -516,7 +516,6 @@ export class MetaModelClient {
 
   private parseSamOutput(text: string): SamSegment[] {
     const segments: SamSegment[] = [];
-    const frameRegex = /<0f>/g;
     const segmentRegex = /ID(\d+)<\|box;x1=([\d.]+);y1=([\d.]+);x2=([\d.]+);y2=([\d.]+);w=([\d.]+);h=([\d.]+)(?:;c=([\d.]+))?\|>(?:<\|mask;x=(\d+);y=(\d+)(?:;c=([\d.]+))?;data=([\d.]+),([\d.]+),([!~][^\|]+)\|>)?/g;
 
     let match;

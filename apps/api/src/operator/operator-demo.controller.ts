@@ -22,7 +22,6 @@ import { OperatorDemoService } from './operator-demo.service';
 
 const MAX_AUDIO_SIZE = 10 * 1024 * 1024; // 10 MB
 const MAX_PHOTO_SIZE = 10 * 1024 * 1024; // 10 MB
-const MAX_AUDIO_DURATION_SEC = 120;
 
 @Controller('v1/operator/demo')
 @UseGuards(OperatorAuthGuard)

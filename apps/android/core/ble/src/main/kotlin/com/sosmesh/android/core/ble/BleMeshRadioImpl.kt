@@ -25,4 +25,6 @@ class BleMeshRadioImpl
         override fun disconnectPeerSession() {
             coordinator.disconnectGatt()
         }
+
+        override fun tickGattReconnect(): Result<Unit>? = coordinator.tickGattReconnect()
     }

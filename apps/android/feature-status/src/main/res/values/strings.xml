@@ -14,6 +14,7 @@
     <string name="status_timeline_desc_local">Message saved on this device; searching for a nearby device to relay.</string>
     <string name="status_timeline_desc_peer">A nearby device received the message; waiting for internet relay.</string>
     <string name="status_timeline_desc_server">Reached the server and is visible to operators.</string>
+    <string name="status_timeline_desc_uploading">Sending to server…</string>
     <string name="status_timeline_desc_operator">An operator viewed the case.</string>
     <string name="status_timeline_desc_case">Case is in progress.</string>
     <string name="status_evidence_created">Recorded (UTC): %1$s</string>

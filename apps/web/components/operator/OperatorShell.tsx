@@ -7,6 +7,7 @@ import { useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 import { SosMeshLogo } from '../brand/SosMeshLogo';
 import { LocaleSwitcher } from '../i18n/LocaleSwitcher';
 import { Button } from '../ui/Button';
+import { FixedPanel } from '../ui/FixedPanel';
 
 import { CommandPalette } from './CommandPalette';
 import { DemoModeBanner } from './DemoModeBanner';
@@ -71,29 +72,7 @@ export function OperatorShell({
   const [drawerOpen, setDrawerOpen] = useState(false);
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const [userMenuOpen, setUserMenuOpen] = useState(false);
-  const userMenuRef = useRef<HTMLDivElement>(null);
-
-  useEffect(() => {
-    if (!userMenuOpen) {
-      return;
-    }
-    const onPointerDown = (event: MouseEvent) => {
-      if (userMenuRef.current && !userMenuRef.current.contains(event.target as Node)) {
-        setUserMenuOpen(false);
-      }
-    };
-    const onKeyDown = (event: KeyboardEvent) => {
-      if (event.key === 'Escape') {
-        setUserMenuOpen(false);
-      }
-    };
-    document.addEventListener('mousedown', onPointerDown);
-    document.addEventListener('keydown', onKeyDown);
-    return () => {
-      document.removeEventListener('mousedown', onPointerDown);
-      document.removeEventListener('keydown', onKeyDown);
-    };
-  }, [userMenuOpen]);
+  const userMenuRef = useRef<HTMLButtonElement>(null);
 
   useEffect(() => {
     try {
@@ -263,8 +242,9 @@ export function OperatorShell({
                 </svg>
               )}
             </button>
-            <div className="operator-user-menu" ref={userMenuRef} data-testid="operator-topbar-user">
+            <div className="operator-user-menu" data-testid="operator-topbar-user">
               <button
+                ref={userMenuRef}
                 type="button"
                 className="ui-button ui-button--ghost operator-user-menu__trigger"
                 aria-expanded={userMenuOpen}
@@ -281,7 +261,13 @@ export function OperatorShell({
                 </span>
               </button>
               {userMenuOpen ? (
-                <div className="operator-user-menu__panel" role="menu">
+                <FixedPanel
+                  triggerRef={userMenuRef}
+                  className="operator-user-menu__panel"
+                  role="menu"
+                  align="right"
+                  onClose={() => setUserMenuOpen(false)}
+                >
                   <p className="operator-user-menu__meta">{user.email || user.displayName}</p>
                   <Button
                     variant="ghost"
@@ -293,7 +279,7 @@ export function OperatorShell({
                   >
                     {t('web.shell.logout')}
                   </Button>
-                </div>
+                </FixedPanel>
               ) : null}
             </div>
           </div>

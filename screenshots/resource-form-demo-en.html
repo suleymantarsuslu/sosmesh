@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Create Resource - EN</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: system-ui, -apple-system, sans-serif; background: #f5f5f5; padding: 20px; }
+    .modal-overlay { position: fixed; inset: 0; background: rgba(0, 0, 0, 0.5); display: flex; align-items: center; justify-content: center; }
+    .modal-content { background: white; border-radius: 8px; width: 90%; max-width: 500px; max-height: 90vh; overflow-y: auto; box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2); }
+    .modal-header { padding: 20px; border-bottom: 1px solid #e0e0e0; display: flex; justify-content: space-between; align-items: center; }
+    .modal-header h2 { font-size: 20px; font-weight: 600; }
+    .modal-close { background: none; border: none; font-size: 28px; cursor: pointer; color: #666; }
+    .modal-form { padding: 20px; }
+    .form-field { margin-bottom: 16px; }
+    .form-field label { display: block; font-weight: 500; margin-bottom: 4px; color: #333; font-size: 14px; }
+    .form-field input, .form-field select { width: 100%; padding: 10px; border: 1px solid #ccc; border-radius: 4px; font-size: 14px; }
+    .form-field input:focus, .form-field select:focus { outline: none; border-color: #1976d2; }
+    .form-field input[type="checkbox"] { width: auto; margin-right: 8px; }
+    .modal-actions { display: flex; gap: 12px; justify-content: flex-end; padding-top: 16px; border-top: 1px solid #e0e0e0; }
+    .button { padding: 10px 20px; border-radius: 4px; font-size: 14px; font-weight: 500; cursor: pointer; border: none; }
+    .button--primary { background: #1976d2; color: white; }
+    .button--secondary { background: #e0e0e0; color: #333; }
+    span[aria-label="required"] { color: #d32f2f; margin-left: 2px; }
+  </style>
+</head>
+<body>
+  <div class="modal-overlay">
+    <div class="modal-content">
+      <header class="modal-header">
+        <h2>Create Resource</h2>
+        <button type="button" class="modal-close" aria-label="Close">×</button>
+      </header>
+      <form class="modal-form">
+        <div class="form-field">
+          <label for="resource-name">Resource name <span aria-label="required">*</span></label>
+          <input id="resource-name" type="text" value="Ambulance Unit 5" required />
+        </div>
+        <div class="form-field">
+          <label for="resource-kind">Kind <span aria-label="required">*</span></label>
+          <select id="resource-kind" required>
+            <option value="FIELD_TEAM">Field team</option>
+            <option value="VEHICLE" selected>Vehicle</option>
+            <option value="EQUIPMENT">Equipment</option>
+            <option value="SHELTER">Shelter</option>
+          </select>
+        </div>
+        <div class="form-field">
+          <label for="resource-capacity">Quantity <span aria-label="required">*</span></label>
+          <input id="resource-capacity" type="number" min="1" max="1000" value="4" required />
+        </div>
+        <div class="form-field">
+          <label for="resource-zone">Zone</label>
+          <input id="resource-zone" type="text" value="District-A" />
+        </div>
+        <div class="form-field">
+          <label for="resource-team">Assigned team</label>
+          <select id="resource-team">
+            <option value="">Not assigned</option>
+            <option value="team-1" selected>Medical Response Team Alpha</option>
+            <option value="team-2">Search & Rescue Beta</option>
+          </select>
+        </div>
+        <div class="form-field">
+          <label>
+            <input type="checkbox" checked />
+            Active
+          </label>
+        </div>
+        <div class="modal-actions">
+          <button type="button" class="button button--secondary">Cancel</button>
+          <button type="submit" class="button button--primary">Save</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</body>
+</html>

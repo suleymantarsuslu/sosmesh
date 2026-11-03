@@ -263,6 +263,10 @@ public final class DiskOutboxQueue {
             return OutboxStoreFile(entries: [])
         }
         let data = try Data(contentsOf: storeURL)
+        // A freshly created store file (OutboxStorePaths) is zero bytes: treat as empty, not corrupt.
+        if data.isEmpty {
+            return OutboxStoreFile(entries: [])
+        }
         return try JSONDecoder().decode(OutboxStoreFile.self, from: data)
     }
 

@@ -26,10 +26,26 @@ class JdbcSqliteOutboxQueue(
                       last_error TEXT,
                       created_at INTEGER NOT NULL,
                       updated_at INTEGER NOT NULL,
+                      upload_retry_at INTEGER,
+                      upload_last_error TEXT,
+                      upload_attempts INTEGER NOT NULL DEFAULT 0,
                       PRIMARY KEY (sos_id, digest)
                     )
                     """.trimIndent(),
                 )
+                try {
+                    st.execute("ALTER TABLE outbox ADD COLUMN upload_retry_at INTEGER")
+                } catch (_: Exception) {
+                }
+                try {
+                    st.execute("ALTER TABLE outbox ADD COLUMN upload_last_error TEXT")
+                } catch (_: Exception) {
+                }
+                try {
+                    st.execute("ALTER TABLE outbox ADD COLUMN upload_attempts INTEGER NOT NULL DEFAULT 0")
+                } catch (_: Exception) {
+                }
+            }
             }
         }
 
@@ -44,8 +60,9 @@ class JdbcSqliteOutboxQueue(
             """
             INSERT INTO outbox (
               sos_id, digest, origin, encrypted_blob, state,
-              retry_at, expires_at, last_error, created_at, updated_at
-            ) VALUES (?, ?, ?, ?, 'LOCAL_SAVED', ?, ?, NULL, ?, ?)
+              retry_at, expires_at, last_error, created_at, updated_at,
+              upload_retry_at, upload_last_error, upload_attempts
+            ) VALUES (?, ?, ?, ?, 'LOCAL_SAVED', ?, ?, NULL, ?, ?, NULL, NULL, 0)
             """.trimIndent(),
         ).use { ps ->
             ps.setString(1, input.sosId)
@@ -122,6 +139,36 @@ class JdbcSqliteOutboxQueue(
             ps.setString(2, lastError)
             ps.setString(3, sosId)
             ps.setString(4, digest)
+            ps.executeUpdate()
+        }
+    }
+
+    override suspend fun setUploadRetryAt(
+        sosId: String,
+        digest: String,
+        retryAtMs: Long,
+        lastError: String?,
+    ) {
+        connection.prepareStatement(
+            "UPDATE outbox SET upload_retry_at = ?, upload_last_error = ?, upload_attempts = upload_attempts + 1 WHERE sos_id = ? AND digest = ?",
+        ).use { ps ->
+            ps.setLong(1, retryAtMs)
+            ps.setString(2, lastError)
+            ps.setString(3, sosId)
+            ps.setString(4, digest)
+            ps.executeUpdate()
+        }
+    }
+
+    override suspend fun clearUploadRetry(
+        sosId: String,
+        digest: String,
+    ) {
+        connection.prepareStatement(
+            "UPDATE outbox SET upload_retry_at = NULL, upload_last_error = NULL WHERE sos_id = ? AND digest = ?",
+        ).use { ps ->
+            ps.setString(1, sosId)
+            ps.setString(2, digest)
             ps.executeUpdate()
         }
     }

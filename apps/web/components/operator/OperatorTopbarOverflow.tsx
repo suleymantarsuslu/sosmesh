@@ -1,9 +1,10 @@
 'use client';
 
-import { useEffect, useRef, useState } from 'react';
+import { useRef, useState } from 'react';
 
 import { LocaleSwitcher } from '../i18n/LocaleSwitcher';
 import { Button } from '../ui/Button';
+import { FixedPanel } from '../ui/FixedPanel';
 
 import { IncidentSwitcher, type IncidentOption } from './IncidentSwitcher';
 import { useOperatorPreferences } from './OperatorPreferencesProvider';
@@ -11,24 +12,12 @@ import { useOperatorPreferences } from './OperatorPreferencesProvider';
 export function OperatorTopbarOverflow({ incidents }: { incidents: IncidentOption[] }) {
   const { t, theme, setTheme } = useOperatorPreferences();
   const [open, setOpen] = useState(false);
-  const rootRef = useRef<HTMLDivElement>(null);
-
-  useEffect(() => {
-    if (!open) {
-      return;
-    }
-    const onPointerDown = (event: MouseEvent) => {
-      if (rootRef.current && !rootRef.current.contains(event.target as Node)) {
-        setOpen(false);
-      }
-    };
-    document.addEventListener('mousedown', onPointerDown);
-    return () => document.removeEventListener('mousedown', onPointerDown);
-  }, [open]);
+  const triggerRef = useRef<HTMLButtonElement>(null);
 
   return (
-    <div className="operator-topbar-overflow" ref={rootRef} data-topbar-item="overflow">
+    <div className="operator-topbar-overflow" data-topbar-item="overflow">
       <Button
+        ref={triggerRef}
         variant="ghost"
         className="operator-topbar-overflow__trigger"
         aria-expanded={open}
@@ -40,7 +29,14 @@ export function OperatorTopbarOverflow({ incidents }: { incidents: IncidentOptio
         <span aria-hidden>⋯</span>
       </Button>
       {open ? (
-        <div className="operator-topbar-overflow__panel" role="menu">
+        <FixedPanel
+          triggerRef={triggerRef}
+          className="operator-topbar-overflow__panel"
+          role="menu"
+          align="right"
+          zIndex={1000}
+          onClose={() => setOpen(false)}
+        >
           <LocaleSwitcher className="operator-topbar-overflow__locale" />
           <button
             type="button"
@@ -51,7 +47,7 @@ export function OperatorTopbarOverflow({ incidents }: { incidents: IncidentOptio
             {theme === 'light' ? t('web.shell.themeDark') : t('web.shell.themeLight')}
           </button>
           <IncidentSwitcher incidents={incidents} />
-        </div>
+        </FixedPanel>
       ) : null}
     </div>
   );

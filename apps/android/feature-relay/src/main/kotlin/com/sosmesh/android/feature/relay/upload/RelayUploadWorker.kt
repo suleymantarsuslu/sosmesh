@@ -46,6 +46,10 @@ class RelayUploadWorker
             if (earliestRetry != null) {
                 val delay = (earliestRetry - nowMs).coerceAtLeast(1_000L)
                 scheduler.scheduleUpload(nowMs, delay)
+            } else if (ownSummary.dueCount > 0 || relaySummary.dueCount > 0) {
+                scheduler.scheduleUpload(nowMs, 5_000L)
+            } else if (ownSummary.uploaded > 0 || relaySummary.uploaded > 0) {
+                scheduler.scheduleUpload(nowMs, 5_000L)
             } else if (
                 ownSummary.attempted == 0 &&
                 ownSummary.uploaded == 0 &&
@@ -54,8 +58,6 @@ class RelayUploadWorker
                 relaySummary.deferredReason == null
             ) {
                 return Result.success()
-            } else if (ownSummary.uploaded > 0 || relaySummary.uploaded > 0) {
-                scheduler.scheduleUpload(nowMs, 5_000L)
             }
             return Result.success()
         }

@@ -4,6 +4,7 @@ import {
   Headers,
   NotFoundException,
   Param,
+  ParseUUIDPipe,
   Query,
   Req,
   UseGuards,
@@ -107,7 +108,7 @@ export class OperatorPanelController {
   @Get('cases/:incidentId')
   async getCase(
     @Req() req: OperatorRequest,
-    @Param('incidentId') incidentId: string,
+    @Param('incidentId', ParseUUIDPipe) incidentId: string,
     @Query('locale') localeParam?: string,
     @Headers('accept-language') acceptLanguage?: string
   ) {

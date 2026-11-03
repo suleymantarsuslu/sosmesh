@@ -50,9 +50,15 @@ fun SosFlowScreen(
     onManualToggle: (Boolean) -> Unit,
     onManualLat: (String) -> Unit,
     onManualLng: (String) -> Unit,
+    onPhotoSelected: (android.net.Uri?) -> Unit,
+    onVoiceRecorded: (java.io.File?) -> Unit,
+    onStartRecording: () -> Unit,
+    onStopRecording: (Boolean) -> Unit,
     onContinue: () -> Unit,
     onBackFromPreview: () -> Unit,
     onConfirm: () -> Unit,
+    onNavigateToStatus: () -> Unit = {},
+    onDismissConfirmation: () -> Unit = {},
     modifier: Modifier = Modifier,
 ) {
     val title =
@@ -77,6 +83,10 @@ fun SosFlowScreen(
                     onManualToggle = onManualToggle,
                     onManualLat = onManualLat,
                     onManualLng = onManualLng,
+                    onPhotoSelected = onPhotoSelected,
+                    onVoiceRecorded = onVoiceRecorded,
+                    onStartRecording = onStartRecording,
+                    onStopRecording = onStopRecording,
                     onContinue = onContinue,
                     contentModifier = contentModifier,
                 )
@@ -93,6 +103,14 @@ fun SosFlowScreen(
                     contentModifier = contentModifier,
                 )
         }
+        
+        if (state.showConfirmationDialog && state.savedMessageId != null) {
+            SosSentConfirmationDialog(
+                sosId = state.savedMessageId,
+                onDismiss = onDismissConfirmation,
+                onNavigateToStatus = onNavigateToStatus,
+            )
+        }
     }
 }
 
@@ -106,6 +124,10 @@ private fun SosFormScreen(
     onManualToggle: (Boolean) -> Unit,
     onManualLat: (String) -> Unit,
     onManualLng: (String) -> Unit,
+    onPhotoSelected: (android.net.Uri?) -> Unit,
+    onVoiceRecorded: (java.io.File?) -> Unit,
+    onStartRecording: () -> Unit,
+    onStopRecording: (Boolean) -> Unit,
     onContinue: () -> Unit,
     contentModifier: Modifier,
 ) {
@@ -155,6 +177,23 @@ private fun SosFormScreen(
             label = { Text(stringResource(R.string.sos_note_label)) },
             placeholder = { Text(stringResource(R.string.sos_note_hint)) },
             modifier = Modifier.fillMaxWidth().testTag("sos_note"),
+        )
+        MediaAttachmentSection(
+            hasPhoto = state.photoUri != null,
+            photoUri = state.photoUri,
+            hasVoice = state.voiceFile != null,
+            voiceDuration = state.voiceDuration,
+            isRecording = state.isRecording,
+            onPhotoSelected = onPhotoSelected,
+            onVoiceRecorded = { file ->
+                onVoiceRecorded(file)
+                onStopRecording(file != null)
+            },
+            onStartRecording = onStartRecording,
+            onStopRecording = onStopRecording,
+            onRemovePhoto = { onPhotoSelected(null) },
+            onRemoveVoice = { onVoiceRecorded(null) },
+            modifier = Modifier.fillMaxWidth()
         )
         LocationSection(
             location = state.gpsLocation,

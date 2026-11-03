@@ -25,6 +25,14 @@ enum PhoneWatchCompanionBootstrap {
         if let env = ProcessInfo.processInfo.environment["SOURCE_ROOT"], !env.isEmpty {
             return env
         }
+        // On device the transport fixture is bundled under Resources/packages/fixtures/transport.
+        if let resourcePath = Bundle.main.resourcePath {
+            let bundled = URL(fileURLWithPath: resourcePath)
+                .appendingPathComponent("packages/fixtures/transport/state-transitions.json")
+            if FileManager.default.fileExists(atPath: bundled.path) {
+                return resourcePath
+            }
+        }
         var url = URL(fileURLWithPath: #filePath).deletingLastPathComponent()
         for _ in 0 ..< 8 {
             let fixture = url.appendingPathComponent("packages/fixtures/transport/state-transitions.json")

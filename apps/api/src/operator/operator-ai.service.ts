@@ -11,6 +11,9 @@ import { AiJobQueueService } from '../ai/ai-job-queue.service';
 import { LocaleContentService, type OperatorLocale } from '../ai/locale-content.service';
 import type { AiStatusView } from '../ai/contracts/ai-status-view';
 import type { AiTriageView, UrgencySuggestion } from '../ai/contracts/ai-triage-view';
+import type { CaseAiBundleView, SparkVisionPanelView } from '../ai/contracts/case-ai-bundle-view';
+import type { IncidentLinkSuggestionView } from '../ai/contracts/link-suggestion-view';
+import type { TranscriptView } from '../ai/contracts/transcript-view';
 
 @Injectable()
 export class OperatorAiService {
@@ -103,6 +106,87 @@ export class OperatorAiService {
     };
   }
 
+  /**
+   * Everything the case detail AI panel renders, in one call:
+   * triage summary, latest transcript, photo scene analysis and link suggestions.
+   */
+  async getCaseAiBundle(incidentId: string, locale: OperatorLocale = 'tr'): Promise<CaseAiBundleView> {
+    const [triage, attachments, suggestions] = await Promise.all([
+      this.getCaseAi(incidentId, locale),
+      this.prisma.attachment.findMany({
+        where: { incidentId },
+        include: { transcript: true, visionAnalysis: true },
+        orderBy: { createdAt: 'desc' },
+      }),
+      this.prisma.incidentLinkSuggestion.findMany({
+        where: { OR: [{ incidentAId: incidentId }, { incidentBId: incidentId }] },
+        include: { decidedBy: { select: { id: true, displayName: true } } },
+        orderBy: { createdAt: 'desc' },
+      }),
+    ]);
+
+    const withTranscript = attachments.find((a) => a.transcript);
+    const transcript: TranscriptView | null = withTranscript?.transcript
+      ? {
+          attachmentId: withTranscript.id,
+          model: withTranscript.transcript.model,
+          transcript: withTranscript.transcript.transcript,
+          turns: withTranscript.transcript.turns as TranscriptView['turns'],
+          language: withTranscript.transcript.language,
+          audioDurationMs: withTranscript.transcript.audioDurationMs,
+          createdAt: withTranscript.transcript.createdAt.toISOString(),
+        }
+      : null;
+
+    const withVision = attachments.find((a) => a.visionAnalysis);
+    const sparkVision: SparkVisionPanelView | null = withVision?.visionAnalysis
+      ? this.toSparkVision(withVision.id, withVision.visionAnalysis)
+      : null;
+
+    const linkSuggestions: IncidentLinkSuggestionView[] = suggestions.map((s) => ({
+      id: s.id,
+      incidentAId: s.incidentAId,
+      incidentBId: s.incidentBId,
+      score: Number(s.score),
+      deterministicSignals: s.deterministicSignals as unknown as IncidentLinkSuggestionView['deterministicSignals'],
+      aiRationale: s.aiRationale,
+      status: s.status as IncidentLinkSuggestionView['status'],
+      decidedBy: s.decidedBy ? { userId: s.decidedBy.id, displayName: s.decidedBy.displayName } : null,
+      decidedAt: s.decidedAt?.toISOString() ?? null,
+      createdAt: s.createdAt.toISOString(),
+    }));
+
+    return { triage, transcript, sparkVision, samVision: null, linkSuggestions };
+  }
+
+  private toSparkVision(
+    attachmentId: string,
+    analysis: { sparkSummary: unknown; sparkModel: string; createdAt: Date }
+  ): SparkVisionPanelView {
+    const raw = (analysis.sparkSummary ?? {}) as Record<string, unknown>;
+    const strings = (value: unknown): string[] =>
+      Array.isArray(value) ? value.filter((v): v is string => typeof v === 'string') : [];
+    const limitations = strings(raw.limitations);
+    const confidence = raw.confidence;
+
+    return {
+      attachmentId,
+      model: analysis.sparkModel,
+      summary: {
+        description: typeof raw.sceneSummary === 'string' ? raw.sceneSummary : '',
+        visibleObjects: [],
+        estimatedPersonCount: null,
+        hazardsVisible: strings(raw.visibleHazards),
+        uncertainty: limitations.length > 0 ? limitations.join('; ') : null,
+        possiblePeopleIndicators:
+          typeof raw.possiblePeopleIndicators === 'string' ? raw.possiblePeopleIndicators : null,
+        accessIssues: strings(raw.accessIssues),
+        confidence: confidence === 'low' || confidence === 'medium' || confidence === 'high' ? confidence : null,
+      },
+      analyzedAt: analysis.createdAt.toISOString(),
+    };
+  }
+
   private async getLastAnalysisTime(): Promise<string | null> {
     const last = await this.prisma.aiAnalysis.findFirst({
       where: { status: 'completed' },
@@ -124,7 +208,7 @@ export class OperatorAiService {
       NO_PLAINTEXT: 'unavailable',
     };
 
-    return map[status] ?? 'pending';
+    return map[status.toUpperCase()] ?? 'pending';
   }
 
   private parseJsonArray(value: unknown): unknown[] {

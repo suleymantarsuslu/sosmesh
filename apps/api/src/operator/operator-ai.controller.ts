@@ -9,6 +9,7 @@ import { OperatorAiService } from './operator-ai.service';
 import { LocaleContentService } from '../ai/locale-content.service';
 import type { AiStatusView } from '../ai/contracts/ai-status-view';
 import type { AiTriageView } from '../ai/contracts/ai-triage-view';
+import type { CaseAiBundleView } from '../ai/contracts/case-ai-bundle-view';
 
 @Controller('v1/operator/ai')
 @UseGuards(OperatorAuthGuard)
@@ -37,5 +38,15 @@ export class OperatorCaseAiController {
   ): Promise<AiTriageView | null> {
     const locale = this.localeContent.resolveLocale(localeParam, acceptLanguage);
     return this.aiService.getCaseAi(incidentId, locale);
+  }
+
+  @Get('bundle')
+  async getCaseAiBundle(
+    @Param('incidentId') incidentId: string,
+    @Query('locale') localeParam?: string,
+    @Headers('accept-language') acceptLanguage?: string
+  ): Promise<CaseAiBundleView> {
+    const locale = this.localeContent.resolveLocale(localeParam, acceptLanguage);
+    return this.aiService.getCaseAiBundle(incidentId, locale);
   }
 }

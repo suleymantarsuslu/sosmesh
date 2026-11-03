@@ -2,10 +2,12 @@ import {
   Body,
   Controller,
   Get,
+  Headers,
   NotFoundException,
   Param,
   Patch,
   Post,
+  Query,
   Req,
   UseGuards,
 } from '@nestjs/common';
@@ -13,6 +15,7 @@ import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
 import { OperatorReviewStatus } from '@prisma/client';
 import { IsEnum, IsInt, IsNumber, IsObject, IsOptional, Min, ValidateIf } from 'class-validator';
 
+import { LocaleContentService } from '../ai/locale-content.service';
 import { OperatorAuthGuard, OperatorRequest } from '../operator/guards/operator-auth.guard';
 import { OperatorCsrfGuard } from '../operator/guards/operator-csrf.guard';
 import { RolesGuard } from '../operator/guards/roles.guard';
@@ -68,12 +71,19 @@ class AiOverrideDto {
 export class OperatorCaseEventsController {
   constructor(
     private readonly actions: OperatorCaseActionsService,
-    private readonly cases: OperatorCasesService
+    private readonly cases: OperatorCasesService,
+    private readonly localeContent: LocaleContentService
   ) {}
 
   @Get(':incidentId/detail')
-  async getDetail(@Req() req: OperatorRequest, @Param('incidentId') incidentId: string) {
-    const detail = await this.cases.getCaseDetail(req.operatorUser, incidentId);
+  async getDetail(
+    @Req() req: OperatorRequest,
+    @Param('incidentId') incidentId: string,
+    @Query('locale') localeParam?: string,
+    @Headers('accept-language') acceptLanguage?: string
+  ) {
+    const locale = this.localeContent.resolveLocale(localeParam, acceptLanguage);
+    const detail = await this.cases.getCaseDetail(req.operatorUser, incidentId, locale);
     if (!detail) {
       throw new NotFoundException({ code: 'NOT_FOUND', message: 'Case not found' });
     }

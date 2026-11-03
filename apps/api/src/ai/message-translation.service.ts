@@ -64,6 +64,10 @@ export class MessageTranslationService {
 
     const cached = await this.getCachedTranslation('sos_message', messageId, 'noteText', targetLocale);
     if (cached) {
+      if (cached.sourceLanguage === targetLocale) {
+        // Cached "already in the operator language" marker - no model call, no translation.
+        return null;
+      }
       return {
         translatedText: cached.translatedText,
         detectedLanguage: cached.sourceLanguage,
@@ -105,6 +109,7 @@ Provide:
 
       if (!response.ok) {
         this.logger.error({ msg: 'Translation failed', error: 'error' in response ? response.error : 'unknown' });
+        await this.releaseReservation(reservation.reservationId);
         return null;
       }
 
@@ -128,6 +133,16 @@ Provide:
           messageId,
           language: detectedLang,
         });
+        await this.reconcileResponse(reservation.reservationId, response);
+        await this.cacheTranslation({
+          sourceType: 'sos_message',
+          sourceId: messageId,
+          sourceField: 'noteText',
+          sourceLanguage: detectedLang,
+          targetLanguage: targetLocale,
+          translatedText: originalText,
+          modelVersion: response.model,
+        });
         return null;
       }
 
@@ -138,6 +153,7 @@ Provide:
           detectedLang,
           heuristicLang,
         });
+        await this.reconcileResponse(reservation.reservationId, response);
         return null;
       }
 
@@ -185,6 +201,7 @@ Provide:
         messageId,
         error: error instanceof Error ? error.message : 'unknown',
       });
+      await this.releaseReservation(reservation.reservationId);
       return null;
     }
   }
@@ -205,6 +222,9 @@ Provide:
 
     const cached = await this.getCachedTranslation('ai_transcript', transcriptId, 'transcript', targetLocale);
     if (cached) {
+      if (cached.sourceLanguage === targetLocale) {
+        return null;
+      }
       return {
         translatedText: cached.translatedText,
         detectedLanguage: cached.sourceLanguage,
@@ -246,6 +266,7 @@ Provide:
 
       if (!response.ok) {
         this.logger.error({ msg: 'Transcript translation failed', error: 'error' in response ? response.error : 'unknown' });
+        await this.releaseReservation(reservation.reservationId);
         return null;
       }
 
@@ -269,6 +290,17 @@ Provide:
           transcriptId,
           language: detectedLang,
         });
+        // Record the spend and remember the verdict so the model is not called again on every refresh.
+        await this.reconcileResponse(reservation.reservationId, response);
+        await this.cacheTranslation({
+          sourceType: 'ai_transcript',
+          sourceId: transcriptId,
+          sourceField: 'transcript',
+          sourceLanguage: detectedLang,
+          targetLanguage: targetLocale,
+          translatedText: originalText,
+          modelVersion: response.model,
+        });
         return null;
       }
 
@@ -279,6 +311,7 @@ Provide:
           detectedLang,
           heuristicLang,
         });
+        await this.reconcileResponse(reservation.reservationId, response);
         return null;
       }
 
@@ -326,6 +359,7 @@ Provide:
         transcriptId,
         error: error instanceof Error ? error.message : 'unknown',
       });
+      await this.releaseReservation(reservation.reservationId);
       return null;
     }
   }
@@ -366,6 +400,39 @@ Provide:
     }
     
     return 'unknown';
+  }
+
+  private async reconcileResponse(
+    reservationId: string,
+    response: {
+      model: string;
+      requestId: string;
+      usage: { inputTokens: number; outputTokens: number };
+    }
+  ): Promise<void> {
+    await this.budgetGuard.reconcile({
+      reservationId,
+      actualUsd: this.metaClient.computeCost(
+        response.model,
+        response.usage.inputTokens,
+        response.usage.outputTokens
+      ),
+      inputTokens: response.usage.inputTokens,
+      outputTokens: response.usage.outputTokens,
+      model: response.model,
+      requestId: response.requestId,
+    });
+  }
+
+  private async releaseReservation(reservationId: string): Promise<void> {
+    await this.budgetGuard.reconcile({
+      reservationId,
+      actualUsd: 0,
+      inputTokens: 0,
+      outputTokens: 0,
+      model: 'none',
+      requestId: 'failed',
+    });
   }
 
   private async getCachedTranslation(

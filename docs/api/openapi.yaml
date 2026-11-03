@@ -17,6 +17,53 @@ paths:
         "200":
           description: ""
       tags: *a1
+  /v1/operator/cases/{caseId}/attachments:
+    post:
+      operationId: AttachmentsController_uploadAudio
+      parameters:
+        - name: caseId
+          required: true
+          in: path
+          schema:
+            type: string
+      responses:
+        "201":
+          description: ""
+  /v1/operator/attachments/{attachmentId}/audio:
+    get:
+      operationId: AttachmentsController_streamAudio
+      parameters:
+        - name: attachmentId
+          required: true
+          in: path
+          schema:
+            type: string
+      responses:
+        "200":
+          description: ""
+  /v1/device/attachments:
+    post:
+      operationId: DeviceAttachmentsController_uploadAttachment
+      parameters:
+        - name: x-upload-token
+          required: true
+          in: header
+          schema:
+            type: string
+      responses:
+        "201":
+          description: ""
+  /v1/operator/organization/context:
+    get:
+      operationId: OrganizationController_context
+      parameters: []
+      responses:
+        "200":
+          description: ""
+      tags:
+        - organization
+      security:
+        - bearer: []
   /v1/auth/login:
     post:
       operationId: AuthController_login
@@ -173,6 +220,30 @@ paths:
           in: path
           schema:
             type: string
+        - name: locale
+          required: true
+          in: query
+          schema:
+            type: string
+        - name: accept-language
+          required: true
+          in: header
+          schema:
+            type: string
+      responses:
+        "200":
+          description: ""
+      tags: *a3
+      security: *a4
+  /v1/operator/cases/{incidentId}/attachments:
+    get:
+      operationId: OperatorPanelController_listCaseAttachments
+      parameters:
+        - name: incidentId
+          required: true
+          in: path
+          schema:
+            type: string
       responses:
         "200":
           description: ""
@@ -217,6 +288,62 @@ paths:
           in: path
           schema:
             type: string
+        - name: locale
+          required: true
+          in: query
+          schema:
+            type: string
+        - name: accept-language
+          required: true
+          in: header
+          schema:
+            type: string
+      responses:
+        "200":
+          description: ""
+  /v1/operator/cases/{incidentId}/ai/bundle:
+    get:
+      operationId: OperatorCaseAiController_getCaseAiBundle
+      parameters:
+        - name: incidentId
+          required: true
+          in: path
+          schema:
+            type: string
+        - name: locale
+          required: true
+          in: query
+          schema:
+            type: string
+        - name: accept-language
+          required: true
+          in: header
+          schema:
+            type: string
+      responses:
+        "200":
+          description: ""
+  /v1/operator/attachments/{id}/image:
+    get:
+      operationId: OperatorAttachmentsController_getImage
+      parameters:
+        - name: id
+          required: true
+          in: path
+          schema:
+            type: string
+      responses:
+        "200":
+          description: ""
+  /v1/operator/attachments/{id}/masks:
+    get:
+      operationId: OperatorAttachmentsController_getMasks
+      parameters:
+        - name: id
+          required: true
+          in: path
+          schema:
+            type: string
       responses:
         "200":
           description: ""
@@ -227,17 +354,62 @@ paths:
       responses:
         "201":
           description: ""
-  /v1/operator/organization/context:
+  /v1/operator/link-suggestions/{id}/confirm:
+    post:
+      operationId: OperatorFusionController_confirmLinkSuggestion
+      parameters:
+        - name: id
+          required: true
+          in: path
+          schema:
+            type: string
+      responses:
+        "200":
+          description: ""
+  /v1/operator/link-suggestions/{id}/reject:
+    post:
+      operationId: OperatorFusionController_rejectLinkSuggestion
+      parameters:
+        - name: id
+          required: true
+          in: path
+          schema:
+            type: string
+      responses:
+        "200":
+          description: ""
+  /v1/operator/cases/{incidentId}/links:
     get:
-      operationId: OrganizationController_context
+      operationId: OperatorFusionController_getCaseLinks
+      parameters:
+        - name: incidentId
+          required: true
+          in: path
+          schema:
+            type: string
+      responses:
+        "200":
+          description: ""
+  /v1/operator/copilot/ask:
+    post:
+      operationId: OperatorCopilotController_ask
+      parameters: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/AskCopilotDto"
+      responses:
+        "200":
+          description: ""
+  /v1/operator/ai/situation-summary:
+    get:
+      operationId: OperatorCopilotController_getSituationSummary
       parameters: []
       responses:
         "200":
           description: ""
-      tags:
-        - organization
-      security:
-        - bearer: []
   /v1/public/messages/{messageId}/status:
     get:
       operationId: PublicController_messageStatus
@@ -291,6 +463,16 @@ paths:
         - name: incidentId
           required: true
           in: path
+          schema:
+            type: string
+        - name: locale
+          required: true
+          in: query
+          schema:
+            type: string
+        - name: accept-language
+          required: true
+          in: header
           schema:
             type: string
       responses:
@@ -415,6 +597,40 @@ paths:
         - operator-coordination
       security: &a8
         - bearer: []
+    post:
+      operationId: CoordinationController_createTeam
+      parameters: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateTeamDto"
+      responses:
+        "201":
+          description: ""
+      tags: *a7
+      security: *a8
+  /v1/operator/teams/{id}:
+    patch:
+      operationId: CoordinationController_updateTeam
+      parameters:
+        - name: id
+          required: true
+          in: path
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UpdateTeamDto"
+      responses:
+        "200":
+          description: ""
+      tags: *a7
+      security: *a8
   /v1/operator/resources:
     get:
       operationId: CoordinationController_listResources
@@ -434,6 +650,26 @@ paths:
       parameters: []
       responses:
         "201":
+          description: ""
+      tags: *a7
+      security: *a8
+  /v1/operator/resources/{id}:
+    patch:
+      operationId: CoordinationController_updateResource
+      parameters:
+        - name: id
+          required: true
+          in: path
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UpdateResourceDto"
+      responses:
+        "200":
           description: ""
       tags: *a7
       security: *a8
@@ -792,6 +1028,9 @@ components:
     CreateOperatorMessageDto:
       type: object
       properties: {}
+    AskCopilotDto:
+      type: object
+      properties: {}
     IngestRequestDto:
       type: object
       properties: {}
@@ -805,5 +1044,14 @@ components:
       type: object
       properties: {}
     IngestBatchRequestDto:
+      type: object
+      properties: {}
+    CreateTeamDto:
+      type: object
+      properties: {}
+    UpdateTeamDto:
+      type: object
+      properties: {}
+    UpdateResourceDto:
       type: object
       properties: {}

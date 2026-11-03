@@ -8,3 +8,4 @@ export * from './transcript-view';
 export * from './vision-view';
 export * from './link-suggestion-view';
 export * from './ai-status-view';
+export * from './case-ai-bundle-view';

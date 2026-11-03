@@ -42,7 +42,7 @@ test.describe('Operator map and case list', () => {
   test('live feed adds a new case row', async ({ page }) => {
     await login(page);
     await page.goto('/operator/cases');
-    await expect(page.getByTestId('live-feed-status')).toContainText('Canlı');
+    await expect(page.getByTestId('live-feed-status')).toContainText('Live feed');
     await expect(page.getByTestId('cases-a11y-table')).toContainText(/e2e33333|e2e44444/, {
       timeout: 15000,
     });

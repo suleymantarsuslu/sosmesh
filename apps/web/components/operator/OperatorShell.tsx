@@ -12,6 +12,7 @@ import { CommandPalette } from './CommandPalette';
 import { DemoModeBanner } from './DemoModeBanner';
 import { IncidentSwitcher } from './IncidentSwitcher';
 import { MobileNavDrawer } from './MobileNavDrawer';
+import { OperatorLiveStatus } from './OperatorLiveStatus';
 import { useOperatorPreferences } from './OperatorPreferencesProvider';
 import { OrgHeader } from './OrgHeader';
 import { SavedViewsMenu } from './SavedViewsMenu';
@@ -39,6 +40,20 @@ function navItemsForRole(role: string, t: (key: string) => string) {
   }));
 }
 
+const NAV_ICONS: Record<string, string> = {
+  '/operator/dashboard': '▣',
+  '/operator/cases': '◎',
+  '/operator/tasks': '☑',
+  '/operator/teams': '◉',
+  '/operator/activity': '↻',
+  '/operator/health': '♥',
+  '/operator/audit': '⌁',
+  '/operator/help': '?',
+  '/operator/admin': '⚙',
+};
+
+const SIDEBAR_KEY = 'sosmesh-sidebar-collapsed-v1';
+
 export function OperatorShell({
   children,
   user,
@@ -54,6 +69,23 @@ export function OperatorShell({
   const { context } = useOrganizationContext();
   const [paletteOpen, setPaletteOpen] = useState(false);
   const [drawerOpen, setDrawerOpen] = useState(false);
+  const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
+
+  useEffect(() => {
+    try {
+      setSidebarCollapsed(window.localStorage.getItem(SIDEBAR_KEY) === '1');
+    } catch {
+      setSidebarCollapsed(false);
+    }
+  }, []);
+
+  const toggleSidebar = () => {
+    setSidebarCollapsed((prev) => {
+      const next = !prev;
+      window.localStorage.setItem(SIDEBAR_KEY, next ? '1' : '0');
+      return next;
+    });
+  };
 
   const items = useMemo(
     () => navItemsForRole(user.role, t),
@@ -78,7 +110,13 @@ export function OperatorShell({
   }
 
   return (
-    <div className="operator-layout">
+    <div
+      className={
+        sidebarCollapsed
+          ? 'operator-layout operator-layout--sidebar-collapsed'
+          : 'operator-layout'
+      }
+    >
       <a href="#operator-main" className="skip-link">
         {t('a11y.skipToMain')}
       </a>
@@ -92,15 +130,28 @@ export function OperatorShell({
           teamName={context?.team?.name ?? null}
           role={user.role}
         />
-        <nav>
+        <Button
+          variant="ghost"
+          className="operator-sidebar__toggle"
+          onClick={toggleSidebar}
+          aria-expanded={!sidebarCollapsed}
+          data-testid="operator-sidebar-toggle"
+        >
+          {sidebarCollapsed ? t('web.shell.sidebarExpand') : t('web.shell.sidebarCollapse')}
+        </Button>
+        <nav className="operator-sidebar__nav">
           <ul>
             {items.map((item) => (
               <li key={item.href}>
                 <Link
                   href={item.href}
                   aria-current={pathname === item.href ? 'page' : undefined}
+                  title={item.label}
                 >
-                  {item.label}
+                  <span className="operator-nav-icon" aria-hidden>
+                    {NAV_ICONS[item.href] ?? '•'}
+                  </span>
+                  <span className="operator-nav-label">{item.label}</span>
                 </Link>
               </li>
             ))}
@@ -129,6 +180,7 @@ export function OperatorShell({
           >
             {t('web.shell.mobileMenu')}
           </Button>
+          <OperatorLiveStatus />
           <IncidentSwitcher incidents={context?.incidents ?? []} />
           <Suspense fallback={null}>
             <SavedViewsMenu />

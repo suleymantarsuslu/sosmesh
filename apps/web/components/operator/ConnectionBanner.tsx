@@ -2,11 +2,14 @@
 
 import { useEffect, useState } from 'react';
 
+import { useOperatorPreferences } from './OperatorPreferencesProvider';
+
 type Props = {
   onReconnect?: () => void;
 };
 
 export function ConnectionBanner({ onReconnect }: Props) {
+  const { t } = useOperatorPreferences();
   const [disconnected, setDisconnected] = useState(false);
 
   useEffect(() => {
@@ -45,7 +48,7 @@ export function ConnectionBanner({ onReconnect }: Props) {
 
   return (
     <div className="ui-connection-banner" role="status" data-testid="connection-disconnected">
-      Canlı bağlantı kesildi — yedek senkronizasyon etkin.
+      {t('web.shell.connectionLost')}
     </div>
   );
 }

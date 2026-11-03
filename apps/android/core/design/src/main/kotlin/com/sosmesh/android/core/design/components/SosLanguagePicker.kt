@@ -29,6 +29,12 @@ fun SosLanguagePicker(
         )
         Row(horizontalArrangement = Arrangement.spacedBy(SosSpacing.xs)) {
             FilterChip(
+                selected = selectedLanguageTag == "system",
+                onClick = { onLanguageSelected("system") },
+                label = { Text(stringResource(R.string.design_language_system)) },
+                modifier = Modifier.testTag("language_option_system"),
+            )
+            FilterChip(
                 selected = selectedLanguageTag == "en",
                 onClick = { onLanguageSelected("en") },
                 label = { Text(stringResource(R.string.design_language_english)) },

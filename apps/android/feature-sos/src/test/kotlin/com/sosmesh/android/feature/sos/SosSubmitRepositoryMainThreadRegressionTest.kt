@@ -4,6 +4,7 @@ import androidx.room.Room
 import androidx.test.core.app.ApplicationProvider
 import com.sosmesh.android.core.data.fixtures.AndroidStateTransitionLoader
 import com.sosmesh.android.core.data.outbox.OutboxDatabase
+import com.sosmesh.android.core.data.outbox.OutboxUploadScheduler
 import com.sosmesh.android.core.data.outbox.RoomOutboxQueueAdapter
 import com.sosmesh.android.core.data.sos.DevTestCryptoConfig
 import com.sosmesh.android.core.data.sos.LocationSnapshot
@@ -43,8 +44,20 @@ class SosSubmitRepositoryMainThreadRegressionTest {
             SosSubmitRepository(
                 composer = SosMessageComposer(DevTestCryptoConfig.config()),
                 outbox = adapter,
+                uploadScheduler = NoOpUploadScheduler,
                 ioDispatcher = Dispatchers.IO,
             )
+    }
+
+    private object NoOpUploadScheduler : OutboxUploadScheduler {
+        override fun scheduleUpload(
+            nowMs: Long,
+            delayMs: Long,
+        ) {
+        }
+
+        override fun cancelUpload() {
+        }
     }
 
     @After

@@ -12,6 +12,7 @@ import { OperatorCasesService } from './operator-cases.service';
 import { OperatorCaseActionsService } from './operator-case-actions.service';
 import { OperatorAiController, OperatorCaseAiController } from './operator-ai.controller';
 import { OperatorAiService } from './operator-ai.service';
+import { DemoSosController } from './demo-sos.controller';
 
 @Module({
   imports: [OrganizationModule, AiModule],
@@ -20,6 +21,7 @@ import { OperatorAiService } from './operator-ai.service';
     OperatorPanelController,
     OperatorAiController,
     OperatorCaseAiController,
+    DemoSosController,
   ],
   providers: [
     OperatorAuthGuard,

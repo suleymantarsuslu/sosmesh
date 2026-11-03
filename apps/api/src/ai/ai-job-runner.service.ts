@@ -11,6 +11,7 @@ import { TriageV2Service } from './triage-v2.service';
 import { SosPlaintextSource, SOS_PLAINTEXT_SOURCE } from './sos-plaintext-source';
 import { PrismaService } from '../prisma/prisma.service';
 import { Inject } from '@nestjs/common';
+import { VoiceTranscriptionService } from './voice/voice-transcription.service';
 
 @Injectable()
 export class AiJobRunnerService {
@@ -21,7 +22,8 @@ export class AiJobRunnerService {
     private readonly queue: AiJobQueueService,
     private readonly triage: TriageV2Service,
     private readonly prisma: PrismaService,
-    @Inject(SOS_PLAINTEXT_SOURCE) private readonly plaintextSource: SosPlaintextSource
+    @Inject(SOS_PLAINTEXT_SOURCE) private readonly plaintextSource: SosPlaintextSource,
+    private readonly voiceTranscription: VoiceTranscriptionService
   ) {}
 
   /**
@@ -72,8 +74,7 @@ export class AiJobRunnerService {
           await this.processTriage(job);
           break;
         case 'transcribe':
-          this.logger.warn({ msg: 'Transcribe not implemented yet', jobId: job.id });
-          await this.queue.complete(job.id);
+          await this.processTranscribe(job);
           break;
         case 'vision':
           this.logger.warn({ msg: 'Vision not implemented yet', jobId: job.id });
@@ -140,6 +141,33 @@ export class AiJobRunnerService {
     } else {
       const errorMsg = 'error' in result ? result.error : 'unknown_error';
       await this.queue.fail(job.id, errorMsg);
+    }
+  }
+
+  private async processTranscribe(job: AiJob): Promise<void> {
+    if (!job.attachmentId) {
+      await this.queue.fail(job.id, 'Missing attachmentId');
+      return;
+    }
+
+    const result = await this.voiceTranscription.processTranscription(job.attachmentId);
+
+    if (result.success) {
+      this.logger.log({
+        msg: 'Transcription job completed',
+        jobId: job.id,
+        transcriptId: result.transcriptId,
+        triageJobId: result.triageJobId,
+      });
+      await this.queue.complete(job.id);
+    } else {
+      const errorMsg = result.error ?? result.reason;
+      
+      if (result.reason === 'unavailable' || result.reason === 'budget_exceeded') {
+        await this.queue.requiresReview(job.id, errorMsg);
+      } else {
+        await this.queue.fail(job.id, errorMsg);
+      }
     }
   }
 

@@ -64,9 +64,14 @@ struct StatusView: View {
                     timelineStep(
                         title: "status.timeline.2",
                         reached: hopReached(entry.state, "PEER_RECEIVED"),
-                        isLast: true
+                        isLast: false
                     )
                     .accessibilityHint(Text("status.peer_not_server"))
+                    timelineStep(
+                        title: "status.timeline.3",
+                        reached: hopReached(entry.state, "SERVER_ACCEPTED"),
+                        isLast: true
+                    )
                 }
                 
                 HStack(spacing: DesignSystem.Spacing.xxs) {

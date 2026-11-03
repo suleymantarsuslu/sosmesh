@@ -17,6 +17,7 @@
 "status.empty" = "Henüz SOS gönderilmedi";
 "status.timeline.1" = "CİHAZDA KAYITLI";
 "status.timeline.2" = "YAKIN CİHAZA AKTARILDI";
+"status.timeline.3" = "SOSMESH SUNUCUSUNA ULAŞTI";
 "status.disclaimer" = "Bu durum teknik bilgidir; müdahale garantisi vermez.";
 "relay.title" = "Relay Modu";
 "relay.toggle.on" = "Relay";

@@ -24,7 +24,8 @@ public final class BlePeripheralCoordinator: NSObject, BlePeripheralCoordinating
         return manager
     }
 
-    public func startTransferService(on peripheral: CBPeripheralManager) {
+    @discardableResult
+    public func startTransferService(on peripheral: CBPeripheralManager) -> [CBMutableCharacteristic] {
         let service = CBMutableService(type: CBUUID(string: BleMeshConstants.serviceUUID), primary: true)
         let control = CBMutableCharacteristic(
             type: CBUUID(string: BleMeshConstants.controlCharacteristicUUID),
@@ -46,6 +47,7 @@ public final class BlePeripheralCoordinator: NSObject, BlePeripheralCoordinating
         )
         service.characteristics = [control, data, ack]
         peripheral.add(service)
+        return [control, data, ack]
     }
 
     public func peripheralManagerDidUpdateState(_ peripheral: CBPeripheralManager) {

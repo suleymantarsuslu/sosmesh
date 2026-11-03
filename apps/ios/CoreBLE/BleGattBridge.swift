@@ -7,6 +7,8 @@ public final class BleGattServerBridge: NSObject, GattServerPort, CBPeripheralMa
     private var writeListener: GattServerWriteListener?
     private var characteristics: [String: CBMutableCharacteristic] = [:]
     private let queue = DispatchQueue(label: "com.sosmesh.ble.gatt-server")
+    private var pendingAdvertisement: [String: Any]?
+    private var serviceAdded = false
 
     public override init() {
         super.init()
@@ -24,15 +26,12 @@ public final class BleGattServerBridge: NSObject, GattServerPort, CBPeripheralMa
             return .failure(NSError(domain: "BleGattServer", code: 2, userInfo: [NSLocalizedDescriptionKey: "Bluetooth not powered on"]))
         }
         let coordinator = BlePeripheralCoordinator()
-        coordinator.startTransferService(on: peripheralManager)
+        let createdCharacteristics = coordinator.startTransferService(on: peripheralManager)
         characteristics.removeAll()
-        peripheralManager.services?.forEach { service in
-            service.characteristics?.forEach { characteristic in
-                if let mutable = characteristic as? CBMutableCharacteristic {
-                    characteristics[characteristic.uuid.uuidString.uppercased()] = mutable
-                }
-            }
+        for characteristic in createdCharacteristics {
+            characteristics[characteristic.uuid.uuidString.uppercased()] = characteristic
         }
+        serviceAdded = true
         var advertisement: [String: Any] = [
             CBAdvertisementDataServiceUUIDsKey: [CBUUID(string: BleMeshConstants.serviceUUID)],
         ]
@@ -55,6 +54,14 @@ public final class BleGattServerBridge: NSObject, GattServerPort, CBPeripheralMa
         }
         let ok = peripheralManager.updateValue(value, for: characteristic, onSubscribedCentrals: nil)
         return ok ? .success(()) : .failure(NSError(domain: "BleGattServer", code: 4, userInfo: nil))
+    }
+
+    public func peripheralManagerDidUpdateState(_ peripheral: CBPeripheralManager) {
+        guard peripheral.state == .poweredOn, let pendingAdvertisement, serviceAdded else {
+            return
+        }
+        peripheral.startAdvertising(pendingAdvertisement)
+        self.pendingAdvertisement = nil
     }
 
     public func peripheralManager(_ peripheral: CBPeripheralManager, didReceiveWrite requests: [CBATTRequest]) {

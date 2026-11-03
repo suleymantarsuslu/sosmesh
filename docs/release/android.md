@@ -19,8 +19,8 @@
 | Flavor | applicationId | INGEST tabanı (BuildConfig) | DEMO etiketi |
 | --- | --- | --- | --- |
 | demo | `com.sosmesh.android.demo` | `https://api.demo.sosmesh.local` | Açık (release dahil) |
-| staging | `…android.staging` | `https://sosmesh.antiosoft.com` (VULUT Coolify) | Kapalı |
-| prod (varsayılan) | `com.sosmesh.android` | `https://sosmesh.antiosoft.com` (VULUT Coolify) | Kapalı |
+| staging | `…android.staging` | `https://sosmesh.antiosoft.com` (VULUT Coolify, pending) | Kapalı |
+| prod (varsayılan) | `com.sosmesh.android` | `https://sosmesh.antiosoft.com` (VULUT Coolify, pending) | Kapalı |
 
 Receipt doğrulama public key hâlâ boş placeholder — production dağıtım **BLOCKED_APPROVAL** (`RelayIngestConfig.PROD_RECEIPT_PUBLIC_KEY_PLACEHOLDER`).
 

@@ -99,15 +99,15 @@ nginx/ingress şablonları HSTS ve TLS 1.2+ içerir.
 |-------|-----|----------------|-------|
 | development | local compose | mock / kapalı | Yerel |
 | staging | ayrı URL | `meta-limits.staging.yaml` | BLOCKED_APPROVAL |
-| **VULUT Coolify** | ayrı URL | staging limitleri | **Canlı** (https://sosmesh.antiosoft.com) |
+| **VULUT Coolify** | ayrı URL | staging limitleri | **Planned** (https://sosmesh.antiosoft.com pending) |
 | production | ayrı URL | `meta-limits.production.yaml` + onay | BLOCKED_APPROVAL |
 
 `SOSMESH_ENV` ve `DATABASE_URL` asla paylaşılmaz.
 
-### VULUT Coolify (Canlı Kurulum)
+### VULUT Coolify (Planned Deployment)
 
 **Dal:** `deploy/vulut-coolify` (Coolify bu dalı izler; yeniden yazma/silme yasak)  
-**URL:** https://sosmesh.antiosoft.com  
+**URL:** https://sosmesh.antiosoft.com (pending DNS + main merge)  
 **Stack:** `infra/deploy/compose/docker-compose.vulut.yml`
 
 **Mimari:**

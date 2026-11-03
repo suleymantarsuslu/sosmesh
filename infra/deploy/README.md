@@ -49,4 +49,4 @@ Behind nginx gateway + Traefik, all clients appear as the proxy IP to the API. T
 - When enabled, API uses `X-Forwarded-For` header to identify real client IPs
 - When disabled (default), API uses socket IP (all clients appear as proxy)
 
-Nginx `vulut.conf` correctly forwards `X-Forwarded-For` and `X-Real-IP` headers.
+Nginx `vulut.conf` forwards `X-Forwarded-For` header for trusted proxy support.

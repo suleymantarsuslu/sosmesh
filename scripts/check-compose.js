@@ -35,7 +35,7 @@ function validateCompose(composeData) {
 
   const services = composeData.services;
 
-  REQUIRED_SERVICES.forEach(name => {
+  REQUIRED_SERVICES.forEach((name) => {
     if (!services[name]) {
       errors.push(`Missing required service: ${name}`);
       return;
@@ -79,10 +79,11 @@ function main() {
 
   let allErrors = [];
   let allWarnings = [];
+  const requiredFiles = [path.join(__dirname, '..', 'compose.yaml')];
 
   for (const checkPath of composePaths) {
     if (!fs.existsSync(checkPath)) {
-      if (composePath) {
+      if (composePath || requiredFiles.includes(checkPath)) {
         console.error(`❌ ${checkPath} not found`);
         process.exit(1);
       }
@@ -102,17 +103,17 @@ function main() {
     } else {
       if (warnings.length > 0) {
         console.log('  ⚠️  Warnings:');
-        warnings.forEach(w => console.log(`     - ${w}`));
+        warnings.forEach((w) => console.log(`     - ${w}`));
       }
       if (errors.length > 0) {
         console.log('  ❌ Errors:');
-        errors.forEach(e => console.log(`     - ${e}`));
+        errors.forEach((e) => console.log(`     - ${e}`));
       }
       console.log('');
     }
 
-    allErrors = allErrors.concat(errors.map(e => `${checkPath}: ${e}`));
-    allWarnings = allWarnings.concat(warnings.map(w => `${checkPath}: ${w}`));
+    allErrors = allErrors.concat(errors.map((e) => `${checkPath}: ${e}`));
+    allWarnings = allWarnings.concat(warnings.map((w) => `${checkPath}: ${w}`));
   }
 
   if (allErrors.length === 0 && allWarnings.length === 0) {

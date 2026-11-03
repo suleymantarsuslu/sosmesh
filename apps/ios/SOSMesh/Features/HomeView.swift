@@ -13,6 +13,7 @@ struct HomeView: View {
                 Text("onboarding.not112")
                     .font(.body)
                     .accessibilityLabel(Text("onboarding.not112"))
+                EmergencyCall112Button()
                 CrossPlatformFaultBanner(hint: appModel.platformHint, onOpenSettings: openSettings)
                 NavigationLink {
                     SosSendView()
@@ -79,7 +80,7 @@ struct SosSendView: View {
             let lang = Locale.current.language.languageCode?.identifier ?? "en"
             try await appModel.submitSos(note: note, languageTag: lang)
         } catch {
-            errorMessage = error.localizedDescription
+            errorMessage = (error as? LocalizedError)?.errorDescription ?? error.localizedDescription
         }
     }
 }

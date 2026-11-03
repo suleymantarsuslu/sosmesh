@@ -30,14 +30,22 @@ final class AppModel: ObservableObject {
     private let roleSelector = BleRoleSelector()
     private let permissionProbe: AppPermissionProbing
     private let composer: IosSosMessageComposer?
+    private let outboxStorePathOverride: String?
+    private let meshRadioFactory: ((SosOutboxService, ReceivedSosInbox) -> BleMeshRadioPort)?
     private var outboxService: SosOutboxService?
     private let receivedInboxStore = ReceivedSosInbox()
     private var meshRadio: BleMeshRadioPort?
     private var meshTickTimer: Timer?
 
-    init(permissionProbe: AppPermissionProbing = LiveAppPermissionProbe()) {
+    init(
+        permissionProbe: AppPermissionProbing = LiveAppPermissionProbe(),
+        outboxStorePath: String? = nil,
+        meshRadioFactory: ((SosOutboxService, ReceivedSosInbox) -> BleMeshRadioPort)? = nil
+    ) {
         self.permissionProbe = permissionProbe
-        composer = try? IosSosMessageComposer(cryptoConfig: SosCryptoConfiguration.loadComposerConfig())
+        self.outboxStorePathOverride = outboxStorePath
+        self.meshRadioFactory = meshRadioFactory
+        self.composer = try? IosSosMessageComposer(cryptoConfig: SosCryptoConfiguration.loadComposerConfig())
         permissionProbe.onGateRefreshRequested = { [weak self] in
             Task { @MainActor in
                 await self?.refreshPermissionGate()
@@ -55,12 +63,15 @@ final class AppModel: ObservableObject {
             try? restorationMachine.apply(.appLaunched)
             restorationPhase = restorationMachine.phase
         }
-        permissionProbe.primeBluetoothAuthorization()
+        Task { await refreshPermissionGate() }
+    }
+
+    func onPermissionGateBecameVisible() {
+        permissionProbe.primeBluetoothAuthorizationIfAlreadyAuthorized()
         Task { await refreshPermissionGate() }
     }
 
     func refreshPermissionGate() async {
-        permissionProbe.primeBluetoothAuthorization()
         var snapshot = await permissionProbe.captureSnapshot()
         #if DEBUG
         if useFaultSimulationOverrides {
@@ -175,8 +186,13 @@ final class AppModel: ObservableObject {
     private func ensureOutbox() throws {
         if outboxService != nil { return }
         let root = sourceRoot()
-        let fileURL = try OutboxStorePaths.applicationSupportOutboxFileURL()
-        outboxService = try SosOutboxService(storePath: fileURL.path, sourceRoot: root)
+        let path: String
+        if let outboxStorePathOverride {
+            path = outboxStorePathOverride
+        } else {
+            path = try OutboxStorePaths.applicationSupportOutboxFileURL().path
+        }
+        outboxService = try SosOutboxService(storePath: path, sourceRoot: root)
     }
 
     private func requireOutbox() throws -> SosOutboxService {
@@ -194,7 +210,11 @@ final class AppModel: ObservableObject {
     private func startMeshIfNeeded() async {
         guard meshRadio == nil else { return }
         guard let outbox = try? requireOutbox() else { return }
-        meshRadio = LiveBleMeshRadio(outbox: outbox, inbox: receivedInboxStore)
+        if let meshRadioFactory {
+            meshRadio = meshRadioFactory(outbox, receivedInboxStore)
+        } else {
+            meshRadio = LiveBleMeshRadio(outbox: outbox, inbox: receivedInboxStore)
+        }
         let pending = outboxEntries.contains { $0.state == "LOCAL_SAVED" }
         let roleDecision = currentBleRoleDecision(pendingSos: pending)
         _ = meshRadio?.startDiscovery(

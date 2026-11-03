@@ -17,6 +17,8 @@ APP_SOURCES = [
     "SOSMesh/Features/RelayView.swift",
     "SOSMesh/Features/SettingsView.swift",
     "SOSMesh/Features/PermissionGateView.swift",
+    "SOSMesh/Features/EmergencyCall112Link.swift",
+    "SOSMesh/Features/EmergencyCall112Button.swift",
     "SOSMesh/Permissions/LiveAppPermissionProbe.swift",
     "SOSMesh/Crypto/SosCryptoConfiguration.swift",
     "SOSMesh/Storage/OutboxStorePaths.swift",
@@ -74,6 +76,8 @@ IOS_COPY_RESOURCES = [
 TEST_SOURCES = [
     "SOSMeshTests/SOSMeshCoreLinkTests.swift",
     "SOSMeshTests/AppModelPermissionGateTests.swift",
+    "SOSMeshTests/EmergencyCall112LinkTests.swift",
+    "SOSMeshTests/SosCryptoConfigurationErrorTests.swift",
 ]
 
 

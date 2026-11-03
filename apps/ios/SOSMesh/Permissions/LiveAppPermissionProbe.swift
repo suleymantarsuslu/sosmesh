@@ -8,6 +8,7 @@ protocol AppPermissionProbing: AnyObject {
     var onGateRefreshRequested: (() -> Void)? { get set }
     func captureSnapshot() async -> PermissionGateSnapshot
     func primeBluetoothAuthorization()
+    func primeBluetoothAuthorizationIfAlreadyAuthorized()
     func requestNotifications() async
 }
 
@@ -32,6 +33,11 @@ final class LiveAppPermissionProbe: NSObject, AppPermissionProbing, CBCentralMan
                 CBCentralManagerOptionShowPowerAlertKey: false,
             ])
         }
+    }
+
+    func primeBluetoothAuthorizationIfAlreadyAuthorized() {
+        guard CBManager.authorization == .allowedAlways else { return }
+        primeBluetoothAuthorization()
     }
 
     func requestNotifications() async {
@@ -83,5 +89,6 @@ final class StubAppPermissionProbe: AppPermissionProbing {
 
     func captureSnapshot() async -> PermissionGateSnapshot { snapshot }
     func primeBluetoothAuthorization() {}
+    func primeBluetoothAuthorizationIfAlreadyAuthorized() {}
     func requestNotifications() async {}
 }

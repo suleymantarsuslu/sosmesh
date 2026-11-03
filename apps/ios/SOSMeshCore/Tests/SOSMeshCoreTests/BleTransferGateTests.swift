@@ -117,7 +117,7 @@ final class BleTransferGateTests: XCTestCase {
         XCTAssertEqual(entry.state, "PEER_RECEIVED")
     }
 
-    func testRelayStoresMetadataWithoutPlaintextNote() throws {
+    func testRelayCannotDecryptOpaquePayload() throws {
         let inbox = ReceivedSosInbox()
         let router = BleIncomingPayloadRouter(inbox: inbox, nowMs: { 1 })
         let secretNote = "PLAINTEXT_MUST_NOT_APPEAR_IN_RELAY_STORE"

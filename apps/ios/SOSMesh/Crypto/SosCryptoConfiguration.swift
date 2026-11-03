@@ -22,6 +22,17 @@ enum SosCryptoConfiguration {
     }
 }
 
-enum SosCryptoConfigurationError: Error {
+enum SosCryptoConfigurationError: Error, LocalizedError {
     case releaseEncryptionNotConfigured
+
+    var errorDescription: String? {
+        switch self {
+        case .releaseEncryptionNotConfigured:
+            return NSLocalizedString(
+                "sos.error.release_encryption_not_configured",
+                bundle: .main,
+                comment: "Shown when release build has no SOS encryption keys configured"
+            )
+        }
+    }
 }

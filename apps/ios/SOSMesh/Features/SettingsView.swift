@@ -60,6 +60,7 @@ struct OnboardingDisclaimerView: View {
                 Text("onboarding.not112")
                     .font(.headline)
                 Text("onboarding.experimental")
+                EmergencyCall112Button()
                 Button("onboarding.accept") {
                     onAccept()
                 }

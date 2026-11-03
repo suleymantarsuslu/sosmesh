@@ -45,24 +45,16 @@ struct PermissionGateView: View {
                     .accessibilityHint(Text("gate.action.open_settings.hint"))
                 }
 
-                Link(destination: URL(string: "tel:112")!) {
-                    Text("gate.action.call112")
-                        .frame(maxWidth: .infinity)
-                        .padding()
-                }
-                .buttonStyle(.borderedProminent)
-                .tint(.blue)
-                .accessibilityLabel(Text("gate.action.call112"))
-                .accessibilityHint(Text("gate.action.call112.hint"))
+                EmergencyCall112Button()
             }
             .padding()
         }
         .onAppear {
-            appModel.refreshPermissionGate()
+            appModel.onPermissionGateBecameVisible()
         }
         .onChange(of: scenePhase) { _, phase in
             if phase == .active {
-                appModel.refreshPermissionGate()
+                appModel.onPermissionGateBecameVisible()
             }
         }
     }

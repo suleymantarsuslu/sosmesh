@@ -12,6 +12,7 @@
 "sos.confirm.title" = "SOS Gönder";
 "sos.confirm.message" = "SOS göndermek istediğinize emin misiniz?";
 "sos.confirm.yes" = "Evet, Gönder";
+"sos.error.release_encryption_not_configured" = "SOS şifrelemesi yapılandırılmadı. Bu sürüm SOS gönderemez; acil durumda 112'yi arayın.";
 "status.title" = "Mesaj Durumu";
 "status.empty" = "Henüz SOS gönderilmedi";
 "status.timeline.1" = "CİHAZDA KAYITLI";
@@ -66,11 +67,8 @@
 "gate.step.bluetooth.body" = "SOSMesh, internet olmadan yakındaki cihazlara SOS iletmek için Bluetooth Low Energy kullanır.";
 "gate.step.notifications.title" = "Bildirimler";
 "gate.step.notifications.body" = "Bildirimler, bu cihazdaki SOS iletim durumu hakkında sizi bilgilendirir.";
-"gate.step.location.title" = "Konum (Uygulamayı Kullanırken)";
-"gate.step.location.body" = "Yaklaşık konum SOS zarfına eklenir; hassas sağlık verisi toplanmaz.";
 "gate.action.allow_bluetooth" = "Bluetooth ile devam et";
 "gate.action.allow_notifications" = "Bildirimlere izin ver";
-"gate.action.allow_location" = "Konuma izin ver";
 "gate.action.open_settings" = "Ayarları aç";
 "gate.action.open_settings.hint" = "SOSMesh izinleri için iOS Ayarlarını açar";
 "gate.action.call112" = "112'yi ara";

@@ -5,7 +5,17 @@ const config: Config = {
   rootDir: '.',
   testMatch: ['<rootDir>/src/**/*.spec.ts', '<rootDir>/test/**/*.spec.ts'],
   transform: {
-    '^.+\\.(t|j)s$': ['ts-jest', { tsconfig: 'tsconfig.spec.json' }],
+    '^.+\\.(t|j)s$': ['ts-jest', { 
+      tsconfig: 'tsconfig.spec.json',
+      useESM: true,
+    }],
+  },
+  transformIgnorePatterns: [
+    'node_modules/(?!(@noble/curves|@noble/hashes|@noble/ciphers|@sosmesh/contracts)/)',
+  ],
+  extensionsToTreatAsEsm: ['.ts'],
+  moduleNameMapper: {
+    '^(\\.{1,2}/.*)\\.js$': '$1',
   },
   collectCoverageFrom: ['src/**/*.(t|j)s'],
   coverageDirectory: './coverage',

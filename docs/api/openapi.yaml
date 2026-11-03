@@ -201,6 +201,32 @@ paths:
           description: ""
       tags: *a3
       security: *a4
+  /v1/operator/ai/status:
+    get:
+      operationId: OperatorAiController_getAiStatus
+      parameters: []
+      responses:
+        "200":
+          description: ""
+  /v1/operator/cases/{incidentId}/ai:
+    get:
+      operationId: OperatorCaseAiController_getCaseAi
+      parameters:
+        - name: incidentId
+          required: true
+          in: path
+          schema:
+            type: string
+      responses:
+        "200":
+          description: ""
+  /v1/operator/demo/sos:
+    post:
+      operationId: OperatorDemoController_createDemoSos
+      parameters: []
+      responses:
+        "201":
+          description: ""
   /v1/operator/organization/context:
     get:
       operationId: OrganizationController_context

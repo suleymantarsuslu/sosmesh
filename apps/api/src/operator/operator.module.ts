@@ -15,6 +15,8 @@ import { OperatorAiService } from './operator-ai.service';
 import { OperatorDemoController } from './operator-demo.controller';
 import { OperatorDemoService } from './operator-demo.service';
 import { LocalDiskStorageService } from '../media/local-disk-storage.service';
+import { OperatorFusionController } from './operator-fusion.controller';
+import { OperatorCopilotController } from './operator-copilot.controller';
 
 @Module({
   imports: [OrganizationModule, AiModule],
@@ -24,6 +26,8 @@ import { LocalDiskStorageService } from '../media/local-disk-storage.service';
     OperatorAiController,
     OperatorCaseAiController,
     OperatorDemoController,
+    OperatorFusionController,
+    OperatorCopilotController,
   ],
   providers: [
     OperatorAuthGuard,

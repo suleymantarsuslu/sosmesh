@@ -8,6 +8,7 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { AiJobQueueService, type AiJob } from './ai-job-queue.service';
 import { TriageV2Service } from './triage-v2.service';
+import { FusionService } from './fusion/fusion.service';
 import { SosPlaintextSource, SOS_PLAINTEXT_SOURCE } from './sos-plaintext-source';
 import { PrismaService } from '../prisma/prisma.service';
 import { Inject } from '@nestjs/common';
@@ -21,6 +22,7 @@ export class AiJobRunnerService {
   constructor(
     private readonly queue: AiJobQueueService,
     private readonly triage: TriageV2Service,
+    private readonly fusion: FusionService,
     private readonly prisma: PrismaService,
     @Inject(SOS_PLAINTEXT_SOURCE) private readonly plaintextSource: SosPlaintextSource,
     private readonly voiceTranscription: VoiceTranscriptionService
@@ -85,8 +87,7 @@ export class AiJobRunnerService {
           await this.queue.complete(job.id);
           break;
         case 'fusion':
-          this.logger.warn({ msg: 'Fusion not implemented yet', jobId: job.id });
-          await this.queue.complete(job.id);
+          await this.processFusion(job);
           break;
         default:
           await this.queue.fail(job.id, `Unknown job kind: ${job.kind}`);
@@ -171,9 +172,48 @@ export class AiJobRunnerService {
 
     if (result.success) {
       await this.queue.complete(job.id);
+      
+      // Enqueue fusion job after successful triage
+      await this.enqueueFusion(job.incidentId);
     } else {
       const errorMsg = 'error' in result ? result.error.substring(0, 200) : 'unknown_error';
       await this.queue.fail(job.id, errorMsg);
+    }
+  }
+
+  private async processFusion(job: AiJob): Promise<void> {
+    if (!job.incidentId) {
+      await this.queue.fail(job.id, 'Missing incidentId');
+      return;
+    }
+
+    const shouldRun = await this.fusion.shouldRunFusion(job.incidentId);
+    if (!shouldRun) {
+      this.logger.log({
+        msg: 'Fusion not applicable for incident',
+        incidentId: job.incidentId,
+      });
+      await this.queue.complete(job.id);
+      return;
+    }
+
+    await this.fusion.runFusion(job.incidentId);
+    await this.queue.complete(job.id);
+  }
+
+  private async enqueueFusion(incidentId: string): Promise<void> {
+    try {
+      await this.queue.enqueue({
+        kind: 'fusion',
+        incidentId,
+      });
+      this.logger.log({ msg: 'Enqueued fusion job', incidentId });
+    } catch (error) {
+      this.logger.error({
+        err: error,
+        msg: 'Failed to enqueue fusion job',
+        incidentId,
+      });
     }
   }
 

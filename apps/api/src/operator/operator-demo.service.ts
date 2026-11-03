@@ -21,6 +21,8 @@ export type CreateSyntheticSosRequest = {
   text: string;
   priority: number;
   language: string;
+  latitude?: number;
+  longitude?: number;
   audioBuffer?: Buffer;
   audioMime?: string;
   photoBuffer?: Buffer;
@@ -65,7 +67,12 @@ export class OperatorDemoService {
           messageId,
           incidentId: incident.id,
           deliveryState: DeliveryState.SERVER_ACCEPTED,
-          locationStatus: LocationStatus.UNKNOWN,
+          locationStatus:
+            request.latitude !== undefined && request.longitude !== undefined
+              ? LocationStatus.GPS
+              : LocationStatus.UNKNOWN,
+          latitude: request.latitude,
+          longitude: request.longitude,
           priority: request.priority,
           noteText: request.text,
           operatorDisplayText: `[DEMO SYNTHETIC] ${request.text}`,

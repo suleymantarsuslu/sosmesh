@@ -52,10 +52,10 @@ data class SosFormUiState(
     val savedMessageId: String? = null,
     val offlineMode: Boolean = true,
     val peerDeliveryHint: SosPeerDeliveryHint = SosPeerDeliveryHint.NONE,
-    val hasPhotoAttachment: Boolean = false,
-    val hasVoiceAttachment: Boolean = false,
+    val photoUri: android.net.Uri? = null,
+    val voiceFile: java.io.File? = null,
+    val voiceDuration: Int = 0,
     val isRecording: Boolean = false,
-    val recordingDurationSeconds: Int = 0,
     val uploadToken: String? = null,
 )
 
@@ -118,24 +118,43 @@ class SosFormViewModel
             _uiState.update { it.copy(manualLng = value) }
         }
 
-        fun setPhotoAttachment(hasPhoto: Boolean) {
-            _uiState.update { it.copy(hasPhotoAttachment = hasPhoto) }
+        fun setPhotoUri(uri: android.net.Uri?) {
+            _uiState.update { it.copy(photoUri = uri) }
         }
 
-        fun setVoiceAttachment(hasVoice: Boolean, duration: Int = 0) {
-            _uiState.update { it.copy(hasVoiceAttachment = hasVoice, recordingDurationSeconds = duration) }
+        fun setVoiceFile(file: java.io.File?, duration: Int = 0) {
+            _uiState.update { it.copy(voiceFile = file, voiceDuration = duration) }
         }
 
         fun setRecording(isRecording: Boolean) {
             _uiState.update { it.copy(isRecording = isRecording) }
         }
-
-        fun updateRecordingDuration(seconds: Int) {
-            _uiState.update { it.copy(recordingDurationSeconds = seconds) }
-        }
         
-        fun setUploadToken(token: String?) {
-            _uiState.update { it.copy(uploadToken = token) }
+        fun scheduleAttachmentUploads(uploadToken: String, baseUrl: String) {
+            val state = _uiState.value
+            state.photoUri?.let { uri ->
+                val file = java.io.File(uri.path ?: return@let)
+                if (file.exists()) {
+                    submitRepository.scheduleAttachmentUpload(
+                        uploadToken = uploadToken,
+                        kind = "image",
+                        file = file,
+                        mimeType = "image/jpeg",
+                        baseUrl = baseUrl
+                    )
+                }
+            }
+            state.voiceFile?.let { file ->
+                if (file.exists()) {
+                    submitRepository.scheduleAttachmentUpload(
+                        uploadToken = uploadToken,
+                        kind = "audio",
+                        file = file,
+                        mimeType = "audio/aac",
+                        baseUrl = baseUrl
+                    )
+                }
+            }
         }
 
         fun goToPreview() {

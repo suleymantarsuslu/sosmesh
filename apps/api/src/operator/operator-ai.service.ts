@@ -8,6 +8,7 @@ import { PrismaService } from '../prisma/prisma.service';
 import { MetaModelClient } from '../ai/meta-model-client';
 import { BudgetGuardService } from '../ai/budget-guard.service';
 import { AiJobQueueService } from '../ai/ai-job-queue.service';
+import { LocaleContentService, type OperatorLocale } from '../ai/locale-content.service';
 import type { AiStatusView } from '../ai/contracts/ai-status-view';
 import type { AiTriageView, UrgencySuggestion } from '../ai/contracts/ai-triage-view';
 
@@ -17,7 +18,8 @@ export class OperatorAiService {
     private readonly prisma: PrismaService,
     private readonly metaClient: MetaModelClient,
     private readonly budgetGuard: BudgetGuardService,
-    private readonly aiJobQueue: AiJobQueueService
+    private readonly aiJobQueue: AiJobQueueService,
+    private readonly localeContent: LocaleContentService
   ) {}
 
   async getStatus(): Promise<AiStatusView> {
@@ -65,7 +67,7 @@ export class OperatorAiService {
     };
   }
 
-  async getCaseAi(incidentId: string): Promise<AiTriageView | null> {
+  async getCaseAi(incidentId: string, locale: OperatorLocale = 'tr'): Promise<AiTriageView | null> {
     const analysis = await this.prisma.aiAnalysis.findFirst({
       where: { incidentId },
       orderBy: { createdAt: 'desc' },
@@ -84,8 +86,8 @@ export class OperatorAiService {
       hazards: this.parseJsonArray(analysis.hazards) as string[],
       urgencySuggestion: analysis.urgencySuggestion as UrgencySuggestion | null,
       missingInfo: this.parseJsonArray(analysis.missingInfo) as string[],
-      summary: analysis.summary,
-      nextStepSuggestion: analysis.nextStepSuggestion,
+      summary: this.localeContent.extractText(analysis.summary, locale, null),
+      nextStepSuggestion: this.localeContent.extractText(analysis.nextStepSuggestion, locale, null),
       sourceQuotes: this.parseJsonArray(analysis.sourceQuotes).map((q: unknown) => {
         if (typeof q === 'object' && q !== null && 'text' in q) {
           return q as { text: string; field?: string };

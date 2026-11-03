@@ -38,6 +38,7 @@ function feedEventToCase(event: FeedEvent, existing?: OperatorCaseRow): Operator
     latitude: event.latitude,
     longitude: event.longitude,
     accuracyMeters: existing?.accuracyMeters ?? null,
+    locationApproximate: existing?.locationApproximate ?? false,
     receivedAt: event.occurredAt,
     source: existing?.source ?? 'feed',
   };
@@ -130,50 +131,45 @@ export function CasesView({ initialCases }: { initialCases: OperatorCaseRow[] })
   }, []);
 
   return (
-    <div className="cases-view" data-testid="operator-cases-view">
-      <header className="cases-view__header">
-        <h1>{t('web.cases.pageTitle')}</h1>
-        <div className="cases-view__live" role="status" data-testid="live-feed-status">
+    <div className="cases-view cases-view--modern" data-testid="operator-cases-view">
+      <div className="cases-view__filters-bar">
+        <div className="cases-view__live-badge" role="status" data-testid="live-feed-status">
+          <span className={`cases-view__live-indicator ${feed.connected ? 'cases-view__live-indicator--connected' : ''}`} aria-hidden="true" />
           {feed.connected ? t('web.cases.liveConnected') : t('web.cases.liveFallback')}
-          {feed.stale ? t('web.cases.liveStale') : ''}
-          <span className="cases-view__live-mode"> ({feed.mode})</span>
+          {feed.stale ? ` — ${t('web.cases.liveStale')}` : ''}
         </div>
-        <button type="button" className="ui-button" onClick={() => refreshCases()}>
-          {t('web.cases.refreshList')}
+        <CaseFilters filters={filters} onChange={setFilters} />
+        <button type="button" className="cases-view__refresh-button" onClick={() => refreshCases()} aria-label={t('web.cases.refreshList')}>
+          <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+            <path d="M4 10C4 6.686 6.686 4 10 4C11.848 4 13.506 4.816 14.625 6.125M16 10C16 13.314 13.314 16 10 16C8.152 16 6.494 15.184 5.375 13.875M14.625 6.125L14 3M14.625 6.125L18 6M5.375 13.875L6 17M5.375 13.875L2 14" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+          </svg>
         </button>
-      </header>
+      </div>
 
-      <CaseFilters filters={filters} onChange={setFilters} />
-
-      <div className="cases-view__layout cases-view__layout--three-col">
-        <div className="cases-view__map-column">
-          <OperatorMap
-            rows={plottable}
-            selectedId={selectedId}
-            onSelect={openDrawer}
-            zoom={mapZoom}
-            onZoomChange={setMapZoom}
-            assignmentPreview={assignmentPreview}
-          />
-        </div>
-        <div className="cases-view__side">
+      <div className="cases-view__map-container">
+        <OperatorMap
+          rows={plottable}
+          selectedId={selectedId}
+          onSelect={openDrawer}
+          zoom={mapZoom}
+          onZoomChange={setMapZoom}
+          assignmentPreview={assignmentPreview}
+        />
+        
+        <aside className="cases-view__floating-panel">
+          <div className="cases-view__panel-header">
+            <h2 className="cases-view__panel-title">{t('web.cases.caseListTitle')}</h2>
+            <span className="cases-view__panel-count">{plottable.length}</span>
+          </div>
           <CaseListPanel rows={plottable} selectedId={selectedId} onSelect={openDrawer} />
-          <UnknownLocationQueue
-            rows={unknownQueue}
-            selectedId={selectedId}
-            onSelect={openDrawer}
-          />
-        </div>
-        <div className="cases-view__detail-column">
-          {selectedId ? (
-            <AssignmentPreviewPanel
-              incidentId={selectedId}
-              caseCoordinates={selectedCoordinates}
-              onPreviewChange={setAssignmentPreview}
+          {unknownQueue.length > 0 && (
+            <UnknownLocationQueue
+              rows={unknownQueue}
+              selectedId={selectedId}
+              onSelect={openDrawer}
             />
-          ) : null}
-          <CaseDetailPanel row={selectedRow} timeline={timeline} />
-        </div>
+          )}
+        </aside>
       </div>
 
       <CasesAccessibleTable rows={filtered} />

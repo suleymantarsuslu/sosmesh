@@ -19,6 +19,7 @@ const BASE_CASES: OperatorCaseRow[] = [
     latitude: 39.94,
     longitude: 32.86,
     accuracyMeters: 120,
+    locationApproximate: false,
     receivedAt: '2026-11-01T10:00:00.000Z',
     source: 'relay-synth-a',
   },
@@ -34,6 +35,7 @@ const BASE_CASES: OperatorCaseRow[] = [
     latitude: null,
     longitude: null,
     accuracyMeters: null,
+    locationApproximate: false,
     receivedAt: '2026-11-01T10:05:00.000Z',
     source: 'relay-synth-b',
   },
@@ -72,6 +74,7 @@ export function mockCasesResponse(searchParams: URLSearchParams) {
         latitude: i % 5 === 0 ? null : 39.9 + (i % 50) * 0.001,
         longitude: i % 5 === 0 ? null : 32.8 + (i % 50) * 0.001,
         accuracyMeters: i % 5 === 0 ? null : 50 + (i % 200),
+        locationApproximate: false,
         receivedAt: new Date(Date.UTC(2026, 10, 1, 10, 0, i)).toISOString(),
         source: 'seed',
       });
@@ -103,6 +106,7 @@ function baseDetail(row: OperatorCaseRow) {
       latitude: row.latitude,
       longitude: row.longitude,
       accuracyMeters: row.accuracyMeters,
+      locationApproximate: row.locationApproximate,
     },
     ai:
       row.incidentId === E2E_CASE_GPS_ID

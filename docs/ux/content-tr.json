@@ -231,12 +231,16 @@
       "accuracyGood": "İyi (±{{meters}}m)",
       "accuracyFair": "Orta (±{{meters}}m)",
       "accuracyPoor": "Zayıf (±{{meters}}m)",
+      "locationApproximate": "Yaklaşık konum (~1 km)",
+      "locationApproximateShort": "~1 km",
       "selectCase": "Vaka seç {{id}}",
       "unknownLocationTitle": "Bilinmeyen Konum Kuyruğu",
       "unknownLocationHint": "Koordinatsız vakalar"
     },
     "ai": {
       "title": "AI İstihbarat Paneli",
+      "collapsePanel": "AI panelini daralt",
+      "expandPanel": "AI panelini genişlet",
       "disclaimer": "SOSMesh 112'nin yerine geçmez. AI öneri aracıdır; operatör karar verir.",
       "unavailable": "AI kullanılamıyor",
       "pending": "AI analizi bekliyor",
@@ -327,8 +331,6 @@
       "brand": "SOSMesh",
       "defaultUser": "Operatör",
       "commandPalette": "Komut paleti",
-      "commandPlaceholder": "Sayfa ara…",
-      "commandShortcut": "Komut ara (Ctrl+K)",
       "logout": "Çıkış",
       "themeLight": "Açık tema",
       "themeDark": "Koyu tema",
@@ -568,6 +570,87 @@
       "OPERATOR_SEEN": "Operatör gördü",
       "CASE_IN_PROGRESS": "Vaka işlemde",
       "unknown": "Teslimat adımı"
+    },
+    "filters": {
+      "legend": "Filtreler",
+      "search": "Ara",
+      "searchPlaceholder": "Vaka ara",
+      "searchAriaLabel": "Vaka ara",
+      "category": "Kategori",
+      "categoryAriaLabel": "Kategori filtresi",
+      "incidentState": "Vaka durumu",
+      "incidentStateAriaLabel": "Vaka durumu filtresi",
+      "deliveryState": "Teslim durumu",
+      "deliveryStateAriaLabel": "Teslim durumu filtresi",
+      "locationStatus": "Konum",
+      "locationStatusAriaLabel": "Konum durumu filtresi",
+      "accuracyMax": "Doğruluk ≤ (m)",
+      "accuracyMaxAriaLabel": "Maksimum doğruluk metresi",
+      "all": "Tümü"
+    },
+    "categoryTypes": {
+      "GENERAL": "Genel",
+      "MEDICAL": "Tıbbi",
+      "TRAPPED": "Enkaz",
+      "FIRE": "Yangın",
+      "OTHER": "Diğer"
+    },
+    "incidentStates": {
+      "PENDING": "Beklemede",
+      "ASSIGNED": "Atandı",
+      "IN_PROGRESS": "Devam ediyor",
+      "RESOLVED": "Çözüldü"
+    },
+    "locationStatuses": {
+      "GPS": "GPS",
+      "MANUAL": "Manuel",
+      "UNKNOWN": "Bilinmiyor"
+    },
+    "caseDetail": {
+      "title": "Vaka detayı",
+      "emptyMessage": "Liste veya haritadan vaka seçin.",
+      "priority": "Öncelik",
+      "state": "Durum",
+      "location": "Konum",
+      "timelineTitle": "Zaman çizelgesi",
+      "timelineEmpty": "Henüz kayıt yok",
+      "fullCaseLink": "Tam vaka sayfası",
+      "close": "Kapat",
+      "closeAriaLabel": "Vaka özetini kapat",
+      "expandAriaLabel": "Vaka özetini genişlet",
+      "drawerTitle": "Vaka özeti"
+    },
+    "aiSuggestionPanel": {
+      "title": "AI yardım önerisi",
+      "draftBadge": "taslak/öneri, doğrulanmadı",
+      "loadError": "AI önerisi yüklenemedi; vaka yine işlenebilir.",
+      "empty": "Henüz AI önerisi yok veya üretilemedi.",
+      "uncertainty": "Belirsizlik",
+      "yes": "Evet",
+      "no": "Hayır",
+      "evidenceQuote": "Dayanak alıntısı",
+      "summaryNeeds": "Özet ihtiyaçlar",
+      "urgencyDraft": "Aciliyet (taslak)",
+      "disclaimer": "AI operatör adına karar vermez; öneri yalnızca taslaktır ve doğrulanmalıdır."
+    },
+    "eventTypes": {
+      "building_collapse": "Bina çökmesi",
+      "fire": "Yangın",
+      "flood": "Sel",
+      "trapped": "Enkaz",
+      "medical_emergency": "Tıbbi acil",
+      "need_supplies": "Malzeme ihtiyacı",
+      "communication": "İletişim",
+      "evacuation": "Tahliye",
+      "other": "Diğer",
+      "unknown": "Bilinmiyor"
+    },
+    "translation": {
+      "machineTranslation": "Makine çevirisi (AI)",
+      "original": "Orijinal",
+      "notTranslated": "Çevrilmedi (AI kullanılamıyor)",
+      "toggle": "Orijinali göster",
+      "hideOriginal": "Orijinali gizle"
     }
   },
   "watch": {

@@ -593,3 +593,19 @@ model IncidentLinkSuggestion {
   @@index([status], map: "incident_link_suggestions_status_idx")
   @@map("incident_link_suggestions")
 }
+
+model AiTranslationCache {
+  id             String   @id @default(uuid()) @db.Uuid
+  sourceType     String   @map("source_type") @db.VarChar(50)
+  sourceId       String   @map("source_id") @db.Uuid
+  sourceField    String   @map("source_field") @db.VarChar(100)
+  sourceLanguage String   @map("source_language") @db.VarChar(10)
+  targetLanguage String   @map("target_language") @db.VarChar(10)
+  translatedText String   @map("translated_text") @db.Text
+  modelVersion   String   @map("model_version") @db.VarChar(100)
+  createdAt      DateTime @default(now()) @map("created_at")
+
+  @@unique([sourceType, sourceId, sourceField, targetLanguage], map: "ai_translation_cache_unique")
+  @@index([sourceType, sourceId], map: "ai_translation_cache_source_idx")
+  @@map("ai_translation_cache")
+}

@@ -22,12 +22,15 @@ export type OperatorCaseDetail = OperatorCaseRow & {
   version: number;
   reviewStatus: string;
   originalText: string | null;
+  translatedText: string | null;
+  detectedLanguage: string | null;
   verifiedMetadata: {
     personCount: number | null;
     locationStatus: string;
     latitude: number | null;
     longitude: number | null;
     accuracyMeters: number | null;
+    locationApproximate: boolean;
   };
   ai: OperatorAiSuggestion | null;
   timeline: {

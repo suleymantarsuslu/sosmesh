@@ -1,8 +1,11 @@
 'use client';
 
+import { useState, useEffect, useRef } from 'react';
 import Link from 'next/link';
 
 import { Card } from '../../components/ui/Card';
+import { useOperatorPreferences } from '../../components/operator/OperatorPreferencesProvider';
+import { DeliveryStateBadge } from '../../components/cases/DeliveryStateBadge';
 
 import type { OperatorCaseRow } from './types';
 
@@ -20,45 +23,96 @@ export function CaseDetailPanel({
   row: OperatorCaseRow | null;
   timeline: TimelineEntry[];
 }) {
+  const { t } = useOperatorPreferences();
+  const [isCollapsed, setIsCollapsed] = useState(false);
+  const panelRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (!isCollapsed) return;
+
+    const handleEscape = (event: KeyboardEvent) => {
+      if (event.key === 'Escape' && isCollapsed) {
+        setIsCollapsed(false);
+      }
+    };
+
+    document.addEventListener('keydown', handleEscape);
+    return () => {
+      document.removeEventListener('keydown', handleEscape);
+    };
+  }, [isCollapsed]);
+
   if (!row) {
     return (
-      <Card title="Vaka detayı" className="cases-detail-panel">
-        <p className="cases-detail-panel__empty">Liste veya haritadan vaka seçin.</p>
+      <Card title={t('web.caseDetail.title')} className="cases-detail-panel">
+        <p className="cases-detail-panel__empty">{t('web.caseDetail.emptyMessage')}</p>
       </Card>
     );
   }
 
+  const toggleCollapse = () => {
+    setIsCollapsed(!isCollapsed);
+  };
+
   return (
-    <Card title="Vaka detayı" className="cases-detail-panel">
-      <div data-testid="case-detail-panel">
+    <div 
+      ref={panelRef}
+      className={`cases-detail-panel ${isCollapsed ? 'cases-detail-panel--collapsed' : ''}`}
+      data-testid="case-detail-panel-wrapper"
+    >
+      <div className="cases-detail-panel__header">
+        <h2 className="cases-detail-panel__title">{t('web.caseDetail.title')}</h2>
+        <button
+          type="button"
+          onClick={toggleCollapse}
+          className="cases-detail-panel__toggle"
+          aria-label={isCollapsed ? t('web.caseDetail.expandAriaLabel') : t('web.caseDetail.closeAriaLabel')}
+          aria-expanded={!isCollapsed}
+          data-testid="case-detail-panel-toggle"
+        >
+          {isCollapsed ? (
+            <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+              <path d="M5 7.5L10 12.5L15 7.5" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+            </svg>
+          ) : (
+            <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+              <path d="M15 5L5 15M5 5L15 15" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+            </svg>
+          )}
+        </button>
+      </div>
+      
+      {!isCollapsed && (
+        <div className="cases-detail-panel__content" data-testid="case-detail-panel">
       <dl className="cases-detail-panel__meta">
         <div>
-          <dt>Öncelik</dt>
+          <dt>{t('web.caseDetail.priority')}</dt>
           <dd>{row.priority}</dd>
         </div>
         <div>
-          <dt>Durum</dt>
-          <dd>{row.deliveryState}</dd>
+          <dt>{t('web.caseDetail.state')}</dt>
+          <dd><DeliveryStateBadge state={row.deliveryState} /></dd>
         </div>
         <div>
-          <dt>Konum</dt>
-          <dd>{row.locationStatus}</dd>
+          <dt>{t('web.caseDetail.location')}</dt>
+          <dd>{t(`web.locationStatuses.${row.locationStatus}`) || row.locationStatus}</dd>
         </div>
       </dl>
-      <h3>Zaman çizelgesi</h3>
+      <h3>{t('web.caseDetail.timelineTitle')}</h3>
       <ol className="cases-detail-panel__timeline">
         {timeline.length === 0 ? (
-          <li>Henüz kayıt yok</li>
+          <li>{t('web.caseDetail.timelineEmpty')}</li>
         ) : (
           timeline.map((entry) => (
             <li key={entry.id}>
-              {entry.deliveryState} · {entry.source}
+              <DeliveryStateBadge state={entry.deliveryState} /> · {entry.source}
             </li>
           ))
         )}
       </ol>
-      <Link href={`/operator/cases/${row.incidentId}`}>Tam vaka sayfası</Link>
-      </div>
-    </Card>
+      <Link href={`/operator/cases/${row.incidentId}`}>{t('web.caseDetail.fullCaseLink')}</Link>
+        </div>
+      )}
+    </div>
   );
 }

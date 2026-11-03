@@ -104,7 +104,11 @@ export function AiTriageCard({ incidentId, triage, onRefresh }: Props) {
           {triage.eventType && (
             <dl className="ai-field">
               <dt>{t('web.ai.eventType')}</dt>
-              <dd data-testid="ai-event-type">{triage.eventType}</dd>
+              <dd data-testid="ai-event-type">
+                {t(`web.eventTypes.${triage.eventType}`) !== `web.eventTypes.${triage.eventType}` 
+                  ? t(`web.eventTypes.${triage.eventType}`)
+                  : triage.eventType}
+              </dd>
             </dl>
           )}
 

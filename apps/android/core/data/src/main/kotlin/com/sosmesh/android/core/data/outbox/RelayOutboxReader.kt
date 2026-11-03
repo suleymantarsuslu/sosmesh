@@ -37,4 +37,22 @@ class RelayOutboxReader
             withContext(ioDispatcher) {
                 dao.listDueRelayUpload(nowMs).size
             }
+
+        suspend fun listDueOwnUpload(nowMs: Long): List<OutboxEntryMeta> =
+            withContext(ioDispatcher) {
+                dao.listDueOwnUpload(nowMs).map { entity ->
+                    OutboxEntryMeta(
+                        sosId = entity.sos_id,
+                        digest = entity.digest,
+                        origin = entity.origin,
+                        encryptedBlobBase64 = entity.encrypted_blob,
+                        state = entity.state,
+                        retryAtMs = entity.retry_at,
+                        expiresAtMs = entity.expires_at,
+                        lastError = entity.last_error,
+                        createdAtMs = entity.created_at,
+                        updatedAtMs = entity.updated_at,
+                    )
+                }
+            }
     }

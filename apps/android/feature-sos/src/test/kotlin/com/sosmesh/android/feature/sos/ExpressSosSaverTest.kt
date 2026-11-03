@@ -6,6 +6,7 @@ import com.sosmesh.android.core.data.fixtures.AndroidStateTransitionLoader
 import com.sosmesh.android.core.data.mesh.SosPeerDeliveryKickResult
 import com.sosmesh.android.core.data.mesh.SosPeerDeliveryPort
 import com.sosmesh.android.core.data.outbox.OutboxDatabase
+import com.sosmesh.android.core.data.outbox.OutboxUploadScheduler
 import com.sosmesh.android.core.data.outbox.RoomOutboxQueueAdapter
 import com.sosmesh.android.core.data.sos.DevTestCryptoConfig
 import com.sosmesh.android.core.data.sos.SosMessageComposer
@@ -43,6 +44,7 @@ class ExpressSosSaverTest {
             SosSubmitRepository(
                 SosMessageComposer(DevTestCryptoConfig.config()),
                 adapter,
+                NoOpUploadScheduler,
                 Dispatchers.IO,
             )
         saver =
@@ -53,6 +55,17 @@ class ExpressSosSaverTest {
                 testGrantAllBleMeshReadiness(),
                 testGrantAllPermissionCoordinator(),
             )
+    }
+
+    private object NoOpUploadScheduler : OutboxUploadScheduler {
+        override fun scheduleUpload(
+            nowMs: Long,
+            delayMs: Long,
+        ) {
+        }
+
+        override fun cancelUpload() {
+        }
     }
 
     private object NoOpSosPeerDeliveryPort : SosPeerDeliveryPort {

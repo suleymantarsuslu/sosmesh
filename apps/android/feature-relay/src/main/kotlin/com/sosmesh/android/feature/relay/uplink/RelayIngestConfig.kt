@@ -17,7 +17,9 @@ data class RelayIngestConfig(
 
         fun defaultBaseUrl(): String = "https://api.sosmesh.local"
 
-        /** Placeholder SPKI; replace before production rollout. */
+        const val PROD_RECEIPT_PUBLIC_KEY =
+            "MCowBQYDK2VwAyEAJgWsM1ZMJK9D9uPkDS/08DL/sOHrBlcCS/ETcKQ2OEs="
+
         const val PROD_RECEIPT_PUBLIC_KEY_PLACEHOLDER = ""
 
         fun default(relayIdHex: String): RelayIngestConfig =

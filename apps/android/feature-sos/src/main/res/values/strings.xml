@@ -22,6 +22,7 @@
     <string name="sos_error_person_high">Person count cannot exceed 99</string>
     <string name="sos_error_note_long">Note cannot exceed 200 characters</string>
     <string name="sos_saved_local">Saved on device — searching for nearby devices</string>
+    <string name="sos_server_delivered">Delivered to SOSMesh server</string>
     <string name="sos_peer_delivery_started">BLE transfer to a nearby SOSMesh device has started. Track progress on the status screen.</string>
     <string name="sos_peer_delivery_waiting">Waiting for a nearby device or GATT session; will retry when permissions allow.</string>
     <string name="sos_peer_delivery_permissions">Bluetooth permissions are required. Grant them under Settings → Permissions; this is not server or operator read.</string>

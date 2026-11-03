@@ -26,7 +26,7 @@ abstract class AppReleaseModule {
             val base = BuildConfig.INGEST_BASE_URL.trimEnd('/')
             return RelayIngestConfig(
                 ingestUrl = base + RelayIngestConfig.DEFAULT_INGEST_PATH,
-                receiptVerifyPublicKeySpkiBase64 = RelayIngestConfig.PROD_RECEIPT_PUBLIC_KEY_PLACEHOLDER,
+                receiptVerifyPublicKeySpkiBase64 = RelayIngestConfig.PROD_RECEIPT_PUBLIC_KEY,
                 relayIdHex = identity.relayIdHex,
                 requireHttps = BuildConfig.REQUIRE_HTTPS_INGEST,
             )

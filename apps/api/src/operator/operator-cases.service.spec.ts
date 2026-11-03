@@ -84,7 +84,7 @@ describe('OperatorCasesService', () => {
       (prisma.attachment.findMany as jest.Mock).mockResolvedValue([]);
 
       const result = await service.getCaseDetail(
-        { userId: 'user-1', organizationId: 'org-1', teamId: null, role: 'OPERATOR' },
+        { sub: 'user-1', organizationId: 'org-1', teamId: null, role: 'OPERATOR' },
         'inc-1'
       );
 
@@ -142,7 +142,7 @@ describe('OperatorCasesService', () => {
       (prisma.attachment.findMany as jest.Mock).mockResolvedValue([]);
 
       const result = await service.getCaseDetail(
-        { userId: 'user-1', organizationId: 'org-1', teamId: null, role: 'OPERATOR' },
+        { sub: 'user-1', organizationId: 'org-1', teamId: null, role: 'OPERATOR' },
         'inc-1'
       );
 
@@ -196,7 +196,7 @@ describe('OperatorCasesService', () => {
       (prisma.attachment.findMany as jest.Mock).mockResolvedValue([]);
 
       const result = await service.getCaseDetail(
-        { userId: 'user-1', organizationId: 'org-1', teamId: null, role: 'OPERATOR' },
+        { sub: 'user-1', organizationId: 'org-1', teamId: null, role: 'OPERATOR' },
         'inc-1'
       );
 
@@ -278,7 +278,7 @@ describe('OperatorCasesService', () => {
       (prisma.attachment.findMany as jest.Mock).mockResolvedValue(mockAttachments);
 
       const result = await service.getCaseDetail(
-        { userId: 'user-1', organizationId: 'org-1', teamId: null, role: 'OPERATOR' },
+        { sub: 'user-1', organizationId: 'org-1', teamId: null, role: 'OPERATOR' },
         'inc-1'
       );
 
@@ -296,7 +296,7 @@ describe('OperatorCasesService', () => {
         kind: 'photo',
         mime: 'image/jpeg',
         transcriptStatus: null,
-        visionStatus: 'processing',
+        visionStatus: 'completed',
       });
     });
   });

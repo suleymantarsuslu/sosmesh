@@ -565,6 +565,7 @@
       "fullCaseLink": "Full case page",
       "close": "Close",
       "closeAriaLabel": "Close case summary",
+      "expandAriaLabel": "Expand case summary",
       "drawerTitle": "Case summary"
     },
     "aiSuggestionPanel": {

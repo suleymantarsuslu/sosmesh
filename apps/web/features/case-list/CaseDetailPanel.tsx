@@ -1,5 +1,6 @@
 'use client';
 
+import { useState, useEffect, useRef } from 'react';
 import Link from 'next/link';
 
 import { Card } from '../../components/ui/Card';
@@ -23,6 +24,23 @@ export function CaseDetailPanel({
   timeline: TimelineEntry[];
 }) {
   const { t } = useOperatorPreferences();
+  const [isCollapsed, setIsCollapsed] = useState(false);
+  const panelRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (!isCollapsed) return;
+
+    const handleEscape = (event: KeyboardEvent) => {
+      if (event.key === 'Escape' && isCollapsed) {
+        setIsCollapsed(false);
+      }
+    };
+
+    document.addEventListener('keydown', handleEscape);
+    return () => {
+      document.removeEventListener('keydown', handleEscape);
+    };
+  }, [isCollapsed]);
 
   if (!row) {
     return (
@@ -32,9 +50,40 @@ export function CaseDetailPanel({
     );
   }
 
+  const toggleCollapse = () => {
+    setIsCollapsed(!isCollapsed);
+  };
+
   return (
-    <Card title={t('web.caseDetail.title')} className="cases-detail-panel">
-      <div data-testid="case-detail-panel">
+    <div 
+      ref={panelRef}
+      className={`cases-detail-panel ${isCollapsed ? 'cases-detail-panel--collapsed' : ''}`}
+      data-testid="case-detail-panel-wrapper"
+    >
+      <div className="cases-detail-panel__header">
+        <h2 className="cases-detail-panel__title">{t('web.caseDetail.title')}</h2>
+        <button
+          type="button"
+          onClick={toggleCollapse}
+          className="cases-detail-panel__toggle"
+          aria-label={isCollapsed ? t('web.caseDetail.expandAriaLabel') : t('web.caseDetail.closeAriaLabel')}
+          aria-expanded={!isCollapsed}
+          data-testid="case-detail-panel-toggle"
+        >
+          {isCollapsed ? (
+            <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+              <path d="M5 7.5L10 12.5L15 7.5" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+            </svg>
+          ) : (
+            <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+              <path d="M15 5L5 15M5 5L15 15" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+            </svg>
+          )}
+        </button>
+      </div>
+      
+      {!isCollapsed && (
+        <div className="cases-detail-panel__content" data-testid="case-detail-panel">
       <dl className="cases-detail-panel__meta">
         <div>
           <dt>{t('web.caseDetail.priority')}</dt>
@@ -62,7 +111,8 @@ export function CaseDetailPanel({
         )}
       </ol>
       <Link href={`/operator/cases/${row.incidentId}`}>{t('web.caseDetail.fullCaseLink')}</Link>
-      </div>
-    </Card>
+        </div>
+      )}
+    </div>
   );
 }

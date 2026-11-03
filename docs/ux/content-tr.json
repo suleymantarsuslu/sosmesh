@@ -565,6 +565,7 @@
       "fullCaseLink": "Tam vaka sayfası",
       "close": "Kapat",
       "closeAriaLabel": "Vaka özetini kapat",
+      "expandAriaLabel": "Vaka özetini genişlet",
       "drawerTitle": "Vaka özeti"
     },
     "aiSuggestionPanel": {

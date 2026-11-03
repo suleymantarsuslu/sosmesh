@@ -12,6 +12,9 @@ import { OperatorCasesService } from './operator-cases.service';
 import { OperatorCaseActionsService } from './operator-case-actions.service';
 import { OperatorAiController, OperatorCaseAiController } from './operator-ai.controller';
 import { OperatorAiService } from './operator-ai.service';
+import { OperatorFusionController } from './operator-fusion.controller';
+import { OperatorCopilotController } from './operator-copilot.controller';
+import { OperatorDemoController } from './operator-demo.controller';
 
 @Module({
   imports: [OrganizationModule, AiModule],
@@ -20,6 +23,9 @@ import { OperatorAiService } from './operator-ai.service';
     OperatorPanelController,
     OperatorAiController,
     OperatorCaseAiController,
+    OperatorFusionController,
+    OperatorCopilotController,
+    OperatorDemoController,
   ],
   providers: [
     OperatorAuthGuard,

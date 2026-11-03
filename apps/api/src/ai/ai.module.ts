@@ -11,6 +11,8 @@ import { BudgetGuardService } from './budget-guard.service';
 import { AiJobQueueService } from './ai-job-queue.service';
 import { AiJobRunnerService } from './ai-job-runner.service';
 import { TriageV2Service } from './triage-v2.service';
+import { FusionService } from './fusion/fusion.service';
+import { CopilotService } from './copilot/copilot.service';
 
 @Module({
   imports: [PrismaModule],
@@ -21,6 +23,8 @@ import { TriageV2Service } from './triage-v2.service';
     AiJobQueueService,
     AiJobRunnerService,
     TriageV2Service,
+    FusionService,
+    CopilotService,
     { provide: AI_PROVIDER_OVERRIDE, useValue: null },
     { provide: SOS_PLAINTEXT_SOURCE, useClass: ServerKeyPlaintextSource },
   ],
@@ -31,6 +35,8 @@ import { TriageV2Service } from './triage-v2.service';
     AiJobQueueService,
     AiJobRunnerService,
     TriageV2Service,
+    FusionService,
+    CopilotService,
   ],
 })
 export class AiModule {}

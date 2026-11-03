@@ -13,4 +13,7 @@ interface BleMeshRadio {
     fun connectFirstDiscoveredPeer(): Result<Unit>
 
     fun disconnectPeerSession()
+
+    /** Attempt GATT reconnect when session is in backoff; no-op if not applicable. */
+    fun tickGattReconnect(): Result<Unit>?
 }

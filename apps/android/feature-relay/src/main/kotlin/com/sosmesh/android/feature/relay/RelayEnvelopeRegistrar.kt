@@ -21,7 +21,7 @@ class RelayEnvelopeRegistrar
         private val outbox: OutboxQueueAdapter,
         private val uploadScheduler: RelayUploadCommands,
     ) {
-        fun registerFromWirePayload(
+        suspend fun registerFromWirePayload(
             payload: ByteArray,
             nowMs: Long,
         ): Result<Unit> {

@@ -8,8 +8,12 @@ export function buildCiTestDatabaseName(): string {
   const runId = sanitizeRunId(
     process.env.GITHUB_RUN_ID ?? process.env.CI ?? 'local'
   );
+  const runner = sanitizeRunId(
+    process.env.RUNNER_NAME ?? process.env.GITHUB_JOB ?? ''
+  );
   const suffix = randomBytes(4).toString('hex');
-  return `sosmesh_t_${runId}_${suffix}`;
+  const parts = runner ? [runId, runner, suffix] : [runId, suffix];
+  return `sosmesh_t_${parts.join('_')}`;
 }
 
 export function buildDatabaseUrlFromTemplate(

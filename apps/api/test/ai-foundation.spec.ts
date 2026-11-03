@@ -10,7 +10,6 @@
 
 import { Test, TestingModule } from '@nestjs/testing';
 import { INestApplication } from '@nestjs/common';
-import * as request from 'supertest';
 import { PrismaService } from '../src/prisma/prisma.service';
 import { BudgetGuardService } from '../src/ai/budget-guard.service';
 import { Prisma } from '@prisma/client';

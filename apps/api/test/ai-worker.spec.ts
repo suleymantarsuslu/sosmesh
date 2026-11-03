@@ -102,6 +102,23 @@ async function createIngestTestApp(params: {
 
   const localApp = moduleRef.createNestApplication({ bufferLogs: true });
   await localApp.init();
+  
+  // Start AI job runner explicitly in tests when AI is enabled
+  let runner: any = null;
+  if (process.env.AI_ENABLED === 'true') {
+    const { AiJobRunnerService } = await import('../src/ai/ai-job-runner.service');
+    runner = localApp.get(AiJobRunnerService);
+    void runner.start();
+  }
+
+  // Override close to stop the runner first
+  const originalClose = localApp.close.bind(localApp);
+  localApp.close = async function () {
+    if (runner) {
+      runner.stop();
+    }
+    return originalClose();
+  };
 
   return Object.assign(localApp, {
     restoreEnv: () => {

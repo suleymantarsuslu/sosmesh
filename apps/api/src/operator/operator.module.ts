@@ -1,6 +1,7 @@
 import { Module } from '@nestjs/common';
 
 import { OrganizationModule } from '../organization/organization.module';
+import { AiModule } from '../ai/ai.module';
 import { OperatorController } from './operator.controller';
 import { OperatorPanelController } from './operator-panel.controller';
 import { OperatorAuthGuard } from './guards/operator-auth.guard';
@@ -9,10 +10,21 @@ import { RolesGuard } from './guards/roles.guard';
 import { OperatorDashboardService } from './operator-dashboard.service';
 import { OperatorCasesService } from './operator-cases.service';
 import { OperatorCaseActionsService } from './operator-case-actions.service';
+import { OperatorAiController, OperatorCaseAiController } from './operator-ai.controller';
+import { OperatorAiService } from './operator-ai.service';
+import { OperatorDemoController } from './operator-demo.controller';
+import { OperatorDemoService } from './operator-demo.service';
+import { LocalDiskStorageService } from '../media/local-disk-storage.service';
 
 @Module({
-  imports: [OrganizationModule],
-  controllers: [OperatorController, OperatorPanelController],
+  imports: [OrganizationModule, AiModule],
+  controllers: [
+    OperatorController,
+    OperatorPanelController,
+    OperatorAiController,
+    OperatorCaseAiController,
+    OperatorDemoController,
+  ],
   providers: [
     OperatorAuthGuard,
     OperatorCsrfGuard,
@@ -20,6 +32,9 @@ import { OperatorCaseActionsService } from './operator-case-actions.service';
     OperatorDashboardService,
     OperatorCasesService,
     OperatorCaseActionsService,
+    OperatorAiService,
+    OperatorDemoService,
+    LocalDiskStorageService,
   ],
   exports: [
     OrganizationModule,

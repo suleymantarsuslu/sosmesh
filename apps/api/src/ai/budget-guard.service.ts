@@ -120,7 +120,11 @@ export class BudgetGuardService {
         };
       });
     } catch (error) {
-      this.logger.error({ err: error, msg: 'Budget reservation failed' });
+      this.logger.error({
+        errorCode: error instanceof Error ? error.constructor.name : 'RESERVATION_FAILED',
+        message: error instanceof Error ? error.message.substring(0, 200) : 'unknown',
+        msg: 'Budget reservation failed',
+      });
       return { reserved: false, reason: 'daily_limit' };
     }
   }
@@ -148,7 +152,8 @@ export class BudgetGuardService {
       });
     } catch (error) {
       this.logger.error({
-        err: error,
+        errorCode: error instanceof Error ? error.constructor.name : 'RECONCILIATION_FAILED',
+        message: error instanceof Error ? error.message.substring(0, 200) : 'unknown',
         msg: 'Budget reconciliation failed',
         reservationId: request.reservationId,
       });

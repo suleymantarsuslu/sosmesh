@@ -148,7 +148,11 @@ export class AiJobQueueService {
         };
       });
     } catch (error) {
-      this.logger.error({ err: error, msg: 'Failed to claim job' });
+      this.logger.error({
+        errorCode: error instanceof Error ? error.constructor.name : 'CLAIM_FAILED',
+        message: error instanceof Error ? error.message.substring(0, 200) : 'unknown',
+        msg: 'Failed to claim job',
+      });
       return null;
     }
   }

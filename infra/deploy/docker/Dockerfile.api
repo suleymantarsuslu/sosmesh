@@ -20,7 +20,7 @@ RUN pnpm --filter @sosmesh/api exec prisma generate
 
 FROM node:20-bookworm-slim AS runtime
 RUN apt-get update \
-  && apt-get install -y --no-install-recommends openssl ca-certificates tini wget \
+  && apt-get install -y --no-install-recommends openssl ca-certificates tini wget ffmpeg \
   && rm -rf /var/lib/apt/lists/* \
   && groupadd -r sosmesh -g 10001 \
   && useradd -r -g sosmesh -u 10001 -d /app -s /usr/sbin/nologin sosmesh

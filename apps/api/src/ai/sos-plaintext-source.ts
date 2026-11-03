@@ -162,11 +162,16 @@ export class ServerKeyPlaintextSource implements SosPlaintextSource {
 
       return noteText;
     } catch (error) {
-      // Log only error codes, never payloads
+      // Log only error codes, never payloads or error objects that may contain sensitive data
+      const errorCode = error instanceof Error && error.message.includes('Key ID mismatch')
+        ? 'KEY_ID_MISMATCH'
+        : error instanceof Error && error.message.includes('DECRYPTION_FAILED')
+        ? 'DECRYPTION_FAILED'
+        : 'DECRYPT_ERROR';
+
       this.logger.error({
-        code: 'DECRYPTION_FAILED',
+        code: errorCode,
         messageId: request.messageId,
-        error: error instanceof Error ? error.message : 'unknown',
       });
       return null;
     }

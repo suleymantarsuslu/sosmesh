@@ -1,97 +1,86 @@
 /**
- * Operator Demo Controller - Demo/synthetic data creation
- * Work Package D - Demo Seed Support
+ * Operator Demo Controller - Synthetic SOS creation for demo
+ * Work Package A - AI Foundation
+ * 
+ * POST /v1/operator/demo/sos creates SYNTHETIC SOS (synthetic=true)
+ * Accepts text + optional audio/photo multipart
+ * Caps: 10 MB audio, 10 MB photo, 120 s audio
  */
 
 import {
   Controller,
   Post,
-  Body,
   UseGuards,
-  HttpCode,
-  HttpStatus,
+  Body,
+  UseInterceptors,
+  UploadedFiles,
   BadRequestException,
 } from '@nestjs/common';
+import { FileFieldsInterceptor } from '@nestjs/platform-express';
 import { OperatorAuthGuard } from './guards/operator-auth.guard';
-import { PrismaService } from '../prisma/prisma.service';
-import { AiJobService } from '../ai/ai-job.service';
-import { Prisma } from '@prisma/client';
+import { OperatorDemoService } from './operator-demo.service';
 
-class CreateDemoSosDto {
-  messageId!: string;
-  sosType!: string;
-  locationStatus!: string;
-  latitude?: number;
-  longitude?: number;
-  personCount?: number;
-  operatorDisplayText!: string;
-  priority!: number;
-  synthetic!: boolean;
-}
+const MAX_AUDIO_SIZE = 10 * 1024 * 1024; // 10 MB
+const MAX_PHOTO_SIZE = 10 * 1024 * 1024; // 10 MB
+const MAX_AUDIO_DURATION_SEC = 120;
 
 @Controller('v1/operator/demo')
 @UseGuards(OperatorAuthGuard)
 export class OperatorDemoController {
-  constructor(
-    private readonly prisma: PrismaService,
-    private readonly aiJobs: AiJobService
-  ) {}
+  constructor(private readonly demoService: OperatorDemoService) {}
 
   @Post('sos')
-  @HttpCode(HttpStatus.CREATED)
-  async createDemoSos(@Body() dto: CreateDemoSosDto) {
-    if (!dto.synthetic) {
-      throw new BadRequestException('Demo SOSes must have synthetic=true');
+  @UseInterceptors(
+    FileFieldsInterceptor([
+      { name: 'audio', maxCount: 1 },
+      { name: 'photo', maxCount: 1 },
+    ])
+  )
+  async createDemoSos(
+    @Body() body: { text?: string; priority?: string; language?: string },
+    @UploadedFiles()
+    files?: {
+      audio?: Array<{ buffer: Buffer; mimetype: string; size: number }>;
+      photo?: Array<{ buffer: Buffer; mimetype: string; size: number }>;
+    }
+  ): Promise<{ incidentId: string; messageId: string }> {
+    const text = body.text?.trim();
+    if (!text) {
+      throw new BadRequestException('text is required');
     }
 
-    if (!dto.messageId || !dto.operatorDisplayText) {
-      throw new BadRequestException('messageId and operatorDisplayText required');
+    if (text.length > 2000) {
+      throw new BadRequestException('text exceeds 2000 characters');
     }
 
-    const existing = await this.prisma.sosMessage.findUnique({
-      where: { messageId: dto.messageId },
-    });
-
-    if (existing) {
-      return { id: existing.id, messageId: existing.messageId, idempotent: true };
+    const priority = body.priority ? parseInt(body.priority, 10) : 3;
+    if (priority < 1 || priority > 5) {
+      throw new BadRequestException('priority must be 1-5');
     }
 
-    const incident = await this.prisma.incident.create({
-      data: {
-        state: 'PENDING',
-        sosMessages: {
-          create: {
-            messageId: dto.messageId,
-            sosType: dto.sosType as any,
-            locationStatus: dto.locationStatus as any,
-            latitude:
-              dto.latitude !== undefined
-                ? new Prisma.Decimal(dto.latitude)
-                : undefined,
-            longitude:
-              dto.longitude !== undefined
-                ? new Prisma.Decimal(dto.longitude)
-                : undefined,
-            personCount: dto.personCount,
-            operatorDisplayText: dto.operatorDisplayText,
-            priority: dto.priority,
-            synthetic: true,
-            needsHumanReview: false,
-          },
-        },
-      },
-      include: {
-        sosMessages: { take: 1 },
-      },
+    const language = body.language ?? 'en';
+
+    const audio = files?.audio?.[0];
+    const photo = files?.photo?.[0];
+
+    if (audio && audio.size > MAX_AUDIO_SIZE) {
+      throw new BadRequestException(`Audio file exceeds ${MAX_AUDIO_SIZE / 1024 / 1024} MB`);
+    }
+
+    if (photo && photo.size > MAX_PHOTO_SIZE) {
+      throw new BadRequestException(`Photo file exceeds ${MAX_PHOTO_SIZE / 1024 / 1024} MB`);
+    }
+
+    const result = await this.demoService.createSyntheticSos({
+      text,
+      priority,
+      language,
+      audioBuffer: audio?.buffer,
+      audioMime: audio?.mimetype,
+      photoBuffer: photo?.buffer,
+      photoMime: photo?.mimetype,
     });
 
-    const sosMessage = incident.sosMessages[0];
-
-    await this.aiJobs.enqueueAfterIngest({
-      incidentId: incident.id,
-      sosMessageId: sosMessage.id,
-    });
-
-    return { id: sosMessage.id, messageId: sosMessage.messageId };
+    return result;
   }
 }

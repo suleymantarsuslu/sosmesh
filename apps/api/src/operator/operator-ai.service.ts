@@ -21,7 +21,7 @@ export class OperatorAiService {
   ) {}
 
   async getStatus(): Promise<AiStatusView> {
-    const enabled = process.env.AI_ENABLED !== 'false';
+    const enabled = process.env.AI_ENABLED === 'true';
     const hasApiKey = !!process.env.MODEL_API_KEY;
 
     if (!enabled || !hasApiKey) {

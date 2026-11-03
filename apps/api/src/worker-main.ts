@@ -18,7 +18,7 @@ async function bootstrap() {
 
   const port = Number(process.env.WORKER_HEALTH_PORT ?? 3002);
   const retentionIntervalMs = Number(process.env.WORKER_RETENTION_INTERVAL_MS ?? 3_600_000);
-  const aiEnabled = process.env.AI_ENABLED !== 'false';
+  const aiEnabled = process.env.AI_ENABLED === 'true';
 
   const server = http.createServer(createWorkerHealthRequestListener(prisma));
 

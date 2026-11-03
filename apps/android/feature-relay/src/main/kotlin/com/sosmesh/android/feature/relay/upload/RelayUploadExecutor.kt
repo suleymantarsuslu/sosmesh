@@ -72,18 +72,20 @@ class RelayUploadExecutor
                         uploaded++
                     }
                     is RelayIngestResult.InvalidReceipt -> {
-                        retryMs = nowMs + HTTP_ERROR_BACKOFF_MS
-                        outbox.setUploadRetryAt(entry.sosId, entry.digest, retryMs, "invalid_receipt")
-                        break
+                        outbox.setUploadRetryAt(
+                            entry.sosId,
+                            entry.digest,
+                            UPLOAD_PERMANENT_ERROR_RETRY_AT_MS,
+                            "invalid_receipt",
+                        )
                     }
                     is RelayIngestResult.MessageIdConflict -> {
                         outbox.setUploadRetryAt(
                             entry.sosId,
                             entry.digest,
-                            NEEDS_REVIEW_RETRY_AT_MS,
+                            UPLOAD_PERMANENT_ERROR_RETRY_AT_MS,
                             "needs_review",
                         )
-                        break
                     }
                     is RelayIngestResult.NoNetwork -> {
                         retryMs = nowMs + NO_NETWORK_BACKOFF_MS
@@ -96,11 +98,11 @@ class RelayUploadExecutor
                         break
                     }
                     is RelayIngestResult.HttpError -> {
-                        if (result.code in 400..499 && result.code != 429) {
+                        if (result.code in 400..499) {
                             outbox.setUploadRetryAt(
                                 entry.sosId,
                                 entry.digest,
-                                NEEDS_REVIEW_RETRY_AT_MS,
+                                UPLOAD_PERMANENT_ERROR_RETRY_AT_MS,
                                 "http_${result.code}",
                             )
                         } else {
@@ -111,8 +113,8 @@ class RelayUploadExecutor
                                 retryMs,
                                 "http_${result.code}",
                             )
+                            break
                         }
-                        break
                     }
                 }
             }
@@ -233,5 +235,6 @@ class RelayUploadExecutor
             const val HTTP_ERROR_BACKOFF_MS = 120_000L
             const val RATE_LIMIT_MAX_BACKOFF_MS = 900_000L
             const val NEEDS_REVIEW_RETRY_AT_MS = 9_223_372_036_854_775L
+            const val UPLOAD_PERMANENT_ERROR_RETRY_AT_MS = 9_223_372_036_854_775L
         }
     }

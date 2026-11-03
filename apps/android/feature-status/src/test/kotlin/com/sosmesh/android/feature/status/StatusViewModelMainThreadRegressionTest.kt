@@ -70,6 +70,7 @@ class StatusViewModelMainThreadRegressionTest {
             }
             val viewModel =
                 StatusViewModel(
+                    context = ApplicationProvider.getApplicationContext(),
                     outbox = adapter,
                     peerDelivery = NoOpPeerDeliveryPort,
                 )

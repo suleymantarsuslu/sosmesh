@@ -193,9 +193,7 @@ class AndroidGattServerPort
             callback: BluetoothGattServerCallback,
         ): BluetoothGattServer? = manager.openGattServer(context, callback)
 
-        private fun hasConnectPermission(): Boolean =
-            PermissionChecker.checkSelfPermission(context, Manifest.permission.BLUETOOTH_CONNECT) ==
-                PermissionChecker.PERMISSION_GRANTED
+        private fun hasConnectPermission(): Boolean = AndroidBlePermissionCheck.canConnect(context)
     }
 
 @Singleton
@@ -371,9 +369,7 @@ class AndroidGattClientPort
                 device.connectGatt(context, false, gattCallback)
             }
 
-        private fun hasConnectPermission(): Boolean =
-            PermissionChecker.checkSelfPermission(context, Manifest.permission.BLUETOOTH_CONNECT) ==
-                PermissionChecker.PERMISSION_GRANTED
+        private fun hasConnectPermission(): Boolean = AndroidBlePermissionCheck.canConnect(context)
 
         private val gattCallback =
             object : BluetoothGattCallback() {

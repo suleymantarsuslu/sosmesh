@@ -15,6 +15,20 @@ export async function createApp() {
   app.use(securityHeadersMiddleware);
 
   const configService = app.get(ConfigService);
+  
+  const trustProxy = configService.get<string>('TRUST_PROXY');
+  if (trustProxy) {
+    const expressApp = app.getHttpAdapter().getInstance();
+    const numericHops = Number(trustProxy);
+    if (!isNaN(numericHops) && numericHops > 0) {
+      expressApp.set('trust proxy', numericHops);
+    } else if (trustProxy.toLowerCase() === 'true') {
+      expressApp.set('trust proxy', true);
+    } else if (trustProxy.includes('/') || trustProxy.includes(',')) {
+      expressApp.set('trust proxy', trustProxy.split(',').map((s) => s.trim()));
+    }
+  }
+
   const corsOrigins = configService.get<string>('CORS_ORIGINS');
   if (corsOrigins) {
     app.enableCors({

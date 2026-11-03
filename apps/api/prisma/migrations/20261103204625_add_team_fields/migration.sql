@@ -1,0 +1,6 @@
+-- AlterTable
+ALTER TABLE "teams" ADD COLUMN "type" TEXT,
+ADD COLUMN "capacity" INTEGER,
+ADD COLUMN "contact_info" TEXT,
+ADD COLUMN "status" TEXT,
+ADD COLUMN "updated_at" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP;

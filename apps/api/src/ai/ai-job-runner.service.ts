@@ -5,7 +5,7 @@
  * Runs in worker process, claims and processes jobs one at a time
  */
 
-import { Injectable, Logger, OnModuleInit } from '@nestjs/common';
+import { Injectable, Logger } from '@nestjs/common';
 import { AiJobQueueService, type AiJob } from './ai-job-queue.service';
 import { TriageV2Service } from './triage-v2.service';
 import { SosPlaintextSource, SOS_PLAINTEXT_SOURCE } from './sos-plaintext-source';
@@ -13,7 +13,7 @@ import { PrismaService } from '../prisma/prisma.service';
 import { Inject } from '@nestjs/common';
 
 @Injectable()
-export class AiJobRunnerService implements OnModuleInit {
+export class AiJobRunnerService {
   private readonly logger = new Logger(AiJobRunnerService.name);
   private running = false;
 
@@ -23,14 +23,6 @@ export class AiJobRunnerService implements OnModuleInit {
     private readonly prisma: PrismaService,
     @Inject(SOS_PLAINTEXT_SOURCE) private readonly plaintextSource: SosPlaintextSource
   ) {}
-
-  async onModuleInit() {
-    // Auto-start in test and when AI is enabled
-    if (process.env.NODE_ENV === 'test' && process.env.AI_ENABLED === 'true') {
-      this.logger.log('Auto-starting AI job runner in test mode');
-      void this.start();
-    }
-  }
 
   /**
    * Start processing jobs in a loop

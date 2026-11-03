@@ -12,7 +12,7 @@ final class BleTransferGateTests: XCTestCase {
         let receiver = BleTransferReceiver(transport: receiverT, config: BleTransferConfig(), clock: clock)
         let sender = BleTransferSender(
             transport: senderT,
-            config: BleTransferConfig(maxRetries: 2, chunkTimeoutMs: 300),
+            config: BleTransferConfig(chunkTimeoutMs: 300, maxRetries: 2),
             clock: clock,
             rng: rng
         )
@@ -36,17 +36,17 @@ final class BleTransferGateTests: XCTestCase {
         let rng = SeededBleTransferRng(seed: 9)
         let outbound = RecordingOutbound()
         let (senderT, receiverT) = linkedPair(outbound: outbound) { wire in
-            corruptLastChunkDigestIfPresent(wire)
+            self.corruptLastChunkDigestIfPresent(wire)
         }
         let sender = BleTransferSender(
             transport: senderT,
-            config: BleTransferConfig(maxRetries: 3, chunkTimeoutMs: 400),
+            config: BleTransferConfig(chunkTimeoutMs: 400, maxRetries: 3),
             clock: clock,
             rng: rng
         )
         let receiver = BleTransferReceiver(
             transport: receiverT,
-            config: BleTransferConfig(maxRetries: 3, chunkTimeoutMs: 400),
+            config: BleTransferConfig(chunkTimeoutMs: 400, maxRetries: 3),
             clock: clock
         )
         let tmp = URL(fileURLWithPath: NSTemporaryDirectory())
@@ -64,7 +64,7 @@ final class BleTransferGateTests: XCTestCase {
             if receiver.getState() == .failed || senderCompleted { break }
             clock.advance(10)
         }
-        XCTAssertEqual(receiver.getState(), .failed)
+        XCTAssertEqual(receiver.getState(), BleTransferState.failed)
         XCTAssertFalse(senderCompleted)
         let entries = try outbox.listEntries()
         XCTAssertEqual(entries.count, 0)
@@ -79,13 +79,13 @@ final class BleTransferGateTests: XCTestCase {
         let (senderT, receiverT) = linkedPair(outbound: outbound)
         let sender = BleTransferSender(
             transport: senderT,
-            config: BleTransferConfig(maxRetries: 5, chunkTimeoutMs: 400),
+            config: BleTransferConfig(chunkTimeoutMs: 400, maxRetries: 5),
             clock: clock,
             rng: rng
         )
         let receiver = BleTransferReceiver(
             transport: receiverT,
-            config: BleTransferConfig(maxRetries: 5, chunkTimeoutMs: 400),
+            config: BleTransferConfig(chunkTimeoutMs: 400, maxRetries: 5),
             clock: clock
         )
         let tmp = URL(fileURLWithPath: NSTemporaryDirectory())

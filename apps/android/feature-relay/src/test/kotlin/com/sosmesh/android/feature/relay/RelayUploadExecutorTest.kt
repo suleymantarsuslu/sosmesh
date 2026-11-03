@@ -14,6 +14,8 @@ import com.sosmesh.android.feature.relay.uplink.FakeRelayIngestUplink
 import com.sosmesh.android.feature.relay.uplink.RelayIngestResult
 import com.sosmesh.android.feature.relay.upload.RelayUploadExecutor
 import com.sosmesh.contracts.transport.EnqueueInput
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.runBlocking
 import org.junit.After
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNotNull
@@ -44,8 +46,8 @@ class RelayUploadExecutorTest {
             AndroidStateTransitionLoader.load(
                 javaClass.classLoader!!.getResourceAsStream("state-transitions.json")!!,
             )
-        adapter = RoomOutboxQueueAdapter(db.outboxDao(), fixture.defaultRetentionMs)
-        reader = RelayOutboxReader(db.outboxDao())
+        adapter = RoomOutboxQueueAdapter(db.outboxDao(), fixture.defaultRetentionMs, Dispatchers.IO)
+        reader = RelayOutboxReader(db.outboxDao(), kotlinx.coroutines.Dispatchers.IO)
         settings = MutableRelaySettings(relayEnabled = true)
         val budget = RelayHourlyDataBudget(context)
         budget.resetForTests()
@@ -60,106 +62,112 @@ class RelayUploadExecutorTest {
     }
 
     @Test
-    fun noNetwork_schedulesRetryWithoutDeletingOutbox() {
-        enqueueRelayBlob("net-1")
-        val summary =
-            executor.runUploadCycle(
-                nowMs = 1_000L,
-                networkConnected = false,
-                battery = RelayBatterySnapshot(90, false),
-            )
-        assertNotNull(summary.scheduledRetryMs)
-        val entry = adapter.getByKey("net-1", digestFor("net-1"))
-        assertNotNull(entry)
-        assertEquals("LOCAL_SAVED", entry!!.state)
-        assertEquals("no_network", entry.lastError)
-    }
+    fun noNetwork_schedulesRetryWithoutDeletingOutbox() =
+        runBlocking {
+            enqueueRelayBlob("net-1")
+            val summary =
+                executor.runUploadCycle(
+                    nowMs = 1_000L,
+                    networkConnected = false,
+                    battery = RelayBatterySnapshot(90, false),
+                )
+            assertNotNull(summary.scheduledRetryMs)
+            val entry = adapter.getByKey("net-1", digestFor("net-1"))
+            assertNotNull(entry)
+            assertEquals("LOCAL_SAVED", entry!!.state)
+            assertEquals("no_network", entry.lastError)
+        }
 
     @Test
-    fun fakeUplink200_updatesState() {
-        enqueueRelayBlob("ok-1")
-        fakeUplink.nextResult = RelayIngestResult.Success
-        val summary =
+    fun fakeUplink200_updatesState() =
+        runBlocking {
+            enqueueRelayBlob("ok-1")
+            fakeUplink.nextResult = RelayIngestResult.Success
+            val summary =
+                executor.runUploadCycle(
+                    nowMs = 2_000L,
+                    networkConnected = true,
+                    battery = RelayBatterySnapshot(90, false),
+                )
+            assertEquals(1, fakeUplink.uploadCallCount)
+            assertEquals(1, summary.uploaded)
+            val entry = adapter.getByKey("ok-1", digestFor("ok-1"))
+            assertEquals("SERVER_ACCEPTED", entry!!.state)
+        }
+
+    @Test
+    fun messageIdConflict_marksNeedsReviewWithoutDeletingOutbox() =
+        runBlocking {
+            enqueueRelayBlob("conflict-1")
+            fakeUplink.nextResult = RelayIngestResult.MessageIdConflict
             executor.runUploadCycle(
-                nowMs = 2_000L,
+                nowMs = 6_000L,
                 networkConnected = true,
                 battery = RelayBatterySnapshot(90, false),
             )
-        assertEquals(1, fakeUplink.uploadCallCount)
-        assertEquals(1, summary.uploaded)
-        val entry = adapter.getByKey("ok-1", digestFor("ok-1"))
-        assertEquals("SERVER_ACCEPTED", entry!!.state)
-    }
+            val entry = adapter.getByKey("conflict-1", digestFor("conflict-1"))
+            assertNotNull(entry)
+            assertEquals("needs_review", entry!!.lastError)
+            assertEquals("LOCAL_SAVED", entry.state)
+        }
 
     @Test
-    fun messageIdConflict_marksNeedsReviewWithoutDeletingOutbox() {
-        enqueueRelayBlob("conflict-1")
-        fakeUplink.nextResult = RelayIngestResult.MessageIdConflict
-        executor.runUploadCycle(
-            nowMs = 6_000L,
-            networkConnected = true,
-            battery = RelayBatterySnapshot(90, false),
-        )
-        val entry = adapter.getByKey("conflict-1", digestFor("conflict-1"))
-        assertNotNull(entry)
-        assertEquals("needs_review", entry!!.lastError)
-        assertEquals("LOCAL_SAVED", entry.state)
-    }
+    fun http429_appliesBackoff() =
+        runBlocking {
+            enqueueRelayBlob("rate-1")
+            fakeUplink.nextResult = RelayIngestResult.RateLimited(retryAfterMs = 120_000L)
+            val summary =
+                executor.runUploadCycle(
+                    nowMs = 3_000L,
+                    networkConnected = true,
+                    battery = RelayBatterySnapshot(90, false),
+                )
+            assertNotNull(summary.scheduledRetryMs)
+            val entry = adapter.getByKey("rate-1", digestFor("rate-1"))
+            assertEquals("http_429", entry!!.lastError)
+            assertEquals("LOCAL_SAVED", entry.state)
+        }
 
     @Test
-    fun http429_appliesBackoff() {
-        enqueueRelayBlob("rate-1")
-        fakeUplink.nextResult = RelayIngestResult.RateLimited(retryAfterMs = 120_000L)
-        val summary =
+    fun http500_keepsLocalSavedWithoutServerAccepted() =
+        runBlocking {
+            enqueueRelayBlob("http-500")
+            fakeUplink.nextResult = RelayIngestResult.HttpError(500, "internal_error")
             executor.runUploadCycle(
-                nowMs = 3_000L,
+                nowMs = 7_000L,
                 networkConnected = true,
                 battery = RelayBatterySnapshot(90, false),
             )
-        assertNotNull(summary.scheduledRetryMs)
-        val entry = adapter.getByKey("rate-1", digestFor("rate-1"))
-        assertEquals("http_429", entry!!.lastError)
-        assertEquals("LOCAL_SAVED", entry.state)
-    }
+            val entry = adapter.getByKey("http-500", digestFor("http-500"))
+            assertNotNull(entry)
+            assertEquals("LOCAL_SAVED", entry!!.state)
+            assertEquals("http_500", entry.lastError)
+        }
 
     @Test
-    fun http500_keepsLocalSavedWithoutServerAccepted() {
-        enqueueRelayBlob("http-500")
-        fakeUplink.nextResult = RelayIngestResult.HttpError(500, "internal_error")
-        executor.runUploadCycle(
-            nowMs = 7_000L,
-            networkConnected = true,
-            battery = RelayBatterySnapshot(90, false),
-        )
-        val entry = adapter.getByKey("http-500", digestFor("http-500"))
-        assertNotNull(entry)
-        assertEquals("LOCAL_SAVED", entry!!.state)
-        assertEquals("http_500", entry.lastError)
-    }
+    fun hourlyLimit_defersUpload() =
+        runBlocking {
+            val limit = 64 * 1024L
+            settings.hourlyLimitBytes = limit
+            enqueueRelayBlob("limit-1", blobSize = 40)
+            val budget = RelayHourlyDataBudget(context)
+            budget.resetForTests()
+            budget.recordSent((limit - 10).toInt(), 4_000L)
+            val policy = RelayBatteryPolicy(settings, budget)
+            executor = RelayUploadExecutor(settings, policy, budget, reader, adapter, fakeUplink)
+            fakeUplink.nextResult = RelayIngestResult.Success
+            val summary =
+                executor.runUploadCycle(
+                    nowMs = 5_000L,
+                    networkConnected = true,
+                    battery = RelayBatterySnapshot(90, false),
+                )
+            assertEquals(RelayPauseReason.HourlyDataLimit, summary.deferredReason)
+            val entry = adapter.getByKey("limit-1", digestFor("limit-1", 40))
+            assertEquals("hourly_data_limit", entry!!.lastError)
+        }
 
-    @Test
-    fun hourlyLimit_defersUpload() {
-        val limit = 64 * 1024L
-        settings.hourlyLimitBytes = limit
-        enqueueRelayBlob("limit-1", blobSize = 40)
-        val budget = RelayHourlyDataBudget(context)
-        budget.resetForTests()
-        budget.recordSent((limit - 10).toInt(), 4_000L)
-        val policy = RelayBatteryPolicy(settings, budget)
-        executor = RelayUploadExecutor(settings, policy, budget, reader, adapter, fakeUplink)
-        fakeUplink.nextResult = RelayIngestResult.Success
-        val summary =
-            executor.runUploadCycle(
-                nowMs = 5_000L,
-                networkConnected = true,
-                battery = RelayBatterySnapshot(90, false),
-            )
-        assertEquals(RelayPauseReason.HourlyDataLimit, summary.deferredReason)
-        val entry = adapter.getByKey("limit-1", digestFor("limit-1", 40))
-        assertEquals("hourly_data_limit", entry!!.lastError)
-    }
-
-    private fun enqueueRelayBlob(
+    private suspend fun enqueueRelayBlob(
         sosId: String,
         blobSize: Int = 16,
     ) {

@@ -14,7 +14,7 @@ class BleTransferEngine
         private val serverPort: GattServerPort,
         private val clientPort: GattClientPort,
         private val peerDeliveryTracker: SosPeerDeliveryTracker,
-    ) {
+    ) : BleTransferEnginePort {
         private val peripheralTransport =
             GattBleTransferTransport(
                 object : GattOutboundWriter {
@@ -75,7 +75,12 @@ class BleTransferEngine
             receiver.setListener(listener)
         }
 
-        fun sendOutbound(
+        @Inject
+        fun wireRelayReceiver(relayListener: BleTransferReceiver.Listener) {
+            setRelayListener(relayListener)
+        }
+
+        override fun sendOutbound(
             sosId: String,
             digest: String,
             payload: ByteArray,
@@ -85,11 +90,17 @@ class BleTransferEngine
             sender.startTransfer(payload)
         }
 
+        /** Multihop relay forward: opaque wire bytes only; does not touch sender outbox PEER_RECEIVED gate. */
+        override fun sendOpaqueForward(payload: ByteArray) {
+            clientPort.enableAckNotifications()
+            sender.startTransfer(payload)
+        }
+
         fun receiverState(): TransferState = receiver.getState()
 
-        fun senderState(): TransferState = sender.getState()
+        override fun senderState(): TransferState = sender.getState()
 
-        fun onGattReady() {
+        override fun onGattReady() {
             clientPort.enableAckNotifications()
         }
     }

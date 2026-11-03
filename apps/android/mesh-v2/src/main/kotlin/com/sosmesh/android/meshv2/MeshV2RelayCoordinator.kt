@@ -36,7 +36,38 @@ class MeshV2RelayCoordinator
 
         private val json = Json { ignoreUnknownKeys = true }
 
+        private val coordinatorLock = Any()
+
         fun onWirePayload(
+            payload: ByteArray,
+            relayDeviceIdHash: String,
+            nowMs: Long,
+            batteryQuotaAllowsForward: Boolean,
+            uplinkInternetAvailable: Boolean,
+        ): MeshV2RelayResult =
+            synchronized(coordinatorLock) {
+                onWirePayloadLocked(
+                    payload,
+                    relayDeviceIdHash,
+                    nowMs,
+                    batteryQuotaAllowsForward,
+                    uplinkInternetAvailable,
+                )
+            }
+
+        fun pollForwardHandoff(): MeshForwardQueueItem? =
+            synchronized(coordinatorLock) {
+                forwardQueue.pollNext()
+            }
+
+        fun peekForwardHandoff(): MeshForwardQueueItem? =
+            synchronized(coordinatorLock) {
+                forwardQueue.peekNext()
+            }
+
+        fun selectHandoffPeer(candidates: List<MeshPeerCandidate>) = routeSelector.selectBestPeer(candidates)
+
+        private fun onWirePayloadLocked(
             payload: ByteArray,
             relayDeviceIdHash: String,
             nowMs: Long,
@@ -87,10 +118,6 @@ class MeshV2RelayCoordinator
                 forwardQueue = queueSnapshot,
             )
         }
-
-        fun pollForwardHandoff(): MeshForwardQueueItem? = forwardQueue.pollNext()
-
-        fun selectHandoffPeer(candidates: List<MeshPeerCandidate>) = routeSelector.selectBestPeer(candidates)
 
         private fun parseV2(payload: ByteArray): MeshRelayEnvelopeV2? {
             return try {

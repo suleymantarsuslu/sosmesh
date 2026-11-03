@@ -33,7 +33,7 @@ class JdbcSqliteOutboxQueue(
             }
         }
 
-    override fun enqueue(
+    override suspend fun enqueue(
         input: EnqueueInput,
         nowMs: Long,
     ): OutboxEntryMeta {
@@ -61,7 +61,7 @@ class JdbcSqliteOutboxQueue(
         return getByKey(input.sosId, input.digest)!!
     }
 
-    override fun getByKey(
+    override suspend fun getByKey(
         sosId: String,
         digest: String,
     ): OutboxEntryMeta? {
@@ -77,7 +77,7 @@ class JdbcSqliteOutboxQueue(
         }
     }
 
-    override fun listAll(): List<OutboxEntryMeta> {
+    override suspend fun listAll(): List<OutboxEntryMeta> {
         val list = mutableListOf<OutboxEntryMeta>()
         connection.createStatement().use { st ->
             st.executeQuery("SELECT * FROM outbox ORDER BY created_at ASC").use { rs ->
@@ -89,7 +89,7 @@ class JdbcSqliteOutboxQueue(
         return list
     }
 
-    override fun updateState(
+    override suspend fun updateState(
         sosId: String,
         digest: String,
         state: String,
@@ -109,7 +109,7 @@ class JdbcSqliteOutboxQueue(
         return getByKey(sosId, digest)
     }
 
-    override fun setRetryAt(
+    override suspend fun setRetryAt(
         sosId: String,
         digest: String,
         retryAtMs: Long,
@@ -126,7 +126,7 @@ class JdbcSqliteOutboxQueue(
         }
     }
 
-    override fun countDueForSend(
+    override suspend fun countDueForSend(
         nowMs: Long,
         paused: Boolean,
     ): Int {
@@ -145,7 +145,7 @@ class JdbcSqliteOutboxQueue(
         }
     }
 
-    override fun purgeExpired(nowMs: Long): Int {
+    override suspend fun purgeExpired(nowMs: Long): Int {
         connection.prepareStatement("DELETE FROM outbox WHERE expires_at <= ?").use { ps ->
             ps.setLong(1, nowMs)
             return ps.executeUpdate()

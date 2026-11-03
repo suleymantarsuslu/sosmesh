@@ -10,7 +10,7 @@ import org.junit.runner.RunWith
 import org.robolectric.RobolectricTestRunner
 
 @RunWith(RobolectricTestRunner::class)
-class SosDeliveryNotificationTest {
+class SosDeliveryNotificationManagerTest {
     private lateinit var context: Context
     private lateinit var manager: SosDeliveryNotificationManager
 

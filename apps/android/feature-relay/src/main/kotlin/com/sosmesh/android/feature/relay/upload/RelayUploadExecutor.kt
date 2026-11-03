@@ -35,6 +35,8 @@ class RelayUploadExecutor
         private val uplink: RelayIngestUplink,
         private val ingestConfig: RelayIngestConfig,
         private val attachmentScheduler: AttachmentUploadScheduler?,
+        private val notificationManager: com.sosmesh.android.feature.sos.notification.SosDeliveryNotificationManager?,
+        private val visibilityTracker: com.sosmesh.android.feature.sos.notification.AppVisibilityTracker?,
     ) {
         suspend fun runOwnSosUploadCycle(
             nowMs: Long,
@@ -73,6 +75,11 @@ class RelayUploadExecutor
                             null,
                         )
                         uploaded++
+                        
+                        if (visibilityTracker?.isAppInForeground() == false) {
+                            notificationManager?.notifyServerAccepted(entry.sosId)
+                        }
+                        
                         result.uploadToken?.let { token ->
                             attachmentScheduler?.scheduleUploadsForMessage(
                                 sosId = entry.sosId,

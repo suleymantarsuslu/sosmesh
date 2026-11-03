@@ -2,7 +2,7 @@
 # Derived from docker-compose.staging.yml, with these differences:
 #   - no host port publishing (Traefik reaches the gateway over the coolify network)
 #   - nginx gateway routes /health + /v1 to api and / to web (see infra/deploy/nginx/vulut.conf)
-#   - AI defaults to disabled (AI_ENABLED=${AI_ENABLED:-false}) but can be enabled; offline BLE SOS must work without AI
+#   - AI defaults to disabled (AI_ENABLED=${AI_ENABLED:-false}) but can be enabled
 # Secrets are injected as Coolify env vars (names only here, never values).
 # Coolify settings: Docker Compose, base dir "/" (Coolify passes --project-directory = repo root, so build context is "."),
 # domain https://sosmesh.antiosoft.com on service "gateway" (port 80).
@@ -21,6 +21,7 @@ services:
       retries: 10
     volumes:
       - sosmesh_pg_data:/var/lib/postgresql/data
+      - sosmesh_media:/data/media
     restart: unless-stopped
 
   migrate:
@@ -56,7 +57,7 @@ services:
       META_ASR_MODEL: ${META_ASR_MODEL:-muse-voice-transcribe-1.0}
       META_SAM_MODEL: ${META_SAM_MODEL:-sam-3.1}
       META_MAX_TOKENS: ${META_MAX_TOKENS:-4096}
-      META_TIMEOUT_MS: ${META_TIMEOUT_MS:-15000}
+      META_TIMEOUT_MS: ${META_TIMEOUT_MS:-60000}
       META_MAX_RETRIES: ${META_MAX_RETRIES:-2}
       META_CIRCUIT_FAILURE_THRESHOLD: ${META_CIRCUIT_FAILURE_THRESHOLD:-3}
       META_CIRCUIT_COOLDOWN_MS: ${META_CIRCUIT_COOLDOWN_MS:-30000}

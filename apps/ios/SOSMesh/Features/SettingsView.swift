@@ -7,6 +7,26 @@ struct SettingsView: View {
     var body: some View {
         NavigationStack {
             Form {
+                Section("settings.language.title") {
+                    Button {
+                        openLanguageSettings()
+                    } label: {
+                        HStack {
+                            VStack(alignment: .leading, spacing: 4) {
+                                Text("settings.language.follows_device")
+                                    .font(DesignSystem.Typography.callout)
+                                    .foregroundStyle(DesignSystem.Colors.textPrimary)
+                            }
+                            Spacer()
+                            Image(systemName: "chevron.right")
+                                .font(.caption)
+                                .foregroundStyle(DesignSystem.Colors.textSecondary)
+                        }
+                    }
+                    .accessibilityLabel(Text("settings.language.follows_device"))
+                    .accessibilityHint(Text("settings.language.change_hint"))
+                }
+                
                 Section("settings.permissions.title") {
                     Text("settings.permissions.bluetooth")
                     Text("settings.permissions.location")
@@ -19,9 +39,9 @@ struct SettingsView: View {
                 Section("ios.background.section") {
                     Text("ios.limitation.background")
                     Text("ios.limitation.force_quit")
-                    Text("Phase: \(appModel.restorationPhase.rawValue)")
+                    Text("\(Text("settings.ble_phase")): \(appModel.restorationPhase.rawValue)")
                         .font(.caption)
-                        .accessibilityLabel(Text("ios.restoration.phase"))
+                        .accessibilityLabel(Text("settings.ble_phase"))
                 }
                 Section("settings.multihop.title") {
                     Toggle(isOn: Binding(
@@ -34,8 +54,25 @@ struct SettingsView: View {
                     Text("settings.multihop.footer")
                         .font(.footnote)
                 }
+                #if DEBUG
+                Section("settings.debug.fault_simulation") {
+                    Toggle("settings.debug.use_fault_simulation", isOn: $appModel.useFaultSimulationOverrides)
+                        .onChange(of: appModel.useFaultSimulationOverrides) { _, _ in
+                            Task { await appModel.refreshPermissionGate() }
+                        }
+                    Toggle("settings.debug.simulate_bluetooth_off", isOn: $appModel.simulateBluetoothOff)
+                    Toggle("settings.debug.simulate_permissions_denied", isOn: $appModel.simulatePermissionsDenied)
+                    Toggle("settings.debug.simulate_location_unavailable", isOn: $appModel.simulateLocationUnavailable)
+                }
+                #endif
             }
             .navigationTitle("settings.title")
+        }
+    }
+    
+    private func openLanguageSettings() {
+        if let url = URL(string: UIApplication.openSettingsURLString) {
+            UIApplication.shared.open(url)
         }
     }
 }
@@ -45,16 +82,58 @@ struct OnboardingDisclaimerView: View {
 
     var body: some View {
         ScrollView {
-            VStack(alignment: .leading, spacing: 16) {
-                Text("onboarding.not112")
-                    .font(.headline)
-                Text("onboarding.experimental")
-                Button("onboarding.accept") {
+            VStack(spacing: DesignSystem.Spacing.xl) {
+                VStack(spacing: DesignSystem.Spacing.md) {
+                    Image("SOSMeshLogoLarge")
+                        .resizable()
+                        .aspectRatio(contentMode: .fit)
+                        .frame(height: 100)
+                        .accessibilityLabel(Text("app.name"))
+                    
+                    Text("app.name")
+                        .font(DesignSystem.Typography.largeTitle)
+                        .foregroundStyle(DesignSystem.Colors.textPrimary)
+                    
+                    Text("app.tagline")
+                        .font(DesignSystem.Typography.title3)
+                        .foregroundStyle(DesignSystem.Colors.textSecondary)
+                }
+                .frame(maxWidth: .infinity)
+                .padding(.top, DesignSystem.Spacing.xxl)
+                
+                VStack(spacing: DesignSystem.Spacing.md) {
+                    SOSCard {
+                        HStack(alignment: .top, spacing: DesignSystem.Spacing.sm) {
+                            Image(systemName: "exclamationmark.triangle.fill")
+                                .font(.system(size: 24))
+                                .foregroundStyle(DesignSystem.Colors.warningOrange)
+                            Text("onboarding.not112")
+                                .font(DesignSystem.Typography.headline)
+                                .foregroundStyle(DesignSystem.Colors.textPrimary)
+                                .fixedSize(horizontal: false, vertical: true)
+                        }
+                    }
+                    
+                    SOSCard {
+                        HStack(alignment: .top, spacing: DesignSystem.Spacing.sm) {
+                            Image(systemName: "flask.fill")
+                                .font(.system(size: 24))
+                                .foregroundStyle(DesignSystem.Colors.accentBlue)
+                            Text("onboarding.experimental")
+                                .font(DesignSystem.Typography.callout)
+                                .foregroundStyle(DesignSystem.Colors.textPrimary)
+                                .fixedSize(horizontal: false, vertical: true)
+                        }
+                    }
+                }
+                
+                PrimaryButton("onboarding.accept", icon: "checkmark") {
                     onAccept()
                 }
-                .buttonStyle(.borderedProminent)
+                .padding(.top, DesignSystem.Spacing.md)
             }
-            .padding()
+            .padding(DesignSystem.Spacing.md)
         }
+        .background(DesignSystem.Colors.cardBackgroundSecondary.ignoresSafeArea())
     }
 }

@@ -26,115 +26,72 @@ export function PhotoAnalysisCard({ sparkVision, samVision }: Props) {
     const ctx = canvas.getContext('2d');
     if (!ctx) return;
 
-    canvas.width = imgRef.current.naturalWidth;
-    canvas.height = imgRef.current.naturalHeight;
+    const displayWidth = imgRef.current.width;
+    const displayHeight = imgRef.current.height;
+    canvas.width = displayWidth;
+    canvas.height = displayHeight;
 
     ctx.clearRect(0, 0, canvas.width, canvas.height);
 
-    if (!samVision?.results || samVision.results.length === 0) return;
+    if (!samVision?.segments || samVision.segments.length === 0) return;
 
-    samVision.results.forEach((result, idx) => {
+    samVision.segments.forEach((segment, idx) => {
       const color = getColor(idx);
+      
+      // Scale normalized coordinates to display size
+      const boxX = segment.box.x * displayWidth;
+      const boxY = segment.box.y * displayHeight;
+      const boxW = segment.box.w * displayWidth;
+      const boxH = segment.box.h * displayHeight;
 
-      if (showBoxes && result.boundingBox) {
-        const { x1, y1, x2, y2 } = result.boundingBox;
+      if (showBoxes) {
         ctx.strokeStyle = color;
         ctx.lineWidth = 3;
-        ctx.strokeRect(x1, y1, x2 - x1, y2 - y1);
+        ctx.strokeRect(boxX, boxY, boxW, boxH);
 
         ctx.fillStyle = color;
         ctx.font = '14px system-ui, sans-serif';
-        const label = `${result.concept}${
-          result.confidence ? ` (${(result.confidence * 100).toFixed(0)}%)` : ''
+        const label = `${segment.concept}${
+          segment.confidence ? ` (${(segment.confidence * 100).toFixed(0)}%)` : ''
         }`;
         const metrics = ctx.measureText(label);
-        ctx.fillRect(x1, y1 - 20, metrics.width + 8, 20);
+        ctx.fillRect(boxX, boxY - 20, metrics.width + 8, 20);
         ctx.fillStyle = '#fff';
-        ctx.fillText(label, x1 + 4, y1 - 5);
+        ctx.fillText(label, boxX + 4, boxY - 5);
       }
 
-      if (showMasks && result.mask) {
-        drawMask(ctx, result, color);
+      if (showMasks && segment.maskPng) {
+        drawMaskPng(ctx, segment.maskPng, boxX, boxY, boxW, boxH, color);
       }
     });
   }, [imageLoaded, showMasks, showBoxes, samVision]);
 
-  const drawMask = (
+  const drawMaskPng = (
     ctx: CanvasRenderingContext2D,
-    result: SamSegmentResult,
+    maskPngDataUrl: string,
+    boxX: number,
+    boxY: number,
+    boxW: number,
+    boxH: number,
     color: string
   ) => {
-    if (!result.mask || !result.boundingBox) return;
-
-    const maskData = decodeMask(result.mask.data, result.mask.width, result.mask.height);
-    if (!maskData) return;
-
-    const imageData = ctx.createImageData(result.mask.width, result.mask.height);
-    const rgb = hexToRgb(color);
-
-    for (let i = 0; i < maskData.length; i++) {
-      if (maskData[i]) {
-        const idx = i * 4;
-        imageData.data[idx] = rgb.r;
-        imageData.data[idx + 1] = rgb.g;
-        imageData.data[idx + 2] = rgb.b;
-        imageData.data[idx + 3] = 100;
-      }
-    }
-
-    ctx.putImageData(imageData, result.mask.x, result.mask.y);
-  };
-
-  const decodeMask = (data: string, width: number, height: number): Uint8Array | null => {
-    try {
-      if (data[0] !== '!') return null;
-      const base85 = data.slice(1);
-      const decoded = decodeBase85(base85);
-      return decodeRLE(decoded, width * height);
-    } catch {
-      return null;
-    }
-  };
-
-  const decodeBase85 = (str: string): Uint8Array => {
-    const result: number[] = [];
-    for (let i = 0; i < str.length; i += 5) {
-      let acc = 0;
-      for (let j = 0; j < 5 && i + j < str.length; j++) {
-        acc = acc * 85 + (str.charCodeAt(i + j) - 33);
-      }
-      for (let k = 3; k >= 0; k--) {
-        result.push((acc >> (k * 8)) & 0xff);
-      }
-    }
-    return new Uint8Array(result);
-  };
-
-  const decodeRLE = (data: Uint8Array, totalPixels: number): Uint8Array => {
-    const output = new Uint8Array(totalPixels);
-    let outIdx = 0;
-    let inIdx = 0;
-
-    while (inIdx < data.length && outIdx < totalPixels) {
-      const count = data[inIdx++];
-      const value = data[inIdx++] || 0;
-      for (let i = 0; i < count && outIdx < totalPixels; i++) {
-        output[outIdx++] = value;
-      }
-    }
-
-    return output;
-  };
-
-  const hexToRgb = (hex: string) => {
-    const result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
-    return result
-      ? {
-          r: parseInt(result[1], 16),
-          g: parseInt(result[2], 16),
-          b: parseInt(result[3], 16),
-        }
-      : { r: 255, g: 0, b: 0 };
+    const img = new Image();
+    img.onload = () => {
+      ctx.save();
+      ctx.globalAlpha = 0.45;
+      
+      // Draw mask with color tint
+      ctx.globalCompositeOperation = 'source-over';
+      ctx.drawImage(img, boxX, boxY, boxW, boxH);
+      
+      // Apply color tint
+      ctx.globalCompositeOperation = 'source-in';
+      ctx.fillStyle = color;
+      ctx.fillRect(boxX, boxY, boxW, boxH);
+      
+      ctx.restore();
+    };
+    img.src = maskPngDataUrl;
   };
 
   const getColor = (idx: number): string => {
@@ -170,7 +127,7 @@ export function PhotoAnalysisCard({ sparkVision, samVision }: Props) {
             onLoad={() => setImageLoaded(true)}
             data-testid="ai-photo-image"
           />
-          {samVision && samVision.results.length > 0 && (
+          {samVision && samVision.segments.length > 0 && (
             <canvas
               ref={canvasRef}
               className="ai-photo-overlay"
@@ -179,7 +136,7 @@ export function PhotoAnalysisCard({ sparkVision, samVision }: Props) {
           )}
         </div>
 
-        {samVision && samVision.results.length > 0 && (
+        {samVision && samVision.segments.length > 0 && (
           <div className="ai-photo-controls">
             <label className="ai-toggle">
               <input
@@ -255,15 +212,15 @@ export function PhotoAnalysisCard({ sparkVision, samVision }: Props) {
           </div>
         )}
 
-        {samVision && samVision.results.length > 0 && (
+        {samVision && samVision.segments.length > 0 && (
           <div className="ai-field">
             <strong>{t('web.ai.samSegmentation')}</strong>
             <div className="ai-sam-results" data-testid="ai-sam-results">
               <ul className="ai-list">
-                {samVision.results.map((result) => (
-                  <li key={result.id}>
-                    {result.concept}
-                    {result.confidence && ` (${t('web.ai.confidence')}: ${(result.confidence * 100).toFixed(0)}%)`}
+                {samVision.segments.map((segment) => (
+                  <li key={segment.id}>
+                    {segment.concept}
+                    {segment.confidence && ` (${t('web.ai.confidence')}: ${(segment.confidence * 100).toFixed(0)}%)`}
                   </li>
                 ))}
               </ul>

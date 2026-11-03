@@ -60,22 +60,13 @@ export type SamSegmentResult = {
   id: string;
   concept: string;
   confidence: number | null;
-  boundingBox: {
-    x1: number;
-    y1: number;
-    x2: number;
-    y2: number;
-    width: number;
-    height: number;
-  };
-  mask: {
+  box: {
     x: number;
     y: number;
-    width: number;
-    height: number;
-    encoding: string;
-    data: string;
-  } | null;
+    w: number;
+    h: number;
+  };
+  maskPng: string | null;
 };
 
 export type SparkVisionView = {
@@ -88,7 +79,9 @@ export type SparkVisionView = {
 export type SamVisionView = {
   attachmentId: string;
   model: string;
-  results: SamSegmentResult[];
+  imageWidth: number;
+  imageHeight: number;
+  segments: SamSegmentResult[];
   analyzedAt: string;
 };
 

@@ -278,28 +278,22 @@ const server = http.createServer(async (req, res) => {
       samVision: {
         attachmentId: 'mock-photo-1',
         model: 'sam-3.1',
-        results: [
+        imageWidth: 800,
+        imageHeight: 600,
+        segments: [
           {
+            id: 'seg-1',
             concept: 'person',
-            segments: [
-              {
-                id: 'seg-1',
-                confidence: 0.95,
-                boundingBox: { x1: 150, y1: 200, x2: 250, y2: 400, width: 800, height: 600 },
-                mask: { x: 150, y: 200, width: 100, height: 200, encoding: '!', data: '!AAABBCCDDEEFFGGHHIIJJKKLLMMNNOOPPQQRRSSTTUUVVWWXXYYZZaabbccddeeffgghhiijj' }
-              }
-            ]
+            confidence: 0.95,
+            box: { x: 0.1875, y: 0.333, w: 0.125, h: 0.333 },
+            maskPng: 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAgAAAAICAYAAADED76LAAAADklEQVQYlWP8//8/AwAI/wL9IG0bxgAAAABJRU5ErkJggg=='
           },
           {
+            id: 'seg-2',
             concept: 'debris',
-            segments: [
-              {
-                id: 'seg-2',
-                confidence: 0.87,
-                boundingBox: { x1: 300, y1: 250, x2: 500, y2: 450, width: 800, height: 600 },
-                mask: null
-              }
-            ]
+            confidence: 0.87,
+            box: { x: 0.375, y: 0.417, w: 0.25, h: 0.333 },
+            maskPng: 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAgAAAAICAYAAADED76LAAAADklEQVQYlWNgYGD4DwABAQEBAKN+PQAAAABJRU5ErkJggg=='
           }
         ],
         analyzedAt: new Date().toISOString()

@@ -133,28 +133,6 @@ html[data-theme='dark'] .operator-topbar {
   background: rgb(7 13 29 / 85%);
 }
 
-.operator-topbar__search-wrap {
-  flex: 1 1 10rem;
-  min-width: 7rem;
-  max-width: 16rem;
-}
-
-.operator-topbar__search {
-  width: 100%;
-  box-sizing: border-box;
-  padding: var(--space-2, 0.5rem) var(--space-3, 0.75rem);
-  border-radius: 999px;
-  border: 1px solid var(--color-border);
-  background: var(--color-surface-secondary);
-  font: inherit;
-  font-size: var(--type-fontSize-sm, 0.875rem);
-  color: var(--color-text-primary);
-}
-
-html[data-theme='dark'] .operator-topbar__search {
-  background: rgb(255 255 255 / 8%);
-  border-color: color-mix(in srgb, var(--color-text-primary) 28%, var(--color-border));
-}
 
 .operator-topbar__cluster {
   display: flex;

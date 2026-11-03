@@ -6,6 +6,7 @@ import { PrismaService } from '../prisma/prisma.service';
 import { OperatorRequestUser } from './guards/operator-auth.guard';
 import { IncidentScopeService } from '../organization/incident-scope.service';
 import { ListOperatorCasesQuery } from './dto/list-operator-cases.query';
+import { TranscriptView } from '../ai/contracts/transcript-view';
 
 export type OperatorCaseRow = {
   incidentId: string;
@@ -43,6 +44,7 @@ export type OperatorCaseDetail = OperatorCaseRow & {
     accuracyMeters: number | null;
   };
   ai: OperatorAiSuggestion | null;
+  transcripts: TranscriptView[];
   timeline: {
     id: string;
     deliveryState: string;
@@ -213,6 +215,26 @@ export class OperatorCasesService {
         }
       : null;
 
+    const attachments = await this.prisma.attachment.findMany({
+      where: { incidentId },
+      include: {
+        transcript: true,
+      },
+      orderBy: { createdAt: 'asc' },
+    });
+
+    const transcripts: TranscriptView[] = attachments
+      .filter((a) => a.transcript)
+      .map((a) => ({
+        attachmentId: a.id,
+        model: a.transcript!.model,
+        transcript: a.transcript!.transcript,
+        turns: a.transcript!.turns as TranscriptView['turns'],
+        language: a.transcript!.language,
+        audioDurationMs: a.transcript!.audioDurationMs,
+        createdAt: a.transcript!.createdAt.toISOString(),
+      }));
+
     return {
       ...base,
       version: message.incident.version,
@@ -226,6 +248,7 @@ export class OperatorCasesService {
         accuracyMeters: message.accuracyMeters,
       },
       ai: aiSuggestion,
+      transcripts,
       timeline: message.messageEvents.map((event) => ({
         id: event.id,
         deliveryState: event.deliveryState,

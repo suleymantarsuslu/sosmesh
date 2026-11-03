@@ -17,6 +17,9 @@ APP_SOURCES = [
     "SOSMesh/Features/RelayView.swift",
     "SOSMesh/Features/SettingsView.swift",
     "SOSMesh/Features/PermissionGateView.swift",
+    "SOSMesh/DesignSystem/DesignSystem.swift",
+    "SOSMesh/DesignSystem/SOSCard.swift",
+    "SOSMesh/DesignSystem/SOSButton.swift",
     "SOSMesh/Permissions/LiveAppPermissionProbe.swift",
     "SOSMesh/Companion/PhoneWatchSessionManager.swift",
     "SOSMesh/Companion/PhoneWatchOutboxAdapter.swift",
@@ -43,6 +46,7 @@ WATCH_WIDGET_SOURCES = [
 WATCH_RESOURCES = [
     "../watchos/SOSMeshWatch/Info.plist",
     "../watchos/SOSMeshWatch/PrivacyInfo.xcprivacy",
+    "../watchos/SOSMeshWatch/Assets.xcassets",
 ]
 
 WATCH_WIDGET_RESOURCES = [
@@ -160,6 +164,7 @@ app_group = uid(8002)
 coreble_group = uid(8003)
 features_group = uid(8004)
 tests_group = uid(8005)
+design_system_group = uid(8006)
 watch_group = uid37(8001)
 watch_widget_group = uid37(8002)
 companion_group = uid37(8003)
@@ -170,6 +175,9 @@ lines.append(
 
 feat_children = ", ".join(file_refs[p] + f" /* {p.split('/')[-1]} */" for p in APP_SOURCES if "Features/" in p)
 lines.append(f"\t\t{features_group} = {{isa = PBXGroup; children = ({feat_children}); path = Features; sourceTree = \"<group>\"; }};")
+
+design_children = ", ".join(file_refs[p] + f" /* {p.split('/')[-1]} */" for p in APP_SOURCES if "DesignSystem/" in p)
+lines.append(f"\t\t{design_system_group} = {{isa = PBXGroup; children = ({design_children}); path = DesignSystem; sourceTree = \"<group>\"; }};")
 
 ble_children = ", ".join(file_refs[p] + f" /* {p.split('/')[-1]} */" for p in APP_SOURCES if p.startswith("CoreBLE"))
 lines.append(f"\t\t{coreble_group} = {{isa = PBXGroup; children = ({ble_children}); path = CoreBLE; sourceTree = \"<group>\"; }};")
@@ -189,9 +197,10 @@ lines.append(
 
 app_children = []
 for p in APP_SOURCES:
-    if not p.startswith("CoreBLE/") and "Features/" not in p and not p.startswith("SOSMesh/Companion/"):
+    if not p.startswith("CoreBLE/") and "Features/" not in p and "DesignSystem/" not in p and not p.startswith("SOSMesh/Companion/"):
         app_children.append(f"{file_refs[p]} /* {p.split('/')[-1]} */")
 app_children.append(f"{features_group} /* Features */")
+app_children.append(f"{design_system_group} /* DesignSystem */")
 app_children.append(f"{companion_group} /* Companion */")
 app_children.append(f"{file_refs['SOSMesh/tr.lproj/Localizable.strings']} /* Localizable.strings */")
 app_children.append(f"{file_refs['SOSMesh/en.lproj/Localizable.strings']} /* Localizable.strings */")
@@ -310,7 +319,7 @@ for idx, p in enumerate(IOS_COPY_RESOURCES):
 
 watch_res_build_files = []
 for idx, p in enumerate(WATCH_RESOURCES):
-    if not p.endswith(".xcprivacy"):
+    if p.endswith(".plist") or p.endswith("Info.plist"):
         continue
     bf = uid37(6600 + idx)
     label = p.split("/")[-1]

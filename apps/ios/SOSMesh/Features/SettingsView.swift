@@ -56,16 +56,58 @@ struct OnboardingDisclaimerView: View {
 
     var body: some View {
         ScrollView {
-            VStack(alignment: .leading, spacing: 16) {
-                Text("onboarding.not112")
-                    .font(.headline)
-                Text("onboarding.experimental")
-                Button("onboarding.accept") {
+            VStack(spacing: DesignSystem.Spacing.xl) {
+                VStack(spacing: DesignSystem.Spacing.md) {
+                    Image("SOSMeshLogoLarge")
+                        .resizable()
+                        .aspectRatio(contentMode: .fit)
+                        .frame(height: 100)
+                        .accessibilityLabel(Text("app.name"))
+                    
+                    Text("app.name")
+                        .font(DesignSystem.Typography.largeTitle)
+                        .foregroundStyle(DesignSystem.Colors.textPrimary)
+                    
+                    Text("app.tagline")
+                        .font(DesignSystem.Typography.title3)
+                        .foregroundStyle(DesignSystem.Colors.textSecondary)
+                }
+                .frame(maxWidth: .infinity)
+                .padding(.top, DesignSystem.Spacing.xxl)
+                
+                VStack(spacing: DesignSystem.Spacing.md) {
+                    SOSCard {
+                        HStack(alignment: .top, spacing: DesignSystem.Spacing.sm) {
+                            Image(systemName: "exclamationmark.triangle.fill")
+                                .font(.system(size: 24))
+                                .foregroundStyle(DesignSystem.Colors.warningOrange)
+                            Text("onboarding.not112")
+                                .font(DesignSystem.Typography.headline)
+                                .foregroundStyle(DesignSystem.Colors.textPrimary)
+                                .fixedSize(horizontal: false, vertical: true)
+                        }
+                    }
+                    
+                    SOSCard {
+                        HStack(alignment: .top, spacing: DesignSystem.Spacing.sm) {
+                            Image(systemName: "flask.fill")
+                                .font(.system(size: 24))
+                                .foregroundStyle(DesignSystem.Colors.accentBlue)
+                            Text("onboarding.experimental")
+                                .font(DesignSystem.Typography.callout)
+                                .foregroundStyle(DesignSystem.Colors.textPrimary)
+                                .fixedSize(horizontal: false, vertical: true)
+                        }
+                    }
+                }
+                
+                PrimaryButton("onboarding.accept", icon: "checkmark") {
                     onAccept()
                 }
-                .buttonStyle(.borderedProminent)
+                .padding(.top, DesignSystem.Spacing.md)
             }
-            .padding()
+            .padding(DesignSystem.Spacing.md)
         }
+        .background(DesignSystem.Colors.cardBackgroundSecondary.ignoresSafeArea())
     }
 }

@@ -128,6 +128,8 @@ model SosMessage {
   /// Sensitive note: encrypted/opaque at rest (ADIM 9); must not appear in logs.
   encryptedNoteBlob   String?        @map("encrypted_note_blob") @db.Text
   encryptedPayloadRef String?        @map("encrypted_payload_ref")
+  /// Original envelope JSON (canonical) for AAD verification during decryption
+  originalEnvelopeAad String?        @map("original_envelope_aad") @db.Text
   /// Plaintext note (decrypted server-side when keyId matches production key)
   noteText            String?        @map("note_text") @db.Text
   personCount         Int?           @map("person_count")

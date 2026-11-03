@@ -6,6 +6,7 @@ import {
   SosMessage,
 } from '@prisma/client';
 import { createHash } from 'node:crypto';
+import { canonicalJSON } from '@sosmesh/contracts';
 
 import { AiJobQueueService } from '../ai/ai-job-queue.service';
 import { PrismaService } from '../prisma/prisma.service';
@@ -144,6 +145,7 @@ export class IngestService {
       this.metrics.recordGpsAnomaly();
     }
     const receiptAt = new Date();
+    const originalEnvelopeAad = canonicalJSON(envelope);
 
     return this.prisma.$transaction(async (tx) => {
       const incident = await tx.incident.create({
@@ -162,6 +164,7 @@ export class IngestService {
           priority,
           encryptedNoteBlob: encryptedPayload || null,
           encryptedPayloadRef: payloadRef,
+          originalEnvelopeAad,
           packetHash,
           serverReceiptAt: receiptAt,
           needsHumanReview,

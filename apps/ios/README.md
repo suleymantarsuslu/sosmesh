@@ -1,6 +1,6 @@
 # SOSMesh iOS / watchOS
 
-**Status:** ADIM 31–33 iskelet; ADIM 34 çapraz UX; ADIM 41 multi-hop; **ADIM 52** release/TestFlight hazırlığı (fiziksel **NOT_TESTED**, TestFlight **BLOCKED_APPROVAL**)
+**Status:** ADIM 31–33 iskelet; ADIM 34 çapraz UX; **BLE GATT transfer (SOSMeshCore + CoreBLE)**; **açılış izin kapısı** (Bluetooth, bildirim, konum); ADIM 41 multi-hop; **ADIM 52** release/TestFlight hazırlığı (fiziksel **NOT_TESTED**, TestFlight **BLOCKED_APPROVAL**)
 
 ## Overview
 
@@ -48,8 +48,15 @@ swiftlint lint --strict
 ## Architecture
 
 - `SOSMesh/` — SwiftUI shell (SOS, Status, Relay, Settings)
-- `SOSMeshCore/` — Testable core (outbox, envelope, BLE role/restoration state machines)
-- `CoreBLE/` — CBCentralManager / CBPeripheralManager adapters
+- `SOSMesh/Features/PermissionGateView.swift` — zorunlu izin kapısı (112 arama her zaman görünür)
+- `SOSMeshCore/` — Testable core (outbox, envelope, BLE role/restoration state machines, **PermissionGateEvaluator**, **BleTransfer**)
+- `CoreBLE/` — CBCentralManager / CBPeripheralManager adapters + live GATT bridge
+
+### Permission gate
+
+1. Onboarding disclaimer → **PermissionGateView** (Bluetooth authorization + powered on, notifications). **Location is not required** (SOS uses `locationStatus: UNKNOWN` without GPS).
+2. Reddedilen izinlerde **Ayarları aç**; `scenePhase == .active` iken yeniden değerlendirilir.
+3. Kapı mantığı: `SOSMeshCore/PermissionGate.swift` — unit test: `PermissionGateEvaluatorTests`.
 
 Physical BLE and background behavior: **NOT_TESTED** on this repo snapshot; see `docs/compat/ios-background-matrix.csv`.
 

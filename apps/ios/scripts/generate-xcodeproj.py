@@ -16,12 +16,20 @@ APP_SOURCES = [
     "SOSMesh/Features/StatusView.swift",
     "SOSMesh/Features/RelayView.swift",
     "SOSMesh/Features/SettingsView.swift",
+    "SOSMesh/Features/PermissionGateView.swift",
+    "SOSMesh/Features/EmergencyCall112Link.swift",
+    "SOSMesh/Features/EmergencyCall112Button.swift",
+    "SOSMesh/Permissions/LiveAppPermissionProbe.swift",
+    "SOSMesh/Crypto/SosCryptoConfiguration.swift",
+    "SOSMesh/Storage/OutboxStorePaths.swift",
     "SOSMesh/Companion/PhoneWatchSessionManager.swift",
     "SOSMesh/Companion/PhoneWatchOutboxAdapter.swift",
     "SOSMesh/Companion/PhoneWatchCompanionHolder.swift",
     "CoreBLE/BleCentralCoordinator.swift",
     "CoreBLE/BlePeripheralCoordinator.swift",
     "CoreBLE/BleBackgroundConfiguration.swift",
+    "CoreBLE/BleGattBridge.swift",
+    "CoreBLE/LiveBleMeshRadio.swift",
 ]
 
 WATCH_APP_SOURCES = [
@@ -65,7 +73,12 @@ IOS_COPY_RESOURCES = [
     "SOSMesh/Assets.xcassets",
 ]
 
-TEST_SOURCES = ["SOSMeshTests/SOSMeshCoreLinkTests.swift"]
+TEST_SOURCES = [
+    "SOSMeshTests/SOSMeshCoreLinkTests.swift",
+    "SOSMeshTests/AppModelPermissionGateTests.swift",
+    "SOSMeshTests/EmergencyCall112LinkTests.swift",
+    "SOSMeshTests/SosCryptoConfigurationErrorTests.swift",
+]
 
 
 def uid(n: int) -> str:
@@ -156,6 +169,9 @@ app_group = uid(8002)
 coreble_group = uid(8003)
 features_group = uid(8004)
 tests_group = uid(8005)
+permissions_group = uid(8006)
+crypto_group = uid(8007)
+storage_group = uid(8008)
 watch_group = uid37(8001)
 watch_widget_group = uid37(8002)
 companion_group = uid37(8003)
@@ -175,6 +191,23 @@ companion_children = ", ".join(
 )
 lines.append(f"\t\t{companion_group} = {{isa = PBXGroup; children = ({companion_children}); path = Companion; sourceTree = \"<group>\"; }};")
 
+permissions_children = ", ".join(
+    file_refs[p] + f" /* {p.split('/')[-1]} */" for p in APP_SOURCES if p.startswith("SOSMesh/Permissions/")
+)
+lines.append(
+    f"\t\t{permissions_group} = {{isa = PBXGroup; children = ({permissions_children}); path = Permissions; sourceTree = \"<group>\"; }};"
+)
+
+crypto_children = ", ".join(
+    file_refs[p] + f" /* {p.split('/')[-1]} */" for p in APP_SOURCES if p.startswith("SOSMesh/Crypto/")
+)
+lines.append(f"\t\t{crypto_group} = {{isa = PBXGroup; children = ({crypto_children}); path = Crypto; sourceTree = \"<group>\"; }};")
+
+storage_children = ", ".join(
+    file_refs[p] + f" /* {p.split('/')[-1]} */" for p in APP_SOURCES if p.startswith("SOSMesh/Storage/")
+)
+lines.append(f"\t\t{storage_group} = {{isa = PBXGroup; children = ({storage_children}); path = Storage; sourceTree = \"<group>\"; }};")
+
 watch_children = ", ".join(file_refs[p] + f" /* {p.split('/')[-1]} */" for p in WATCH_APP_SOURCES)
 lines.append(f"\t\t{watch_group} = {{isa = PBXGroup; children = ({watch_children}); name = SOSMeshWatch; path = ../watchos/SOSMeshWatch; sourceTree = \"<group>\"; }};")
 
@@ -185,10 +218,24 @@ lines.append(
 
 app_children = []
 for p in APP_SOURCES:
-    if not p.startswith("CoreBLE/") and "Features/" not in p and not p.startswith("SOSMesh/Companion/"):
-        app_children.append(f"{file_refs[p]} /* {p.split('/')[-1]} */")
+    if p.startswith("CoreBLE/"):
+        continue
+    if "Features/" in p:
+        continue
+    if p.startswith("SOSMesh/Companion/"):
+        continue
+    if p.startswith("SOSMesh/Permissions/"):
+        continue
+    if p.startswith("SOSMesh/Crypto/"):
+        continue
+    if p.startswith("SOSMesh/Storage/"):
+        continue
+    app_children.append(f"{file_refs[p]} /* {p.split('/')[-1]} */")
 app_children.append(f"{features_group} /* Features */")
 app_children.append(f"{companion_group} /* Companion */")
+app_children.append(f"{permissions_group} /* Permissions */")
+app_children.append(f"{crypto_group} /* Crypto */")
+app_children.append(f"{storage_group} /* Storage */")
 app_children.append(f"{file_refs['SOSMesh/tr.lproj/Localizable.strings']} /* Localizable.strings */")
 app_children.append(f"{file_refs['SOSMesh/en.lproj/Localizable.strings']} /* Localizable.strings */")
 app_children.append(f"{file_refs['SOSMesh/Assets.xcassets']} /* Assets.xcassets */")

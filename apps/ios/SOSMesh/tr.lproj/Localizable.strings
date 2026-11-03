@@ -99,3 +99,11 @@
 "settings.language.title" = "Dil";
 "settings.language.follows_device" = "Cihaz dilini takip eder; iOS Ayarlarından değiştirin";
 "settings.language.change_hint" = "Cihaz dilini değiştirmek için iOS Ayarlarını açar";
+"sos.sent.title" = "SOS Gönderiliyor";
+"sos.sent.online" = "Mesajınız sunucuya gönderiliyor.";
+"sos.sent.offline" = "Mesajınız cihazda kaydedildi ve yakındaki cihazlar üzerinden aktarılacak veya internet bağlantısı kurulduğunda gönderilecek.";
+"sos.sent.not112" = "SOSMesh, 112'nin yerine geçmez.";
+"sos.sent.action.ok" = "Tamam";
+"sos.sent.action.status" = "Durum ekranına git";
+"notification.sos.delivered.title" = "Mesajınız gönderildi";
+"notification.sos.delivered.body" = "SOS mesajınız sunucuya ulaştı.";

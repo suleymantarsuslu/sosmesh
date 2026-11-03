@@ -11,6 +11,7 @@
   "terminalStates": ["FAILED", "EXPIRED"],
   "validTransitions": [
     { "from": "LOCAL_SAVED", "to": "PEER_RECEIVED" },
+    { "from": "LOCAL_SAVED", "to": "SERVER_ACCEPTED" },
     { "from": "LOCAL_SAVED", "to": "FAILED" },
     { "from": "LOCAL_SAVED", "to": "EXPIRED" },
     { "from": "PEER_RECEIVED", "to": "SERVER_ACCEPTED" },

@@ -21,12 +21,8 @@ class VoiceRecorder(private val context: Context) {
         val file = File(context.cacheDir, "voice_${System.currentTimeMillis()}.m4a")
         outputFile = file
         
-        recorder = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
-            MediaRecorder(context)
-        } else {
-            @Suppress("DEPRECATION")
-            MediaRecorder()
-        }.apply {
+        val mediaRecorder = createMediaRecorder()
+        recorder = mediaRecorder.apply {
             setAudioSource(MediaRecorder.AudioSource.MIC)
             setOutputFormat(MediaRecorder.OutputFormat.MPEG_4)
             setAudioEncoder(MediaRecorder.AudioEncoder.AAC)

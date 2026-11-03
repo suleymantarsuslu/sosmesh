@@ -160,6 +160,23 @@ private fun SosFormScreen(
             placeholder = { Text(stringResource(R.string.sos_note_hint)) },
             modifier = Modifier.fillMaxWidth().testTag("sos_note"),
         )
+        MediaAttachmentSection(
+            hasPhoto = state.photoUri != null,
+            photoUri = state.photoUri,
+            hasVoice = state.voiceFile != null,
+            voiceDuration = state.voiceDuration,
+            isRecording = state.isRecording,
+            onPhotoSelected = onPhotoSelected,
+            onVoiceRecorded = { file ->
+                onVoiceRecorded(file)
+                onStopRecording(file != null)
+            },
+            onStartRecording = onStartRecording,
+            onStopRecording = onStopRecording,
+            onRemovePhoto = { onPhotoSelected(null) },
+            onRemoveVoice = { onVoiceRecorded(null) },
+            modifier = Modifier.fillMaxWidth()
+        )
         LocationSection(
             location = state.gpsLocation,
             useManual = state.useManualLocation,

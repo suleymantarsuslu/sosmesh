@@ -94,7 +94,7 @@ test.describe('ADIM 50 klavye tam akış', () => {
   test('login → skip link → vaka listesi yalnız klavye', async ({ page }) => {
     const password = requireE2ePassword();
     await page.goto('/operator/login');
-    await page.getByLabel('E-posta').focus();
+    await page.getByTestId('login-email').focus();
     await page.keyboard.type('e2e-operator@sosmesh.example');
     await page.keyboard.press('Tab');
     await page.keyboard.type(password);
@@ -105,7 +105,7 @@ test.describe('ADIM 50 klavye tam akış', () => {
     await page.keyboard.press('Enter');
     await expect(page.locator('#operator-main')).toBeFocused();
 
-    await page.getByRole('link', { name: 'Harita / Vakalar' }).focus();
+    await page.getByRole('link', { name: 'Map / Cases' }).focus();
     await page.keyboard.press('Enter');
     await expect(page).toHaveURL(/\/operator\/cases/);
     await expect(page.getByTestId('operator-cases-view')).toBeVisible();
@@ -246,7 +246,7 @@ test.describe('ADIM 50 rol-yetki rota assertion', () => {
   test('admin admin rotasına erişir', async ({ page }) => {
     await loginAsAdmin(page);
     await page.goto('/operator/admin');
-    await expect(page.getByRole('heading', { name: 'Yönetim' })).toBeVisible();
+    await expect(page.getByRole('heading', { name: 'Administration' })).toBeVisible();
   });
 
   test('Nest API operatör JWT ile admin users uç noktasında 403', () => {
@@ -283,9 +283,9 @@ test.describe('ADIM 50 mobil navigasyon erişilebilirliği', () => {
     await page.setViewportSize({ width: 390, height: 844 });
     await loginAsOperator(page);
     await page.goto('/operator/dashboard');
-    await page.getByRole('button', { name: 'Menüyü aç' }).click();
+    await page.getByRole('button', { name: 'Open menu' }).click();
     await expect(page.getByRole('dialog')).toBeVisible();
-    await page.getByRole('link', { name: 'Harita / Vakalar' }).click();
+    await page.getByRole('link', { name: 'Map / Cases' }).click();
     await expect(page).toHaveURL(/\/operator\/cases/);
     await expect(page.getByTestId('operator-cases-view')).toBeVisible();
   });

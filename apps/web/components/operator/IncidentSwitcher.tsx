@@ -15,6 +15,7 @@ export function IncidentSwitcher({
     <label className="operator-incident-switcher">
       <span>{t('web.shell.incidentSwitcher')}</span>
       <select
+        className="operator-select"
         data-testid="incident-switcher"
         value={activeIncidentId ?? ''}
         onChange={(event) =>

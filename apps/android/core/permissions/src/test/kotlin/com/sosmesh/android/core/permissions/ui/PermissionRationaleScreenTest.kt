@@ -6,6 +6,8 @@ import androidx.compose.ui.test.junit4.createAndroidComposeRule
 import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.performClick
+import androidx.compose.ui.test.performScrollTo
+import com.sosmesh.android.core.design.theme.SosMeshTheme
 import com.sosmesh.android.core.permissions.PermissionRequestOutcome
 import org.junit.Assert.assertEquals
 import org.junit.Rule
@@ -24,16 +26,18 @@ class PermissionRationaleScreenTest {
     fun rationaleGrantButton_isVisibleWithAccessibilitySemantics() {
         var requested = false
         composeRule.setContent {
-            PermissionRationaleScreen(
-                state =
-                    PermissionScreenState(
-                        rationaleMessage = "Bluetooth rationale",
-                        outcome = null,
-                        showSettingsAction = false,
-                    ),
-                onRequestPermission = { requested = true },
-                onOpenSettings = {},
-            )
+            SosMeshTheme {
+                PermissionRationaleScreen(
+                    state =
+                        PermissionScreenState(
+                            rationaleMessage = "Bluetooth rationale",
+                            outcome = null,
+                            showSettingsAction = false,
+                        ),
+                    onRequestPermission = { requested = true },
+                    onOpenSettings = {},
+                )
+            }
         }
         composeRule.onNodeWithTag("permission_request_button").assertIsDisplayed()
         composeRule.onNodeWithContentDescription("İzni ver").performClick()
@@ -44,18 +48,20 @@ class PermissionRationaleScreenTest {
     fun permanentlyDenied_showsSettingsButton() {
         var settingsOpened = false
         composeRule.setContent {
-            PermissionRationaleScreen(
-                state =
-                    PermissionScreenState(
-                        rationaleMessage = "Need Bluetooth",
-                        outcome = PermissionRequestOutcome.PERMANENTLY_DENIED,
-                        showSettingsAction = true,
-                    ),
-                onRequestPermission = {},
-                onOpenSettings = { settingsOpened = true },
-            )
+            SosMeshTheme {
+                PermissionRationaleScreen(
+                    state =
+                        PermissionScreenState(
+                            rationaleMessage = "Need Bluetooth",
+                            outcome = PermissionRequestOutcome.PERMANENTLY_DENIED,
+                            showSettingsAction = true,
+                        ),
+                    onRequestPermission = {},
+                    onOpenSettings = { settingsOpened = true },
+                )
+            }
         }
-        composeRule.onNodeWithTag("permission_settings_button").assertIsDisplayed()
+        composeRule.onNodeWithTag("permission_settings_button").performScrollTo().assertIsDisplayed()
         composeRule.onNodeWithContentDescription("Ayarlara git").performClick()
         assertEquals(true, settingsOpened)
     }
@@ -63,18 +69,20 @@ class PermissionRationaleScreenTest {
     @Test
     fun permissionButtons_haveMinimumTouchHeightSemantics() {
         composeRule.setContent {
-            PermissionRationaleScreen(
-                state =
-                    PermissionScreenState(
-                        rationaleMessage = "Rationale",
-                        outcome = null,
-                        showSettingsAction = true,
-                    ),
-                onRequestPermission = {},
-                onOpenSettings = {},
-            )
+            SosMeshTheme {
+                PermissionRationaleScreen(
+                    state =
+                        PermissionScreenState(
+                            rationaleMessage = "Rationale",
+                            outcome = null,
+                            showSettingsAction = true,
+                        ),
+                    onRequestPermission = {},
+                    onOpenSettings = {},
+                )
+            }
         }
         composeRule.onNodeWithTag("permission_request_button").assertIsDisplayed()
-        composeRule.onNodeWithTag("permission_settings_button").assertIsDisplayed()
+        composeRule.onNodeWithTag("permission_settings_button").performScrollTo().assertIsDisplayed()
     }
 }

@@ -41,8 +41,10 @@ export type OperatorCaseDetail = OperatorCaseRow & {
 
 export const AI_DRAFT_LABEL = 'öneri/taslak, doğrulanmadı' as const;
 
-export const REVIEW_STATUS_OPTIONS = [
-  { value: 'SEEN', label: 'Görüldü' },
-  { value: 'UNDER_REVIEW', label: 'İncelemede' },
-  { value: 'COORDINATING', label: 'Koordine ediliyor' },
-] as const;
+export function getReviewStatusOptions(t: (key: string) => string) {
+  return [
+    { value: 'SEEN' as const, label: t('web.dashboard.states.seen') },
+    { value: 'UNDER_REVIEW' as const, label: t('web.cases.stateUnderReview') },
+    { value: 'COORDINATING' as const, label: t('web.cases.stateCoordinating') },
+  ];
+}

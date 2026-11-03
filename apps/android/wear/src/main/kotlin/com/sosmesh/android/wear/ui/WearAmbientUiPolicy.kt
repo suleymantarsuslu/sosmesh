@@ -1,6 +1,7 @@
 package com.sosmesh.android.wear.ui
 
 import androidx.compose.ui.graphics.Color
+import com.sosmesh.android.core.design.theme.SosBrandColors
 
 /**
  * Burn-in safe palette when the watch enters ambient / always-on display.
@@ -11,7 +12,7 @@ object WearAmbientUiPolicy {
         if (isAmbient) {
             Color(0xFF424242)
         } else {
-            Color(0xFFB71C1C)
+            SosBrandColors.SosRedBright
         }
 
     fun primaryText(isAmbient: Boolean): Color =

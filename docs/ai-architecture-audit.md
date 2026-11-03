@@ -1,6 +1,5 @@
 # SOSMesh — AI architecture audit (Phase 0, Meta AI Hackathon)
 
-**Status:** Phase 0 completed (Pre-implementation audit) + Post-Implementation Update  
 Audited: `main` @ `924952f` (fresh clone), 2026-11-03 (Europe/Istanbul). Read-only research; no code, server or deploy changes.
 Deadline: 2026-11-05 05:00 Europe/Istanbul (2026-11-04 21:00 EST).
 Synthetic data only. No secret appears in this document (the Meta key was used only as `Authorization: Bearer $MODEL_API_KEY`).
@@ -21,7 +20,7 @@ Everything lives in `apps/api` (NestJS 10 + Prisma 5 + PostgreSQL 16). **There i
 | De-identification | `apps/api/src/ai/deidentify-plaintext.ts` | Real, regex only (email, phone, coordinate pairs). |
 | Cost / rate / token guards | `apps/api/src/ai/ai-guards.ts` (`AiCostGuard`, `TenantAiRateLimiter`, `IncidentTokenBudgetGuard`) | **Real but in-process memory only.** `AiCostGuard`: UTC-day counter vs `AI_DAILY_COST_CAP_USD` (default **5**), charged with a flat `AI_ESTIMATED_COST_USD` (0.002) *before* the call; never reconciled with real `usage`; no cumulative/contest budget; not shared between api and worker processes; resets on restart. `IncidentTokenBudgetGuard` (8192 tokens/incident, flat 2048 estimate). Rate limiter 30/min per tenant key (= client IP). |
 | Job runner | `apps/api/src/ai/ai-job.service.ts` (`AiJobService.enqueueAfterIngest` → `setImmediate` → `runJob`) | **Real but not a queue.** In-process fire-and-forget in the **api** process, called from `IngestService.createFirstAccept` after the DB transaction commits. No persistence, no retry across restarts, no idempotency key (relies on ingest dedup by `messageId`), no concurrency limit. The `worker` container (`worker-main.ts`) only runs a retention loop + health endpoint — it does **not** run AI. |
-| Plaintext source | `apps/ai/src/ai/sos-plaintext-source.ts` (`NullSosPlaintextSource`, DI token `SOS_PLAINTEXT_SOURCE`) | **STUB — the critical gap.** Always returns `null`, so every real ingest ends as `ai_analyses.status = NO_PLAINTEXT`. The AI path has never run on a real SOS in production. |
+| Plaintext source | `apps/api/src/ai/sos-plaintext-source.ts` (`NullSosPlaintextSource`, DI token `SOS_PLAINTEXT_SOURCE`) | **STUB — the critical gap.** Always returns `null`, so every real ingest ends as `ai_analyses.status = NO_PLAINTEXT`. The AI path has never run on a real SOS in production. |
 | Metrics | `apps/api/src/ai/ai-metrics.ts`, `observability/sosmesh-metrics.service.ts` (`setAiQueueDepth`, `recordAiFailure`) | Real counters (attempts/completed/failed/fallback/skips/cost/tokens), exposed on `/metrics`. |
 | AI eval harness | `apps/api/src/ai/evals/eval-runner.ts`, `operator-correction-capture.ts` | Offline eval over mock fixtures (not live). |
 | Recommendation rationale | `apps/api/src/recommendation/recommendation-rationale.service.ts` | **Mostly stub.** Opt-in (`AI_RECOMMENDATION_RATIONALE_ENABLED=true`, default false); it re-uses the SOS *classifier* and only prints `aciliyet=/belirsizlik=` — no real rationale text. Deterministic matching (`matching-engine.ts`, `recommendation.service.ts`, haversine, demo zone anchors `demo-zone-anchors.ts`) is **real**. |
@@ -99,11 +98,11 @@ Base URL: `https://api.meta.ai/v1` (https://dev.meta.ai/docs/overview). Auth: `A
 ### 3.2 Muse Voice Transcribe — `muse-voice-transcribe-1.0`
 - Sources: https://dev.meta.ai/docs/speech-to-text, https://dev.meta.ai/docs/api-reference/voice/transcribe.
 - **File endpoint:** `POST https://api.meta.ai/v1/asr/transcribe?sessionId=<optional>` — `multipart/form-data` with part `request` (JSON, `type=application/json`) and part `audio` (the file). Header `Authorization: Bearer …`; `Accept: application/json` (default) | `text/event-stream` | `text/plain` (else 406).
-- Request JSON fields: `model` (`muse-voice-transcribe-1.0`), `audioEncoding` (`"WAV"`), `mode` (`PUSH_TO_TALK` default | `ENDPOINTING` | `DIARIZATION`), `languageBias` (list of language names, e.g. `["Turkish","English"]`), `keywords` (list), `partialMode`/`emitAudioProgress` (SSE only).
-- **Supported input: RIFF/WAVE, mono, 16-bit PCM, 16 kHz or 24 kHz only.** Convert everything else first: `ffmpeg -i in.m4a -ac 1 -ar 24000 -c:a pcm_s16le -map_metadata -1 out.wav`.
-- **Limits:** body ≤ **32 MB** (413), audio ≤ **10 minutes** (400), unsupported WAV → 400, 429 on concurrency/hourly limit (256 concurrent streams, 16,000 streams/hour per tenant; no `x-ratelimit-*` headers), 500 → retry once.
-- Response (JSON): `{"sessionId":"…","transcript":"…","audioDurationMs":6080,"turns":[{"turnId":1,"startMs":…,"endMs":…,"transcript":"…","speaker":"A"}]}` — `turns` empty in `PUSH_TO_TALK`; `speaker` only in `DIARIZATION`; turn-level timestamps only (no word timestamps, no confidence).
-- 25 languages incl. **English and Turkish** (Arabic, Bengali, Dutch, English, French, German, Hebrew, Hindi, Indonesian, Italian, Japanese, Kannada, Korean, Malay, Mandarin Chinese, Marathi, Polish, Portuguese, Spanish, Tagalog, Tamil, Telugu, Thai, Turkish, Vietnamese) with code-switching.
+  - Request JSON fields: `model` (`muse-voice-transcribe-1.0`), `audioEncoding` (`"WAV"`), `mode` (`PUSH_TO_TALK` default | `ENDPOINTING` | `DIARIZATION`), `languageBias` (list of language names, e.g. `["Turkish","English"]`), `keywords` (list), `partialMode`/`emitAudioProgress` (SSE only).
+  - **Supported input: RIFF/WAVE, mono, 16-bit PCM, 16 kHz or 24 kHz only.** Convert everything else first: `ffmpeg -i in.m4a -ac 1 -ar 24000 -c:a pcm_s16le -map_metadata -1 out.wav`.
+  - **Limits:** body ≤ **32 MB** (413), audio ≤ **10 minutes** (400), unsupported WAV → 400, 429 on concurrency/hourly limit (256 concurrent streams, 16,000 streams/hour per tenant; no `x-ratelimit-*` headers), 500 → retry once.
+  - Response (JSON): `{"sessionId":"…","transcript":"…","audioDurationMs":6080,"turns":[{"turnId":1,"startMs":…,"endMs":…,"transcript":"…","speaker":"A"}]}` — `turns` empty in `PUSH_TO_TALK`; `speaker` only in `DIARIZATION`; turn-level timestamps only (no word timestamps, no confidence).
+  - 25 languages incl. **English and Turkish** (Arabic, Bengali, Dutch, English, French, German, Hebrew, Hindi, Indonesian, Italian, Japanese, Kannada, Korean, Malay, Mandarin Chinese, Marathi, Polish, Portuguese, Spanish, Tagalog, Tamil, Telugu, Thai, Turkish, Vietnamese) with code-switching.
 - Realtime: `wss://api.meta.ai/v1/asr/realtime` (auth inside handshake frame, PCM_16KHZ/PCM_24KHZ) — not needed for P0.
 - Pricing: **$0.18 per hour** of audio, billed in whole seconds; no Contributor mode. **Not documented:** a non-WAV upload path (MP3/M4A/AAC/Opus are *not* accepted by this endpoint — convert on the server; `ffmpeg` must be in the api/worker image).
 
@@ -206,6 +205,8 @@ Touches only `apps/web/**`: `features/ai/**` (new: `AiIntelligencePanel`, `Trans
 | R10 | Prompt injection through transcripts/OCR/photo text. | Keep existing system prompt; treat transcript as quoted data; schema-constrained output; red-team fixtures against the real API. |
 | R11 | Privacy: audio/photo are PII/health-adjacent. | Standard mode only, minimal fields to model, de-identify text, store media with TTL, never log prompts/payloads, synthetic demo data only; retention job covers media. |
 | R12 | Time: ~40 h; migrations/deploy and real-API evidence are the long poles. | Single migration in WP-A first; parallel B–E; freeze at T-6 h; evidence run + docs last. |
+| R13 | Geographic/availability policy for Meta models and Contributor/Standard confusion. | Use only IDs verified in `/v1/models`; never `-contributor`. |
+
 | R13 | Geographic/availability policy for Meta models and Contributor/Standard confusion. | Use only IDs verified in `/v1/models`; never `-contributor`. |
 
 ---

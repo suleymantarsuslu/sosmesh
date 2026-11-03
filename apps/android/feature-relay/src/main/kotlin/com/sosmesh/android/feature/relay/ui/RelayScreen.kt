@@ -1,13 +1,9 @@
 package com.sosmesh.android.feature.relay.ui
 
 import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Button
-import androidx.compose.material3.Card
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
@@ -15,7 +11,10 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.unit.dp
+import com.sosmesh.android.core.design.components.SosNot112Banner
+import com.sosmesh.android.core.design.components.SosScreenScaffold
+import com.sosmesh.android.core.design.components.SosScrollableScreenContent
+import com.sosmesh.android.core.design.components.SosStatusCard
 import com.sosmesh.android.feature.relay.R
 import com.sosmesh.android.feature.relay.battery.RelayPauseReason
 
@@ -24,29 +23,31 @@ fun RelayScreen(
     state: RelayUiState,
     onToggleRelay: (Boolean) -> Unit,
     onStopAndExit: () -> Unit,
+    onNavigateBack: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    Column(
-        modifier =
-            modifier
-                .fillMaxSize()
-                .padding(24.dp),
-        verticalArrangement = Arrangement.spacedBy(16.dp),
-    ) {
-        Text(text = stringResource(R.string.relay_title), style = MaterialTheme.typography.headlineMedium)
-        Text(text = stringResource(R.string.relay_intro), style = MaterialTheme.typography.bodyMedium)
+    SosScreenScaffold(
+        title = stringResource(R.string.relay_title),
+        modifier = modifier,
+        onNavigateBack = onNavigateBack,
+    ) { contentModifier ->
+        SosScrollableScreenContent(contentModifier) {
+            Text(text = stringResource(R.string.relay_intro), style = MaterialTheme.typography.bodyMedium)
+            SosNot112Banner(
+                disclaimerText = stringResource(R.string.relay_not112_disclaimer),
+                showCall112 = false,
+            )
 
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.SpaceBetween,
-            verticalAlignment = Alignment.CenterVertically,
-        ) {
-            Text(text = stringResource(R.string.relay_toggle_label))
-            Switch(checked = state.relayEnabled, onCheckedChange = onToggleRelay)
-        }
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
+                Text(text = stringResource(R.string.relay_toggle_label))
+                Switch(checked = state.relayEnabled, onCheckedChange = onToggleRelay)
+            }
 
-        Card(modifier = Modifier.fillMaxWidth()) {
-            Column(modifier = Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+            SosStatusCard {
                 Text(
                     text = stringResource(R.string.relay_pending_count, state.pendingUploadCount),
                     style = MaterialTheme.typography.titleMedium,
@@ -79,25 +80,23 @@ fun RelayScreen(
                         ),
                 )
             }
-        }
 
-        when (state.pauseReason) {
-            RelayPauseReason.BatteryBelowThreshold ->
-                Text(
-                    text = stringResource(R.string.relay_pause_battery),
-                    color = MaterialTheme.colorScheme.error,
-                )
-            RelayPauseReason.HourlyDataLimit ->
-                Text(
-                    text = stringResource(R.string.relay_pause_hourly_limit),
-                    color = MaterialTheme.colorScheme.error,
-                )
-            RelayPauseReason.UserDisabled -> Unit
-            null -> Unit
-        }
+            when (state.pauseReason) {
+                RelayPauseReason.BatteryBelowThreshold ->
+                    Text(
+                        text = stringResource(R.string.relay_pause_battery),
+                        color = MaterialTheme.colorScheme.error,
+                    )
+                RelayPauseReason.HourlyDataLimit ->
+                    Text(
+                        text = stringResource(R.string.relay_pause_hourly_limit),
+                        color = MaterialTheme.colorScheme.error,
+                    )
+                RelayPauseReason.UserDisabled -> Unit
+                null -> Unit
+            }
 
-        Card(modifier = Modifier.fillMaxWidth()) {
-            Column(modifier = Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+            SosStatusCard {
                 Text(
                     text = stringResource(R.string.relay_constraints_title),
                     style = MaterialTheme.typography.titleSmall,
@@ -105,10 +104,10 @@ fun RelayScreen(
                 Text(text = state.systemConstraintSummary, style = MaterialTheme.typography.bodyMedium)
                 Text(text = state.systemConstraintDetail, style = MaterialTheme.typography.bodySmall)
             }
-        }
 
-        Button(onClick = onStopAndExit, modifier = Modifier.fillMaxWidth()) {
-            Text(stringResource(R.string.relay_stop_exit))
+            Button(onClick = onStopAndExit, modifier = Modifier.fillMaxWidth()) {
+                Text(stringResource(R.string.relay_stop_exit))
+            }
         }
     }
 }

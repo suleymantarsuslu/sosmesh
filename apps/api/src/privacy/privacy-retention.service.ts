@@ -1,23 +1,28 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, Inject } from '@nestjs/common';
 
 import { PrismaService } from '../prisma/prisma.service';
 import { auditDetailsForWrite } from './audit-redaction.util';
 import { readRetentionMaxAgeMs, retentionJobEnabled } from './retention.config';
+import { MediaStorage, MEDIA_STORAGE } from '../media/media-storage.interface';
 
 export type RetentionRunResult = {
   ran: boolean;
   reason: string;
   deletedIncidents: number;
   deletedFeedEvents: number;
+  deletedAttachments: number;
 };
 
 @Injectable()
 export class PrivacyRetentionService {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    @Inject(MEDIA_STORAGE) private readonly storage: MediaStorage
+  ) {}
 
   async purgeExpiredRecords(actorId: string | null): Promise<RetentionRunResult> {
     if (!retentionJobEnabled()) {
-      return { ran: false, reason: 'RETENTION_JOB_DISABLED', deletedIncidents: 0, deletedFeedEvents: 0 };
+      return { ran: false, reason: 'RETENTION_JOB_DISABLED', deletedIncidents: 0, deletedFeedEvents: 0, deletedAttachments: 0 };
     }
 
     const maxAgeMs = readRetentionMaxAgeMs();
@@ -27,8 +32,11 @@ export class PrivacyRetentionService {
         reason: 'RETENTION_MAX_AGE_NOT_CONFIGURED',
         deletedIncidents: 0,
         deletedFeedEvents: 0,
+        deletedAttachments: 0,
       };
     }
+
+    const deletedAttachments = await this.purgeExpiredAttachments();
 
     const cutoff = new Date(Date.now() - maxAgeMs);
 
@@ -40,9 +48,10 @@ export class PrivacyRetentionService {
     if (staleMessages.length === 0) {
       return {
         ran: true,
-        reason: 'NO_EXPIRED_RECORDS',
+        reason: deletedAttachments > 0 ? 'PURGED_ATTACHMENTS' : 'NO_EXPIRED_RECORDS',
         deletedIncidents: 0,
         deletedFeedEvents: 0,
+        deletedAttachments,
       };
     }
 
@@ -77,6 +86,37 @@ export class PrivacyRetentionService {
       reason: 'PURGED',
       deletedIncidents: incidentIds.length,
       deletedFeedEvents: feedDelete.count,
+      deletedAttachments,
     };
+  }
+
+  private async purgeExpiredAttachments(): Promise<number> {
+    const now = new Date();
+    const expired = await this.prisma.attachment.findMany({
+      where: {
+        expiresAt: { not: null, lte: now },
+      },
+      select: { id: true, storageKey: true },
+    });
+
+    if (expired.length === 0) {
+      return 0;
+    }
+
+    for (const attachment of expired) {
+      try {
+        await this.storage.delete(attachment.storageKey);
+      } catch (error) {
+        // Continue cleanup even if storage delete fails
+      }
+    }
+
+    const result = await this.prisma.attachment.deleteMany({
+      where: {
+        id: { in: expired.map((a) => a.id) },
+      },
+    });
+
+    return result.count;
   }
 }

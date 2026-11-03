@@ -1,16 +1,37 @@
 'use client';
 
 import { useState } from 'react';
-import { AiSuggestionPanel } from './AiSuggestionPanel';
+
+import { DeliveryStateBadge } from '../../components/cases/DeliveryStateBadge';
+import { useOperatorPreferences } from '../../components/operator/OperatorPreferencesProvider';
+import { AiIntelligencePanel } from '../ai/AiIntelligencePanel';
+import type {
+  AiTriageView,
+  TranscriptView,
+  SparkVisionView,
+  SamVisionView,
+  IncidentLinkSuggestionView,
+} from '../ai/types';
 import { AssignmentPreviewPanel } from '../assignment/AssignmentPreviewPanel';
-import { REVIEW_STATUS_OPTIONS, type OperatorCaseDetail } from './types';
+import { getReviewStatusOptions, type OperatorCaseDetail } from './types';
+
+type AiData = {
+  triage: AiTriageView | null;
+  transcript: TranscriptView | null;
+  sparkVision: SparkVisionView | null;
+  samVision: SamVisionView | null;
+  linkSuggestions: IncidentLinkSuggestionView[];
+};
 
 type Props = {
   detail: OperatorCaseDetail;
+  aiData: AiData | null;
   onRefresh: () => Promise<void>;
 };
 
-export function CaseDetailView({ detail, onRefresh }: Props) {
+export function CaseDetailView({ detail, aiData, onRefresh }: Props) {
+  const { t, locale } = useOperatorPreferences();
+  const dateLocale = locale === 'tr' ? 'tr-TR' : 'en-GB';
   const [version, setVersion] = useState(detail.version);
   const [reviewStatus, setReviewStatus] = useState(detail.reviewStatus);
   const [personCount, setPersonCount] = useState(
@@ -40,7 +61,7 @@ export function CaseDetailView({ detail, onRefresh }: Props) {
     });
     setBusy(false);
     if (res.status === 409) {
-      setConflictMessage('Başka bir operatör bu vakayı güncelledi. Sayfayı yenileyin.');
+      setConflictMessage(t('web.cases.conflictMessage'));
       return;
     }
     if (!res.ok) {
@@ -61,7 +82,7 @@ export function CaseDetailView({ detail, onRefresh }: Props) {
     });
     setBusy(false);
     if (res.status === 409) {
-      setConflictMessage('Başka bir operatör bu vakayı güncelledi. Sayfayı yenileyin.');
+      setConflictMessage(t('web.cases.conflictMessage'));
       return;
     }
     if (!res.ok) {
@@ -74,9 +95,9 @@ export function CaseDetailView({ detail, onRefresh }: Props) {
   };
 
   return (
-    <article className="case-detail" data-testid="operator-case-detail">
+    <article className="case-detail case-detail--modern" data-testid="operator-case-detail">
       <header className="case-detail__header">
-        <h1>Vaka ayrıntısı</h1>
+        <h1>{t('web.cases.detailTitle')}</h1>
         <p>
           <span className="case-detail__id">{detail.incidentId.slice(0, 8)}…</span>
           <span className="case-detail__review" data-testid="case-review-status">
@@ -91,17 +112,17 @@ export function CaseDetailView({ detail, onRefresh }: Props) {
       </header>
 
       <section aria-labelledby="case-original-title">
-        <h2 id="case-original-title">Orijinal metin</h2>
+        <h2 id="case-original-title">{t('web.cases.originalTitle')}</h2>
         <p className="case-detail__original" data-testid="case-original-text">
-          {detail.originalText ?? 'Orijinal metin kayıtlı değil (M0 şifreli yük).'}
+          {detail.originalText ?? t('web.cases.originalMissing')}
         </p>
       </section>
 
       <section aria-labelledby="case-meta-title">
-        <h2 id="case-meta-title">Doğrulanmış metadata</h2>
+        <h2 id="case-meta-title">{t('web.cases.metaTitle')}</h2>
         <dl>
           <div>
-            <dt id="case-person-count-label">Kişi sayısı</dt>
+            <dt id="case-person-count-label">{t('web.cases.personCount')}</dt>
             <dd>
               <input
                 type="number"
@@ -114,7 +135,7 @@ export function CaseDetailView({ detail, onRefresh }: Props) {
             </dd>
           </div>
           <div>
-            <dt>Konum durumu</dt>
+            <dt>{t('web.cases.locationStatus')}</dt>
             <dd>{detail.verifiedMetadata.locationStatus}</dd>
           </div>
         </dl>
@@ -125,18 +146,29 @@ export function CaseDetailView({ detail, onRefresh }: Props) {
           onClick={() => saveCorrection()}
           data-testid="case-save-correction"
         >
-          Düzeltmeyi kaydet (denetim)
+          {t('web.cases.saveCorrection')}
         </button>
       </section>
 
-      <AiSuggestionPanel ai={detail.ai} />
+      {aiData && (
+        <AiIntelligencePanel
+          incidentId={detail.incidentId}
+          triage={aiData.triage}
+          transcript={aiData.transcript}
+          sparkVision={aiData.sparkVision}
+          samVision={aiData.samVision}
+          linkSuggestions={aiData.linkSuggestions}
+          isSynthetic={false}
+          onRefresh={onRefresh}
+        />
+      )}
 
       <AssignmentPreviewPanel incidentId={detail.incidentId} caseCoordinates={caseCoordinates} />
 
       <section aria-labelledby="case-actions-title">
-        <h2 id="case-actions-title">Operatör durumu</h2>
+        <h2 id="case-actions-title">{t('web.cases.operatorStatusTitle')}</h2>
         <div className="case-detail__review-actions">
-          {REVIEW_STATUS_OPTIONS.map((option) => (
+          {getReviewStatusOptions(t).map((option) => (
             <button
               key={option.value}
               type="button"
@@ -151,17 +183,17 @@ export function CaseDetailView({ detail, onRefresh }: Props) {
         </div>
       </section>
 
-      <section aria-label="Denetim kayıtları">
-        <h2>Denetim</h2>
+      <section aria-label={t('web.cases.auditTitle')}>
+        <h2>{t('web.cases.auditTitle')}</h2>
         <ul className="case-detail__audit" data-testid="case-audit-list">
           {detail.audit.length === 0 ? (
-            <li>Henüz denetim kaydı yok</li>
+            <li>{t('web.cases.auditEmpty')}</li>
           ) : (
             detail.audit.map((entry) => (
               <li key={entry.id} data-testid={`case-audit-${entry.action}`}>
                 <strong>{entry.action}</strong>
                 <time dateTime={entry.createdAt}>
-                  {new Date(entry.createdAt).toLocaleString('tr-TR')}
+                  {new Date(entry.createdAt).toLocaleString(dateLocale)}
                 </time>
               </li>
             ))
@@ -169,12 +201,16 @@ export function CaseDetailView({ detail, onRefresh }: Props) {
         </ul>
       </section>
 
-      <section aria-label="Olay zaman çizelgesi">
-        <h2>Zaman çizelgesi</h2>
-        <ol data-testid="case-detail-timeline">
+      <section aria-label={t('web.cases.timelineTitle')}>
+        <h2>{t('web.cases.timelineTitle')}</h2>
+        <ol className="case-detail__timeline" data-testid="case-detail-timeline">
           {detail.timeline.map((entry) => (
-            <li key={entry.id}>
-              {entry.deliveryState} · {entry.source}
+            <li key={entry.id} className="case-detail__timeline-item">
+              <DeliveryStateBadge state={entry.deliveryState} />
+              <span className="case-detail__timeline-source">{entry.source}</span>
+              <time dateTime={entry.createdAt}>
+                {new Date(entry.createdAt).toLocaleString(dateLocale)}
+              </time>
             </li>
           ))}
         </ol>

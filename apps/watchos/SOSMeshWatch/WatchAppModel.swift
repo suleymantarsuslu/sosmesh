@@ -6,7 +6,7 @@ import WatchConnectivity
 final class WatchAppModel: ObservableObject {
     @Published var confirmStep: WatchConfirmStep = .idle
     @Published var headline = "SOS"
-    @Published var detail = "Acil durumda iki adımda onaylayın."
+    @Published var detail = String(localized: "watch.initial.detail")
     @Published var connectivityHeadline = ""
     @Published var showOfflineHelp = false
 
@@ -36,8 +36,8 @@ final class WatchAppModel: ObservableObject {
 
     func onConfirmCancel() {
         confirmStep = .cancelled
-        headline = "SOS gönderilmedi"
-        detail = "İptal edildi."
+        headline = String(localized: "watch.cancel.headline")
+        detail = String(localized: "watch.cancel.detail")
     }
 
     func onConfirmSend(nowMs: Int64 = Int64(Date().timeIntervalSince1970 * 1000)) {

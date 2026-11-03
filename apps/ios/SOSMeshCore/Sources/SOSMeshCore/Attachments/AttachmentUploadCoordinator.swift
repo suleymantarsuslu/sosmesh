@@ -13,7 +13,9 @@ public final class AttachmentUploadCoordinator {
     private let baseURL: String
     private let monitor = NWPathMonitor()
     private var isConnected = false
+    private var hasReceivedInitialPath = false
     private var uploadTasks: [String: Task<Void, Never>] = [:]
+    private var retryWorkItem: DispatchWorkItem?
     
     public var onStatusChange: ((String, AttachmentUploadStatus) -> Void)?
     
@@ -22,19 +24,29 @@ public final class AttachmentUploadCoordinator {
         self.baseURL = baseURL
         
         monitor.pathUpdateHandler = { [weak self] path in
-            // The coordinator can be deallocated while the monitor still delivers updates.
-            guard let self else { return }
+            guard let self = self else { return }
+            self.hasReceivedInitialPath = true
             let connected = path.status == .satisfied
-            if connected && !self.isConnected {
+            let wasDisconnected = !self.isConnected
+            self.isConnected = connected
+            
+            if connected && wasDisconnected {
                 Task { await self.processQueue() }
             }
-            self.isConnected = connected
         }
         monitor.start(queue: DispatchQueue.global(qos: .background))
     }
-
+    
     deinit {
         monitor.cancel()
+        retryWorkItem?.cancel()
+    }
+    
+    public func start() {
+        Task {
+            try? await Task.sleep(nanoseconds: 500_000_000)
+            await processQueue()
+        }
     }
     
     public func processQueue() async {
@@ -70,22 +82,32 @@ public final class AttachmentUploadCoordinator {
     }
     
     private func uploadAttachment(_ attachment: QueuedAttachment) async {
-        guard isConnected else {
-            notifyStatus(attachment.id, .waiting)
-            return
-        }
-        
         guard let uploadToken = attachment.uploadToken else {
             return
         }
         
-        notifyStatus(attachment.id, .uploading)
+        if !hasReceivedInitialPath {
+            try? await Task.sleep(nanoseconds: 2_000_000_000)
+        }
         
         guard let data = try? Data(contentsOf: URL(fileURLWithPath: attachment.dataPath)) else {
             notifyStatus(attachment.id, .failed(NSError(domain: "AttachmentUpload", code: 1)))
             try? queue.dequeue(id: attachment.id)
             return
         }
+        
+        if !validateAttachmentSize(data: data, kind: attachment.kind) {
+            let error = NSError(
+                domain: "AttachmentUpload",
+                code: 413,
+                userInfo: [NSLocalizedDescriptionKey: "Attachment exceeds size limit"]
+            )
+            notifyStatus(attachment.id, .failed(error))
+            try? queue.dequeue(id: attachment.id)
+            return
+        }
+        
+        notifyStatus(attachment.id, .uploading)
         
         let config = AttachmentUploadConfig(baseURL: baseURL, uploadToken: uploadToken)
         let uploader = AttachmentUploader(config: config)
@@ -100,18 +122,43 @@ public final class AttachmentUploadCoordinator {
             
         case .noNetwork:
             notifyStatus(attachment.id, .waiting)
+            scheduleRetry()
             
         case .httpError(let code, let message):
             let error = NSError(domain: "AttachmentUpload", code: code, userInfo: [NSLocalizedDescriptionKey: message])
             notifyStatus(attachment.id, .failed(error))
             if code >= 400 && code < 500 {
                 try? queue.dequeue(id: attachment.id)
+            } else {
+                scheduleRetry()
             }
 
         case .error(let message):
             let error = NSError(domain: "AttachmentUpload", code: 0, userInfo: [NSLocalizedDescriptionKey: message])
             notifyStatus(attachment.id, .failed(error))
+            scheduleRetry()
         }
+    }
+    
+    private func validateAttachmentSize(data: Data, kind: String) -> Bool {
+        let sizeInMB = Double(data.count) / (1024 * 1024)
+        
+        if kind == "audio" {
+            return sizeInMB <= 50
+        } else {
+            return sizeInMB <= 15
+        }
+    }
+    
+    private func scheduleRetry() {
+        retryWorkItem?.cancel()
+        let workItem = DispatchWorkItem { [weak self] in
+            Task {
+                await self?.processQueue()
+            }
+        }
+        retryWorkItem = workItem
+        DispatchQueue.global(qos: .utility).asyncAfter(deadline: .now() + 30, execute: workItem)
     }
     
     private func notifyStatus(_ id: String, _ status: AttachmentUploadStatus) {

@@ -18,6 +18,8 @@ data class PendingAttachmentRecord(
     val kind: String,
     val filePath: String,
     val mimeType: String,
+    val uploadToken: String? = null,
+    val baseUrl: String? = null,
 )
 
 /**
@@ -34,42 +36,84 @@ class AttachmentPendingStore
         private val storeFile: File
             get() = File(context.filesDir, "pending_attachments.json")
 
-        fun add(attachment: PendingAttachment) {
-            lock.write {
-                val records = loadRecords().toMutableList()
-                records.add(
-                    PendingAttachmentRecord(
-                        sosId = attachment.sosId,
-                        kind = attachment.kind,
-                        filePath = attachment.filePath,
-                        mimeType = attachment.mimeType,
-                    ),
+    fun add(attachment: PendingAttachment) {
+        lock.write {
+            val records = loadRecords().toMutableList()
+            records.add(
+                PendingAttachmentRecord(
+                    sosId = attachment.sosId,
+                    kind = attachment.kind,
+                    filePath = attachment.filePath,
+                    mimeType = attachment.mimeType,
+                    uploadToken = null,
+                    baseUrl = null,
+                ),
+            )
+            saveRecords(records)
+        }
+    }
+
+    fun listBySosId(sosId: String): List<PendingAttachment> {
+        return lock.read {
+            loadRecords()
+                .filter { it.sosId == sosId }
+                .map {
+                    PendingAttachment(
+                        sosId = it.sosId,
+                        kind = it.kind,
+                        filePath = it.filePath,
+                        mimeType = it.mimeType,
+                        uploadToken = it.uploadToken,
+                        baseUrl = it.baseUrl,
+                    )
+                }
+        }
+    }
+    
+    fun listAll(): List<PendingAttachment> {
+        return lock.read {
+            loadRecords().map {
+                PendingAttachment(
+                    sosId = it.sosId,
+                    kind = it.kind,
+                    filePath = it.filePath,
+                    mimeType = it.mimeType,
+                    uploadToken = it.uploadToken,
+                    baseUrl = it.baseUrl,
                 )
+            }
+        }
+    }
+    
+    fun setUploadToken(sosId: String, uploadToken: String, baseUrl: String) {
+        lock.write {
+            val records = loadRecords().toMutableList()
+            var updated = false
+            for (i in records.indices) {
+                if (records[i].sosId == sosId && records[i].uploadToken == null) {
+                    records[i] = records[i].copy(uploadToken = uploadToken, baseUrl = baseUrl)
+                    updated = true
+                }
+            }
+            if (updated) {
                 saveRecords(records)
             }
         }
-
-        fun listBySosId(sosId: String): List<PendingAttachment> {
-            return lock.read {
-                loadRecords()
-                    .filter { it.sosId == sosId }
-                    .map {
-                        PendingAttachment(
-                            sosId = it.sosId,
-                            kind = it.kind,
-                            filePath = it.filePath,
-                            mimeType = it.mimeType,
-                        )
-                    }
-            }
+    }
+    
+    fun removeByFilePath(filePath: String) {
+        lock.write {
+            val records = loadRecords().filter { it.filePath != filePath }
+            saveRecords(records)
         }
+    }
 
-        fun removeBySosId(sosId: String) {
-            lock.write {
-                val records = loadRecords().filter { it.sosId != sosId }
-                saveRecords(records)
-            }
+    fun removeBySosId(sosId: String) {
+        lock.write {
+            val records = loadRecords().filter { it.sosId != sosId }
+            saveRecords(records)
         }
+    }
 
         private fun loadRecords(): List<PendingAttachmentRecord> {
             if (!storeFile.exists()) return emptyList()

@@ -37,6 +37,8 @@ class SosSubmitFlowTest {
     private lateinit var db: OutboxDatabase
     private lateinit var adapter: RoomOutboxQueueAdapter
     private lateinit var repository: SosSubmitRepository
+    private lateinit var pendingStore: com.sosmesh.android.feature.sos.attachment.AttachmentPendingStore
+    private lateinit var notificationManager: com.sosmesh.android.feature.sos.notification.SosDeliveryNotificationManager
 
     @Before
     fun setUp() {
@@ -57,6 +59,8 @@ class SosSubmitFlowTest {
                 NoOpUploadScheduler,
                 Dispatchers.IO,
             )
+        pendingStore = com.sosmesh.android.feature.sos.attachment.AttachmentPendingStore(context)
+        notificationManager = com.sosmesh.android.feature.sos.notification.SosDeliveryNotificationManager(context)
     }
 
     @After
@@ -82,6 +86,8 @@ class SosSubmitFlowTest {
             NoOpPeerDelivery,
             testGrantAllBleMeshReadiness(),
             testGrantAllPermissionCoordinator(),
+            pendingStore,
+            notificationManager,
         )
 
     @Test
@@ -127,6 +133,8 @@ class SosSubmitFlowTest {
                     ThrowingPeerDelivery,
                     testGrantAllBleMeshReadiness(),
                     testGrantAllPermissionCoordinator(),
+                    pendingStore,
+                    notificationManager,
                 )
             vm.setPersonCountText("1")
             vm.goToPreview()

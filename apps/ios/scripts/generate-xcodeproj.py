@@ -94,6 +94,7 @@ TEST_SOURCES = [
     "SOSMeshTests/AppModelPermissionGateTests.swift",
     "SOSMeshTests/EmergencyCall112LinkTests.swift",
     "SOSMeshTests/SosCryptoConfigurationErrorTests.swift",
+    "SOSMeshCore/Tests/SOSMeshCoreTests/AttachmentUploadCoordinatorTests.swift",
 ]
 
 

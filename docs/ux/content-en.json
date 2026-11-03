@@ -562,7 +562,10 @@
       "location": "Location",
       "timelineTitle": "Timeline",
       "timelineEmpty": "No records yet",
-      "fullCaseLink": "Full case page"
+      "fullCaseLink": "Full case page",
+      "close": "Close",
+      "closeAriaLabel": "Close case summary",
+      "drawerTitle": "Case summary"
     },
     "aiSuggestionPanel": {
       "title": "AI assistance suggestion",

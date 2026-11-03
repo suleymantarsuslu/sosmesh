@@ -1,7 +1,7 @@
 'use client';
 
-import { useMemo } from 'react';
-import Map, { Marker } from 'react-map-gl/maplibre';
+import { forwardRef, useImperativeHandle, useMemo, useRef } from 'react';
+import Map, { Marker, type MapRef } from 'react-map-gl/maplibre';
 import * as maplibregl from 'maplibre-gl';
 import Supercluster from 'supercluster';
 import 'maplibre-gl/dist/maplibre-gl.css';
@@ -26,6 +26,10 @@ type Props = {
   assignmentPreview?: AssignmentPreviewRoute | null;
 };
 
+export type OperatorMapHandle = {
+  flyTo: (latitude: number, longitude: number, zoom?: number) => void;
+};
+
 type ClusterProps = {
   cluster: boolean;
   cluster_id?: number;
@@ -47,16 +51,27 @@ function getSeverityColor(priority: number): string {
   return '#65a30d';
 }
 
-export function OperatorMap({
+export const OperatorMap = forwardRef<OperatorMapHandle, Props>(function OperatorMap({
   rows,
   selectedId,
   onSelect,
   zoom,
   onZoomChange,
   assignmentPreview,
-}: Props) {
+}, ref) {
   const testMode = isMapTestMode();
   const { t } = useOperatorPreferences();
+  const mapRef = useRef<MapRef>(null);
+
+  useImperativeHandle(ref, () => ({
+    flyTo: (latitude: number, longitude: number, targetZoom = 14) => {
+      mapRef.current?.flyTo({
+        center: [longitude, latitude],
+        zoom: targetZoom,
+        duration: 1500,
+      });
+    },
+  }));
   const plottable = useMemo(
     () => rows.filter((row) => hasPlottableCoordinates(row)),
     [rows]
@@ -150,6 +165,7 @@ export function OperatorMap({
   return (
     <div className="operator-map-wrap operator-map-wrap--modern" data-testid="operator-map">
       <Map
+        ref={mapRef}
         mapLib={maplibregl}
         initialViewState={{
           latitude: SYNTHETIC_MAP_CENTER.lat,
@@ -185,14 +201,54 @@ export function OperatorMap({
           if (!row) {
             return null;
           }
-          const radiusPx = metersToPixels(
-            lat,
-            accuracyCircleRadiusMeters(row.accuracyMeters),
-            zoom
-          );
-          const opacity = accuracyVisualOpacity(row.accuracyMeters);
+          const isApproximate = row.locationApproximate;
+          const radiusMeters = isApproximate ? Math.max(1000, row.accuracyMeters ?? 1000) : accuracyCircleRadiusMeters(row.accuracyMeters);
+          const radiusPx = metersToPixels(lat, radiusMeters, zoom);
+          const opacity = isApproximate ? 0.15 : accuracyVisualOpacity(row.accuracyMeters);
           const pinColor = getSeverityColor(row.priority);
           const isSelected = selectedId === row.incidentId;
+          
+          if (isApproximate) {
+            return (
+              <Marker
+                key={row.incidentId}
+                latitude={lat}
+                longitude={lng}
+                anchor="center"
+              >
+                <div className="operator-map__marker-stack">
+                  <span
+                    className="operator-map__approximate-circle"
+                    style={{
+                      width: radiusPx * 2,
+                      height: radiusPx * 2,
+                      opacity,
+                      borderColor: isSelected ? '#1d4ed8' : pinColor,
+                      backgroundColor: isSelected ? 'rgb(29 78 184 / 0.1)' : `${pinColor}22`,
+                    }}
+                    aria-hidden
+                  />
+                  <button
+                    type="button"
+                    className={
+                      isSelected
+                        ? 'operator-map__center-dot operator-map__center-dot--selected'
+                        : 'operator-map__center-dot'
+                    }
+                    style={{
+                      backgroundColor: isSelected ? '#1d4ed8' : pinColor,
+                    }}
+                    aria-label={`Vaka öncelik ${row.priority} (yaklaşık konum)`}
+                    data-testid={`map-pin-${row.incidentId.slice(0, 8)}`}
+                    onClick={() => onSelect(row.incidentId)}
+                  >
+                    <span className="operator-map__center-dot-label">{row.priority}</span>
+                  </button>
+                </div>
+              </Marker>
+            );
+          }
+          
           return (
             <Marker
               key={row.incidentId}
@@ -276,4 +332,4 @@ export function OperatorMap({
       ) : null}
     </div>
   );
-}
+});

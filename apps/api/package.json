@@ -19,6 +19,7 @@
     "db:migrate": "prisma migrate deploy",
     "db:seed": "prisma db seed",
     "openapi:generate": "ts-node --transpile-only scripts/generate-openapi.ts",
+    "requeue-failed-triage": "node dist/scripts/requeue-failed-triage.js",
     "postinstall": "prisma generate"
   },
   "dependencies": {

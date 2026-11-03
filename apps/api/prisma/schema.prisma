@@ -530,7 +530,7 @@ model Attachment {
   mime            String              @db.VarChar(100)
   sizeBytes       Int                 @map("size_bytes")
   durationMs      Int?                @map("duration_ms")
-  storageKey      String              @db.VarChar(500)
+  storageKey      String              @map("storage_key") @db.VarChar(500)
   sha256          String              @db.VarChar(64)
   synthetic       Boolean             @default(false)
   createdAt       DateTime            @default(now()) @map("created_at")
@@ -592,4 +592,20 @@ model IncidentLinkSuggestion {
   @@index([incidentBId], map: "incident_link_suggestions_incident_b_idx")
   @@index([status], map: "incident_link_suggestions_status_idx")
   @@map("incident_link_suggestions")
+}
+
+model AiTranslationCache {
+  id             String   @id @default(uuid()) @db.Uuid
+  sourceType     String   @map("source_type") @db.VarChar(50)
+  sourceId       String   @map("source_id") @db.Uuid
+  sourceField    String   @map("source_field") @db.VarChar(100)
+  sourceLanguage String   @map("source_language") @db.VarChar(10)
+  targetLanguage String   @map("target_language") @db.VarChar(10)
+  translatedText String   @map("translated_text") @db.Text
+  modelVersion   String   @map("model_version") @db.VarChar(100)
+  createdAt      DateTime @default(now()) @map("created_at")
+
+  @@unique([sourceType, sourceId, sourceField, targetLanguage], map: "ai_translation_cache_unique")
+  @@index([sourceType, sourceId], map: "ai_translation_cache_source_idx")
+  @@map("ai_translation_cache")
 }

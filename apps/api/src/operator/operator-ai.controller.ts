@@ -3,9 +3,10 @@
  * Work Package A - AI Foundation
  */
 
-import { Controller, Get, Param, UseGuards } from '@nestjs/common';
+import { Controller, Get, Headers, Param, Query, UseGuards } from '@nestjs/common';
 import { OperatorAuthGuard } from './guards/operator-auth.guard';
 import { OperatorAiService } from './operator-ai.service';
+import { LocaleContentService } from '../ai/locale-content.service';
 import type { AiStatusView } from '../ai/contracts/ai-status-view';
 import type { AiTriageView } from '../ai/contracts/ai-triage-view';
 
@@ -23,10 +24,18 @@ export class OperatorAiController {
 @Controller('v1/operator/cases/:incidentId/ai')
 @UseGuards(OperatorAuthGuard)
 export class OperatorCaseAiController {
-  constructor(private readonly aiService: OperatorAiService) {}
+  constructor(
+    private readonly aiService: OperatorAiService,
+    private readonly localeContent: LocaleContentService
+  ) {}
 
   @Get()
-  async getCaseAi(@Param('incidentId') incidentId: string): Promise<AiTriageView | null> {
-    return this.aiService.getCaseAi(incidentId);
+  async getCaseAi(
+    @Param('incidentId') incidentId: string,
+    @Query('locale') localeParam?: string,
+    @Headers('accept-language') acceptLanguage?: string
+  ): Promise<AiTriageView | null> {
+    const locale = this.localeContent.resolveLocale(localeParam, acceptLanguage);
+    return this.aiService.getCaseAi(incidentId, locale);
   }
 }

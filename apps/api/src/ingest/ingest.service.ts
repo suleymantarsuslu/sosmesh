@@ -20,6 +20,7 @@ import { IngestRateLimitService } from './ingest-rate-limit.service';
 import { ReceiptSignerService } from './receipt-signer.service';
 import { SosMeshMetricsService } from '../observability/sosmesh-metrics.service';
 import { StructuredEventLogger } from '../observability/structured-event-logger.service';
+import { extractClientAad } from './envelope-aad-builder';
 
 type RelayWindow = { count: number; windowStartMs: number };
 
@@ -149,7 +150,8 @@ export class IngestService {
       this.metrics.recordGpsAnomaly();
     }
     const receiptAt = new Date();
-    const originalEnvelopeAad = canonicalJSON(envelope);
+    const clientAad = extractClientAad(envelope);
+    const originalEnvelopeAad = canonicalJSON(clientAad);
 
     return this.prisma.$transaction(async (tx) => {
       const incident = await tx.incident.create({

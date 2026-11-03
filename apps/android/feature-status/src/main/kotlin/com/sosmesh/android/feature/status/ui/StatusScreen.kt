@@ -34,17 +34,30 @@ fun StatusScreen(
         verticalArrangement = Arrangement.spacedBy(12.dp),
     ) {
         if (state.offline) {
-            Surface(color = MaterialTheme.colorScheme.errorContainer, modifier = Modifier.fillMaxWidth()) {
+            Surface(
+                color = MaterialTheme.colorScheme.errorContainer,
+                shape = MaterialTheme.shapes.small,
+                modifier = Modifier.fillMaxWidth(),
+            ) {
                 Text(
                     text = stringResource(R.string.status_offline_badge),
                     modifier = Modifier.padding(12.dp),
+                    color = MaterialTheme.colorScheme.onErrorContainer,
+                    style = MaterialTheme.typography.labelLarge,
                 )
             }
         }
-        Text(stringResource(R.string.status_title), style = MaterialTheme.typography.headlineSmall)
-        Text(stringResource(R.string.status_not112_disclaimer), style = MaterialTheme.typography.bodySmall)
+        Text(stringResource(R.string.status_title), style = MaterialTheme.typography.headlineMedium)
+        Text(
+            stringResource(R.string.status_not112_disclaimer),
+            style = MaterialTheme.typography.bodySmall,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+        )
         if (state.entries.isEmpty()) {
-            Text(stringResource(R.string.status_empty))
+            Text(
+                stringResource(R.string.status_empty),
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
         } else {
             state.entries.forEach { entry ->
                 StatusEntryTimeline(entry = entry)

@@ -7,6 +7,8 @@ import com.sosmesh.android.core.data.outbox.OutboxDatabase
 import com.sosmesh.android.core.data.outbox.RoomOutboxQueueAdapter
 import com.sosmesh.android.feature.relay.upload.RelayUploadCommands
 import com.sosmesh.ble.BleProtocol
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.runBlocking
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
@@ -38,24 +40,25 @@ class RelayNoDecryptTest {
 
 class RelayDedupKeyTest {
     @Test
-    fun registrar_producesStableSosIdAndDigestKey() {
-        ThrowingOutbox.enqueueCalls = 0
-        ThrowingOutbox.lastSosId = null
-        ThrowingOutbox.lastDigest = null
-        val registrar = RelayEnvelopeRegistrar(ThrowingOutbox(), NoopUploadCommands())
-        val payload =
-            """
-            {"version":1,"id":"dup-15","envelope":{"timestamp":"2026-10-29T17:00:00Z","priority":1},"encryptedPayload":"cipher"}
-            """.trimIndent().toByteArray()
-        val first = registrar.registerFromWirePayload(payload, 100L)
-        val second = registrar.registerFromWirePayload(payload, 200L)
-        assertTrue(first.isSuccess)
-        assertTrue(second.isSuccess)
-        val expectedDigest = Base64.getEncoder().encodeToString(BleProtocol.calculateSHA256(payload))
-        assertEquals("dup-15", ThrowingOutbox.lastSosId)
-        assertEquals(expectedDigest, ThrowingOutbox.lastDigest)
-        assertEquals(2, ThrowingOutbox.enqueueCalls)
-    }
+    fun registrar_producesStableSosIdAndDigestKey() =
+        runBlocking {
+            ThrowingOutbox.enqueueCalls = 0
+            ThrowingOutbox.lastSosId = null
+            ThrowingOutbox.lastDigest = null
+            val registrar = RelayEnvelopeRegistrar(ThrowingOutbox(), NoopUploadCommands())
+            val payload =
+                """
+                {"version":1,"id":"dup-15","envelope":{"timestamp":"2026-10-29T17:00:00Z","priority":1},"encryptedPayload":"cipher"}
+                """.trimIndent().toByteArray()
+            val first = registrar.registerFromWirePayload(payload, 100L)
+            val second = registrar.registerFromWirePayload(payload, 200L)
+            assertTrue(first.isSuccess)
+            assertTrue(second.isSuccess)
+            val expectedDigest = Base64.getEncoder().encodeToString(BleProtocol.calculateSHA256(payload))
+            assertEquals("dup-15", ThrowingOutbox.lastSosId)
+            assertEquals(expectedDigest, ThrowingOutbox.lastDigest)
+            assertEquals(2, ThrowingOutbox.enqueueCalls)
+        }
 
     private class ThrowingOutbox : com.sosmesh.contracts.transport.OutboxQueueAdapter {
         companion object {
@@ -64,7 +67,7 @@ class RelayDedupKeyTest {
             var enqueueCalls = 0
         }
 
-        override fun enqueue(
+        override suspend fun enqueue(
             input: com.sosmesh.contracts.transport.EnqueueInput,
             nowMs: Long,
         ): com.sosmesh.contracts.transport.OutboxEntryMeta {
@@ -85,14 +88,14 @@ class RelayDedupKeyTest {
             )
         }
 
-        override fun getByKey(
+        override suspend fun getByKey(
             sosId: String,
             digest: String,
         ): com.sosmesh.contracts.transport.OutboxEntryMeta? = null
 
-        override fun listAll(): List<com.sosmesh.contracts.transport.OutboxEntryMeta> = emptyList()
+        override suspend fun listAll(): List<com.sosmesh.contracts.transport.OutboxEntryMeta> = emptyList()
 
-        override fun updateState(
+        override suspend fun updateState(
             sosId: String,
             digest: String,
             state: String,
@@ -100,19 +103,19 @@ class RelayDedupKeyTest {
             lastError: String?,
         ): com.sosmesh.contracts.transport.OutboxEntryMeta? = null
 
-        override fun setRetryAt(
+        override suspend fun setRetryAt(
             sosId: String,
             digest: String,
             retryAtMs: Long,
             lastError: String?,
         ) = Unit
 
-        override fun countDueForSend(
+        override suspend fun countDueForSend(
             nowMs: Long,
             paused: Boolean,
         ): Int = 0
 
-        override fun purgeExpired(nowMs: Long): Int = 0
+        override suspend fun purgeExpired(nowMs: Long): Int = 0
 
         override fun close() = Unit
     }
@@ -122,25 +125,26 @@ class RelayDedupKeyTest {
 @Config(sdk = [33])
 class RelayRoomOutboxDedupTest {
     @Test
-    fun duplicateRegister_singleRowInRoomOutbox() {
-        val context = ApplicationProvider.getApplicationContext<android.content.Context>()
-        val db =
-            Room.inMemoryDatabaseBuilder(context, OutboxDatabase::class.java)
-                .allowMainThreadQueries()
-                .build()
-        val fixture =
-            AndroidStateTransitionLoader.load(
-                javaClass.classLoader!!.getResourceAsStream("state-transitions.json")!!,
-            )
-        val adapter = RoomOutboxQueueAdapter(db.outboxDao(), fixture.defaultRetentionMs)
-        val registrar = RelayEnvelopeRegistrar(adapter, NoopUploadCommands())
-        val payload =
-            """
-            {"version":1,"id":"room-dup-15","envelope":{"timestamp":"2026-10-29T17:00:00Z","priority":1},"encryptedPayload":"cipher"}
-            """.trimIndent().toByteArray()
-        registrar.registerFromWirePayload(payload, 100L)
-        registrar.registerFromWirePayload(payload, 200L)
-        assertEquals(1, adapter.listAll().size)
-        db.close()
-    }
+    fun duplicateRegister_singleRowInRoomOutbox() =
+        runBlocking {
+            val context = ApplicationProvider.getApplicationContext<android.content.Context>()
+            val db =
+                Room.inMemoryDatabaseBuilder(context, OutboxDatabase::class.java)
+                    .allowMainThreadQueries()
+                    .build()
+            val fixture =
+                AndroidStateTransitionLoader.load(
+                    javaClass.classLoader!!.getResourceAsStream("state-transitions.json")!!,
+                )
+            val adapter = RoomOutboxQueueAdapter(db.outboxDao(), fixture.defaultRetentionMs, Dispatchers.IO)
+            val registrar = RelayEnvelopeRegistrar(adapter, NoopUploadCommands())
+            val payload =
+                """
+                {"version":1,"id":"room-dup-15","envelope":{"timestamp":"2026-10-29T17:00:00Z","priority":1},"encryptedPayload":"cipher"}
+                """.trimIndent().toByteArray()
+            registrar.registerFromWirePayload(payload, 100L)
+            registrar.registerFromWirePayload(payload, 200L)
+            assertEquals(1, adapter.listAll().size)
+            db.close()
+        }
 }

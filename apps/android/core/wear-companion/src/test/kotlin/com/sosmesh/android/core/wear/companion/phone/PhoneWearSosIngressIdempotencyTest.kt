@@ -12,6 +12,8 @@ import com.sosmesh.android.core.wear.companion.protocol.WearPhoneAckStatus
 import com.sosmesh.android.core.wear.companion.protocol.WearSosCreateWire
 import com.sosmesh.contracts.CryptoConfig
 import com.sosmesh.contracts.transport.OutboxQueueAdapter
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.runBlocking
 import org.junit.After
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
@@ -40,7 +42,7 @@ class PhoneWearSosIngressIdempotencyTest {
             AndroidStateTransitionLoader.load(
                 javaClass.classLoader!!.getResourceAsStream("state-transitions.json")!!,
             )
-        adapter = RoomOutboxQueueAdapter(db.outboxDao(), fixture.defaultRetentionMs)
+        adapter = RoomOutboxQueueAdapter(db.outboxDao(), fixture.defaultRetentionMs, Dispatchers.IO)
         ingress =
             PhoneWearSosIngress(
                 SosMessageComposer(
@@ -59,23 +61,24 @@ class PhoneWearSosIngressIdempotencyTest {
     }
 
     @Test
-    fun duplicateWatchMessage_singleOutboxRow() {
-        val wire =
-            WearSosCreateWire(
-                messageId = "550e8400-e29b-41d4-a716-446655440001",
-                nonce = "nonce-a",
-                sosType = "deprem",
-                personCount = 1,
-                createdAtMs = 50L,
-            )
-        val payload = WearCompanionCodec.encodeCreate(wire)
-        val first = ingress.handleCreatePayload(payload, nowMs = 100L)
-        val second = ingress.handleCreatePayload(payload, nowMs = 200L)
-        assertTrue(first.enqueued)
-        assertFalse(second.enqueued)
-        assertEquals(WearPhoneAckStatus.QUEUED, first.ack.status)
-        assertEquals(WearPhoneAckStatus.DUPLICATE, second.ack.status)
-        assertEquals(1, adapter.listAll().size)
-        assertEquals("wear_os", adapter.listAll().single().origin)
-    }
+    fun duplicateWatchMessage_singleOutboxRow() =
+        runBlocking {
+            val wire =
+                WearSosCreateWire(
+                    messageId = "550e8400-e29b-41d4-a716-446655440001",
+                    nonce = "nonce-a",
+                    sosType = "deprem",
+                    personCount = 1,
+                    createdAtMs = 50L,
+                )
+            val payload = WearCompanionCodec.encodeCreate(wire)
+            val first = ingress.handleCreatePayload(payload, nowMs = 100L)
+            val second = ingress.handleCreatePayload(payload, nowMs = 200L)
+            assertTrue(first.enqueued)
+            assertFalse(second.enqueued)
+            assertEquals(WearPhoneAckStatus.QUEUED, first.ack.status)
+            assertEquals(WearPhoneAckStatus.DUPLICATE, second.ack.status)
+            assertEquals(1, adapter.listAll().size)
+            assertEquals("wear_os", adapter.listAll().single().origin)
+        }
 }

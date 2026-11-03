@@ -14,6 +14,7 @@ export const envValidationSchema = Joi.object({
   INGEST_RECEIPT_SIGNING_PRIVATE_KEY: Joi.string().base64().min(32).required(),
   INGEST_RATE_LIMIT_MAX: Joi.number().integer().min(1).default(120),
   INGEST_RATE_LIMIT_WINDOW_MS: Joi.number().integer().min(1000).default(60000),
+  TRUST_PROXY: Joi.string().allow('').optional(),
   AI_ENABLED: Joi.string().valid('true', 'false').default('false'),
   MODEL_API_KEY: Joi.string().allow('').optional(),
   META_BASE_URL: Joi.string().uri().default('https://api.meta.ai/v1'),

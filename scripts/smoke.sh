@@ -7,13 +7,15 @@ set -euo pipefail
 echo "=== SOSMesh Smoke Test ==="
 echo ""
 
-API_PORT=3001
-WEB_PORT=3000
+API_PORT="${API_PORT:-3001}"
+WEB_PORT="${WEB_PORT:-3000}"
 API_PGID=""
 WEB_PGID=""
 SMOKE_PG_HELPER=""
 SMOKE_PG_STATE=""
 SMOKE_DB_MODE=""
+
+echo "Using ports: API=${API_PORT}, WEB=${WEB_PORT}"
 
 cleanup() {
   echo ""
@@ -92,7 +94,8 @@ if [ ! -d "apps/web/.next" ]; then
 fi
 
 # Provision PostgreSQL for API smoke (CI shared PG or embedded fallback)
-SMOKE_PG_STATE=$(mktemp /tmp/sosmesh-smoke-pg-XXXXXX.json)
+SMOKE_SUFFIX="${API_PORT}"
+SMOKE_PG_STATE=$(mktemp "/tmp/sosmesh-smoke-${SMOKE_SUFFIX}-pg-XXXXXX.json")
 rm -f "$SMOKE_PG_STATE"
 
 write_smoke_env_from_state() {
@@ -100,6 +103,7 @@ write_smoke_env_from_state() {
 const fs = require('node:fs');
 const { generateKeyPairSync } = require('node:crypto');
 const statePath = process.env.SMOKE_PG_STATE;
+const smokeSuffix = process.env.SMOKE_SUFFIX;
 const jwtKey = 'JWT' + '_SECRET';
 const metricsScrapeKey = 'METRICS_SCRAPE_' + 'AUTH';
 const state = JSON.parse(fs.readFileSync(statePath, 'utf8'));
@@ -113,7 +117,7 @@ const lines = [
   `DATABASE_URL=${JSON.stringify(state.databaseUrl)}`,
   `INGEST_RECEIPT_SIGNING_PRIVATE_KEY=${JSON.stringify(ingestSigningKey)}`,
 ];
-fs.writeFileSync('/tmp/sosmesh-smoke.env', lines.join('\n'));
+fs.writeFileSync(`/tmp/sosmesh-smoke-${smokeSuffix}.env`, lines.join('\n'));
 NODE
 }
 
@@ -150,23 +154,24 @@ else
 fi
 
 export SMOKE_PG_STATE
+export SMOKE_SUFFIX
 write_smoke_env_from_state
 set -a
 # shellcheck disable=SC1091
-. /tmp/sosmesh-smoke.env
+. "/tmp/sosmesh-smoke-${SMOKE_SUFFIX}.env"
 set +a
 export DATABASE_URL
 echo "Applying API migrations for smoke..."
-if ! (cd apps/api && npx prisma migrate deploy > /tmp/sosmesh-smoke-migrate.log 2>&1); then
+if ! (cd apps/api && npx prisma migrate deploy > "/tmp/sosmesh-smoke-migrate-${SMOKE_SUFFIX}.log" 2>&1); then
   echo "❌ API migrations failed for smoke"
-  cat /tmp/sosmesh-smoke-migrate.log
+  cat "/tmp/sosmesh-smoke-migrate-${SMOKE_SUFFIX}.log"
   exit 1
 fi
 
 # Start API in its own process group
 echo "Starting API on port $API_PORT..."
 cd apps/api
-setsid sh -c 'set -a; . /tmp/sosmesh-smoke.env; set +a; PORT='"$API_PORT"' node dist/main.js > /tmp/sosmesh-api-smoke.log 2>&1' &
+setsid sh -c 'set -a; . /tmp/sosmesh-smoke-'"${SMOKE_SUFFIX}"'.env; set +a; PORT='"$API_PORT"' node dist/main.js > /tmp/sosmesh-api-smoke-'"${SMOKE_SUFFIX}"'.log 2>&1' &
 API_PGID=$!
 cd ../..
 
@@ -214,7 +219,7 @@ echo "✅ API /health status is 'ok'"
 echo ""
 echo "Starting web on port $WEB_PORT..."
 cd apps/web
-setsid sh -c "PORT=$WEB_PORT npx next start > /tmp/sosmesh-web-smoke.log 2>&1" &
+setsid sh -c "PORT=$WEB_PORT npx next start > /tmp/sosmesh-web-smoke-${SMOKE_SUFFIX}.log 2>&1" &
 WEB_PGID=$!
 cd ../..
 
@@ -226,7 +231,7 @@ for i in {1..30}; do
   fi
   if ! kill -0 "$WEB_PGID" 2>/dev/null; then
     echo "❌ Web process died"
-    cat /tmp/sosmesh-web-smoke.log
+    cat "/tmp/sosmesh-web-smoke-${SMOKE_SUFFIX}.log"
     exit 1
   fi
   sleep 1

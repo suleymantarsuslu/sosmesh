@@ -1,5 +1,6 @@
 package com.sosmesh.android.core.protocol
 
+import com.sosmesh.android.core.data.di.OutboxIoScope
 import com.sosmesh.contracts.transport.OutboxQueueAdapter
 import javax.inject.Inject
 import javax.inject.Singleton
@@ -12,6 +13,7 @@ class SosPeerDeliveryTracker
     @Inject
     constructor(
         private val outbox: OutboxQueueAdapter,
+        private val outboxIoScope: OutboxIoScope,
     ) {
         data class ActiveTransfer(
             val sosId: String,
@@ -26,7 +28,9 @@ class SosPeerDeliveryTracker
                 object : BleTransferSender.Listener {
                     override fun onCompleted() {
                         val ctx = active ?: return
-                        outbox.updateState(ctx.sosId, ctx.digest, "PEER_RECEIVED", System.currentTimeMillis(), null)
+                        outboxIoScope.launchOutboxWork {
+                            outbox.updateState(ctx.sosId, ctx.digest, "PEER_RECEIVED", System.currentTimeMillis(), null)
+                        }
                         active = null
                     }
 
@@ -35,12 +39,14 @@ class SosPeerDeliveryTracker
                         message: String,
                     ) {
                         val ctx = active ?: return
-                        outbox.setRetryAt(
-                            ctx.sosId,
-                            ctx.digest,
-                            System.currentTimeMillis() + 5_000L,
-                            message,
-                        )
+                        outboxIoScope.launchOutboxWork {
+                            outbox.setRetryAt(
+                                ctx.sosId,
+                                ctx.digest,
+                                System.currentTimeMillis() + 5_000L,
+                                message,
+                            )
+                        }
                         active = null
                     }
                 },

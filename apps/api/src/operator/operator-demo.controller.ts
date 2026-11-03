@@ -37,7 +37,14 @@ export class OperatorDemoController {
     ])
   )
   async createDemoSos(
-    @Body() body: { text?: string; priority?: string; language?: string },
+    @Body()
+    body: {
+      text?: string;
+      priority?: string;
+      language?: string;
+      latitude?: string;
+      longitude?: string;
+    },
     @UploadedFiles()
     files?: {
       audio?: Array<{ buffer: Buffer; mimetype: string; size: number }>;
@@ -60,6 +67,30 @@ export class OperatorDemoController {
 
     const language = body.language ?? 'en';
 
+    let latitude: number | undefined;
+    let longitude: number | undefined;
+
+    if (body.latitude !== undefined || body.longitude !== undefined) {
+      if (body.latitude === undefined || body.longitude === undefined) {
+        throw new BadRequestException('Both latitude and longitude required if either is provided');
+      }
+
+      latitude = parseFloat(body.latitude);
+      longitude = parseFloat(body.longitude);
+
+      if (isNaN(latitude) || isNaN(longitude)) {
+        throw new BadRequestException('Invalid latitude or longitude');
+      }
+
+      if (latitude < -90 || latitude > 90) {
+        throw new BadRequestException('Latitude must be between -90 and 90');
+      }
+
+      if (longitude < -180 || longitude > 180) {
+        throw new BadRequestException('Longitude must be between -180 and 180');
+      }
+    }
+
     const audio = files?.audio?.[0];
     const photo = files?.photo?.[0];
 
@@ -75,6 +106,8 @@ export class OperatorDemoController {
       text,
       priority,
       language,
+      latitude,
+      longitude,
       audioBuffer: audio?.buffer,
       audioMime: audio?.mimetype,
       photoBuffer: photo?.buffer,

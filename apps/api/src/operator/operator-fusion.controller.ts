@@ -16,11 +16,12 @@ import {
   BadRequestException,
 } from '@nestjs/common';
 import { OperatorAuthGuard, type OperatorRequest } from './guards/operator-auth.guard';
+import { OperatorCsrfGuard } from './guards/operator-csrf.guard';
 import { PrismaService } from '../prisma/prisma.service';
 import type { IncidentLinkSuggestionView } from '../ai/contracts/link-suggestion-view';
 
 @Controller('v1/operator')
-@UseGuards(OperatorAuthGuard)
+@UseGuards(OperatorAuthGuard, OperatorCsrfGuard)
 export class OperatorFusionController {
   constructor(private readonly prisma: PrismaService) {}
 

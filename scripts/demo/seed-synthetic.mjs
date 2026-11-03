@@ -6,10 +6,8 @@
  * Creates 8-10 synthetic SOS messages in a demo region
  * 2-3 are designed to trigger fusion (same event)
  * 
- * Usage: MODEL_API_KEY=xxx OPERATOR_TOKEN=xxx node scripts/demo/seed-synthetic.mjs
+ * Usage: OPERATOR_TOKEN=xxx node scripts/demo/seed-synthetic.mjs
  */
-
-import { randomUUID } from 'crypto';
 
 const API_BASE = process.env.API_BASE || 'http://localhost:3001';
 const OPERATOR_TOKEN = process.env.OPERATOR_TOKEN;
@@ -45,14 +43,23 @@ function coarseCoord(lat, lon) {
   };
 }
 
-async function createSOS(payload) {
+async function createSOS(text, priority, latitude, longitude) {
+  const formData = new FormData();
+  formData.append('text', text);
+  formData.append('priority', priority.toString());
+  formData.append('language', 'tr');
+  
+  if (latitude !== undefined && longitude !== undefined) {
+    formData.append('latitude', latitude.toString());
+    formData.append('longitude', longitude.toString());
+  }
+
   const response = await fetch(`${API_BASE}/v1/operator/demo/sos`, {
     method: 'POST',
     headers: {
-      'Content-Type': 'application/json',
       Authorization: `Bearer ${OPERATOR_TOKEN}`,
     },
-    body: JSON.stringify(payload),
+    body: formData,
   });
 
   if (!response.ok) {
@@ -68,106 +75,68 @@ async function createSOS(payload) {
 async function main() {
   console.log('🌱 Seeding synthetic demo data...');
 
-  const baseCoord = randomCoord(
-    DEMO_REGION.centerLat,
-    5000
-  );
+  const baseCoord = randomCoord(DEMO_REGION.centerLat, 5000);
   const sameEventCoarse = coarseCoord(baseCoord.lat, baseCoord.lon);
 
   const fusionGroup = [
     {
-      messageId: `demo-fusion-${randomUUID()}`,
-      sosType: 'TRAPPED',
-      locationStatus: 'GPS',
+      text: 'SENTETİK DEMO: Yardım! Binamız çöktü, üç kişiyiz enkaz altında. Lütfen yardım gönderin!',
+      priority: 1,
       latitude: sameEventCoarse.lat + 0.001,
       longitude: sameEventCoarse.lon + 0.001,
-      personCount: 3,
-      operatorDisplayText:
-        'SENTETİK DEMO: Yardım! Binamız çöktü, üç kişiyiz enkaz altında. Lütfen yardım gönderin!',
-      priority: 1,
-      synthetic: true,
     },
     {
-      messageId: `demo-fusion-${randomUUID()}`,
-      sosType: 'TRAPPED',
-      locationStatus: 'GPS',
+      text: 'SENTETİK DEMO: Help! Building collapsed on Main Street. We need rescue team urgently!',
+      priority: 1,
       latitude: sameEventCoarse.lat + 0.0005,
       longitude: sameEventCoarse.lon - 0.0005,
-      personCount: null,
-      operatorDisplayText:
-        'SENTETİK DEMO: Help! Building collapsed on Main Street. We need rescue team urgently!',
-      priority: 1,
-      synthetic: true,
     },
     {
-      messageId: `demo-fusion-${randomUUID()}`,
-      sosType: 'GENERAL',
-      locationStatus: 'GPS',
+      text: 'SENTETİK DEMO: Çok sayıda kişi mahsur! Ana Cadde, enkaz var!',
+      priority: 1,
       latitude: sameEventCoarse.lat,
       longitude: sameEventCoarse.lon,
-      personCount: 2,
-      operatorDisplayText:
-        'SENTETİK DEMO: Çok sayıda kişi mahsur! Ana Cadde, enkaz var!',
-      priority: 1,
-      synthetic: true,
     },
+  ];
+
+  const otherCoords = [
+    randomCoord(DEMO_REGION.centerLat, 3000),
+    randomCoord(DEMO_REGION.centerLat, 4000),
+    randomCoord(DEMO_REGION.centerLat, 6000),
+    randomCoord(DEMO_REGION.centerLat, 2000),
+    randomCoord(DEMO_REGION.centerLat, 5000),
   ];
 
   const otherIncidents = [
     {
-      messageId: `demo-other-${randomUUID()}`,
-      sosType: 'FIRE',
-      locationStatus: 'GPS',
-      ...randomCoord(DEMO_REGION.centerLat, 3000),
-      personCount: 1,
-      operatorDisplayText:
-        'SENTETİK DEMO: Yangın var! Ormanlık alanda büyüyen yangın.',
+      text: 'SENTETİK DEMO: Yangın var! Ormanlık alanda büyüyen yangın.',
       priority: 2,
-      synthetic: true,
+      latitude: otherCoords[0].lat,
+      longitude: otherCoords[0].lon,
     },
     {
-      messageId: `demo-other-${randomUUID()}`,
-      sosType: 'MEDICAL',
-      locationStatus: 'GPS',
-      ...randomCoord(DEMO_REGION.centerLat, 4000),
-      personCount: 1,
-      operatorDisplayText:
-        'SENTETİK DEMO: Yaralı var, ambulans gerekli. Ciddi yaralanma.',
+      text: 'SENTETİK DEMO: Yaralı var, ambulans gerekli. Ciddi yaralanma.',
       priority: 1,
-      synthetic: true,
+      latitude: otherCoords[1].lat,
+      longitude: otherCoords[1].lon,
     },
     {
-      messageId: `demo-other-${randomUUID()}`,
-      sosType: 'GENERAL',
-      locationStatus: 'GPS',
-      ...randomCoord(DEMO_REGION.centerLat, 6000),
-      personCount: 5,
-      operatorDisplayText:
-        'SENTETİK DEMO: Five people need evacuation. Water supply cut.',
+      text: 'SENTETİK DEMO: Five people need evacuation. Water supply cut.',
       priority: 3,
-      synthetic: true,
+      latitude: otherCoords[2].lat,
+      longitude: otherCoords[2].lon,
     },
     {
-      messageId: `demo-other-${randomUUID()}`,
-      sosType: 'GENERAL',
-      locationStatus: 'GPS',
-      ...randomCoord(DEMO_REGION.centerLat, 2000),
-      personCount: 8,
-      operatorDisplayText:
-        'SENTETİK DEMO: Elektrik kesildi, sekiz kişi sıkıştı asansörde.',
+      text: 'SENTETİK DEMO: Elektrik kesildi, sekiz kişi sıkıştı asansörde.',
       priority: 2,
-      synthetic: true,
+      latitude: otherCoords[3].lat,
+      longitude: otherCoords[3].lon,
     },
     {
-      messageId: `demo-other-${randomUUID()}`,
-      sosType: 'MEDICAL',
-      locationStatus: 'GPS',
-      ...randomCoord(DEMO_REGION.centerLat, 5000),
-      personCount: 2,
-      operatorDisplayText:
-        'SENTETİK DEMO: Chronic patient needs medication urgently.',
+      text: 'SENTETİK DEMO: Chronic patient needs medication urgently.',
       priority: 2,
-      synthetic: true,
+      latitude: otherCoords[4].lat,
+      longitude: otherCoords[4].lon,
     },
   ];
 
@@ -182,13 +151,13 @@ async function main() {
 
   for (const sos of allSOSes) {
     try {
-      const result = await createSOS(sos);
-      console.log(`✅ Created SOS: ${result.id} (${sos.messageId})`);
+      const result = await createSOS(sos.text, sos.priority, sos.latitude, sos.longitude);
+      console.log(`✅ Created SOS: ${result.incidentId} / ${result.messageId}`);
       created += 1;
 
       await new Promise((resolve) => setTimeout(resolve, 500));
     } catch (error) {
-      console.error(`❌ Failed to create SOS: ${sos.messageId}`, error.message);
+      console.error(`❌ Failed to create SOS:`, error.message);
       failed += 1;
     }
   }

@@ -14,6 +14,7 @@ import {
   BadRequestException,
 } from '@nestjs/common';
 import { OperatorAuthGuard } from './guards/operator-auth.guard';
+import { OperatorCsrfGuard } from './guards/operator-csrf.guard';
 import {
   CopilotService,
   type CopilotAskRequest,
@@ -27,7 +28,7 @@ class AskCopilotDto {
 }
 
 @Controller('v1/operator')
-@UseGuards(OperatorAuthGuard)
+@UseGuards(OperatorAuthGuard, OperatorCsrfGuard)
 export class OperatorCopilotController {
   constructor(private readonly copilot: CopilotService) {}
 

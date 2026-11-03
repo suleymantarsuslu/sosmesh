@@ -91,9 +91,9 @@ async function testCopilotAsk() {
 
   if (!result.ok) {
     if (result.status === 500 && result.data?.message?.includes('AI unavailable')) {
-      console.log('⚠️  AI unavailable (budget limit or no MODEL_API_KEY)');
-      console.log('   This is expected if MODEL_API_KEY is not set');
-      return true;
+      console.error('❌ AI unavailable (budget limit or no MODEL_API_KEY)');
+      console.error('   MODEL_API_KEY must be set for this test to pass');
+      return false;
     }
 
     console.error('❌ Failed:', result.status, result.data);

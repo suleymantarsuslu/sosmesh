@@ -3,6 +3,7 @@ import {
   Get,
   NotFoundException,
   Param,
+  ParseUUIDPipe,
   Query,
   Req,
   UseGuards,
@@ -102,7 +103,7 @@ export class OperatorPanelController {
   }
 
   @Get('cases/:incidentId')
-  async getCase(@Req() req: OperatorRequest, @Param('incidentId') incidentId: string) {
+  async getCase(@Req() req: OperatorRequest, @Param('incidentId', ParseUUIDPipe) incidentId: string) {
     const detail = await this.cases.getCaseDetail(req.operatorUser, incidentId);
     if (!detail) {
       throw new NotFoundException({

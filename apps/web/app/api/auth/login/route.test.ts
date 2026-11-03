@@ -1,5 +1,5 @@
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { NextRequest } from 'next/server';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { POST } from './route';
 
@@ -43,7 +43,7 @@ describe('POST /api/auth/login', () => {
         headers: expect.objectContaining({
           'X-Forwarded-For': '192.0.2.1, 198.51.100.1',
         }),
-      }),
+      })
     );
   });
 
@@ -74,7 +74,7 @@ describe('POST /api/auth/login', () => {
         headers: expect.not.objectContaining({
           'X-Forwarded-For': expect.anything(),
         }),
-      }),
+      })
     );
   });
 });

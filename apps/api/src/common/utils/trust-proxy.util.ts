@@ -1,9 +1,6 @@
 import { INestApplication } from '@nestjs/common';
 
-export function applyTrustProxy(
-  app: INestApplication,
-  trustProxyValue: string | undefined,
-): void {
+export function applyTrustProxy(app: INestApplication, trustProxyValue: string | undefined): void {
   if (!trustProxyValue) {
     return;
   }
@@ -16,18 +13,21 @@ export function applyTrustProxy(
   } else if (trustProxyValue.toLowerCase() === 'true') {
     expressApp.set('trust proxy', true);
   } else if (trustProxyValue.includes('/') || trustProxyValue.includes(',')) {
-    expressApp.set('trust proxy', trustProxyValue.split(',').map((s) => s.trim()));
+    expressApp.set(
+      'trust proxy',
+      trustProxyValue.split(',').map((s) => s.trim())
+    );
   } else {
     try {
       const logger = app.get('Logger', { strict: false });
       if (logger && typeof logger.warn === 'function') {
         logger.warn(
-          `Invalid TRUST_PROXY value: "${trustProxyValue}". Expected: number, "true", or CIDR list. Trust proxy not configured.`,
+          `Invalid TRUST_PROXY value: "${trustProxyValue}". Expected: number, "true", or CIDR list. Trust proxy not configured.`
         );
       }
     } catch {
       console.warn(
-        `Invalid TRUST_PROXY value: "${trustProxyValue}". Expected: number, "true", or CIDR list. Trust proxy not configured.`,
+        `Invalid TRUST_PROXY value: "${trustProxyValue}". Expected: number, "true", or CIDR list. Trust proxy not configured.`
       );
     }
   }

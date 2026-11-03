@@ -79,7 +79,29 @@ function main() {
 
   let allErrors = [];
   let allWarnings = [];
-  const requiredFiles = [path.join(__dirname, '..', 'compose.yaml')];
+  const requiredFiles = composePath
+    ? []
+    : [
+        path.join(__dirname, '..', 'compose.yaml'),
+        path.join(
+          __dirname,
+          '..',
+          'infra',
+          'deploy',
+          'compose',
+          'docker-compose.staging.yml',
+        ),
+        path.join(
+          __dirname,
+          '..',
+          'infra',
+          'deploy',
+          'compose',
+          'docker-compose.vulut.yml',
+        ),
+      ];
+
+  let validatedCount = 0;
 
   for (const checkPath of composePaths) {
     if (!fs.existsSync(checkPath)) {
@@ -89,6 +111,7 @@ function main() {
       }
       continue;
     }
+    validatedCount++;
 
     console.log(`Checking: ${checkPath}`);
 
@@ -117,7 +140,7 @@ function main() {
   }
 
   if (allErrors.length === 0 && allWarnings.length === 0) {
-    console.log(`\n✅ All ${composePaths.length} compose files validated successfully`);
+    console.log(`\n✅ All ${validatedCount} compose files validated successfully`);
     process.exit(0);
   }
 

@@ -34,7 +34,9 @@ export class HttpExceptionFilter implements ExceptionFilter {
         message: 'Prisma known request error',
         errorClass: 'PrismaClientKnownRequestError',
         prismaCode: exception.code,
-        prismaMessage: exception.message,
+        modelName: exception.meta?.modelName,
+        columnName: exception.meta?.column_name,
+        target: exception.meta?.target,
         path,
         requestId,
       });
@@ -60,9 +62,9 @@ export class HttpExceptionFilter implements ExceptionFilter {
 
     if (exception instanceof Prisma.PrismaClientValidationError) {
       this.logger.error({
-        message: 'Prisma validation error',
+        message: 'Prisma validation error (query args redacted for PII safety)',
         errorClass: 'PrismaClientValidationError',
-        prismaMessage: exception.message,
+        hint: 'Check Prisma schema for type mismatches or missing fields',
         path,
         requestId,
       });
@@ -77,9 +79,9 @@ export class HttpExceptionFilter implements ExceptionFilter {
 
     if (exception instanceof Prisma.PrismaClientInitializationError) {
       this.logger.error({
-        message: 'Prisma initialization error',
+        message: 'Prisma initialization error (connection details redacted)',
         errorClass: 'PrismaClientInitializationError',
-        prismaMessage: exception.message,
+        hint: 'Check DATABASE_URL and database connectivity',
         path,
         requestId,
       });

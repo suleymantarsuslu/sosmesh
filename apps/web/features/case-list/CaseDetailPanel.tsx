@@ -1,7 +1,7 @@
 'use client';
 
 import Link from 'next/link';
-
+import { useOperatorPreferences } from '../../components/operator/OperatorPreferencesProvider';
 import { Card } from '../../components/ui/Card';
 
 import type { OperatorCaseRow } from './types';
@@ -20,35 +20,37 @@ export function CaseDetailPanel({
   row: OperatorCaseRow | null;
   timeline: TimelineEntry[];
 }) {
+  const { t } = useOperatorPreferences();
+  
   if (!row) {
     return (
-      <Card title="Vaka detayı" className="cases-detail-panel">
-        <p className="cases-detail-panel__empty">Liste veya haritadan vaka seçin.</p>
+      <Card title={t('web.cases.caseHeaderCardTitle')} className="cases-detail-panel">
+        <p className="cases-detail-panel__empty">{t('web.cases.listEmpty')}</p>
       </Card>
     );
   }
 
   return (
-    <Card title="Vaka detayı" className="cases-detail-panel">
+    <Card title={t('web.cases.caseHeaderCardTitle')} className="cases-detail-panel">
       <div data-testid="case-detail-panel">
       <dl className="cases-detail-panel__meta">
         <div>
-          <dt>Öncelik</dt>
-          <dd>{row.priority}</dd>
+          <dt>{t('web.cases.tableHeaders.priority')}</dt>
+          <dd>P{row.priority}</dd>
         </div>
         <div>
-          <dt>Durum</dt>
+          <dt>{t('web.cases.filterByStatus')}</dt>
           <dd>{row.deliveryState}</dd>
         </div>
         <div>
-          <dt>Konum</dt>
+          <dt>{t('web.cases.tableHeaders.locationStatus')}</dt>
           <dd>{row.locationStatus}</dd>
         </div>
       </dl>
-      <h3>Zaman çizelgesi</h3>
+      <h3>{t('web.cases.timelineTitle')}</h3>
       <ol className="cases-detail-panel__timeline">
         {timeline.length === 0 ? (
-          <li>Henüz kayıt yok</li>
+          <li>{t('web.cases.auditEmpty')}</li>
         ) : (
           timeline.map((entry) => (
             <li key={entry.id}>
@@ -57,7 +59,12 @@ export function CaseDetailPanel({
           ))
         )}
       </ol>
-      <Link href={`/operator/cases/${row.incidentId}`}>Tam vaka sayfası</Link>
+      <Link 
+        href={`/operator/cases/${row.incidentId}`}
+        className="cases-detail-panel__open-button"
+      >
+        {t('web.cases.openFullCaseDetail')}
+      </Link>
       </div>
     </Card>
   );

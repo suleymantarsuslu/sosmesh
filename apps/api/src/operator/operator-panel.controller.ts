@@ -114,6 +114,18 @@ export class OperatorPanelController {
     return detail;
   }
 
+  @Get('cases/:incidentId/attachments')
+  async listCaseAttachments(@Req() req: OperatorRequest, @Param('incidentId', ParseUUIDPipe) incidentId: string) {
+    const attachments = await this.cases.listAttachments(req.operatorUser, incidentId);
+    if (attachments === null) {
+      throw new NotFoundException({
+        code: 'NOT_FOUND',
+        message: 'Case not found',
+      });
+    }
+    return { items: attachments };
+  }
+
   @Get('incidents/:id')
   async getIncident(@Req() req: OperatorRequest, @Param('id') id: string) {
     const allowed = await this.scope.canAccessIncident(req.operatorUser, id, this.prisma);

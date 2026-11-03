@@ -57,6 +57,7 @@ data class SosFormUiState(
     val voiceDuration: Int = 0,
     val isRecording: Boolean = false,
     val uploadToken: String? = null,
+    val showConfirmationDialog: Boolean = false,
 )
 
 @HiltViewModel
@@ -69,6 +70,7 @@ class SosFormViewModel
         private val bleMeshReadiness: com.sosmesh.android.core.permissions.BleMeshReadiness,
         private val permissionFlowCoordinator: com.sosmesh.android.core.permissions.PermissionFlowCoordinator,
         private val pendingStore: com.sosmesh.android.feature.sos.attachment.AttachmentPendingStore,
+        private val notificationManager: com.sosmesh.android.feature.sos.notification.SosDeliveryNotificationManager,
     ) : ViewModel() {
         private val _uiState = MutableStateFlow(SosFormUiState())
         val uiState: StateFlow<SosFormUiState> = _uiState.asStateFlow()
@@ -205,16 +207,24 @@ class SosFormViewModel
                     if (error is CancellationException) throw error
                     SosPeerDeliveryKickResult.Blocked(error.message ?: "peer_kickoff_failed")
                 }
+            notificationManager.trackPendingSos(composed.message.id)
+            
             _uiState.update {
                 it.copy(
                     step = SosWizardStep.DONE,
                     savedMessageId = composed.message.id,
                     peerDeliveryHint = delivery.toHint(),
+                    showConfirmationDialog = true,
                 )
             }
         }
 
+        fun dismissConfirmationDialog() {
+            _uiState.update { it.copy(showConfirmationDialog = false) }
+        }
+
         fun resetFlow() {
+            _uiState.update { it.copy(showConfirmationDialog = false) }
             _uiState.value = SosFormUiState()
             refreshLocation()
         }

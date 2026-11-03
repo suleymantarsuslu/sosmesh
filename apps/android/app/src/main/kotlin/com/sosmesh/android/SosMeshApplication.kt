@@ -16,10 +16,14 @@ class SosMeshApplication : Application(), Configuration.Provider {
     @Inject
     lateinit var crashReporter: LocalCrashReporter
 
+    @Inject
+    lateinit var outboxMonitor: com.sosmesh.android.feature.sos.notification.OutboxStateMonitor
+
     override fun onCreate() {
         super.onCreate()
         AppLocaleController.applyStoredLocale(this)
         crashReporter.install()
+        outboxMonitor.start()
     }
 
     override val workManagerConfiguration: Configuration

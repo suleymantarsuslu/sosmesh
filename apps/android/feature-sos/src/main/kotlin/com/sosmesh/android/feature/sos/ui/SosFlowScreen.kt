@@ -57,6 +57,8 @@ fun SosFlowScreen(
     onContinue: () -> Unit,
     onBackFromPreview: () -> Unit,
     onConfirm: () -> Unit,
+    onNavigateToStatus: () -> Unit = {},
+    onDismissConfirmation: () -> Unit = {},
     modifier: Modifier = Modifier,
 ) {
     val title =
@@ -100,6 +102,14 @@ fun SosFlowScreen(
                     peerDeliveryHint = state.peerDeliveryHint,
                     contentModifier = contentModifier,
                 )
+        }
+        
+        if (state.showConfirmationDialog && state.savedMessageId != null) {
+            SosSentConfirmationDialog(
+                sosId = state.savedMessageId,
+                onDismiss = onDismissConfirmation,
+                onNavigateToStatus = onNavigateToStatus,
+            )
         }
     }
 }

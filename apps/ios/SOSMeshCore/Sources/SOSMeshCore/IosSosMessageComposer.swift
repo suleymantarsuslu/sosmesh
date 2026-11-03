@@ -54,17 +54,18 @@ public struct IosSosMessageComposer: Sendable {
             var language: String
         }
 
-        let innerLocation: InnerLocation? = if request.location.status == .gps || request.location.status == .manual,
-                                               let lat = request.location.latitude,
-                                               let lng = request.location.longitude {
-            InnerLocation(
+        let innerLocation: InnerLocation?
+        if (request.location.status == .gps || request.location.status == .manual),
+           let lat = request.location.latitude,
+           let lng = request.location.longitude {
+            innerLocation = InnerLocation(
                 latitude: lat,
                 longitude: lng,
                 accuracy_meters: request.location.accuracy,
                 timestamp: isoTimestamp
             )
         } else {
-            nil
+            innerLocation = nil
         }
 
         let inner = InnerPayload(
@@ -79,12 +80,13 @@ public struct IosSosMessageComposer: Sendable {
         let innerBytes = try innerEncoder.encode(inner)
 
         let locationStatus = mapLocationStatus(request.location)
-        let envelopeLocation: Location? = if request.location.status == .gps || request.location.status == .manual,
-                                             let lat = request.location.latitude,
-                                             let lng = request.location.longitude {
-            Location(latitude: lat, longitude: lng, accuracy: request.location.accuracy)
+        let envelopeLocation: Location?
+        if (request.location.status == .gps || request.location.status == .manual),
+           let lat = request.location.latitude,
+           let lng = request.location.longitude {
+            envelopeLocation = Location(latitude: lat, longitude: lng, accuracy: request.location.accuracy)
         } else {
-            nil
+            envelopeLocation = nil
         }
 
         let envelopeMap: [String: Any] = [

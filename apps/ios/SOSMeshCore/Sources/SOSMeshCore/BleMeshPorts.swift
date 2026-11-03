@@ -1,4 +1,5 @@
 import Foundation
+import SOSMeshContracts
 
 public enum BleAuthorizationSnapshot: Equatable {
     case unknown

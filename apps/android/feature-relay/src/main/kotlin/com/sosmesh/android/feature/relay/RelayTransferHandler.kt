@@ -8,7 +8,6 @@ import com.sosmesh.android.meshv2.MeshV2RelayAction
 import com.sosmesh.android.meshv2.MeshV2RelayCoordinator
 import javax.inject.Inject
 import javax.inject.Singleton
-import kotlinx.coroutines.launch
 
 @Singleton
 class RelayTransferHandler

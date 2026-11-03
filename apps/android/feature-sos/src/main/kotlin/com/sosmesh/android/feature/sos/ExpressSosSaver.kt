@@ -1,6 +1,5 @@
 package com.sosmesh.android.feature.sos
 
-import com.sosmesh.android.core.data.mesh.SosPeerDeliveryKickResult
 import com.sosmesh.android.core.data.mesh.SosPeerDeliveryPort
 import com.sosmesh.android.core.data.sos.SosComposeRequest
 import com.sosmesh.android.core.model.SosType

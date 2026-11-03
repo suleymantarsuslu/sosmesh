@@ -1,5 +1,7 @@
 package com.sosmesh.android.core.permissions.ui
 
+import android.content.ActivityNotFoundException
+import android.util.Log
 import androidx.compose.material3.Button
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -18,7 +20,13 @@ fun EmergencyCall112Button(
     val context = LocalContext.current
     val label = stringResource(R.string.permission_call_112_button)
     Button(
-        onClick = { context.startActivity(EmergencyDialIntents.dial112(context)) },
+        onClick = {
+            try {
+                context.startActivity(EmergencyDialIntents.dial112(context))
+            } catch (_: ActivityNotFoundException) {
+                Log.w("EmergencyCall112Button", "dial_112_activity_not_found")
+            }
+        },
         modifier = modifier.testTag(testTag),
     ) {
         Text(label)

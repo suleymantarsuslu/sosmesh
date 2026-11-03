@@ -1,5 +1,6 @@
 package com.sosmesh.android.feature.sos
 
+import androidx.arch.core.executor.testing.InstantTaskExecutorRule
 import androidx.room.Room
 import androidx.test.core.app.ApplicationProvider
 import com.sosmesh.android.core.data.fixtures.AndroidStateTransitionLoader
@@ -12,16 +13,15 @@ import com.sosmesh.android.core.data.sos.LocationSnapshot
 import com.sosmesh.android.core.data.sos.SosComposeRequest
 import com.sosmesh.android.core.data.sos.SosMessageComposer
 import com.sosmesh.android.core.model.SosType
-import androidx.arch.core.executor.testing.InstantTaskExecutorRule
 import com.sosmesh.android.feature.sos.location.DefaultSosLocationProvider
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.runBlocking
-import org.junit.Rule
 import org.junit.After
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNotNull
 import org.junit.Assert.assertTrue
 import org.junit.Before
+import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.robolectric.RobolectricTestRunner

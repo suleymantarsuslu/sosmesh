@@ -32,7 +32,6 @@ internal fun testBleMeshReadiness(permissionFlowCoordinator: PermissionFlowCoord
             },
     )
 
-internal fun testGrantAllBleMeshReadiness(): BleMeshReadiness =
-    testBleMeshReadiness(testGrantAllPermissionCoordinator())
+internal fun testGrantAllBleMeshReadiness(): BleMeshReadiness = testBleMeshReadiness(testGrantAllPermissionCoordinator())
 
 internal fun testIoDispatcher(): CoroutineDispatcher = Dispatchers.Unconfined

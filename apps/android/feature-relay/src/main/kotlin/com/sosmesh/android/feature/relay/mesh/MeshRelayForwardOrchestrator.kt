@@ -9,12 +9,12 @@ import com.sosmesh.android.core.permissions.PermissionFlowCoordinator
 import com.sosmesh.android.core.protocol.BleTransferEnginePort
 import com.sosmesh.android.core.protocol.TransferState
 import com.sosmesh.android.meshv2.MeshV2RelayCoordinator
-import javax.inject.Inject
-import javax.inject.Singleton
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import kotlinx.coroutines.withContext
+import javax.inject.Inject
+import javax.inject.Singleton
 
 sealed class MeshRelayForwardCycleResult {
     data object Idle : MeshRelayForwardCycleResult()
@@ -64,8 +64,9 @@ class MeshRelayForwardOrchestrator
             if (!bleMeshReadiness.canRunBleMeshFeatures()) {
                 return MeshRelayForwardCycleResult.PermissionsMissing(permissions.missingPermissions())
             }
-            val handoff = meshV2RelayCoordinator.peekForwardHandoff()
-                ?: return MeshRelayForwardCycleResult.Idle
+            val handoff =
+                meshV2RelayCoordinator.peekForwardHandoff()
+                    ?: return MeshRelayForwardCycleResult.Idle
             if (engine.senderState() != TransferState.IDLE) {
                 return MeshRelayForwardCycleResult.SenderBusy
             }

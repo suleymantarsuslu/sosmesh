@@ -186,9 +186,7 @@ fun PermissionGateScreen(
 }
 
 @Composable
-fun permissionRationaleFor(
-    permission: String,
-): String {
+fun permissionRationaleFor(permission: String): String {
     val res =
         when (permission) {
             Manifest.permission.BLUETOOTH_SCAN -> R.string.permission_bluetooth_scan_rationale

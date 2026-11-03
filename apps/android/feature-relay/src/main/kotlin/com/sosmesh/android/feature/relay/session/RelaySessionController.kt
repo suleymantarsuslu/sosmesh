@@ -5,13 +5,13 @@ import com.sosmesh.android.core.data.di.IoDispatcher
 import com.sosmesh.android.feature.relay.battery.RelayBatteryPolicy
 import com.sosmesh.android.feature.relay.battery.RelayBatterySnapshot
 import com.sosmesh.android.feature.relay.battery.RelayPauseReason
+import com.sosmesh.android.feature.relay.mesh.MeshRelayForwardOrchestrator
 import com.sosmesh.android.feature.relay.settings.RelaySettingsStore
 import com.sosmesh.android.feature.relay.upload.RelayUploadCommands
-import com.sosmesh.android.feature.relay.mesh.MeshRelayForwardOrchestrator
-import javax.inject.Inject
-import javax.inject.Singleton
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.withContext
+import javax.inject.Inject
+import javax.inject.Singleton
 
 enum class RelaySessionStopReason {
     UserDisabled,

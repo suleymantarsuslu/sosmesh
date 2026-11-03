@@ -1,8 +1,8 @@
 package com.sosmesh.android.feature.relay
 
-import com.sosmesh.android.core.protocol.ErrorCode
 import androidx.test.core.app.ApplicationProvider
 import com.sosmesh.android.core.data.di.OutboxIoScope
+import com.sosmesh.android.core.protocol.ErrorCode
 import com.sosmesh.android.feature.relay.uplink.RelayIdentityProvider
 import com.sosmesh.android.feature.relay.upload.RelayUploadCommands
 import com.sosmesh.android.meshv2.MeshForwardQueue
@@ -11,7 +11,6 @@ import com.sosmesh.android.meshv2.MeshV2RelayCoordinator
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.runBlocking
 import org.junit.Assert.assertEquals
-import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Test
 import org.junit.runner.RunWith

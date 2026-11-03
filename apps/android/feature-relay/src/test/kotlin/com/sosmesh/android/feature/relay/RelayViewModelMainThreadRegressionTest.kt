@@ -9,7 +9,6 @@ import com.sosmesh.android.core.ble.GattUiConnectionState
 import com.sosmesh.android.core.data.outbox.OutboxDatabase
 import com.sosmesh.android.core.data.outbox.RelayOutboxReader
 import com.sosmesh.android.core.permissions.PermissionFlowCoordinator
-import com.sosmesh.android.core.permissions.PermissionStatusReader
 import com.sosmesh.android.core.protocol.BleTransferEnginePort
 import com.sosmesh.android.core.protocol.TransferState
 import com.sosmesh.android.feature.relay.battery.RelayBatteryPolicy

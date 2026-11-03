@@ -1,5 +1,6 @@
 package com.sosmesh.android.feature.sos
 
+import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.sosmesh.android.core.data.mesh.SosPeerDeliveryKickResult
@@ -12,8 +13,8 @@ import com.sosmesh.android.core.data.sos.SosDraftValidation
 import com.sosmesh.android.core.data.sos.SosDraftValidator
 import com.sosmesh.android.core.model.SosType
 import com.sosmesh.android.feature.sos.location.SosLocationProvider
-import android.util.Log
 import dagger.hilt.android.lifecycle.HiltViewModel
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -126,6 +127,7 @@ class SosFormViewModel
             viewModelScope.launch {
                 runCatching { performSaveAfterPreview(nowMs) }
                     .onFailure { throwable ->
+                        if (throwable is CancellationException) throw throwable
                         Log.e("SosFormViewModel", "sos_save_failed", throwable)
                     }
             }
@@ -155,6 +157,7 @@ class SosFormViewModel
                         SosPeerDeliveryKickResult.PermissionsMissing(permissionFlowCoordinator.missingPermissions())
                     }
                 }.getOrElse { error ->
+                    if (error is CancellationException) throw error
                     SosPeerDeliveryKickResult.Blocked(error.message ?: "peer_kickoff_failed")
                 }
             _uiState.update {

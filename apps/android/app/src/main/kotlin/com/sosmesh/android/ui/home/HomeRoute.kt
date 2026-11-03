@@ -26,9 +26,9 @@ import androidx.compose.ui.semantics.role
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
-import com.sosmesh.android.core.permissions.ui.EmergencyCall112Button
 import com.sosmesh.android.BuildConfig
 import com.sosmesh.android.R
+import com.sosmesh.android.core.permissions.ui.EmergencyCall112Button
 
 @Composable
 fun HomeRoute(

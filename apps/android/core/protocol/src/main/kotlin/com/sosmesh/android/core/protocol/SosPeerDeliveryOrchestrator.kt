@@ -10,13 +10,13 @@ import com.sosmesh.android.core.permissions.PermissionFlowCoordinator
 import com.sosmesh.ble.BleProtocol
 import com.sosmesh.contracts.transport.OutboxEntryMeta
 import com.sosmesh.contracts.transport.OutboxQueueAdapter
-import java.util.Base64
-import javax.inject.Inject
-import javax.inject.Singleton
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import kotlinx.coroutines.withContext
+import java.util.Base64
+import javax.inject.Inject
+import javax.inject.Singleton
 
 sealed class SosPeerDeliveryCycleResult {
     data object Idle : SosPeerDeliveryCycleResult()
@@ -73,8 +73,9 @@ class SosPeerDeliveryOrchestrator
             if (!bleMeshReadiness.canRunBleMeshFeatures()) {
                 return SosPeerDeliveryCycleResult.PermissionsMissing(permissions.missingPermissions())
             }
-            val due = outboxReader.listDueAndroidPeerSend(nowMs).firstOrNull()
-                ?: return SosPeerDeliveryCycleResult.Idle
+            val due =
+                outboxReader.listDueAndroidPeerSend(nowMs).firstOrNull()
+                    ?: return SosPeerDeliveryCycleResult.Idle
             if (engine.senderState() != TransferState.IDLE) {
                 return SosPeerDeliveryCycleResult.SenderBusy
             }

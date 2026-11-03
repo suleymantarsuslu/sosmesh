@@ -1,6 +1,7 @@
 package com.sosmesh.android.core.data.di
 
 import android.util.Log
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.CoroutineExceptionHandler
 import kotlinx.coroutines.CoroutineScope
@@ -28,6 +29,7 @@ class OutboxIoScope
         fun launchOutboxWork(block: suspend CoroutineScope.() -> Unit) {
             scope.launch {
                 runCatching { block() }.onFailure { throwable ->
+                    if (throwable is CancellationException) throw throwable
                     Log.e(TAG, "outbox_io_work_failed", throwable)
                 }
             }

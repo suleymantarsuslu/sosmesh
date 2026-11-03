@@ -1,5 +1,6 @@
 package com.sosmesh.android.feature.relay
 
+import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.sosmesh.android.core.data.outbox.RelayOutboxReader
@@ -10,8 +11,8 @@ import com.sosmesh.android.feature.relay.session.RelaySessionController
 import com.sosmesh.android.feature.relay.settings.RelaySettingsStore
 import com.sosmesh.android.feature.relay.system.RelaySystemConstraints
 import com.sosmesh.android.feature.relay.ui.RelayUiState
-import android.util.Log
 import dagger.hilt.android.lifecycle.HiltViewModel
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -71,6 +72,7 @@ class RelayViewModel
                             systemConstraintDetail = constraints.detail,
                         )
                 }.onFailure { throwable ->
+                    if (throwable is CancellationException) throw throwable
                     Log.e("RelayViewModel", "relay_refresh_failed", throwable)
                 }
             }

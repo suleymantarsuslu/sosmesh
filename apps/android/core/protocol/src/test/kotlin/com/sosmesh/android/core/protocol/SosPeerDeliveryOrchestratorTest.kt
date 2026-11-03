@@ -11,8 +11,8 @@ import com.sosmesh.android.core.data.outbox.RoomOutboxQueueAdapter
 import com.sosmesh.android.core.data.outbox.SosOutboxReader
 import com.sosmesh.android.core.permissions.PermissionFlowCoordinator
 import com.sosmesh.android.core.permissions.PermissionStatusReader
-import com.sosmesh.contracts.transport.EnqueueInput
 import com.sosmesh.ble.BleProtocol
+import com.sosmesh.contracts.transport.EnqueueInput
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.runBlocking
 import org.junit.After

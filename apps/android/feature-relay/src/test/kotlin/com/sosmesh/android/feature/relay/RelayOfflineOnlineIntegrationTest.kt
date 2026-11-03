@@ -17,11 +17,11 @@ import com.sosmesh.android.feature.relay.uplink.ServerAcceptedReceipt
 import com.sosmesh.android.feature.relay.uplink.ServerReceiptVerifier
 import com.sosmesh.android.feature.relay.upload.RelayUploadExecutor
 import com.sosmesh.contracts.transport.EnqueueInput
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.runBlocking
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.jsonObject
 import kotlinx.serialization.json.jsonPrimitive
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.runBlocking
 import org.junit.After
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNotNull

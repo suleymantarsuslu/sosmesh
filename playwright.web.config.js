@@ -23,6 +23,7 @@ const operatorSpecs = [
   '**/operator-case-detail.spec.js',
   '**/operator-tasks-teams.spec.js',
   '**/operator-help.spec.js',
+  '**/operator-menu-visibility.spec.js',
   '**/adim50-web-closure.spec.js',
   '**/marketing-landing.spec.js',
 ];

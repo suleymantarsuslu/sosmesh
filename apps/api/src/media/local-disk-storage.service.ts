@@ -8,7 +8,7 @@
 import { Injectable, Logger, OnModuleInit, ServiceUnavailableException } from '@nestjs/common';
 import { createHash } from 'node:crypto';
 import { mkdir, readFile, writeFile, unlink, access, stat, readdir, constants } from 'node:fs/promises';
-import { join } from 'node:path';
+import { dirname, join } from 'node:path';
 import type {
   MediaStorage,
   StoreMediaRequest,
@@ -82,6 +82,7 @@ export class LocalDiskStorageService implements MediaStorage, OnModuleInit {
     const filePath = this.resolveFilePath(storageKey);
 
     try {
+      await mkdir(dirname(filePath), { recursive: true });
       await writeFile(filePath, request.buffer);
     } catch (error) {
       const err = error as NodeJS.ErrnoException;

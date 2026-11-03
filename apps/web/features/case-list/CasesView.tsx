@@ -1,7 +1,7 @@
 'use client';
 
 import Link from 'next/link';
-import { useCallback, useMemo, useState } from 'react';
+import { useCallback, useMemo, useRef, useState } from 'react';
 
 import { CaseDetailPanel } from './CaseDetailPanel';
 import { CaseDrawer } from './CaseDrawer';
@@ -14,7 +14,7 @@ import type { FeedEvent, OperatorCaseRow } from './types';
 import { UnknownLocationQueue } from './UnknownLocationQueue';
 import { useLiveFeed } from './useLiveFeed';
 import { useOperatorPreferences } from '../../components/operator/OperatorPreferencesProvider';
-import { OperatorMap } from '../map/OperatorMap';
+import { OperatorMap, type OperatorMapHandle } from '../map/OperatorMap';
 import { AssignmentPreviewPanel } from '../assignment/AssignmentPreviewPanel';
 import type { AssignmentPreviewRoute } from '../assignment/types';
 

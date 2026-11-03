@@ -15,7 +15,7 @@ if (!E2E_PASS) {
   throw new Error(`${e2ePassKey} must be set (see playwright config)`);
 }
 
-const SCREENSHOTS_DIR = join(process.cwd(), 'artifacts', 'screenshots', 'ai-panel');
+const SCREENSHOTS_DIR = '/opt/cursor/artifacts/ai-panel';
 
 test.beforeAll(async () => {
   await mkdir(SCREENSHOTS_DIR, { recursive: true });
@@ -23,9 +23,13 @@ test.beforeAll(async () => {
 
 async function login(page) {
   await page.goto('/operator/login');
+  await expect(page.getByTestId('login-form')).toBeVisible();
   await page.getByTestId('login-email').fill(E2E_EMAIL);
   await page.getByTestId('login-password').fill(E2E_PASS);
   await page.getByTestId('login-submit').click();
+  // Wait for redirect to complete
+  await page.waitForURL(/\/operator\/dashboard/, { timeout: 10000 });
+  await expect(page.getByTestId('operator-dashboard')).toBeVisible({ timeout: 5000 });
 }
 
 test.describe('AI Panel WP-E Screenshots', () => {
@@ -36,8 +40,16 @@ test.describe('AI Panel WP-E Screenshots', () => {
     // Navigate to case with AI data
     await page.goto('/operator/cases/mock-incident-1', { waitUntil: 'networkidle' });
     
-    // Wait for AI data to load
-    await page.waitForTimeout(3000);
+    // Verify not on login page
+    await expect(page.getByTestId('login-form')).not.toBeVisible();
+    
+    // Wait for AI panel content to be visible
+    await expect(page.locator('h2').filter({ hasText: /AI Intelligence|Yapay Zeka/ })).toBeVisible({ timeout: 10000 });
+    await expect(page.getByTestId('ai-triage-card')).toBeVisible({ timeout: 5000 });
+    
+    // Verify triage summary is loaded
+    const triageSummary = page.locator('[data-testid="ai-triage-card"]').locator('text=/trapped|collapse|building/i');
+    await expect(triageSummary.first()).toBeVisible({ timeout: 5000 });
     
     await page.screenshot({
       path: join(SCREENSHOTS_DIR, 'case-detail-ai-panel-1440.png'),
@@ -50,7 +62,16 @@ test.describe('AI Panel WP-E Screenshots', () => {
     await login(page);
     
     await page.goto('/operator/cases/mock-incident-1', { waitUntil: 'networkidle' });
-    await page.waitForTimeout(3000);
+    
+    // Verify not on login page
+    await expect(page.getByTestId('login-form')).not.toBeVisible();
+    
+    // Wait for AI panel content
+    await expect(page.locator('h2').filter({ hasText: /AI Intelligence|Yapay Zeka/ })).toBeVisible({ timeout: 10000 });
+    await expect(page.getByTestId('ai-triage-card')).toBeVisible({ timeout: 5000 });
+    
+    const triageSummary = page.locator('[data-testid="ai-triage-card"]').locator('text=/trapped|collapse|building/i');
+    await expect(triageSummary.first()).toBeVisible({ timeout: 5000 });
     
     await page.screenshot({
       path: join(SCREENSHOTS_DIR, 'case-detail-ai-panel-375.png'),
@@ -63,7 +84,19 @@ test.describe('AI Panel WP-E Screenshots', () => {
     await login(page);
     
     await page.goto('/operator/cases/mock-incident-1', { waitUntil: 'networkidle' });
-    await page.waitForTimeout(3000);
+    
+    // Verify not on login page
+    await expect(page.getByTestId('login-form')).not.toBeVisible();
+    
+    // Wait for photo analysis card to be visible
+    await expect(page.getByTestId('ai-photo-card')).toBeVisible({ timeout: 10000 });
+    
+    // Verify canvas overlay is present
+    await expect(page.getByTestId('ai-photo-canvas')).toBeVisible({ timeout: 5000 });
+    
+    // Verify at least one concept label (person or debris from mock data)
+    const conceptLabel = page.locator('[data-testid="ai-photo-card"]').locator('text=/person|debris/i');
+    await expect(conceptLabel.first()).toBeVisible({ timeout: 5000 });
     
     await page.screenshot({
       path: join(SCREENSHOTS_DIR, 'photo-sam-overlay-1440.png'),
@@ -76,7 +109,17 @@ test.describe('AI Panel WP-E Screenshots', () => {
     await login(page);
     
     await page.goto('/operator/cases/mock-incident-1', { waitUntil: 'networkidle' });
-    await page.waitForTimeout(3000);
+    
+    // Verify not on login page
+    await expect(page.getByTestId('login-form')).not.toBeVisible();
+    
+    // Wait for photo analysis card
+    await expect(page.getByTestId('ai-photo-card')).toBeVisible({ timeout: 10000 });
+    
+    // Verify canvas and concept label
+    await expect(page.getByTestId('ai-photo-canvas')).toBeVisible({ timeout: 5000 });
+    const conceptLabel = page.locator('[data-testid="ai-photo-card"]').locator('text=/person|debris/i');
+    await expect(conceptLabel.first()).toBeVisible({ timeout: 5000 });
     
     await page.screenshot({
       path: join(SCREENSHOTS_DIR, 'photo-sam-overlay-375.png'),
@@ -89,7 +132,14 @@ test.describe('AI Panel WP-E Screenshots', () => {
     await login(page);
     
     await page.goto('/operator/ai', { waitUntil: 'networkidle' });
-    await page.waitForTimeout(2000);
+    
+    // Verify not on login page
+    await expect(page.getByTestId('login-form')).not.toBeVisible();
+    
+    // Wait for AI dashboard elements
+    await expect(page.getByTestId('ai-dashboard')).toBeVisible({ timeout: 10000 });
+    await expect(page.locator('h1').filter({ hasText: /AI Dashboard|Yapay Zeka/ })).toBeVisible({ timeout: 5000 });
+    await expect(page.getByTestId('ai-status-card')).toBeVisible({ timeout: 5000 });
     
     await page.screenshot({
       path: join(SCREENSHOTS_DIR, 'ai-dashboard-1440.png'),
@@ -102,7 +152,14 @@ test.describe('AI Panel WP-E Screenshots', () => {
     await login(page);
     
     await page.goto('/operator/ai', { waitUntil: 'networkidle' });
-    await page.waitForTimeout(2000);
+    
+    // Verify not on login page
+    await expect(page.getByTestId('login-form')).not.toBeVisible();
+    
+    // Wait for AI dashboard elements
+    await expect(page.getByTestId('ai-dashboard')).toBeVisible({ timeout: 10000 });
+    await expect(page.locator('h1').filter({ hasText: /AI Dashboard|Yapay Zeka/ })).toBeVisible({ timeout: 5000 });
+    await expect(page.getByTestId('ai-status-card')).toBeVisible({ timeout: 5000 });
     
     await page.screenshot({
       path: join(SCREENSHOTS_DIR, 'ai-dashboard-375.png'),

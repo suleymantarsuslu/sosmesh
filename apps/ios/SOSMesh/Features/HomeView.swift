@@ -201,7 +201,7 @@ struct SosSendView: View {
                         HStack(spacing: DesignSystem.Spacing.xs) {
                             ProgressView()
                                 .tint(DesignSystem.Colors.accentBlue)
-                            Text("Sending...")
+                            Text("sos.sending")
                                 .font(DesignSystem.Typography.callout)
                                 .foregroundStyle(DesignSystem.Colors.textSecondary)
                         }

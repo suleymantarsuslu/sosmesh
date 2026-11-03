@@ -48,7 +48,7 @@ struct WatchRootView: View {
                     } label: {
                         HStack(spacing: 4) {
                             Image(systemName: "info.circle")
-                            Text("Yardım")
+                            Text("watch.help.link")
                         }
                         .font(.caption2)
                         .foregroundStyle(.blue)
@@ -85,8 +85,8 @@ struct WatchRootView: View {
                     )
                 )
         )
-        .accessibilityLabel("Acil SOS")
-        .accessibilityHint("Basılı tutun, bırakın, ardından onaylayın")
+        .accessibilityLabel(Text("watch.sos.label"))
+        .accessibilityHint(Text("watch.sos.hint"))
         .simultaneousGesture(
             DragGesture(minimumDistance: 0)
                 .onChanged { _ in model.onSosPressStart() }
@@ -101,14 +101,14 @@ struct WatchRootView: View {
             } label: {
                 HStack(spacing: 4) {
                     Image(systemName: "paperplane.fill")
-                    Text("Gönder")
+                    Text("watch.confirm.send")
                 }
                 .frame(maxWidth: .infinity)
             }
             .buttonStyle(.borderedProminent)
             .tint(.red)
             
-            Button("İptal") {
+            Button("watch.confirm.cancel") {
                 model.onConfirmCancel()
             }
             .buttonStyle(.bordered)
@@ -149,12 +149,12 @@ struct WatchOfflineHelpView: View {
                         Image(systemName: "exclamationmark.triangle.fill")
                             .font(.system(size: 12))
                             .foregroundStyle(.red)
-                        Text("112 yerine geçmez.")
+                        Text("onboarding.not112")
                             .font(.caption2)
                             .fontWeight(.semibold)
                     }
                     
-                    Text("Acil durumlarda önce 112'yi arayın.")
+                    Text("watch.offline.emergency_warning")
                         .font(.caption2)
                         .foregroundStyle(.secondary)
                 }
@@ -162,6 +162,6 @@ struct WatchOfflineHelpView: View {
             }
             .padding(8)
         }
-        .navigationTitle("Yardım")
+        .navigationTitle(Text("watch.help.title"))
     }
 }

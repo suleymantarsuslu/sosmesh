@@ -76,7 +76,7 @@ struct RelayView: View {
                 HStack(spacing: DesignSystem.Spacing.xs) {
                     Image(systemName: "info.circle.fill")
                         .foregroundStyle(DesignSystem.Colors.accentBlue)
-                    Text("How relay works")
+                    Text("relay.how_it_works")
                         .font(DesignSystem.Typography.headline)
                         .foregroundStyle(DesignSystem.Colors.textPrimary)
                 }

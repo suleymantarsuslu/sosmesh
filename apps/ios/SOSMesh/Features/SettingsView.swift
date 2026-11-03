@@ -7,6 +7,22 @@ struct SettingsView: View {
     var body: some View {
         NavigationStack {
             Form {
+                Section("settings.language.title") {
+                    Button {
+                        openLanguageSettings()
+                    } label: {
+                        HStack {
+                            Text("settings.language.change")
+                                .foregroundStyle(DesignSystem.Colors.textPrimary)
+                            Spacer()
+                            Image(systemName: "chevron.right")
+                                .font(.caption)
+                                .foregroundStyle(DesignSystem.Colors.textSecondary)
+                        }
+                    }
+                    .accessibilityHint(Text("settings.language.change_hint"))
+                }
+                
                 Section("settings.permissions.title") {
                     Text("settings.permissions.bluetooth")
                     Text("settings.permissions.location")
@@ -19,9 +35,9 @@ struct SettingsView: View {
                 Section("ios.background.section") {
                     Text("ios.limitation.background")
                     Text("ios.limitation.force_quit")
-                    Text("Phase: \(appModel.restorationPhase.rawValue)")
+                    Text("\(Text("settings.ble_phase")): \(appModel.restorationPhase.rawValue)")
                         .font(.caption)
-                        .accessibilityLabel(Text("ios.restoration.phase"))
+                        .accessibilityLabel(Text("settings.ble_phase"))
                 }
                 Section("settings.multihop.title") {
                     Toggle(isOn: Binding(
@@ -47,6 +63,12 @@ struct SettingsView: View {
                 #endif
             }
             .navigationTitle("settings.title")
+        }
+    }
+    
+    private func openLanguageSettings() {
+        if let url = URL(string: UIApplication.openSettingsURLString) {
+            UIApplication.shared.open(url)
         }
     }
 }

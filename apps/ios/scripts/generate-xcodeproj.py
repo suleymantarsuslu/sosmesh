@@ -47,6 +47,8 @@ WATCH_RESOURCES = [
     "../watchos/SOSMeshWatch/Info.plist",
     "../watchos/SOSMeshWatch/PrivacyInfo.xcprivacy",
     "../watchos/SOSMeshWatch/Assets.xcassets",
+    "../watchos/SOSMeshWatch/en.lproj/Localizable.strings",
+    "../watchos/SOSMeshWatch/tr.lproj/Localizable.strings",
 ]
 
 WATCH_WIDGET_RESOURCES = [
@@ -73,7 +75,10 @@ IOS_COPY_RESOURCES = [
     "SOSMesh/Assets.xcassets",
 ]
 
-TEST_SOURCES = ["SOSMeshTests/SOSMeshCoreLinkTests.swift"]
+TEST_SOURCES = [
+    "SOSMeshTests/SOSMeshCoreLinkTests.swift",
+    "SOSMeshTests/LocalizationCompletenessTests.swift",
+]
 
 
 def uid(n: int) -> str:
@@ -456,7 +461,7 @@ lines.append(
 \t\t\tattributes = {{ LastSwiftUpdateCheck = 1500; LastUpgradeCheck = 1500; }};
 \t\t\tbuildConfigurationList = {uid(4000)} /* Build configuration list for PBXProject "SOSMesh" */;
 \t\t\tcompatibilityVersion = "Xcode 14.0";
-\t\t\tdevelopmentRegion = tr;
+\t\t\tdevelopmentRegion = en;
 \t\t\thasScannedForEncodings = 0;
 \t\t\tknownRegions = (en, tr, Base);
 \t\t\tmainGroup = {main_group};

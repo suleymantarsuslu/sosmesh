@@ -6,7 +6,7 @@ import WatchConnectivity
 final class WatchAppModel: ObservableObject {
     @Published var confirmStep: WatchConfirmStep = .idle
     @Published var headline = "SOS"
-    @Published var detail = "Acil durumda iki adımda onaylayın."
+    @Published var detail = String(localized: "watch.initial.detail")
     @Published var connectivityHeadline = ""
     @Published var showOfflineHelp = false
 

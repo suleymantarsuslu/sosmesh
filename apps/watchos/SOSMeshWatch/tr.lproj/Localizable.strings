@@ -1,0 +1,12 @@
+"watch.sos.label" = "Acil SOS";
+"watch.sos.hint" = "Basılı tutun, bırakın, ardından onaylayın";
+"watch.confirm.send" = "Gönder";
+"watch.confirm.cancel" = "İptal";
+"watch.help.title" = "Yardım";
+"watch.help.link" = "Yardım";
+"watch.offline.emergency_warning" = "Acil durumlarda önce 112'yi arayın.";
+"watch.complication.headline.unreachable" = "Telefona ulaşılamıyor";
+"watch.complication.headline.default" = "SOS";
+"watch.complication.detail.default" = "Onay gerekli";
+"watch.initial.detail" = "Acil durumda iki adımda onaylayın.";
+"watch.complication.description" = "Hızlı SOS kısayolu; iki adımlı onay uygulamada.";

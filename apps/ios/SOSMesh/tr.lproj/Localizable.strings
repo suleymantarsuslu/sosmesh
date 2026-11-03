@@ -84,3 +84,10 @@
 "settings.debug.simulate_bluetooth_off" = "Bluetooth kapalı simülasyonu";
 "settings.debug.simulate_permissions_denied" = "İzin reddi simülasyonu";
 "settings.debug.simulate_location_unavailable" = "Konum reddi simülasyonu";
+"relay.how_it_works" = "Röle nasıl çalışır";
+"sos.sending" = "Gönderiliyor...";
+"settings.ble_phase" = "BLE yaşam döngüsü aşaması";
+"settings.language.title" = "Dil";
+"settings.language.current" = "Mevcut dil";
+"settings.language.change" = "Dili değiştir";
+"settings.language.change_hint" = "Uygulama dilini değiştirmek için sistem ayarlarını açar";

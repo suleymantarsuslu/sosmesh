@@ -84,3 +84,10 @@
 "settings.debug.simulate_bluetooth_off" = "Simulate Bluetooth off";
 "settings.debug.simulate_permissions_denied" = "Simulate permissions denied";
 "settings.debug.simulate_location_unavailable" = "Simulate location denied";
+"relay.how_it_works" = "How relay works";
+"sos.sending" = "Sending...";
+"settings.ble_phase" = "BLE lifecycle phase";
+"settings.language.title" = "Language";
+"settings.language.current" = "Current language";
+"settings.language.change" = "Change language";
+"settings.language.change_hint" = "Opens system settings to change the app language";

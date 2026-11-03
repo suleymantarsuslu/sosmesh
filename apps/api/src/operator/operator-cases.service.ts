@@ -20,6 +20,7 @@ export type OperatorCaseRow = {
   latitude: number | null;
   longitude: number | null;
   accuracyMeters: number | null;
+  locationApproximate: boolean;
   receivedAt: string;
   source: string | null;
 };
@@ -42,6 +43,7 @@ export type OperatorCaseDetail = OperatorCaseRow & {
     latitude: number | null;
     longitude: number | null;
     accuracyMeters: number | null;
+    locationApproximate: boolean;
   };
   ai: OperatorAiSuggestion | null;
   transcripts: TranscriptView[];
@@ -124,6 +126,9 @@ export class OperatorCasesService {
         latitude: true,
         longitude: true,
         accuracyMeters: true,
+        preciseLatitude: true,
+        preciseLongitude: true,
+        preciseAccuracyMeters: true,
         receivedAt: true,
         incident: { select: { state: true } },
         messageEvents: {
@@ -168,6 +173,10 @@ export class OperatorCasesService {
         latitude: true,
         longitude: true,
         accuracyMeters: true,
+        preciseLatitude: true,
+        preciseLongitude: true,
+        preciseAccuracyMeters: true,
+        preciseCapturedAt: true,
         receivedAt: true,
         personCount: true,
         operatorDisplayText: true,
@@ -243,9 +252,18 @@ export class OperatorCasesService {
       verifiedMetadata: {
         personCount: message.personCount,
         locationStatus: message.locationStatus,
-        latitude: message.latitude ? message.latitude.toNumber() : null,
-        longitude: message.longitude ? message.longitude.toNumber() : null,
-        accuracyMeters: message.accuracyMeters,
+        latitude: message.preciseLatitude
+          ? message.preciseLatitude.toNumber()
+          : message.latitude
+          ? message.latitude.toNumber()
+          : null,
+        longitude: message.preciseLongitude
+          ? message.preciseLongitude.toNumber()
+          : message.longitude
+          ? message.longitude.toNumber()
+          : null,
+        accuracyMeters: message.preciseAccuracyMeters ?? message.accuracyMeters,
+        locationApproximate: !message.preciseLatitude && !!message.latitude,
       },
       ai: aiSuggestion,
       transcripts,
@@ -269,6 +287,9 @@ export class OperatorCasesService {
     latitude: { toNumber(): number } | null;
     longitude: { toNumber(): number } | null;
     accuracyMeters: number | null;
+    preciseLatitude: { toNumber(): number } | null;
+    preciseLongitude: { toNumber(): number } | null;
+    preciseAccuracyMeters: number | null;
     receivedAt: Date;
     incident: { state: string };
     messageEvents: { source: string }[];
@@ -282,9 +303,18 @@ export class OperatorCasesService {
       sosType: row.sosType,
       deliveryState: row.deliveryState,
       locationStatus: row.locationStatus,
-      latitude: row.latitude ? row.latitude.toNumber() : null,
-      longitude: row.longitude ? row.longitude.toNumber() : null,
-      accuracyMeters: row.accuracyMeters,
+      latitude: row.preciseLatitude
+        ? row.preciseLatitude.toNumber()
+        : row.latitude
+        ? row.latitude.toNumber()
+        : null,
+      longitude: row.preciseLongitude
+        ? row.preciseLongitude.toNumber()
+        : row.longitude
+        ? row.longitude.toNumber()
+        : null,
+      accuracyMeters: row.preciseAccuracyMeters ?? row.accuracyMeters,
+      locationApproximate: !row.preciseLatitude && !!row.latitude,
       receivedAt: row.receivedAt.toISOString(),
       source: row.messageEvents[0]?.source ?? null,
     };

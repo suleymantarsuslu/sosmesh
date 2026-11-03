@@ -84,7 +84,11 @@ public struct IosSosMessageComposer: Sendable {
         if (request.location.status == .gps || request.location.status == .manual),
            let lat = request.location.latitude,
            let lng = request.location.longitude {
-            envelopeLocation = Location(latitude: lat, longitude: lng, accuracy: request.location.accuracy)
+            envelopeLocation = Location(
+                latitude: roundCoordinate(lat),
+                longitude: roundCoordinate(lng),
+                accuracy: request.location.accuracy.map { coarseAccuracy($0) }
+            )
         } else {
             envelopeLocation = nil
         }
@@ -172,6 +176,14 @@ public struct IosSosMessageComposer: Sendable {
         case .manual:
             return .manual
         }
+    }
+
+    private func roundCoordinate(_ coord: Double) -> Double {
+        return (coord * 100.0).rounded() / 100.0
+    }
+
+    private func coarseAccuracy(_ accuracyMeters: Double) -> Double {
+        return max(accuracyMeters, 1000.0)
     }
 }
 

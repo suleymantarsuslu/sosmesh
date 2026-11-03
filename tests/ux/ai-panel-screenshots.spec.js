@@ -11,15 +11,9 @@ const BASE_URL = process.env.BASE_URL || 'http://localhost:3000';
 const API_URL = process.env.API_URL || 'http://127.0.0.1:3001';
 
 const SCREENSHOTS_DIR = path.join(
-  __dirname,
-  '../../..',
+  process.cwd(),
   'artifacts/screenshots/ai-panel'
 );
-
-// Ensure screenshots directory exists
-if (!fs.existsSync(SCREENSHOTS_DIR)) {
-  fs.mkdirSync(SCREENSHOTS_DIR, { recursive: true });
-}
 
 async function loginAsOperator(page) {
   await page.goto(`${BASE_URL}/operator/login`);

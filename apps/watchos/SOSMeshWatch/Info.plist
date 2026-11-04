@@ -22,8 +22,10 @@
 	<string>1</string>
 	<key>NSBluetoothAlwaysUsageDescription</key>
 	<string>When your iPhone is out of reach, SOSMesh can hand your SOS to a nearby phone over Bluetooth.</string>
+	<key>WKApplication</key>
+	<true/>
 	<key>WKCompanionAppBundleIdentifier</key>
-	<string>com.sosmesh.ios</string>
+	<string>com.suleymantarsuslu.sosmesh</string>
 	<key>WKRunsIndependentlyOfCompanionApp</key>
 	<false/>
 </dict>

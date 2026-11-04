@@ -22,6 +22,7 @@ import com.sosmesh.android.core.ble.platform.GattClientCallbackPort
 import com.sosmesh.android.core.ble.platform.GattClientPort
 import com.sosmesh.android.core.ble.platform.GattConnectionState
 import com.sosmesh.android.core.ble.platform.GattProperty
+import com.sosmesh.android.core.ble.platform.GattServerConnectionListener
 import com.sosmesh.android.core.ble.platform.GattServerPort
 import com.sosmesh.android.core.ble.platform.GattServerWriteListener
 import dagger.hilt.android.qualifiers.ApplicationContext

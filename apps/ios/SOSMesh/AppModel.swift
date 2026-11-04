@@ -552,8 +552,14 @@ final class AppModel: ObservableObject {
         }
         
         let nowMs = Int64(Date().timeIntervalSince1970 * 1000)
+        let isActive = await UIApplication.shared.applicationState == .active
+        
         for broadcast in broadcasts {
-            await notificationManager.showNotification(broadcast: broadcast)
+            if isActive && broadcast.kind == "relay_request" {
+                pendingRelayRequestBroadcast = broadcast
+            } else {
+                await notificationManager.showNotification(broadcast: broadcast)
+            }
             
             let historyItem = NotificationHistoryItem(
                 id: broadcast.id,
@@ -574,6 +580,7 @@ final class AppModel: ObservableObject {
                     title: broadcast.title,
                     body: broadcast.body,
                     severity: broadcast.severity,
+                    kind: broadcast.kind,
                     createdAt: broadcast.createdAt,
                     expiresAt: broadcast.expiresAt,
                     regionLat: broadcast.regionLat,

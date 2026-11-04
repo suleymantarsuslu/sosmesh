@@ -5,6 +5,7 @@ struct RootTabView: View {
     @AppStorage("sosmesh.disclaimer.accepted") private var storedDisclaimer = false
     @AppStorage("sosmesh.profile.onboarding.done") private var profileOnboardingDone = false
     @State private var selectedTab = 0
+    @State private var showRelayRequestAlert = false
 
     var body: some View {
         Group {

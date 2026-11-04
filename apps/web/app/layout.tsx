@@ -13,6 +13,7 @@ import './ai.css';
 import './cases-modern.css';
 import './case-detail-v2.css';
 import './ops-pages.css';
+import './(operator)/operator/(panel)/broadcasts/broadcasts.css';
 
 const inter = Inter({
   subsets: ['latin'],

@@ -20,6 +20,7 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.semantics.heading
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.style.TextAlign
@@ -39,6 +40,7 @@ import com.sosmesh.android.core.design.components.SosNot112Banner
 import com.sosmesh.android.core.design.components.SosScreenScaffold
 import com.sosmesh.android.core.design.components.SosScrollableScreenContent
 import com.sosmesh.android.core.design.components.SosStatusCard
+import com.sosmesh.android.core.design.emergency.EmergencyNumberProvider
 import com.sosmesh.android.core.design.theme.SosIosColors
 import com.sosmesh.android.core.design.theme.SosSpacing
 
@@ -78,6 +80,8 @@ internal fun HomeScreen(
     onOpenRelay: () -> Unit,
     onOpenSettings: () -> Unit,
 ) {
+    val context = LocalContext.current
+    val emergencyNumber = EmergencyNumberProvider.getEmergencyNumber(context)
     SosScreenScaffold(
         title = stringResource(R.string.home_title),
         showLogoInTopBar = true,
@@ -101,6 +105,7 @@ internal fun HomeScreen(
                 disclaimerText =
                     stringResource(
                         com.sosmesh.android.core.permissions.R.string.permission_disclaimer_not112,
+                        emergencyNumber,
                     ),
             )
             SosExpressSosButton(

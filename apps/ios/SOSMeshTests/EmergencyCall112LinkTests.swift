@@ -2,8 +2,14 @@ import XCTest
 @testable import SOSMesh
 
 final class EmergencyCall112LinkTests: XCTestCase {
-    func testEmergencyDialURLIs112() {
+    func testEmergencyDialURLScheme() {
         XCTAssertEqual(EmergencyCall112Link.url.scheme, "tel")
-        XCTAssertEqual(EmergencyCall112Link.url.absoluteString, "tel:112")
+    }
+    
+    func testEmergencyDialURLContainsNumber() {
+        let url = EmergencyCall112Link.url.absoluteString
+        XCTAssertTrue(url.hasPrefix("tel:"))
+        let numberPart = url.replacingOccurrences(of: "tel:", with: "")
+        XCTAssertFalse(numberPart.isEmpty)
     }
 }

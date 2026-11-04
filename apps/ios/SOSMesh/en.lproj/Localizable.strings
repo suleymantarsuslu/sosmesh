@@ -4,7 +4,7 @@
 "nav.status" = "Status";
 "nav.relay" = "Relay";
 "nav.settings" = "Settings";
-"onboarding.not112" = "SOSMesh is not a replacement for 112. Always call 112 in emergencies.";
+"onboarding.not112" = "SOSMesh is not a replacement for %@. Always call %@ in emergencies.";
 "onboarding.experimental" = "SOSMesh is experimental and does not guarantee physical rescue.";
 "onboarding.accept" = "I understand and accept";
 "sos.button.label" = "SOS";
@@ -51,7 +51,7 @@
 "settings.multihop.footer" = "Off by default. iPhone is not a 24/7 repeater; background and force-quit limits apply.";
 "settings.multihop.toggle" = "Enable research multi-hop relay";
 "help.title" = "Help";
-"help.not112" = "SOSMesh does not replace 112. Call 112 in an emergency.";
+"help.not112" = "SOSMesh does not replace %@. Call %@ in an emergency.";
 "help.offline.title" = "Offline use";
 "help.offline.body" = "SOS stays encrypted on device; nearby BLE transfer runs without AI.";
 "help.ackLevels.title" = "Status steps";
@@ -72,7 +72,7 @@
 "gate.action.allow_notifications" = "Allow notifications";
 "gate.action.open_settings" = "Open Settings";
 "gate.action.open_settings.hint" = "Opens iOS Settings for SOSMesh permissions";
-"gate.action.call112" = "Call 112";
+"gate.action.call112" = "Call %@";
 "gate.action.call112.hint" = "Opens the phone dialer for emergency services";
 "gate.hint.bluetooth_off" = "Bluetooth is turned off. Turn it on in Control Center or Settings.";
 "gate.hint.open_settings" = "Permission was denied. Open Settings to allow access, then return to SOSMesh.";
@@ -102,13 +102,13 @@
 "sos.sent.title" = "SOS Being Sent";
 "sos.sent.online" = "Your message is being sent to the server.";
 "sos.sent.offline" = "Your message has been saved on your device and will be relayed via nearby devices or sent when internet connection is restored.";
-"sos.sent.not112" = "SOSMesh does not replace 112.";
+"sos.sent.not112" = "SOSMesh does not replace %@.";
 "sos.sent.action.ok" = "OK";
 "sos.sent.action.status" = "Go to status";
 "notification.sos.delivered.title" = "Your message has been delivered";
 "notification.sos.delivered.body" = "Your SOS message has reached the server.";
 "sos.delivered.title" = "Your help request was delivered";
-"sos.delivered.message" = "This does not replace 112. Call 112 for immediate emergency response.";
+"sos.delivered.message" = "This does not replace %@. Call %@ for immediate emergency response.";
 "sos.followup.title" = "Your message was sent. Add anything you want to add";
 "sos.followup.send" = "Send follow-up";
 "relay.delivered.count" = "%d help messages were delivered through you";
@@ -143,7 +143,7 @@
 "relay.diag.tombstones" = "Delivery proofs";
 "profile.title" = "My profile";
 "profile.edit" = "Edit profile";
-"profile.intro" = "Optional. Stored only on this phone (Keychain) and sent only inside an encrypted SOS. You can send an SOS without filling anything. In a life-threatening emergency call 112.";
+"profile.intro" = "Optional. Stored only on this phone (Keychain) and sent only inside an encrypted SOS. You can send an SOS without filling anything. In a life-threatening emergency call %@.";
 "profile.section.person" = "Person";
 "profile.section.address" = "Address";
 "profile.section.contact" = "Contact";

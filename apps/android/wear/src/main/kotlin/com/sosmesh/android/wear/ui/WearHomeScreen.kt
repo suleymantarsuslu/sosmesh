@@ -23,6 +23,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.contentDescription
@@ -42,6 +43,7 @@ import androidx.wear.compose.material.TimeText
 import androidx.wear.compose.material.Vignette
 import androidx.wear.compose.material.VignettePosition
 import androidx.wear.compose.material.curvedText
+import com.sosmesh.android.core.design.emergency.EmergencyNumberProvider
 import com.sosmesh.android.core.wear.companion.sync.WearUserFacingPhase
 import com.sosmesh.android.wear.R
 
@@ -51,9 +53,11 @@ internal fun WearHomeScreen(
     isAmbient: Boolean,
     onHoldComplete: () -> Unit,
 ) {
+    val context = LocalContext.current
+    val emergencyNumber = EmergencyNumberProvider.getEmergencyNumber(context)
     val copy = phase.toStatusCopy()
     var holding by remember { mutableStateOf(false) }
-    val not112 = stringResource(R.string.not112)
+    val not112 = stringResource(R.string.not112, emergencyNumber)
     val not112Color = if (isAmbient) WearAmbientUiPolicy.primaryText(true) else WearSosPalette.TextMuted
     Scaffold(
         timeText = { TimeText() },

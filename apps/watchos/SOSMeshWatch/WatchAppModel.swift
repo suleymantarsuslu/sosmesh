@@ -66,14 +66,15 @@ final class WatchAppModel: ObservableObject {
               let l1 = MeshCarry.encode(MeshCarry.wrap(l2: composed.wirePayload, messageId: composed.message.id, nowMs: nowMs)) else {
             return
         }
+        let emergencyNumber = EmergencyNumberProvider.getEmergencyNumber()
         meshHandoffStatus = String(localized: "watch.mesh.searching")
         meshHandoff.start(messageId: composed.message.id, l1Payload: l1) { [weak self] outcome in
             Task { @MainActor in
                 guard let self else { return }
                 switch outcome {
-                case .peerReceived: self.meshHandoffStatus = String(localized: "watch.mesh.peer_received")
-                case .noPeer: self.meshHandoffStatus = String(localized: "watch.mesh.no_peer")
-                case .failed: self.meshHandoffStatus = String(localized: "watch.mesh.failed")
+                case .peerReceived: self.meshHandoffStatus = String(format: NSLocalizedString("watch.mesh.peer_received", comment: ""), emergencyNumber)
+                case .noPeer: self.meshHandoffStatus = String(format: NSLocalizedString("watch.mesh.no_peer", comment: ""), emergencyNumber)
+                case .failed: self.meshHandoffStatus = String(format: NSLocalizedString("watch.mesh.failed", comment: ""), emergencyNumber)
                 }
             }
         }

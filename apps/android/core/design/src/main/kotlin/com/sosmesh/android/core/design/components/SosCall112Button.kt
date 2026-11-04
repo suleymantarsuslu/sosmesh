@@ -29,6 +29,7 @@ import androidx.compose.ui.semantics.role
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.dp
 import com.sosmesh.android.core.design.R
+import com.sosmesh.android.core.design.emergency.EmergencyNumberProvider
 import com.sosmesh.android.core.design.theme.SosIosColors
 import com.sosmesh.android.core.design.theme.SosShapes
 import com.sosmesh.android.core.design.theme.SosSpacing
@@ -40,12 +41,13 @@ fun SosCall112Button(
     testTag: String = "sos_call_112_button",
 ) {
     val context = LocalContext.current
-    val label = stringResource(R.string.design_call_112_button)
-    val cd = stringResource(R.string.design_call_112_content_description)
+    val emergencyNumber = EmergencyNumberProvider.getEmergencyNumber(context)
+    val label = stringResource(R.string.design_call_112_button, emergencyNumber)
+    val cd = stringResource(R.string.design_call_112_content_description, emergencyNumber)
     Button(
         onClick = {
             try {
-                context.startActivity(Intent(Intent.ACTION_DIAL, Uri.parse("tel:112")))
+                context.startActivity(Intent(Intent.ACTION_DIAL, Uri.parse("tel:$emergencyNumber")))
             } catch (_: ActivityNotFoundException) {
                 // No dialer installed; nothing else to do.
             }

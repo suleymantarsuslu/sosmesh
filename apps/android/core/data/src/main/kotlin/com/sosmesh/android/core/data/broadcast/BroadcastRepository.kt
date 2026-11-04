@@ -22,7 +22,7 @@ class BroadcastRepository(
     suspend fun fetchAndProcessBroadcasts(currentLocation: Location?): List<ServerBroadcast> =
         withContext(Dispatchers.IO) {
             val lastFetch = store.getLastFetchTime() ?: Instant.now().minusSeconds(7 * 24 * 3600).toString()
-            val url = "$apiBaseUrl/device/broadcasts/active?since=$lastFetch"
+            val url = "$apiBaseUrl/v1/device/broadcasts/active?since=$lastFetch"
 
             val request = Request.Builder().url(url).build()
             val response = httpClient.newCall(request).execute()

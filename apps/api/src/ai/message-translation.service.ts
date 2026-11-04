@@ -49,6 +49,37 @@ export class MessageTranslationService {
   ) {}
 
   /**
+   * Translation fields for a stored transcript, in the shape TranscriptView expects.
+   * Skips the call when the transcript is already in the UI language; any failure yields nulls
+   * so the original transcript is always shown.
+   */
+  async getTranscriptTranslationFields(
+    transcriptId: string,
+    transcriptText: string,
+    transcriptLanguage: string | null,
+    targetLocale: OperatorLocale
+  ): Promise<{ translatedTranscript: string | null; translatedText: string | null; translationLanguage: string | null }> {
+    const none = { translatedTranscript: null, translatedText: null, translationLanguage: null };
+    if (transcriptLanguage === targetLocale) {
+      return none;
+    }
+    try {
+      const result = await this.translateTranscript(transcriptId, transcriptText, targetLocale);
+      if (!result) {
+        return none;
+      }
+      return {
+        translatedTranscript: result.translatedText,
+        translatedText: result.translatedText,
+        translationLanguage: targetLocale,
+      };
+    } catch (error) {
+      this.logger.warn({ msg: 'Transcript translation lookup failed', transcriptId, err: error });
+      return none;
+    }
+  }
+
+  /**
    * Translate incoming SOS message text to target locale
    * Returns null if AI unavailable or text doesn't need translation
    */

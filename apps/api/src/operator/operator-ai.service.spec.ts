@@ -2,7 +2,13 @@ import { OperatorAiService } from './operator-ai.service';
 import { LocaleContentService } from '../ai/locale-content.service';
 
 describe('OperatorAiService case AI views', () => {
-  function build(overrides: { analysis?: unknown; attachments?: unknown[]; suggestions?: unknown[] }) {
+  const noTranslation = { translatedTranscript: null, translatedText: null, translationLanguage: null };
+
+  function build(
+    overrides: { analysis?: unknown; attachments?: unknown[]; suggestions?: unknown[] },
+    translationFields: typeof noTranslation = noTranslation
+  ) {
+    const translation = { getTranscriptTranslationFields: jest.fn().mockResolvedValue(translationFields) };
     const prisma = {
       aiAnalysis: { findFirst: jest.fn().mockResolvedValue(overrides.analysis ?? null) },
       attachment: { findMany: jest.fn().mockResolvedValue(overrides.attachments ?? []) },
@@ -13,9 +19,10 @@ describe('OperatorAiService case AI views', () => {
       {} as never,
       {} as never,
       {} as never,
-      new LocaleContentService()
+      new LocaleContentService(),
+      translation as never
     );
-    return service;
+    return Object.assign(service, { translation });
   }
 
   const analysisRow = (status: string) => ({
@@ -74,6 +81,7 @@ describe('OperatorAiService case AI views', () => {
           id: 'audio-1',
           visionAnalysis: null,
           transcript: {
+            id: 'tr-1',
             model: 'muse-voice-transcribe-1.0',
             transcript: 'help',
             turns: [],
@@ -108,5 +116,38 @@ describe('OperatorAiService case AI views', () => {
   it('returns nulls when nothing was analysed yet', async () => {
     const bundle = await build({}).getCaseAiBundle('inc-1', 'tr');
     expect(bundle).toEqual({ triage: null, transcript: null, sparkVision: null, samVision: null, linkSuggestions: [] });
+  });
+
+  it('adds the machine translation of the transcript for the UI locale', async () => {
+    const service = build(
+      {
+        attachments: [
+          {
+            id: 'audio-1',
+            visionAnalysis: null,
+            transcript: {
+              id: 'tr-1',
+              model: 'm',
+              transcript: 'yardım edin',
+              turns: [],
+              language: 'tr',
+              audioDurationMs: 3000,
+              createdAt: new Date('2026-11-03T22:58:54.000Z'),
+            },
+          },
+        ],
+      },
+      { translatedTranscript: 'help us', translatedText: 'help us', translationLanguage: 'en' }
+    );
+
+    const bundle = await service.getCaseAiBundle('inc-1', 'en');
+
+    expect(service.translation.getTranscriptTranslationFields).toHaveBeenCalledWith('tr-1', 'yardım edin', 'tr', 'en');
+    expect(bundle.transcript).toMatchObject({
+      transcript: 'yardım edin',
+      translatedTranscript: 'help us',
+      translatedText: 'help us',
+      translationLanguage: 'en',
+    });
   });
 });

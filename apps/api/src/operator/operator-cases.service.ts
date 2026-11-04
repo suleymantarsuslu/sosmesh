@@ -262,17 +262,25 @@ export class OperatorCasesService {
       visionStatus: att.visionAnalysis ? 'completed' : null,
     }));
 
-    const transcripts: TranscriptView[] = attachments
-      .filter((a) => a.transcript)
-      .map((a) => ({
-        attachmentId: a.id,
-        model: a.transcript!.model,
-        transcript: a.transcript!.transcript,
-        turns: a.transcript!.turns as TranscriptView['turns'],
-        language: a.transcript!.language,
-        audioDurationMs: a.transcript!.audioDurationMs,
-        createdAt: a.transcript!.createdAt.toISOString(),
-      }));
+    const transcripts: TranscriptView[] = await Promise.all(
+      attachments
+        .filter((a) => a.transcript)
+        .map(async (a) => ({
+          attachmentId: a.id,
+          model: a.transcript!.model,
+          transcript: a.transcript!.transcript,
+          turns: a.transcript!.turns as TranscriptView['turns'],
+          language: a.transcript!.language,
+          audioDurationMs: a.transcript!.audioDurationMs,
+          createdAt: a.transcript!.createdAt.toISOString(),
+          ...(await this.messageTranslation.getTranscriptTranslationFields(
+            a.transcript!.id,
+            a.transcript!.transcript,
+            a.transcript!.language,
+            locale
+          )),
+        }))
+    );
 
     const originalText = message.noteText ?? message.operatorDisplayText;
     let translatedText: string | null = null;

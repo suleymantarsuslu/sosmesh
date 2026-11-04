@@ -28,6 +28,24 @@ class SosMeshApplication : Application(), Configuration.Provider {
         crashReporter.install()
         meshV2Runtime.install(filesDir)
         meshV2OutboxSync.start()
+        com.sosmesh.android.core.data.broadcast.BroadcastPoller.meshSink = { broadcast, nowMs ->
+            com.sosmesh.android.meshv2.v2.MeshV2Runtime.installed?.node?.broadcasts?.put(
+                com.sosmesh.android.meshv2.v2.ServerBroadcast(
+                    id = broadcast.id,
+                    title = broadcast.title,
+                    body = broadcast.body,
+                    severity = broadcast.severity,
+                    createdAt = broadcast.createdAt,
+                    expiresAt = broadcast.expiresAt,
+                    regionLat = broadcast.regionLat,
+                    regionLng = broadcast.regionLng,
+                    regionRadiusKm = broadcast.regionRadiusKm,
+                    signature = broadcast.signature,
+                    hopsLeft = 8,
+                ),
+                nowMs,
+            )
+        }
         com.sosmesh.android.core.data.broadcast.BroadcastFetchWorker.schedule(this)
         initializeFirebase()
     }

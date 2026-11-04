@@ -1,5 +1,4 @@
 import Foundation
-import UIKit
 
 public actor PushTokenManager {
     private let apiBaseUrl: String
@@ -8,9 +7,8 @@ public actor PushTokenManager {
         self.apiBaseUrl = apiBaseUrl
     }
 
-    public func registerToken(_ token: Data) async {
+    public func registerToken(_ token: Data, deviceId: String) async {
         let tokenString = token.map { String(format: "%02x", $0) }.joined()
-        let deviceId = await UIDevice.current.identifierForVendor?.uuidString ?? UUID().uuidString
 
         let payload: [String: String] = [
             "platform": "ios",

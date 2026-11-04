@@ -94,6 +94,7 @@ class RelayViewModelMainThreadRegressionTest {
                 batteryPolicy = policy,
                 outboxReader = RelayOutboxReader(db.outboxDao(), Dispatchers.IO),
                 systemConstraints = RelaySystemConstraints(context),
+                deliveryCounter = RelayDeliveryCounter(context),
             )
     }
 

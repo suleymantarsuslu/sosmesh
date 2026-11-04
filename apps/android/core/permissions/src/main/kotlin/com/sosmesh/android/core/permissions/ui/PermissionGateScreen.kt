@@ -28,6 +28,7 @@ import androidx.compose.ui.semantics.heading
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.platform.LocalContext
 import com.sosmesh.android.core.design.components.SosBadge
 import com.sosmesh.android.core.design.components.SosBadgeKind
 import com.sosmesh.android.core.design.components.SosCall112Button
@@ -36,6 +37,7 @@ import com.sosmesh.android.core.design.components.SosMeshLogo
 import com.sosmesh.android.core.design.components.SosNot112Banner
 import com.sosmesh.android.core.design.components.SosPrimaryButton
 import com.sosmesh.android.core.design.components.SosSecondaryButton
+import com.sosmesh.android.core.design.emergency.EmergencyNumberProvider
 import com.sosmesh.android.core.design.theme.SosIosColors
 import com.sosmesh.android.core.design.theme.SosSpacing
 import com.sosmesh.android.core.permissions.PermissionGateEvaluator
@@ -57,6 +59,8 @@ fun PermissionGateScreen(
     onCallEmergency: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
+    val context = LocalContext.current
+    val emergencyNumber = EmergencyNumberProvider.getEmergencyNumber(context)
     Column(
         modifier =
             modifier
@@ -77,7 +81,7 @@ fun PermissionGateScreen(
                     .testTag("permission_gate_title")
                     .semantics { heading() },
         )
-        SosNot112Banner(disclaimerText = stringResource(R.string.permission_disclaimer_not112))
+        SosNot112Banner(disclaimerText = stringResource(R.string.permission_disclaimer_not112, emergencyNumber))
         Text(
             text = stringResource(R.string.permission_gate_intro),
             style = MaterialTheme.typography.bodyMedium,

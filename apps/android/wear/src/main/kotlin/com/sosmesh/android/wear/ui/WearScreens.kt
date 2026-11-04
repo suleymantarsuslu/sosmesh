@@ -312,8 +312,10 @@ private fun DoneChip(onDone: () -> Unit) {
 
 @Composable
 private fun Not112Caption() {
+    val context = androidx.compose.ui.platform.LocalContext.current
+    val emergencyNumber = com.sosmesh.android.core.design.emergency.EmergencyNumberProvider.getEmergencyNumber(context)
     Text(
-        text = stringResource(R.string.not112),
+        text = stringResource(R.string.not112, emergencyNumber),
         style = MaterialTheme.typography.caption3,
         color = WearSosPalette.TextMuted,
         textAlign = TextAlign.Center,

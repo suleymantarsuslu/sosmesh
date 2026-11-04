@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <string name="permission_screen_title">İzinler ve güvenlik</string>
-    <string name="permission_disclaimer_not112">SOSMesh, 112\'nin yerine geçmez. Acil durumlarda 112\'yi arayın.</string>
+    <string name="permission_disclaimer_not112">SOSMesh, %1$s\'nin yerine geçmez. Acil durumlarda %1$s\'yi arayın.</string>
     <string name="permission_gate_title">Başlamadan önce izinler</string>
     <string name="permission_gate_intro">SOSMesh, internet olmadan yakındaki cihazlara SOS iletmek için Bluetooth ve (Android sürümünüze göre) bildirim izinlerine ihtiyaç duyar. Tüm zorunlu izinler verilmeden uygulama açılmaz.</string>
     <string name="permission_bluetooth_rationale">Bluetooth: SOSMesh, internet olmadan yakındaki cihazlara SOS iletmek için Bluetooth Low Energy kullanır. İzin vermezseniz mesh taraması başlatılamaz.</string>
@@ -14,7 +14,7 @@
     <string name="permission_location_services_off">Konum servisi kapalı. Bu Android sürümünde BLE taraması için konumu açın.</string>
     <string name="permission_enable_bluetooth_button">Bluetooth\'u aç</string>
     <string name="permission_enable_location_services_button">Konum servisini aç</string>
-    <string name="permission_call_112_button">112\'yi ara</string>
+    <string name="permission_call_112_button">%1$s\'yi ara</string>
     <string name="permission_gate_status_granted">Durum: verildi</string>
     <string name="permission_gate_status_missing">Durum: eksik</string>
     <string name="permission_request_button">İzni ver</string>

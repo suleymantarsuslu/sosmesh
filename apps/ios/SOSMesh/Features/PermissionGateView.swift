@@ -69,13 +69,14 @@ struct PermissionGateView: View {
     }
     
     private var disclaimerSection: some View {
+        let emergencyNumber = EmergencyNumberProvider.getEmergencyNumber()
         SOSCard {
             HStack(spacing: DesignSystem.Spacing.sm) {
                 Image(systemName: "info.circle.fill")
                     .font(.system(size: 20))
                     .foregroundStyle(DesignSystem.Colors.accentBlue)
                     .accessibilityHidden(true)
-                Text("onboarding.not112")
+                Text(String(format: NSLocalizedString("onboarding.not112", comment: ""), emergencyNumber, emergencyNumber))
                     .font(DesignSystem.Typography.subheadline)
                     .foregroundStyle(DesignSystem.Colors.textPrimary)
             }
@@ -95,10 +96,11 @@ struct PermissionGateView: View {
                 .accessibilityHint(Text("gate.action.open_settings.hint"))
             }
 
-            Link(destination: URL(string: "tel:112")!) {
+            let emergencyNumber = EmergencyNumberProvider.getEmergencyNumber()
+            Link(destination: EmergencyCall112Link.url) {
                 HStack(spacing: DesignSystem.Spacing.xs) {
                     Image(systemName: "phone.fill")
-                    Text("gate.action.call112")
+                    Text(String(format: NSLocalizedString("gate.action.call112", comment: ""), emergencyNumber))
                 }
                 .font(DesignSystem.Typography.headline)
                 .foregroundStyle(.white)
@@ -109,8 +111,8 @@ struct PermissionGateView: View {
                         .fill(DesignSystem.Colors.accentBlue)
                 )
             }
-            .accessibilityLabel(Text("gate.action.call112"))
-            .accessibilityHint(Text("gate.action.call112.hint"))
+            .accessibilityLabel(Text(String(format: NSLocalizedString("gate.action.call112", comment: ""), emergencyNumber)))
+            .accessibilityHint(Text(String(format: NSLocalizedString("gate.action.call112.hint", comment: ""), emergencyNumber)))
         }
     }
 

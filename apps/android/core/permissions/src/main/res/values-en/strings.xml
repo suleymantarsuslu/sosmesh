@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <string name="permission_disclaimer_not112">SOSMesh is not a replacement for 112. Always call 112 in emergencies.</string>
+    <string name="permission_disclaimer_not112">SOSMesh is not a replacement for %1$s. Always call %1$s in emergencies.</string>
     <string name="permission_gate_title">Permissions before you start</string>
     <string name="permission_gate_intro">SOSMesh needs Bluetooth and (on your Android version) notification permission to send SOS to nearby devices without internet. The app stays locked until all required permissions are granted.</string>
     <string name="permission_bluetooth_rationale">Bluetooth: SOSMesh uses Bluetooth Low Energy to share SOS messages with nearby devices without internet. Without this permission, mesh scan cannot start.</string>
@@ -13,7 +13,7 @@
     <string name="permission_location_services_off">Location services are off. Enable location for BLE scan on this Android version.</string>
     <string name="permission_enable_bluetooth_button">Turn on Bluetooth</string>
     <string name="permission_enable_location_services_button">Open location settings</string>
-    <string name="permission_call_112_button">Call 112</string>
+    <string name="permission_call_112_button">Call %1$s</string>
     <string name="permission_gate_status_granted">Status: granted</string>
     <string name="permission_gate_status_missing">Status: missing</string>
     <string name="permission_request_button">Grant permission</string>

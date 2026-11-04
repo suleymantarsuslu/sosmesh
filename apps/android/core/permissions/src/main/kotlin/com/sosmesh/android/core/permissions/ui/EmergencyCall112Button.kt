@@ -18,7 +18,8 @@ fun EmergencyCall112Button(
     testTag: String = "persistent_call_112_button",
 ) {
     val context = LocalContext.current
-    val label = stringResource(R.string.permission_call_112_button)
+    val emergencyNumber = com.sosmesh.android.core.design.emergency.EmergencyNumberProvider.getEmergencyNumber(context)
+    val label = stringResource(R.string.permission_call_112_button, emergencyNumber)
     Button(
         onClick = {
             try {

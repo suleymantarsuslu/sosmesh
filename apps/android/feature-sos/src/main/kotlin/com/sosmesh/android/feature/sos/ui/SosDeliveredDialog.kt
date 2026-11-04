@@ -27,6 +27,7 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
+import com.sosmesh.android.core.design.emergency.EmergencyNumberProvider
 import com.sosmesh.android.core.design.theme.SosSpacing
 import com.sosmesh.android.feature.sos.R
 
@@ -35,6 +36,7 @@ fun SosDeliveredDialog(
     onDismiss: () -> Unit,
 ) {
     val context = LocalContext.current
+    val emergencyNumber = EmergencyNumberProvider.getEmergencyNumber(context)
 
     Dialog(onDismissRequest = onDismiss) {
         Surface(
@@ -73,7 +75,7 @@ fun SosDeliveredDialog(
                 )
 
                 Text(
-                    text = stringResource(R.string.sos_delivered_modal_body),
+                    text = stringResource(R.string.sos_delivered_modal_body, emergencyNumber),
                     style = MaterialTheme.typography.bodyMedium,
                 )
 
@@ -90,7 +92,7 @@ fun SosDeliveredDialog(
                     onClick = {
                         val intent =
                             Intent(Intent.ACTION_DIAL).apply {
-                                data = android.net.Uri.parse("tel:112")
+                                data = android.net.Uri.parse("tel:$emergencyNumber")
                             }
                         context.startActivity(intent)
                     },
@@ -106,7 +108,7 @@ fun SosDeliveredDialog(
                         modifier = Modifier.size(20.dp),
                     )
                     Text(
-                        text = stringResource(R.string.sos_delivered_modal_action_call112),
+                        text = stringResource(R.string.sos_delivered_modal_action_call112, emergencyNumber),
                         modifier = Modifier.padding(start = SosSpacing.xs),
                     )
                 }

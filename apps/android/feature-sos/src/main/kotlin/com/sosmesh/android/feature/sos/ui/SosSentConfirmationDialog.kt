@@ -39,6 +39,7 @@ import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
+import com.sosmesh.android.core.design.emergency.EmergencyNumberProvider
 import com.sosmesh.android.core.design.theme.SosSpacing
 import com.sosmesh.android.feature.sos.R
 
@@ -49,6 +50,7 @@ fun SosSentConfirmationDialog(
     onNavigateToStatus: () -> Unit,
 ) {
     val context = LocalContext.current
+    val emergencyNumber = EmergencyNumberProvider.getEmergencyNumber(context)
     var isOnline by remember { mutableStateOf(false) }
 
     LaunchedEffect(Unit) {
@@ -139,7 +141,7 @@ fun SosSentConfirmationDialog(
                             tint = MaterialTheme.colorScheme.error,
                         )
                         Text(
-                            text = stringResource(R.string.sos_sent_not112),
+                            text = stringResource(R.string.sos_sent_not112, emergencyNumber),
                             style = MaterialTheme.typography.bodyMedium,
                         )
                     }
@@ -161,7 +163,7 @@ fun SosSentConfirmationDialog(
                     onClick = {
                         val intent =
                             Intent(Intent.ACTION_DIAL).apply {
-                                data = android.net.Uri.parse("tel:112")
+                                data = android.net.Uri.parse("tel:$emergencyNumber")
                             }
                         context.startActivity(intent)
                     },
@@ -176,7 +178,7 @@ fun SosSentConfirmationDialog(
                         contentDescription = null,
                         modifier = Modifier.size(20.dp),
                     )
-                    Text(text = "Call 112", modifier = Modifier.padding(start = SosSpacing.xs))
+                    Text(text = stringResource(R.string.sos_delivered_modal_action_call112, emergencyNumber), modifier = Modifier.padding(start = SosSpacing.xs))
                 }
             }
         }

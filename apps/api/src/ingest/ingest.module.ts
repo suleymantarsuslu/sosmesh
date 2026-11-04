@@ -23,6 +23,6 @@ import { ReceiptsLookupService } from '../mesh-v2/receipts-lookup.service';
     MeshV2IngestService,
     ReceiptsLookupService,
   ],
-  exports: [IngestService, IngestPacketService],
+  exports: [IngestService, IngestPacketService, IngestRateLimitService],
 })
 export class IngestModule {}

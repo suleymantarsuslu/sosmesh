@@ -31,6 +31,7 @@ import { ObservabilityModule } from './observability/observability.module';
 import { RecommendationModule } from './recommendation/recommendation.module';
 import { MediaModule } from './media/media.module';
 import { BroadcastModule } from './broadcast/broadcast.module';
+import { RelayModule } from './relay/relay.module';
 
 @Module({
   imports: [
@@ -88,6 +89,7 @@ import { BroadcastModule } from './broadcast/broadcast.module';
     RecommendationModule,
     MediaModule,
     BroadcastModule,
+    RelayModule,
   ],
   providers: [
     HttpExceptionFilter,

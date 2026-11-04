@@ -20,6 +20,7 @@ class RelayEnvelopeRegistrar
     constructor(
         private val outbox: OutboxQueueAdapter,
         private val uploadScheduler: RelayUploadCommands,
+        private val deliveryCounter: RelayDeliveryCounter,
     ) {
         /** Stores verbatim L2 v1 wire bytes for upload / forwarding (mesh-v2: the persisted part of the carry store). */
         suspend fun registerL2(
@@ -39,6 +40,7 @@ class RelayEnvelopeRegistrar
                         ),
                         nowMs,
                     )
+                    deliveryCounter.recordCarriedMessage(messageId)
                     uploadScheduler.scheduleUpload(nowMs)
                 }
                 Result.success(Unit)
@@ -70,6 +72,7 @@ class RelayEnvelopeRegistrar
                     ),
                     nowMs,
                 )
+                deliveryCounter.recordCarriedMessage(sosId)
                 uploadScheduler.scheduleUpload(nowMs)
                 Result.success(Unit)
             } catch (ex: Exception) {

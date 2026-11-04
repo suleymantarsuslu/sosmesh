@@ -37,6 +37,7 @@ final class AppModel: ObservableObject {
     let deliveredModalTracker = DeliveredModalTracker()
     let openCaseTracker = OpenCaseTracker()
     let relayCounter = RelayDeliveryCounter()
+    private var relayDeliveryStatusClient: RelayDeliveryStatusClient?
 
     /// Debug-only fault injection (not the default data path).
     #if DEBUG
@@ -295,6 +296,7 @@ final class AppModel: ObservableObject {
             await refreshPermissionGate()
             await attachmentCoordinator?.processQueue()
             await fetchAndNotifyBroadcasts()
+            await syncRelayDeliveryStatus()
         }
     }
 
@@ -522,8 +524,20 @@ final class AppModel: ObservableObject {
                 try? await Task.sleep(nanoseconds: 20_000_000_000)
                 if !Task.isCancelled {
                     await fetchAndNotifyBroadcasts()
+                    await syncRelayDeliveryStatus()
                 }
             }
+        }
+    }
+    
+    private func syncRelayDeliveryStatus() async {
+        guard let client = relayDeliveryStatusClient else { return }
+        let pending = relayCounter.getPendingCarriedIds()
+        guard !pending.isEmpty else { return }
+        
+        let delivered = await client.checkDeliveryStatus(messageIds: pending)
+        if !delivered.isEmpty {
+            relayCounter.markCarriedMessagesDelivered(delivered)
         }
     }
     
@@ -625,7 +639,8 @@ final class AppModel: ObservableObject {
             relayIdHex: config.relayIdHex,
             receiptKeySpkiBase64: config.receiptVerifyPublicKeySpkiBase64,
             directory: meshDirectory,
-            nowMs: nowMs
+            nowMs: nowMs,
+            relayDeliveryCounter: relayCounter
         )
         node.relayEnabled = relayEnabled
         
@@ -652,6 +667,7 @@ final class AppModel: ObservableObject {
         
         meshNode = node
         gatewayProbe = GatewayProbe(baseURL: config.baseURL)
+        relayDeliveryStatusClient = RelayDeliveryStatusClient(baseURL: config.baseURL)
         if let meshRadioFactory {
             meshRadio = meshRadioFactory(outbox, receivedInboxStore)
         } else {
@@ -701,7 +717,10 @@ extension AppModel {
     /// Runs only while relay mode is on; failures keep the entry queued for the next retry.
     func forwardReceivedEnvelopes() async {
         guard relayEnabled, let relayForwarder else { return }
-        await relayForwarder.forwardDue()
+        let summary = await relayForwarder.forwardDue()
+        if summary.accepted > 0 {
+            await syncRelayDeliveryStatus()
+        }
         receivedInbox = receivedInboxStore.list()
     }
 

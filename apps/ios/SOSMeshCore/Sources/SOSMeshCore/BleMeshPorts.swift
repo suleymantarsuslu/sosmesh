@@ -209,6 +209,12 @@ public final class BleIncomingPayloadRouter: BleTransferReceiver.Listener {
 
     private func receiveV2(payload: Data, node: MeshV2Node) {
         let now = nowMs()
+        
+        if let broadcastFrame = MeshV2Frame.decode(payload), case .broadcast(let broadcast) = broadcastFrame {
+            node.onBroadcastFrame(broadcast, nowMs: now)
+            return
+        }
+        
         let outcome = node.receive(payload: payload, nowMs: now)
         switch outcome {
         case .stored:

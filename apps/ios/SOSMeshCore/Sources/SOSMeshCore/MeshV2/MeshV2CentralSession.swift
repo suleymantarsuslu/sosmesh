@@ -18,7 +18,7 @@ public final class MeshV2CentralSession {
     }
 
     private enum Phase { case idle, awaitingReply, transferring, done }
-    private enum Item { case candidate(MeshV2Node.Candidate), tombstones(Data, [String]) }
+    private enum Item { case candidate(MeshV2Node.Candidate), tombstones(Data, [String]), broadcast(ServerBroadcast) }
 
     private let node: MeshV2Node
     public let peerId: String
@@ -124,6 +124,9 @@ public final class MeshV2CentralSession {
         queue = []
         if let batch = node.tombstoneBatch(for: peerId, nowMs: nowMs) { queue.append(.tombstones(batch.payload, batch.ids)) }
         queue += wanted.map { .candidate($0) }
+        if let broadcast = node.takeBroadcastFor(peerId: peerId, nowMs: nowMs) {
+            queue.append(.broadcast(broadcast))
+        }
         phase = .transferring
         return actions + next(nowMs: nowMs)
     }
@@ -139,6 +142,9 @@ public final class MeshV2CentralSession {
             return [.transfer(sosId: c.trackerSosId, digest: c.trackerDigest, payload: c.payload)]
         case .tombstones(let payload, _):
             return [.transfer(sosId: MeshV2Node.tombstoneBatchSosId, digest: "tombstones", payload: payload)]
+        case .broadcast(let b):
+            guard let payload = MeshV2Frame.broadcast(b).encode() else { return next(nowMs: nowMs) }
+            return [.transfer(sosId: "broadcast-\(b.id)", digest: "", payload: payload)]
         }
     }
 

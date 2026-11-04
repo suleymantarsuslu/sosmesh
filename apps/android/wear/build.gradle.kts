@@ -1,6 +1,8 @@
 plugins {
     id("com.android.application")
     id("org.jetbrains.kotlin.android")
+    id("com.google.dagger.hilt.android")
+    kotlin("kapt")
 }
 
 android {
@@ -63,10 +65,38 @@ android {
 
     buildFeatures {
         compose = true
+        buildConfig = true
     }
 
     composeOptions {
         kotlinCompilerExtensionVersion = "1.5.8"
+    }
+
+    flavorDimensions += "environment"
+    productFlavors {
+        create("demo") {
+            dimension = "environment"
+            applicationIdSuffix = ".demo"
+            versionNameSuffix = "-demo"
+            buildConfigField("String", "SOSMESH_ENV", "\"demo\"")
+            buildConfigField("String", "INGEST_BASE_URL", "\"https://api.demo.sosmesh.local\"")
+            buildConfigField("String", "BROADCAST_PUBLIC_KEY", "\"MCowBQYDK2VwAyEAJgWsM1ZMJK9D9uPkDS/08DL/sOHrBlcCS/ETcKQ2OEs=\"")
+        }
+        create("staging") {
+            dimension = "environment"
+            applicationIdSuffix = ".staging"
+            versionNameSuffix = "-staging"
+            buildConfigField("String", "SOSMESH_ENV", "\"staging\"")
+            buildConfigField("String", "INGEST_BASE_URL", "\"https://sosmesh.antiosoft.com\"")
+            buildConfigField("String", "BROADCAST_PUBLIC_KEY", "\"MCowBQYDK2VwAyEAJgWsM1ZMJK9D9uPkDS/08DL/sOHrBlcCS/ETcKQ2OEs=\"")
+        }
+        create("prod") {
+            dimension = "environment"
+            isDefault = true
+            buildConfigField("String", "SOSMESH_ENV", "\"prod\"")
+            buildConfigField("String", "INGEST_BASE_URL", "\"https://sosmesh.antiosoft.com\"")
+            buildConfigField("String", "BROADCAST_PUBLIC_KEY", "\"MCowBQYDK2VwAyEAJgWsM1ZMJK9D9uPkDS/08DL/sOHrBlcCS/ETcKQ2OEs=\"")
+        }
     }
 
     lint {
@@ -80,6 +110,7 @@ android {
 }
 
 dependencies {
+    implementation(project(":contracts-kotlin"))
     implementation(project(":core:design"))
     implementation(project(":core:wear-companion"))
     implementation(project(":core:ble"))
@@ -87,8 +118,13 @@ dependencies {
     implementation(project(":core:permissions"))
     implementation(project(":core:data"))
     implementation(project(":core:model"))
+    implementation(project(":core:platform"))
     implementation(project(":mesh-v2"))
-    implementation(project(":contracts-kotlin"))
+
+    implementation("com.google.dagger:hilt-android:2.50")
+    kapt("com.google.dagger:hilt-compiler:2.50")
+    implementation("androidx.hilt:hilt-work:1.1.0")
+    kapt("androidx.hilt:hilt-compiler:1.1.0")
 
     implementation("androidx.core:core-splashscreen:1.0.1")
 

@@ -62,26 +62,24 @@ class SosPeerDeliveryOrchestrator
         private val attemptedPeers = mutableMapOf<String, MutableSet<String>>()
 
         init {
-            peerDeliveryTracker.setCompletionCallback { sosId, peerId, success ->
+            peerDeliveryTracker.setCompletionCallback { sosId, digest, peerId, success ->
                 if (success && peerId != null) {
                     CoroutineScope(ioDispatcher).launch {
                         val allPeers = getAllDiscoveredPeerIds()
                         val delivered = peerRecordStore.getDeliveredPeers(sosId)
                         val remaining = allPeers - delivered
+                        
+                        if (delivered.size == 1) {
+                            outbox.updateState(sosId, digest, "PEER_RECEIVED", System.currentTimeMillis(), null)
+                        }
+                        
                         if (remaining.isEmpty() && allPeers.isNotEmpty()) {
-                            val entry = outbox.getByKey(sosId, peerDeliveryTracker.active?.digest ?: "")
-                            if (entry != null) {
-                                peerDeliveryTracker.markPeerReceivedIfAllDelivered(
-                                    sosId,
-                                    entry.digest,
-                                    allPeers,
-                                    System.currentTimeMillis(),
-                                )
-                            }
+                            peerRecordStore.clearMessageRecords(sosId)
+                            outbox.setRetryAt(sosId, digest, Long.MAX_VALUE, null)
                         } else if (remaining.isNotEmpty()) {
-                            val entry = outbox.getByKey(sosId, peerDeliveryTracker.active?.digest ?: "")
-                            if (entry != null && entry.state == "LOCAL_SAVED") {
-                                outbox.setRetryAt(sosId, entry.digest, System.currentTimeMillis() + 500L, "continue_fanout")
+                            val entry = outbox.getByKey(sosId, digest)
+                            if (entry != null) {
+                                outbox.setRetryAt(sosId, digest, System.currentTimeMillis() + 500L, "continue_fanout")
                             }
                         }
                     }
@@ -129,6 +127,8 @@ class SosPeerDeliveryOrchestrator
             radio.tickGattReconnect()
             var status = radio.refreshStatus()
             val triedForThisMessage = attemptedPeers.getOrPut(due.sosId) { mutableSetOf() }
+            val deliveredPeers = peerRecordStore.getDeliveredPeers(due.sosId)
+            val excludePeers = triedForThisMessage + deliveredPeers
             if (status.gattState != GattUiConnectionState.READY) {
                 if (status.peerCount == 0 && radio.peerHops().isEmpty()) {
                     scheduleRetry(due, nowMs + 5_000L, "no_peer")
@@ -137,7 +137,7 @@ class SosPeerDeliveryOrchestrator
                 if (status.gattState == GattUiConnectionState.NONE ||
                     status.gattState == GattUiConnectionState.BACKOFF
                 ) {
-                    radio.connectBestPeer(triedForThisMessage).onFailure { error ->
+                    radio.connectBestPeer(excludePeers).onFailure { error ->
                         scheduleRetry(due, nowMs + 5_000L, error.message ?: "connect_failed")
                         return mapRadioFailure(error, due, nowMs)
                     }

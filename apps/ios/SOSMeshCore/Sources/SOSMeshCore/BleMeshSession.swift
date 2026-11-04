@@ -52,7 +52,9 @@ public final class BleMeshSession {
     private func nextDueOwnEntry() throws -> OutboxEntryMeta? {
         let now = nowMs()
         return try outbox.listEntries().first {
-            $0.state == "LOCAL_SAVED" && $0.origin != SosOutboxService.relayOrigin && $0.retryAtMs <= now
+            ($0.state == "LOCAL_SAVED" || $0.state == "PEER_RECEIVED") && 
+            $0.origin != SosOutboxService.relayOrigin && 
+            $0.retryAtMs <= now
         }
     }
 

@@ -38,7 +38,7 @@ public final class SosPeerDeliveryTracker {
     /// Mesh v2 session hook: the active transfer ended (true = peer VERIFIED it).
     public var onActiveFinished: ((ActiveTransfer, Bool) -> Void)?
     /// Fan-out callback: invoked after each peer transfer completes (success or failure).
-    public var onTransferComplete: ((String, String?, Bool) -> Void)?
+    public var onTransferComplete: ((String, String, String?, Bool) -> Void)?
     private let outbox: OutboxQueueUpdating
     private let nowMs: () -> Int64
     private var senderListenerRetention: TrackerListener?
@@ -63,7 +63,7 @@ public final class SosPeerDeliveryTracker {
 
         func onCompleted() {
             guard let tracker, let ctx = tracker.active else { return }
-            tracker.onTransferComplete?(ctx.sosId, ctx.peerId, true)
+            tracker.onTransferComplete?(ctx.sosId, ctx.digest, ctx.peerId, true)
             tracker.active = nil
             tracker.onPeerAckCompleted?()
             tracker.onActiveFinished?(ctx, true)
@@ -71,7 +71,7 @@ public final class SosPeerDeliveryTracker {
 
         func onFailed(code: BleTransferErrorCode, message: String) {
             guard let tracker, let ctx = tracker.active else { return }
-            tracker.onTransferComplete?(ctx.sosId, ctx.peerId, false)
+            tracker.onTransferComplete?(ctx.sosId, ctx.digest, ctx.peerId, false)
             try? tracker.outbox.setRetryAt(
                 sosId: ctx.sosId,
                 digest: ctx.digest,

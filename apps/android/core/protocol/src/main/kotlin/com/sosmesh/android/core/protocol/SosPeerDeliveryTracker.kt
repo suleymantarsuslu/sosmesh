@@ -26,9 +26,9 @@ class SosPeerDeliveryTracker
         @Volatile
         var active: ActiveTransfer? = null
 
-        private var completionCallback: ((String, String?, Boolean) -> Unit)? = null
+        private var completionCallback: ((String, String, String?, Boolean) -> Unit)? = null
 
-        fun setCompletionCallback(callback: (sosId: String, peerId: String?, success: Boolean) -> Unit) {
+        fun setCompletionCallback(callback: (sosId: String, digest: String, peerId: String?, success: Boolean) -> Unit) {
             completionCallback = callback
         }
 
@@ -41,7 +41,7 @@ class SosPeerDeliveryTracker
                             if (ctx.peerId != null) {
                                 peerRecordStore.recordDelivery(ctx.sosId, ctx.peerId)
                             }
-                            completionCallback?.invoke(ctx.sosId, ctx.peerId, true)
+                            completionCallback?.invoke(ctx.sosId, ctx.digest, ctx.peerId, true)
                         }
                         active = null
                     }
@@ -52,7 +52,7 @@ class SosPeerDeliveryTracker
                     ) {
                         val ctx = active ?: return
                         outboxIoScope.launchOutboxWork {
-                            completionCallback?.invoke(ctx.sosId, ctx.peerId, false)
+                            completionCallback?.invoke(ctx.sosId, ctx.digest, ctx.peerId, false)
                             outbox.setRetryAt(
                                 ctx.sosId,
                                 ctx.digest,

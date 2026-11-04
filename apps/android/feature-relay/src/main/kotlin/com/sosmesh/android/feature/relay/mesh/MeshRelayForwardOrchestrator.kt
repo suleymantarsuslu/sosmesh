@@ -166,7 +166,7 @@ class MeshRelayForwardOrchestrator
             if (v2Peer && engine.senderState() == TransferState.IDLE) {
                 val broadcast = meshV2.takeBroadcastFor(peerId, nowMs)
                 if (broadcast != null) {
-                    val broadcastBytes = MeshV2Wire.encodeBroadcast(broadcast)
+                    val broadcastBytes = com.sosmesh.android.meshv2.v2.MeshV2FrameCodec.encodeBroadcast(broadcast)
                     engine.sendOpaqueForward(broadcastBytes)
                 }
             }

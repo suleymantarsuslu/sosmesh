@@ -32,9 +32,9 @@ class RelayTransferHandler
                 val nowMs = System.currentTimeMillis()
                 if (meshV2.onTransferPayloadTombstones(payload, nowMs)) return@launchOutboxWork
                 
-                val broadcastFrame = MeshV2Wire.decode(payload) as? MeshV2Wire.MeshV2Frame.Broadcast
-                if (broadcastFrame != null) {
-                    meshV2.node.onBroadcastFrame(broadcastFrame.broadcast, nowMs)
+                val decoded = com.sosmesh.android.meshv2.v2.MeshV2FrameCodec.decode(payload)
+                if (decoded is com.sosmesh.android.meshv2.v2.MeshV2Frame.Broadcast) {
+                    meshV2.node.onBroadcastFrame(decoded.broadcast, nowMs)
                     return@launchOutboxWork
                 }
                 

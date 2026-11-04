@@ -1,7 +1,7 @@
 import Foundation
 import SOSMeshContracts
 
-public enum MeshV2DropReason: String, Equatable {
+public enum MeshV2DropReason: String, Error, Equatable {
     case invalidEnvelope = "INVALID_ENVELOPE"
     case timeExpired = "TIME_EXPIRED"
     case maxHops = "MAX_HOPS"

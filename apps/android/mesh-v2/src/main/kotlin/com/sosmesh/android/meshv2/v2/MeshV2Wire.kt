@@ -295,7 +295,6 @@ object MeshV2FrameCodec {
                 title = title,
                 body = body,
                 severity = severity,
-                kind = "standard",
                 createdAt = createdAt,
                 expiresAt = expiresAt,
                 regionLat = regionLat,

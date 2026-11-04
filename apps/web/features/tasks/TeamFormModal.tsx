@@ -2,6 +2,7 @@
 
 import { useState, FormEvent } from 'react';
 import { useRouter } from 'next/navigation';
+import { OpsModal } from '../ops/OpsModal';
 import { useOperatorPreferences } from '../../components/operator/OperatorPreferencesProvider';
 import type { TeamRow } from './TeamsView';
 
@@ -14,13 +15,7 @@ type TeamFormData = {
   zoneCode: string;
 };
 
-export function TeamFormModal({
-  team,
-  onClose,
-}: {
-  team: TeamRow | null;
-  onClose: () => void;
-}) {
+export function TeamFormModal({ team, onClose }: { team: TeamRow | null; onClose: () => void }) {
   const { t } = useOperatorPreferences();
   const router = useRouter();
   const [formData, setFormData] = useState<TeamFormData>({
@@ -55,7 +50,7 @@ export function TeamFormModal({
     setSubmitError(null);
 
     try {
-      const url = team ? `/v1/operator/teams/${team.id}` : '/v1/operator/teams';
+      const url = team ? `/api/operator/teams/${team.id}` : '/api/operator/teams';
       const method = team ? 'PATCH' : 'POST';
       const payload: Record<string, unknown> = {
         name: formData.name,
@@ -94,127 +89,118 @@ export function TeamFormModal({
   };
 
   return (
-    <div className="modal-overlay" onClick={onClose} role="dialog" aria-modal="true">
-      <div className="modal-content" onClick={(e) => e.stopPropagation()}>
-        <header className="modal-header">
-          <h2>{team ? t('web.teams.editTeamTitle') : t('web.teams.createTeamTitle')}</h2>
-          <button
-            type="button"
-            className="modal-close"
-            onClick={onClose}
-            aria-label={t('common.close')}
-          >
-            ×
-          </button>
-        </header>
-        <form onSubmit={handleSubmit} className="modal-form">
-          <div className="form-field">
-            <label htmlFor="team-name">
-              {t('web.teams.teamName')} <span aria-label="required">*</span>
-            </label>
-            <input
-              id="team-name"
-              type="text"
-              value={formData.name}
-              onChange={(e) => handleChange('name', e.target.value)}
-              aria-invalid={!!errors.name}
-              aria-describedby={errors.name ? 'team-name-error' : undefined}
-              required
-            />
-            {errors.name && (
-              <span id="team-name-error" className="form-error" role="alert">
-                {errors.name}
-              </span>
-            )}
-          </div>
-
-          <div className="form-field">
-            <label htmlFor="team-type">{t('web.teams.teamType')}</label>
-            <select
-              id="team-type"
-              value={formData.type}
-              onChange={(e) => handleChange('type', e.target.value)}
-            >
-              <option value="GENERAL">{t('web.teams.typeGeneral')}</option>
-              <option value="MEDICAL">{t('web.teams.typeMedical')}</option>
-              <option value="SEARCH_RESCUE">{t('web.teams.typeSearchRescue')}</option>
-              <option value="FIRE">{t('web.teams.typeFire')}</option>
-              <option value="POLICE">{t('web.teams.typePolice')}</option>
-              <option value="TECHNICAL">{t('web.teams.typeTechnical')}</option>
-              <option value="LOGISTICS">{t('web.teams.typeLogistics')}</option>
-            </select>
-          </div>
-
-          <div className="form-field">
-            <label htmlFor="team-capacity">{t('web.teams.teamCapacity')}</label>
-            <input
-              id="team-capacity"
-              type="number"
-              min="1"
-              max="1000"
-              value={formData.capacity}
-              onChange={(e) => handleChange('capacity', e.target.value)}
-            />
-          </div>
-
-          <div className="form-field">
-            <label htmlFor="team-contact">{t('web.teams.teamContact')}</label>
-            <input
-              id="team-contact"
-              type="text"
-              value={formData.contactInfo}
-              onChange={(e) => handleChange('contactInfo', e.target.value)}
-            />
-          </div>
-
-          <div className="form-field">
-            <label htmlFor="team-status">
-              {t('web.teams.teamStatus')} <span aria-label="required">*</span>
-            </label>
-            <select
-              id="team-status"
-              value={formData.status}
-              onChange={(e) => handleChange('status', e.target.value)}
-              aria-invalid={!!errors.status}
-              required
-            >
-              <option value="ACTIVE">{t('web.teams.statusActive')}</option>
-              <option value="STANDBY">{t('web.teams.statusStandby')}</option>
-              <option value="OFF_DUTY">{t('web.teams.statusOffDuty')}</option>
-            </select>
-            {errors.status && (
-              <span className="form-error" role="alert">
-                {errors.status}
-              </span>
-            )}
-          </div>
-
-          <div className="form-field">
-            <label htmlFor="team-zone">{t('web.teams.teamZone')}</label>
-            <input
-              id="team-zone"
-              type="text"
-              value={formData.zoneCode}
-              onChange={(e) => handleChange('zoneCode', e.target.value)}
-            />
-          </div>
-
-          {submitError && (
-            <div className="form-error" role="alert">
-              {submitError}
-            </div>
+    <OpsModal
+      title={team ? t('web.teams.editTeamTitle') : t('web.teams.createTeamTitle')}
+      icon="users"
+      onClose={onClose}
+    >
+      <form onSubmit={handleSubmit} className="modal-form">
+        <div className="form-field">
+          <label htmlFor="team-name">
+            {t('web.teams.teamName')} <span aria-label={t('web.teams.required')}>*</span>
+          </label>
+          <input
+            id="team-name"
+            type="text"
+            value={formData.name}
+            onChange={(e) => handleChange('name', e.target.value)}
+            aria-invalid={!!errors.name}
+            aria-describedby={errors.name ? 'team-name-error' : undefined}
+            required
+          />
+          {errors.name && (
+            <span id="team-name-error" className="form-error" role="alert">
+              {errors.name}
+            </span>
           )}
+        </div>
 
-          <div className="modal-actions">
-            <button type="button" onClick={onClose} className="button button--secondary">
-              {t('common.cancel')}
-            </button>
-            <button type="submit" className="button button--primary" disabled={submitting}>
-              {submitting ? t('common.loading') : t('common.save')}
-            </button>
+        <div className="form-field">
+          <label htmlFor="team-type">{t('web.teams.teamType')}</label>
+          <select
+            id="team-type"
+            value={formData.type}
+            onChange={(e) => handleChange('type', e.target.value)}
+          >
+            <option value="GENERAL">{t('web.teams.typeGeneral')}</option>
+            <option value="MEDICAL">{t('web.teams.typeMedical')}</option>
+            <option value="SEARCH_RESCUE">{t('web.teams.typeSearchRescue')}</option>
+            <option value="FIRE">{t('web.teams.typeFire')}</option>
+            <option value="POLICE">{t('web.teams.typePolice')}</option>
+            <option value="TECHNICAL">{t('web.teams.typeTechnical')}</option>
+            <option value="LOGISTICS">{t('web.teams.typeLogistics')}</option>
+          </select>
+        </div>
+
+        <div className="form-field">
+          <label htmlFor="team-capacity">{t('web.teams.teamCapacity')}</label>
+          <input
+            id="team-capacity"
+            type="number"
+            min="1"
+            max="1000"
+            value={formData.capacity}
+            onChange={(e) => handleChange('capacity', e.target.value)}
+          />
+        </div>
+
+        <div className="form-field">
+          <label htmlFor="team-contact">{t('web.teams.teamContact')}</label>
+          <input
+            id="team-contact"
+            type="text"
+            value={formData.contactInfo}
+            onChange={(e) => handleChange('contactInfo', e.target.value)}
+          />
+        </div>
+
+        <div className="form-field">
+          <label htmlFor="team-status">
+            {t('web.teams.teamStatus')} <span aria-label={t('web.teams.required')}>*</span>
+          </label>
+          <select
+            id="team-status"
+            value={formData.status}
+            onChange={(e) => handleChange('status', e.target.value)}
+            aria-invalid={!!errors.status}
+            required
+          >
+            <option value="ACTIVE">{t('web.teams.statusActive')}</option>
+            <option value="STANDBY">{t('web.teams.statusStandby')}</option>
+            <option value="OFF_DUTY">{t('web.teams.statusOffDuty')}</option>
+          </select>
+          {errors.status && (
+            <span className="form-error" role="alert">
+              {errors.status}
+            </span>
+          )}
+        </div>
+
+        <div className="form-field">
+          <label htmlFor="team-zone">{t('web.teams.teamZone')}</label>
+          <input
+            id="team-zone"
+            type="text"
+            value={formData.zoneCode}
+            onChange={(e) => handleChange('zoneCode', e.target.value)}
+          />
+        </div>
+
+        {submitError && (
+          <div className="form-error" role="alert">
+            {submitError}
           </div>
-        </form>
-      </div>
-    </div>
+        )}
+
+        <div className="modal-actions">
+          <button type="button" onClick={onClose} className="cd2-btn">
+            {t('common.cancel')}
+          </button>
+          <button type="submit" className="cd2-btn cd2-btn--primary" disabled={submitting}>
+            {submitting ? t('common.loading') : t('common.save')}
+          </button>
+        </div>
+      </form>
+    </OpsModal>
   );
 }

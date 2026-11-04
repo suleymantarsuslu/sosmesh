@@ -1,5 +1,7 @@
 'use client';
 
+import type { ReactNode } from 'react';
+
 import { useOperatorPreferences } from '../operator/OperatorPreferencesProvider';
 
 type TimelineEntry = {
@@ -14,7 +16,7 @@ type Props = {
   emptyMessage?: string;
 };
 
-function formatRelativeTime(dateStr: string, locale: string): string {
+export function formatRelativeTime(dateStr: string, locale: string): string {
   const date = new Date(dateStr);
   const now = new Date();
   const diffMs = now.getTime() - date.getTime();
@@ -94,6 +96,64 @@ export function Timeline({ entries, emptyMessage }: Props) {
           </li>
         );
       })}
+    </ol>
+  );
+}
+
+export type TimelineFeedItem = {
+  id: string;
+  title: string;
+  description?: ReactNode;
+  meta?: ReactNode;
+  createdAt: string;
+  color?: string;
+  icon?: ReactNode;
+};
+
+/** Generic feed that shares the Timeline markup/styles (marker, title, source, relative time). */
+export function TimelineFeed({
+  items,
+  emptyMessage,
+  testId = 'timeline-feed',
+}: {
+  items: TimelineFeedItem[];
+  emptyMessage?: string;
+  testId?: string;
+}) {
+  const { t, locale } = useOperatorPreferences();
+  const dateLocale = locale === 'tr' ? 'tr-TR' : 'en-GB';
+
+  if (items.length === 0) {
+    return <p className="timeline__empty">{emptyMessage || t('web.timeline.empty')}</p>;
+  }
+
+  return (
+    <ol className="timeline timeline--feed" data-testid={testId}>
+      {items.map((item, index) => (
+        <li
+          key={item.id}
+          className={`timeline__item ${index === items.length - 1 ? 'timeline__item--last' : ''}`}
+        >
+          <div
+            className="timeline__marker timeline__marker--icon"
+            style={{ backgroundColor: item.color ?? 'var(--color-text-secondary, #6b7280)' }}
+          >
+            {item.icon}
+          </div>
+          <div className="timeline__content">
+            <div className="timeline__title">{item.title}</div>
+            {item.description ? <div className="timeline__source">{item.description}</div> : null}
+            {item.meta ? <div className="timeline__source">{item.meta}</div> : null}
+            <time
+              className="timeline__time"
+              dateTime={item.createdAt}
+              title={new Date(item.createdAt).toLocaleString(dateLocale)}
+            >
+              {formatRelativeTime(item.createdAt, locale)}
+            </time>
+          </div>
+        </li>
+      ))}
     </ol>
   );
 }

@@ -2,6 +2,7 @@
 
 import { useState, FormEvent } from 'react';
 import { useRouter } from 'next/navigation';
+import { OpsModal } from '../ops/OpsModal';
 import { useOperatorPreferences } from '../../components/operator/OperatorPreferencesProvider';
 import type { ResourceRow, TeamRow } from './TeamsView';
 
@@ -34,8 +35,8 @@ export function ResourceFormModal({
     zoneCode: resource?.zoneCode ?? '',
     teamId: resource?.teamId ?? '',
     isActive: resource?.isActive ?? true,
-    availableFrom: resource?.availableFrom ?? '',
-    availableUntil: resource?.availableUntil ?? '',
+    availableFrom: resource?.availableFrom?.slice(0, 16) ?? '',
+    availableUntil: resource?.availableUntil?.slice(0, 16) ?? '',
   });
   const [errors, setErrors] = useState<Partial<Record<keyof ResourceFormData, string>>>({});
   const [submitting, setSubmitting] = useState(false);
@@ -64,7 +65,7 @@ export function ResourceFormModal({
     setSubmitError(null);
 
     try {
-      const url = resource ? `/v1/operator/resources/${resource.id}` : '/v1/operator/resources';
+      const url = resource ? `/api/operator/resources/${resource.id}` : '/api/operator/resources';
       const method = resource ? 'PATCH' : 'POST';
       const payload: Record<string, unknown> = {
         name: formData.name,
@@ -105,159 +106,148 @@ export function ResourceFormModal({
   };
 
   return (
-    <div className="modal-overlay" onClick={onClose} role="dialog" aria-modal="true">
-      <div className="modal-content" onClick={(e) => e.stopPropagation()}>
-        <header className="modal-header">
-          <h2>
-            {resource ? t('web.teams.editResourceTitle') : t('web.teams.createResourceTitle')}
-          </h2>
-          <button
-            type="button"
-            className="modal-close"
-            onClick={onClose}
-            aria-label={t('common.close')}
-          >
-            ×
-          </button>
-        </header>
-        <form onSubmit={handleSubmit} className="modal-form">
-          <div className="form-field">
-            <label htmlFor="resource-name">
-              {t('web.teams.resourceName')} <span aria-label="required">*</span>
-            </label>
-            <input
-              id="resource-name"
-              type="text"
-              value={formData.name}
-              onChange={(e) => handleChange('name', e.target.value)}
-              aria-invalid={!!errors.name}
-              aria-describedby={errors.name ? 'resource-name-error' : undefined}
-              required
-            />
-            {errors.name && (
-              <span id="resource-name-error" className="form-error" role="alert">
-                {errors.name}
-              </span>
-            )}
-          </div>
-
-          <div className="form-field">
-            <label htmlFor="resource-kind">
-              {t('web.teams.resourceKind')} <span aria-label="required">*</span>
-            </label>
-            <select
-              id="resource-kind"
-              value={formData.kind}
-              onChange={(e) => handleChange('kind', e.target.value)}
-              aria-invalid={!!errors.kind}
-              required
-            >
-              <option value="FIELD_TEAM">{t('web.teams.kindFieldTeam')}</option>
-              <option value="VEHICLE">{t('web.teams.kindVehicle')}</option>
-              <option value="EQUIPMENT">{t('web.teams.kindEquipment')}</option>
-              <option value="SHELTER">{t('web.teams.kindShelter')}</option>
-            </select>
-            {errors.kind && (
-              <span className="form-error" role="alert">
-                {errors.kind}
-              </span>
-            )}
-          </div>
-
-          <div className="form-field">
-            <label htmlFor="resource-capacity">
-              {t('web.teams.resourceCapacity')} <span aria-label="required">*</span>
-            </label>
-            <input
-              id="resource-capacity"
-              type="number"
-              min="1"
-              max="1000"
-              value={formData.capacity}
-              onChange={(e) => handleChange('capacity', e.target.value)}
-              aria-invalid={!!errors.capacity}
-              required
-            />
-            {errors.capacity && (
-              <span className="form-error" role="alert">
-                {errors.capacity}
-              </span>
-            )}
-          </div>
-
-          <div className="form-field">
-            <label htmlFor="resource-zone">{t('web.teams.resourceZone')}</label>
-            <input
-              id="resource-zone"
-              type="text"
-              value={formData.zoneCode}
-              onChange={(e) => handleChange('zoneCode', e.target.value)}
-            />
-          </div>
-
-          <div className="form-field">
-            <label htmlFor="resource-team">{t('web.teams.resourceTeam')}</label>
-            <select
-              id="resource-team"
-              value={formData.teamId}
-              onChange={(e) => handleChange('teamId', e.target.value)}
-            >
-              <option value="">{t('web.teams.noTeamAssignment')}</option>
-              {teams.map((team) => (
-                <option key={team.id} value={team.id}>
-                  {team.name}
-                </option>
-              ))}
-            </select>
-          </div>
-
-          <div className="form-field">
-            <label>
-              <input
-                type="checkbox"
-                checked={formData.isActive}
-                onChange={(e) => handleChange('isActive', e.target.checked)}
-              />
-              {t('web.teams.statusActive')}
-            </label>
-          </div>
-
-          <div className="form-field">
-            <label htmlFor="resource-from">{t('web.teams.resourceAvailableFrom')}</label>
-            <input
-              id="resource-from"
-              type="datetime-local"
-              value={formData.availableFrom}
-              onChange={(e) => handleChange('availableFrom', e.target.value)}
-            />
-          </div>
-
-          <div className="form-field">
-            <label htmlFor="resource-until">{t('web.teams.resourceAvailableUntil')}</label>
-            <input
-              id="resource-until"
-              type="datetime-local"
-              value={formData.availableUntil}
-              onChange={(e) => handleChange('availableUntil', e.target.value)}
-            />
-          </div>
-
-          {submitError && (
-            <div className="form-error" role="alert">
-              {submitError}
-            </div>
+    <OpsModal
+      title={resource ? t('web.teams.editResourceTitle') : t('web.teams.createResourceTitle')}
+      icon="box"
+      onClose={onClose}
+    >
+      <form onSubmit={handleSubmit} className="modal-form">
+        <div className="form-field">
+          <label htmlFor="resource-name">
+            {t('web.teams.resourceName')} <span aria-label={t('web.teams.required')}>*</span>
+          </label>
+          <input
+            id="resource-name"
+            type="text"
+            value={formData.name}
+            onChange={(e) => handleChange('name', e.target.value)}
+            aria-invalid={!!errors.name}
+            aria-describedby={errors.name ? 'resource-name-error' : undefined}
+            required
+          />
+          {errors.name && (
+            <span id="resource-name-error" className="form-error" role="alert">
+              {errors.name}
+            </span>
           )}
+        </div>
 
-          <div className="modal-actions">
-            <button type="button" onClick={onClose} className="button button--secondary">
-              {t('common.cancel')}
-            </button>
-            <button type="submit" className="button button--primary" disabled={submitting}>
-              {submitting ? t('common.loading') : t('common.save')}
-            </button>
+        <div className="form-field">
+          <label htmlFor="resource-kind">
+            {t('web.teams.resourceKind')} <span aria-label={t('web.teams.required')}>*</span>
+          </label>
+          <select
+            id="resource-kind"
+            value={formData.kind}
+            onChange={(e) => handleChange('kind', e.target.value)}
+            aria-invalid={!!errors.kind}
+            required
+          >
+            <option value="FIELD_TEAM">{t('web.teams.kindFieldTeam')}</option>
+            <option value="VEHICLE">{t('web.teams.kindVehicle')}</option>
+            <option value="EQUIPMENT">{t('web.teams.kindEquipment')}</option>
+            <option value="SHELTER">{t('web.teams.kindShelter')}</option>
+          </select>
+          {errors.kind && (
+            <span className="form-error" role="alert">
+              {errors.kind}
+            </span>
+          )}
+        </div>
+
+        <div className="form-field">
+          <label htmlFor="resource-capacity">
+            {t('web.teams.resourceCapacity')} <span aria-label={t('web.teams.required')}>*</span>
+          </label>
+          <input
+            id="resource-capacity"
+            type="number"
+            min="1"
+            max="1000"
+            value={formData.capacity}
+            onChange={(e) => handleChange('capacity', e.target.value)}
+            aria-invalid={!!errors.capacity}
+            required
+          />
+          {errors.capacity && (
+            <span className="form-error" role="alert">
+              {errors.capacity}
+            </span>
+          )}
+        </div>
+
+        <div className="form-field">
+          <label htmlFor="resource-zone">{t('web.teams.resourceZone')}</label>
+          <input
+            id="resource-zone"
+            type="text"
+            value={formData.zoneCode}
+            onChange={(e) => handleChange('zoneCode', e.target.value)}
+          />
+        </div>
+
+        <div className="form-field">
+          <label htmlFor="resource-team">{t('web.teams.resourceTeam')}</label>
+          <select
+            id="resource-team"
+            value={formData.teamId}
+            onChange={(e) => handleChange('teamId', e.target.value)}
+          >
+            <option value="">{t('web.teams.noTeamAssignment')}</option>
+            {teams.map((team) => (
+              <option key={team.id} value={team.id}>
+                {team.name}
+              </option>
+            ))}
+          </select>
+        </div>
+
+        <div className="form-field">
+          <label>
+            <input
+              type="checkbox"
+              checked={formData.isActive}
+              onChange={(e) => handleChange('isActive', e.target.checked)}
+            />
+            {t('web.teams.statusActive')}
+          </label>
+        </div>
+
+        <div className="form-field">
+          <label htmlFor="resource-from">{t('web.teams.resourceAvailableFrom')}</label>
+          <input
+            id="resource-from"
+            type="datetime-local"
+            value={formData.availableFrom}
+            onChange={(e) => handleChange('availableFrom', e.target.value)}
+          />
+        </div>
+
+        <div className="form-field">
+          <label htmlFor="resource-until">{t('web.teams.resourceAvailableUntil')}</label>
+          <input
+            id="resource-until"
+            type="datetime-local"
+            value={formData.availableUntil}
+            onChange={(e) => handleChange('availableUntil', e.target.value)}
+          />
+        </div>
+
+        {submitError && (
+          <div className="form-error" role="alert">
+            {submitError}
           </div>
-        </form>
-      </div>
-    </div>
+        )}
+
+        <div className="modal-actions">
+          <button type="button" onClick={onClose} className="cd2-btn">
+            {t('common.cancel')}
+          </button>
+          <button type="submit" className="cd2-btn cd2-btn--primary" disabled={submitting}>
+            {submitting ? t('common.loading') : t('common.save')}
+          </button>
+        </div>
+      </form>
+    </OpsModal>
   );
 }

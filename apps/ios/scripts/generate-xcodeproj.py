@@ -17,6 +17,11 @@ APP_SOURCES = [
     "SOSMesh/Features/VoiceRecorder.swift",
     "SOSMesh/Features/SosNotificationManager.swift",
     "SOSMesh/Features/SosSentConfirmationView.swift",
+    "SOSMesh/Features/SosDeliveredModal.swift",
+    "SOSMesh/Features/SosFollowUpView.swift",
+    "SOSMesh/Features/DeliveredModalTracker.swift",
+    "SOSMesh/Features/OpenCaseTracker.swift",
+    "SOSMesh/Features/RelayDeliveryCounter.swift",
     "SOSMesh/Features/CrossPlatformFaultViews.swift",
     "SOSMesh/Features/StatusView.swift",
     "SOSMesh/Features/RelayView.swift",
@@ -94,6 +99,9 @@ TEST_SOURCES = [
     "SOSMeshTests/AppModelPermissionGateTests.swift",
     "SOSMeshTests/EmergencyCall112LinkTests.swift",
     "SOSMeshTests/SosCryptoConfigurationErrorTests.swift",
+    "SOSMeshTests/OpenCaseTrackerTests.swift",
+    "SOSMeshTests/RelayDeliveryCounterTests.swift",
+    "SOSMeshTests/DeliveredModalTrackerTests.swift",
     "SOSMeshCore/Tests/SOSMeshCoreTests/AttachmentUploadCoordinatorTests.swift",
 ]
 

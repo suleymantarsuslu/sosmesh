@@ -36,7 +36,7 @@ public actor BroadcastRepository {
 
             if await store.isSeen(broadcast.id) { continue }
 
-            let formatter = ISO8601DateFormatter()
+            // Server timestamps carry fractional seconds; reuse the formatter configured above.
             guard let expiresAt = formatter.date(from: broadcast.expiresAt),
                   expiresAt > now else { continue }
 

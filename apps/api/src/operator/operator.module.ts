@@ -10,6 +10,7 @@ import { RolesGuard } from './guards/roles.guard';
 import { OperatorDashboardService } from './operator-dashboard.service';
 import { OperatorCasesService } from './operator-cases.service';
 import { OperatorCaseActionsService } from './operator-case-actions.service';
+import { OperatorSituationService } from './operator-situation.service';
 import { OperatorAiController, OperatorCaseAiController } from './operator-ai.controller';
 import { OperatorAiService } from './operator-ai.service';
 import { OperatorAttachmentsController } from './operator-attachments.controller';
@@ -39,6 +40,7 @@ import { OperatorCopilotController } from './operator-copilot.controller';
     OperatorDashboardService,
     OperatorCasesService,
     OperatorCaseActionsService,
+    OperatorSituationService,
     OperatorAiService,
     OperatorAttachmentsService,
     OperatorDemoService,

@@ -13,7 +13,8 @@
     "loading": "Yükleniyor...",
     "error": "Hata oluştu",
     "saving": "Kaydediliyor",
-    "refresh": "Yenile"
+    "refresh": "Yenile",
+    "more": "daha fazla"
   },
   "nav": {
     "home": "Ana Sayfa",
@@ -137,7 +138,57 @@
       "emptyHint": "Henüz veri yok",
       "chartEmpty": "Vakalar geldikçe durum dağılımı burada görünür.",
       "tableEmptyTitle": "Son vaka yok",
-      "tableEmptyHint": "Panele ulaşan yeni SOS olayları burada listelenir."
+      "tableEmptyHint": "Panele ulaşan yeni SOS olayları burada listelenir.",
+      "regionalSituation": {
+        "title": "Bölgesel Durum",
+        "description": "Aktif SOS'lar analiz edilip bölgesel sorunlar ve afetler halinde gruplandı",
+        "empty": "Gösterilecek bölgesel durum yok",
+        "emptyHint": "Aktif vakalar oluştukça bölgesel gruplamalar burada görünür.",
+        "liveLabel": "Canlı",
+        "lastUpdated": "Son güncelleme",
+        "filters": {
+          "timeWindow": "Zaman aralığı",
+          "window1h": "Son 1 saat",
+          "window6h": "Son 6 saat",
+          "window24h": "Son 24 saat",
+          "minUrgency": "Min. aciliyet"
+        },
+        "card": {
+          "sosCount": "{{count}} SOS",
+          "peopleAffected": "{{count}} kişi etkilenmiş (tahmini)",
+          "timeSpan": "İlk: {{first}}, Son: {{last}}",
+          "topNeeds": "İhtiyaçlar",
+          "topHazards": "Tehlikeler",
+          "viewDetails": "Vaka detayını aç",
+          "aiSummary": "AI özeti",
+          "aiSummaryDisclaimer": "AI özeti — karar operatöre aittir",
+          "aiSummaryComputing": "Özet hazırlanıyor...",
+          "aiSummaryFailed": "Özet oluşturulamadı"
+        },
+        "severity": {
+          "label": "Önem",
+          "CRITICAL": "Kritik",
+          "HIGH": "Yüksek",
+          "MEDIUM": "Orta",
+          "LOW": "Düşük"
+        },
+        "urgency": {
+          "label": "Aciliyet",
+          "CRITICAL": "Kritik",
+          "HIGH": "Yüksek",
+          "MEDIUM": "Orta",
+          "LOW": "Düşük"
+        },
+        "hazardTypes": {
+          "MEDICAL": "Tıbbi",
+          "TRAPPED": "Mahsur kalma",
+          "FIRE": "Yangın",
+          "FLOOD": "Sel",
+          "EARTHQUAKE": "Deprem",
+          "COLLAPSE": "Göçük",
+          "GENERAL": "Genel"
+        }
+      }
     },
     "map": {
       "title": "Harita",

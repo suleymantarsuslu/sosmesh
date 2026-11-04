@@ -3,6 +3,7 @@ package com.sosmesh.android.wear.mesh
 import android.content.Context
 import android.content.Intent
 import com.sosmesh.android.core.ble.BleMeshRadio
+import com.sosmesh.android.core.permissions.PermissionFlowCoordinator
 import com.sosmesh.android.meshv2.v2.MeshV2Runtime
 import dagger.hilt.android.qualifiers.ApplicationContext
 import javax.inject.Inject
@@ -15,6 +16,7 @@ class WearMeshCoordinator
         @ApplicationContext private val context: Context,
         private val meshRuntime: MeshV2Runtime,
         private val bleMeshRadio: BleMeshRadio,
+        private val permissionFlowCoordinator: PermissionFlowCoordinator,
     ) {
         private var relayActive = false
 
@@ -53,5 +55,5 @@ class WearMeshCoordinator
 
         fun isRelayActive(): Boolean = relayActive
 
-        fun getMissingPermissions(): List<String> = emptyList()
+        fun getMissingPermissions(): List<String> = permissionFlowCoordinator.missingPermissions()
     }

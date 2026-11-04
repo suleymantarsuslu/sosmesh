@@ -59,8 +59,13 @@ class BleTransferReceiver(
     private fun handleData(data: ByteArray) {
         if (data.isEmpty()) return
         val msgType = data[0].toInt() and 0xff
-        if (msgType == MessageType.HELLO.wire && state == TransferState.IDLE) {
-            handleHello(data)
+        if (msgType == MessageType.HELLO.wire) {
+            if (state == TransferState.IDLE || state == TransferState.COMPLETED || state == TransferState.FAILED) {
+                if (state != TransferState.IDLE) {
+                    resetState()
+                }
+                handleHello(data)
+            }
         } else if (
             msgType != MessageType.TRANSFER_VERIFIED.wire &&
             msgType != MessageType.HELLO.wire &&
@@ -199,8 +204,20 @@ class BleTransferReceiver(
         listener?.onFailed(code, message)
     }
 
+    private fun resetState() {
+        chunks.clear()
+        expectedTotal = 0
+        receivedDigest = null
+        negotiatedMtu = 0
+        currentTransferId = null
+        state = TransferState.IDLE
+    }
+
     fun onTransportDisconnected() {
-        if (state == TransferState.COMPLETED || state == TransferState.FAILED) return
+        if (state == TransferState.COMPLETED || state == TransferState.FAILED) {
+            resetState()
+            return
+        }
         if (chunks.isNotEmpty() && expectedTotal > 0) {
             state = TransferState.RESUMING
         } else {

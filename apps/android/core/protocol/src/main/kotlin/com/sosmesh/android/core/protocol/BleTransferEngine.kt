@@ -4,11 +4,17 @@ import com.sosmesh.android.core.ble.BleMeshConstants
 import com.sosmesh.android.core.ble.MeshV2Hooks
 import com.sosmesh.android.core.ble.platform.GattClientCallbackPort
 import com.sosmesh.android.core.ble.platform.GattClientPort
+import com.sosmesh.android.core.ble.platform.GattServerConnectionListener
 import com.sosmesh.android.core.ble.platform.GattServerPort
 import com.sosmesh.android.core.ble.platform.GattServerWriteListener
 import kotlinx.coroutines.sync.withLock
 import javax.inject.Inject
 import javax.inject.Singleton
+
+private data class ReceiverSession(
+    val receiver: BleTransferReceiver,
+    val transport: GattBleTransferTransport,
+)
 
 @Singleton
 class BleTransferEngine
@@ -18,17 +24,9 @@ class BleTransferEngine
         private val clientPort: GattClientPort,
         private val peerDeliveryTracker: SosPeerDeliveryTracker,
     ) : BleTransferEnginePort {
-        private val peripheralTransport =
-            GattBleTransferTransport(
-                object : GattOutboundWriter {
-                    override fun writeCharacteristic(
-                        uuid: String,
-                        value: ByteArray,
-                    ) {
-                        serverPort.notifyCharacteristic(uuid, value, null)
-                    }
-                },
-            )
+        private val receiverSessions = mutableMapOf<String, ReceiverSession>()
+        private var relayListener: BleTransferReceiver.Listener? = null
+
         private val centralTransport =
             GattBleTransferTransport(
                 object : GattOutboundWriter {
@@ -40,8 +38,25 @@ class BleTransferEngine
                     }
                 },
             )
-        private val receiver = BleTransferReceiver(peripheralTransport)
         private val sender = BleTransferSender(centralTransport)
+
+        private fun getOrCreateReceiverSession(deviceAddress: String): ReceiverSession =
+            receiverSessions.getOrPut(deviceAddress) {
+                val transport =
+                    GattBleTransferTransport(
+                        object : GattOutboundWriter {
+                            override fun writeCharacteristic(
+                                uuid: String,
+                                value: ByteArray,
+                            ) {
+                                serverPort.notifyCharacteristic(uuid, value, deviceAddress)
+                            }
+                        },
+                    )
+                val receiver = BleTransferReceiver(transport)
+                relayListener?.let { receiver.setListener(it) }
+                ReceiverSession(receiver, transport)
+            }
 
         init {
             peerDeliveryTracker.attachSenderListener(sender)
@@ -62,7 +77,20 @@ class BleTransferEngine
                                 return
                             }
                         }
-                        peripheralTransport.deliverIncoming(uuid, value)
+                        val session = getOrCreateReceiverSession(deviceAddress)
+                        session.transport.deliverIncoming(uuid, value)
+                    }
+                },
+            )
+            serverPort.setConnectionListener(
+                object : GattServerConnectionListener {
+                    override fun onConnectionStateChanged(
+                        deviceAddress: String,
+                        connected: Boolean,
+                    ) {
+                        if (!connected) {
+                            onPeerDisconnected(deviceAddress)
+                        }
                     }
                 },
             )
@@ -123,12 +151,17 @@ class BleTransferEngine
             }
 
         fun setRelayListener(listener: BleTransferReceiver.Listener) {
-            receiver.setListener(listener)
+            relayListener = listener
+            receiverSessions.values.forEach { it.receiver.setListener(listener) }
         }
 
         @Inject
         fun wireRelayReceiver(relayListener: BleTransferReceiver.Listener) {
             setRelayListener(relayListener)
+        }
+
+        fun onPeerDisconnected(deviceAddress: String) {
+            receiverSessions[deviceAddress]?.receiver?.onTransportDisconnected()
         }
 
         override fun sendOutbound(
@@ -147,7 +180,8 @@ class BleTransferEngine
             sender.startTransfer(payload)
         }
 
-        fun receiverState(): TransferState = receiver.getState()
+        fun receiverState(): TransferState =
+            receiverSessions.values.firstOrNull()?.receiver?.getState() ?: TransferState.IDLE
 
         override fun senderState(): TransferState = sender.getState()
 

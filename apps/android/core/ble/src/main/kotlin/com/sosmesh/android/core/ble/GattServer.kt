@@ -22,5 +22,6 @@ class GattServer(
 
     fun stop() {
         serverPort.stop()
+        serverPort.setConnectionListener(null)
     }
 }

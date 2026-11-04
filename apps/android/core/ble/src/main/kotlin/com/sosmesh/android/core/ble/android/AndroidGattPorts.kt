@@ -42,6 +42,9 @@ class AndroidGattServerPort
         private val characteristics = mutableMapOf<String, BluetoothGattCharacteristic>()
         private var connectedAddress: String? = null
 
+        // BluetoothGattServer.getConnectedDevices() always throws UnsupportedOperationException; track centrals ourselves.
+        private val connectedDevices = java.util.concurrent.ConcurrentHashMap<String, BluetoothDevice>()
+
         override fun start(
             serviceUuid: String,
             specs: List<GattCharacteristicSpec>,
@@ -54,6 +57,7 @@ class AndroidGattServerPort
                     ?: return Result.failure(IllegalStateException("No BT adapter"))
             return try {
                 closeServerInternal()
+                connectedDevices.clear()
                 gattServer =
                     openGattServerInternal(
                         manager,
@@ -66,6 +70,9 @@ class AndroidGattServerPort
                                 val address = device?.address
                                 val connected = newState == BluetoothProfile.STATE_CONNECTED
                                 connectedAddress = if (connected) address else null
+                                if (address != null && device != null) {
+                                    if (connected) connectedDevices[address] = device else connectedDevices.remove(address)
+                                }
                                 if (address != null) {
                                     connectionListener?.onConnectionStateChanged(address, connected)
                                 }
@@ -200,6 +207,7 @@ class AndroidGattServerPort
             }
             gattServer = null
             characteristics.clear()
+            connectedDevices.clear()
             connectedAddress = null
         }
 
@@ -222,9 +230,7 @@ class AndroidGattServerPort
             val characteristic = characteristics[uuid.uppercase()] ?: return Result.failure(IllegalStateException("Unknown char"))
             characteristic.value = value
             val target =
-                deviceAddress?.let { addr ->
-                    gattServer?.connectedDevices?.firstOrNull { it.address == addr }
-                } ?: gattServer?.connectedDevices?.firstOrNull()
+                deviceAddress?.let { addr -> connectedDevices[addr] } ?: connectedDevices.values.firstOrNull()
             val device = target ?: return Result.failure(IllegalStateException("No connected device"))
             return try {
                 val ok = notifyInternal(device, characteristic) ?: false

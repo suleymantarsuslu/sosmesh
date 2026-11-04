@@ -60,15 +60,24 @@ object BroadcastModule {
 
     @Provides
     @Singleton
+    fun provideNotificationHistoryStore(
+        @ApplicationContext context: Context,
+    ): com.sosmesh.android.core.data.notifications.NotificationHistoryStore =
+        com.sosmesh.android.core.data.notifications.NotificationHistoryStore(context)
+
+    @Provides
+    @Singleton
     fun provideBroadcastPoller(
         @ApplicationContext context: Context,
         repository: BroadcastRepository,
         notificationManager: BroadcastNotificationManager,
+        historyStore: com.sosmesh.android.core.data.notifications.NotificationHistoryStore,
     ): com.sosmesh.android.core.data.broadcast.BroadcastPoller =
         com.sosmesh.android.core.data.broadcast.BroadcastPoller(
             context = context,
             repository = repository,
             notificationManager = notificationManager,
+            historyStore = historyStore,
         )
 
 }

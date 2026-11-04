@@ -88,6 +88,9 @@
             <meta-data
                 android:name="androidx.work.WorkManagerInitializer"
                 tools:node="remove" />
+            <meta-data
+                android:name="com.sosmesh.android.feature.sos.attachment.AttachmentUploadInitializer"
+                android:value="androidx.startup" />
         </provider>
 
         <provider

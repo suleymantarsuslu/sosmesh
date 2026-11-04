@@ -16,6 +16,7 @@ import android.os.Build
 import androidx.annotation.RequiresPermission
 import androidx.core.content.PermissionChecker
 import com.sosmesh.android.core.ble.BleMeshConstants
+import com.sosmesh.android.core.ble.MeshV2Hooks
 import com.sosmesh.android.core.ble.platform.GattCharacteristicSpec
 import com.sosmesh.android.core.ble.platform.GattClientCallbackPort
 import com.sosmesh.android.core.ble.platform.GattClientPort
@@ -66,6 +67,28 @@ class AndroidGattServerPort
                                     } else {
                                         null
                                     }
+                            }
+
+                            override fun onCharacteristicReadRequest(
+                                device: BluetoothDevice?,
+                                requestId: Int,
+                                offset: Int,
+                                characteristic: BluetoothGattCharacteristic?,
+                            ) {
+                                val target = device ?: return
+                                val uuid = characteristic?.uuid?.toString()?.uppercase() ?: return
+                                val value =
+                                    if (uuid == MeshV2Hooks.MESH_INFO_CHAR_UUID.uppercase()) {
+                                        MeshV2Hooks.hooks?.meshInfo(System.currentTimeMillis()) ?: ByteArray(0)
+                                    } else {
+                                        characteristic.value ?: ByteArray(0)
+                                    }
+                                val slice = if (offset in 0..value.size) value.copyOfRange(offset, value.size) else ByteArray(0)
+                                try {
+                                    sendResponseInternal(target, requestId, offset, slice)
+                                } catch (_: SecurityException) {
+                                    // Permission revoked mid-session.
+                                }
                             }
 
                             override fun onCharacteristicWriteRequest(

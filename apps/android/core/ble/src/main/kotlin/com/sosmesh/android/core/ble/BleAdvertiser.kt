@@ -15,6 +15,7 @@ class BleAdvertiser(
             manufacturerCompanyId = BleMeshConstants.MANUFACTURER_COMPANY_ID,
             manufacturerPayload = payload,
             includeDeviceName = false,
+            serviceData = MeshV2Hooks.hooks?.advertisementServiceData(System.currentTimeMillis()) ?: ByteArray(0),
         )
     }
 

@@ -13,6 +13,8 @@ import android.os.ParcelUuid
 import androidx.annotation.RequiresPermission
 import androidx.core.content.PermissionChecker
 import com.sosmesh.android.core.ble.BleScanProfile
+import com.sosmesh.android.core.ble.BleMeshConstants
+import com.sosmesh.android.core.ble.MeshV2Hooks
 import com.sosmesh.android.core.ble.platform.BleScannerPort
 import com.sosmesh.android.core.ble.platform.ScanCallbackPort
 import com.sosmesh.android.core.ble.platform.ScanRequest
@@ -66,6 +68,22 @@ class AndroidBleScannerPort
                     ) {
                         val record = result?.scanRecord ?: return
                         val payload = record.manufacturerSpecificData?.valueAt(0)
+                        MeshV2Hooks.hooks?.let { hooks ->
+                            val uuids =
+                                record.serviceUuids.orEmpty().mapNotNull { parcel ->
+                                    val msb = parcel.uuid.mostSignificantBits
+                                    if (parcel.uuid.leastSignificantBits == BASE_UUID_LSB && (msb and 0xFFFFL) == 0x1000L) {
+                                        ((msb ushr 32) and 0xFFFFL).toInt()
+                                    } else {
+                                        null
+                                    }
+                                }
+                            val serviceData = record.getServiceData(ParcelUuid(UUID.fromString(BleMeshConstants.SERVICE_UUID)))
+                            val address = result.device?.address
+                            if (address != null) {
+                                hooks.onAdvertisement(address, result.rssi, serviceData, uuids, System.currentTimeMillis())
+                            }
+                        }
                         callback.onScanResult(request.serviceUuid, payload)
                     }
                 }
@@ -98,7 +116,7 @@ class AndroidBleScannerPort
             settings: ScanSettings,
             scanCallback: ScanCallback,
         ) {
-            leScanner.startScan(listOf(filter), settings, scanCallback)
+            leScanner.startScan(listOf(filter) + iosHopsFilters(), settings, scanCallback)
         }
 
         @RequiresPermission(Manifest.permission.BLUETOOTH_SCAN)
@@ -118,4 +136,14 @@ class AndroidBleScannerPort
             val manager = context.getSystemService(Context.BLUETOOTH_SERVICE) as? BluetoothManager
             return manager?.adapter
         }
+    }
+
+private const val BASE_UUID_LSB: Long = -0x7fffff7fa064cb05L
+
+/** mesh-v2 §4.2: iOS hops UUIDs 0xFFE0..0xFFE8 (background iOS peers may only expose these). */
+private fun iosHopsFilters(): List<ScanFilter> =
+    (MeshV2Hooks.IOS_HOPS_UUID_FIRST..MeshV2Hooks.IOS_HOPS_UUID_LAST).map { short ->
+        ScanFilter.Builder()
+            .setServiceUuid(ParcelUuid(UUID.fromString(String.format("0000%04X-0000-1000-8000-00805F9B34FB", short))))
+            .build()
     }

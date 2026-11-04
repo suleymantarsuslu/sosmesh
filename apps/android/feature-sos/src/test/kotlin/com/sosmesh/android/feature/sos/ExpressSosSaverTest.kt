@@ -46,6 +46,7 @@ class ExpressSosSaverTest {
                 adapter,
                 NoOpUploadScheduler,
                 Dispatchers.IO,
+                { null },
             )
         saver =
             ExpressSosSaver(

@@ -1,5 +1,7 @@
 package com.sosmesh.android.core.protocol
 
+import com.sosmesh.android.core.ble.BleMeshConstants
+import com.sosmesh.android.core.ble.MeshV2Hooks
 import com.sosmesh.android.core.ble.platform.GattClientCallbackPort
 import com.sosmesh.android.core.ble.platform.GattClientPort
 import com.sosmesh.android.core.ble.platform.GattServerPort
@@ -49,6 +51,16 @@ class BleTransferEngine
                         value: ByteArray,
                         deviceAddress: String,
                     ) {
+                        if (uuid.equals(BleMeshConstants.CONTROL_CHAR_UUID, ignoreCase = true)) {
+                            val replies =
+                                MeshV2Hooks.hooks?.onControlFrame(value, System.currentTimeMillis(), MESH_V2_MAX_NOTIFY_BYTES)
+                            if (replies != null) {
+                                replies.forEach { frame ->
+                                    serverPort.notifyCharacteristic(BleMeshConstants.ACK_CHAR_UUID, frame, deviceAddress)
+                                }
+                                return
+                            }
+                        }
                         peripheralTransport.deliverIncoming(uuid, value)
                     }
                 },
@@ -104,3 +116,6 @@ class BleTransferEngine
             clientPort.enableAckNotifications()
         }
     }
+
+/** TOMBSTONE frames are ≤ 170 B; conservative default ATT payload for a 185 MTU link. */
+private const val MESH_V2_MAX_NOTIFY_BYTES = 182

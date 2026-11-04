@@ -22,6 +22,14 @@ abstract class AppReleaseModule {
     companion object {
         @Provides
         @Singleton
+        fun provideMeshV2Config(config: RelayIngestConfig): com.sosmesh.android.meshv2.v2.MeshV2Config =
+            com.sosmesh.android.meshv2.v2.MeshV2Config(
+                relayIdHex = config.relayIdHex,
+                receiptVerifyPublicKeySpkiBase64 = config.receiptVerifyPublicKeySpkiBase64,
+            )
+
+        @Provides
+        @Singleton
         fun provideRelayIngestConfig(identity: RelayIdentityProvider): RelayIngestConfig {
             val base = BuildConfig.INGEST_BASE_URL.trimEnd('/')
             return RelayIngestConfig(

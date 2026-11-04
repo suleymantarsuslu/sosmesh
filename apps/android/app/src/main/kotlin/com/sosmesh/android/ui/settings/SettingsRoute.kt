@@ -24,6 +24,7 @@ import com.sosmesh.android.locale.AppLocaleController
 @Composable
 fun SettingsRoute(
     onBack: () -> Unit,
+    onOpenProfile: () -> Unit = {},
     viewModel: SettingsViewModel = hiltViewModel(),
 ) {
     val state by viewModel.uiState.collectAsState()
@@ -56,6 +57,9 @@ fun SettingsRoute(
                 checked = state.highPowerRadioConsent,
                 onCheckedChange = viewModel::setHighPowerRadioConsent,
             )
+            Button(onClick = onOpenProfile, modifier = Modifier.fillMaxWidth()) {
+                Text(stringResource(R.string.settings_profile))
+            }
             Text(stringResource(R.string.settings_local_data_note), style = MaterialTheme.typography.bodySmall)
             Button(onClick = onBack, modifier = Modifier.fillMaxWidth()) {
                 Text(stringResource(R.string.settings_back))

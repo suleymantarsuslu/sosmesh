@@ -32,7 +32,8 @@ object SosDraftValidator {
         }
         val trimmed = input.personCountText.trim()
         if (trimmed.isEmpty()) {
-            return SosDraftValidation.Invalid(DraftInvalidReason.PERSON_COUNT_TOO_LOW)
+            // mesh-v2 §2.1 / invariant 3: an empty SOS is valid; blank count = unknown.
+            return SosDraftValidation.Valid
         }
         val count =
             trimmed.toIntOrNull()
@@ -48,6 +49,6 @@ object SosDraftValidator {
 
     fun parsedPersonCount(input: SosDraftInput): Int? {
         if (input.personCountUnknown) return null
-        return input.personCountText.trim().toIntOrNull()
+        return input.personCountText.trim().toIntOrNull()?.takeIf { it in SosFormLimits.MIN_PERSON_COUNT..SosFormLimits.MAX_PERSON_COUNT }
     }
 }

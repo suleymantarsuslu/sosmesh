@@ -20,10 +20,13 @@ class SosSubmitRepository
         private val outbox: OutboxQueueAdapter,
         private val uploadScheduler: OutboxUploadScheduler,
         @IoDispatcher private val ioDispatcher: CoroutineDispatcher,
+        private val senderContext: com.sosmesh.android.core.data.profile.SosSenderContextSource,
     ) {
         suspend fun submit(request: SosComposeRequest): ComposedSosMessage =
             withContext(ioDispatcher) {
-                val composed = composer.compose(request)
+                // mesh-v2 inner payload; if the secure store is unavailable, fall back to v1 inner (SOS never blocked).
+                val sender = request.sender ?: senderContext.nextSenderContextOrNull()
+                val composed = composer.compose(request.copy(sender = sender))
                 outbox.enqueue(
                     EnqueueInput(
                         sosId = composed.message.id,

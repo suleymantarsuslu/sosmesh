@@ -39,7 +39,7 @@ Identifiers:
 | `messageId` | string, UUID v4 lowercase, 36 chars | L2 `id`. Same value end to end. |
 | `messageKey` | 16 bytes | `SHA-256(UTF-8(messageId))[0..16)`. Used on BLE and in seen caches. |
 | `packetHash` | 64 hex | `SHA-256(canonicalJSON(L2 SosMessage))` where canonicalJSON = keys sorted, no whitespace, numbers as JSON numbers (matches server `computePacketHash` / contracts `canonicalJSON`). Relays compute it over the bytes they carry; they MUST NOT re-serialize L2. |
-| `senderKey` | 64 hex (32 random bytes) | Per install, generated at first launch, Keychain (iOS, `kSecAttrAccessibleAfterFirstUnlockThisDeviceOnly`) / EncryptedSharedPreferences (Android). **Only inside L3.** Server stores `senderKeyHash = SHA-256(senderKey)`. |
+| `senderKey` | 64 hex (32 random bytes) | Per install, generated at first launch, Keychain (iOS, `kSecAttrAccessibleAfterFirstUnlockThisDeviceOnly`) / EncryptedSharedPreferences (Android). **Only inside L3.** Server stores `senderKeyHash = SHA-256(senderKey)`, computed over the **32 raw key bytes** (hex-decoded), lowercase hex. Server-internal only; clients never send it. |
 | `relayId` | 64 hex | Existing per-install random id used in `/v1/ingest relayInfo` (unchanged). |
 | `deviceIdHash` | 64 hex | Existing `hopChainReceipt` entry (SHA-256 of per-install relay id). |
 
@@ -246,12 +246,14 @@ Effects:
 ### 8.2 Server
 
 - Ingest decrypts L3 (already done for AI/plaintext source), computes `senderKeyHash`.
-- **Merge**: same `senderKeyHash` and an incident not `CLOSED`/`RESOLVED` updated within 24 h ⇒ attach the message to that incident;
+- **Merge**: same `senderKeyHash` and an incident not `RESOLVED`/`CANCELLED` (the server's closed states) updated within 24 h ⇒ attach the message to that incident;
   incident `latestLocation` = newest by inner `location.timestamp`; status unchanged; event `SOS_MERGED`.
-- **Limits**: ≤ 30 accepted per `senderKeyHash` per hour ⇒ accept + merge (receipt as normal). Above 60/h, or > `DEFAULT_RATE_LIMIT_MAX`
-  per client IP/relayId per minute (existing), respond `429` + `Retry-After` (seconds). Relays treat 429 as retry (≤ 15 min backoff),
+- **Limits**: ≤ 30 accepted per `senderKeyHash` per hour ⇒ accept + merge (receipt as normal). 31–60/h ⇒ still accept + merge, but the
+  server skips AI re-triage for those messages (cost guard; the receipt is identical). Above 60/h (i.e. the 61st message in a rolling hour), or > `DEFAULT_RATE_LIMIT_MAX`
+  per client IP/relayId per minute (existing), respond `429` + `Retry-After` (seconds; per-sender body code `SENDER_RATE_LIMITED`, `Retry-After` ≤ 900). Relays treat 429 as retry (≤ 15 min backoff),
   never as delivered.
-- The receipt format is unchanged; v2 adds optional response field `merged: boolean` (clients MUST ignore unknown fields).
+- The receipt format is unchanged; v2 adds the optional **top-level** response field `merged: boolean` next to `receipt`, present only when
+  the inner payload was v2 (clients MUST ignore unknown fields).
 
 ---
 
@@ -311,18 +313,37 @@ phone over the Data Layer. MESH_INFO flag bit2 = 1.
 - `sos_sender` (`id uuid pk`, `sender_key_hash char(64) unique`, `created_at`, `last_seen_at`) — no raw senderKey.
 - `sos_message.sender_id uuid null fk`, `sos_message.inner_version smallint null`, index (`sender_id`, `received_at desc`).
 - `incident.latest_location_*` nullable columns (or reuse existing geo columns) + `incident.merged_message_count int default 1`.
-- `sos_profile_snapshot` (encrypted at rest with the existing field-encryption key; `sos_message_id fk`, `ciphertext`, `created_at`);
-  plaintext only in memory for the panel; retention = incident retention.
+- `sos_sender_profiles` (**latest profile per sender only, no per-message copies**; `sender_id pk/fk`, `ciphertext`, `key_version`,
+  `source_seq`, `updated_at`). A profile from an SOS with a lower `seq` never overwrites a newer one. Encrypted at rest with AES-256-GCM
+  (AAD = sender row id) under a key derived as in §12.1; plaintext only in memory for the panel; deleted with the sender row.
+  (There is no pre-existing field-encryption key on the server, so §12.1 derives one.)
 - No tombstone table: tombstones are receipts recomputed from `sos_message` (`messageId`, `packetHash`, `serverReceiptAt`).
-- New endpoint `POST /v1/receipts/lookup` (public, rate-limited like ingest, ≤ 64 items).
+- New endpoint `POST /v1/receipts/lookup` (public, rate-limited like ingest, ≤ 64 items). Returns a receipt only when **both** `messageId`
+  and the stored `packetHash` match (unknown items are omitted), so it cannot list messages. `hopsLeft = 8`.
+- Implemented as migration `20261104030000_mesh_v2_sender_merge` (table names follow the repo's plural convention: `sos_senders`,
+  `sos_sender_profiles`; incident columns `latest_latitude`, `latest_longitude`, `latest_accuracy_meters`, `latest_location_at`,
+  `merged_message_count`, `last_message_at`, `sender_id`).
+
+### 12.1 Server subkeys (no new secret)
+
+The server adds **no new production secret**. Subkeys are HKDF-SHA256 from the existing `SOSMESH_SERVER_SOS_PRIVATE_KEY`
+(salt `sosmesh-mesh-v2`, 32 bytes), each with a distinct `info` label:
+
+| Use | info label | salt suffix |
+| --- | --- | --- |
+| Profile encryption at rest | `sosmesh/mesh-v2/profile-at-rest/aes-256-gcm/v1` | none |
+| Day-rotating server key (log pseudonyms: `senderTag` = HMAC(dayKey, senderKeyHash)[0..8 hex]) | `sosmesh/mesh-v2/day-key/v1` | `:day:<UTC day number>` |
+
+Rotating the SOS key rotates these subkeys; stored profiles then become unreadable and are replaced by the next SOS that carries one.
+The device-side `selfKey` (§5.3) is unaffected: it stays a client concern (per-install secret recommended, §15).
 
 ## 13. Panel inference (address match)
 
-- Server only, on decrypted L3: if `location` (accuracy ≤ 100 m) is within **100 m** of the geocoded `profile.address`
-  (or `homeLocation`), show: "Assumption: may be at the registered address (floor F) with N people" (N = `personCount` ?? `householdSize`).
+- Server only, on decrypted L3: if the incident's newest `location` (accuracy ≤ 100 m) is within **100 m** of `profile.homeLocation`, show: "Assumption: may be at the registered address (floor F) with N people" (N = `personCount` ?? `householdSize`).
 - Always labelled as an inference ("Varsayım"), never auto-dispatches, never changes priority automatically, disappears when the newest
-  location is > 100 m away. Geocoding via server-side provider; addresses and coordinates never logged; audit records only
-  `inference_shown` with incident id.
+  location is > 100 m away. **No server geocoder and no external calls**: the device geocodes the address at onboarding (OS geocoder)
+  and sends the coordinates as `profile.homeLocation` inside L3. Without `homeLocation` there is no inference. Addresses and coordinates
+  are never logged.
 
 ---
 
@@ -357,5 +378,5 @@ phone over the Data Layer. MESH_INFO flag bit2 = 1.
 ## 15. Open points (decide before coding)
 
 - Day-rotating `selfKey` derivation needs a per-install secret if relayId must not be linkable across days.
-- Exact geocoder and its data-processing terms (server side).
-- Whether `sos_profile_snapshot` is kept per message or only the latest per sender.
+- ~~Exact geocoder~~ Resolved: device-side geocoding into `profile.homeLocation` (§13).
+- ~~Profile per message or latest per sender~~ Resolved: latest per sender only (§12).

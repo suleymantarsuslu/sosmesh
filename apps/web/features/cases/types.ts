@@ -40,7 +40,41 @@ export type OperatorTranscript = TranscriptView & {
   translationLanguage?: string | null;
 };
 
+
+/** Mesh v2 sender profile (decrypted server-side, operators only). Every field optional. */
+export type SenderProfile = {
+  fullName?: string;
+  age?: number;
+  address?: { line?: string; district?: string; city?: string; postalCode?: string; country?: string };
+  floor?: number;
+  phone?: string;
+  email?: string;
+  householdSize?: number;
+};
+
+export type CaseSenderView = {
+  profile: SenderProfile | null;
+  /** Inference only; never dispatches. */
+  assumption: {
+    kind: 'AT_REGISTERED_ADDRESS';
+    inference: true;
+    distanceMeters: number;
+    floor: number | null;
+    personCount: number | null;
+  } | null;
+  mergedMessageCount: number;
+  mergedMessages: {
+    messageId: string;
+    receivedAt: string;
+    hasNote: boolean;
+    hasLocation: boolean;
+    personCount: number | null;
+  }[];
+};
+
 export type OperatorCaseDetail = OperatorCaseRow & {
+  /** Mesh v2 sender block; null/absent for v1 incidents. */
+  sender?: CaseSenderView | null;
   version: number;
   reviewStatus: string;
   originalText: string | null;

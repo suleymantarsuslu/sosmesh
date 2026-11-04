@@ -438,6 +438,19 @@ paths:
       responses:
         "200":
           description: SERVER_ACCEPTED signed receipt
+        "429":
+          description: Rate limited; mesh v2 per-sender limit sets Retry-After (seconds)
+      tags:
+        - public
+  /v1/receipts/lookup:
+    post:
+      operationId: ReceiptsLookupController_lookup
+      summary: "Mesh v2: return existing signed receipts for known (messageId,
+        packetHash) pairs"
+      parameters: []
+      responses:
+        "200":
+          description: Receipts (delivery tombstones) for matching items only
       tags:
         - public
   /v1/operator/events:

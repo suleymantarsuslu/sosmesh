@@ -92,77 +92,150 @@ export class OperatorCasesService {
     const scopeWhere = this.scope.incidentWhere(user);
     const incidentFilter: Prisma.IncidentWhereInput = scopeWhere ?? {};
 
-    const messageWhere: Prisma.SosMessageWhereInput = {
-      incident: {
-        ...incidentFilter,
-        deletedAt: null,
-        ...(query.incidentState ? { state: query.incidentState } : {}),
-      },
-      ...(query.category ? { sosType: query.category } : {}),
-      ...(query.deliveryState ? { deliveryState: query.deliveryState } : {}),
-      ...(query.locationStatus ? { locationStatus: query.locationStatus } : {}),
-      ...(query.receivedFrom || query.receivedTo
+    const incidentWhere: Prisma.IncidentWhereInput = {
+      ...incidentFilter,
+      deletedAt: null,
+      ...(query.incidentState ? { state: query.incidentState } : {}),
+      ...(query.category || query.deliveryState || query.locationStatus || query.receivedFrom || query.receivedTo || query.accuracyMin !== undefined || query.accuracyMax !== undefined || query.search || query.source
         ? {
-            receivedAt: {
-              ...(query.receivedFrom ? { gte: query.receivedFrom } : {}),
-              ...(query.receivedTo ? { lte: query.receivedTo } : {}),
-            },
-          }
-        : {}),
-      ...(query.accuracyMin !== undefined || query.accuracyMax !== undefined
-        ? {
-            accuracyMeters: {
-              ...(query.accuracyMin !== undefined ? { gte: query.accuracyMin } : {}),
-              ...(query.accuracyMax !== undefined ? { lte: query.accuracyMax } : {}),
-            },
-          }
-        : {}),
-      ...(query.search
-        ? {
-            messageId: { contains: query.search, mode: 'insensitive' },
-          }
-        : {}),
-      ...(query.source
-        ? {
-            messageEvents: {
-              some: { source: { equals: query.source, mode: 'insensitive' } },
+            sosMessages: {
+              some: {
+                ...(query.category ? { sosType: query.category } : {}),
+                ...(query.deliveryState ? { deliveryState: query.deliveryState } : {}),
+                ...(query.locationStatus ? { locationStatus: query.locationStatus } : {}),
+                ...(query.receivedFrom || query.receivedTo
+                  ? {
+                      receivedAt: {
+                        ...(query.receivedFrom ? { gte: query.receivedFrom } : {}),
+                        ...(query.receivedTo ? { lte: query.receivedTo } : {}),
+                      },
+                    }
+                  : {}),
+                ...(query.accuracyMin !== undefined || query.accuracyMax !== undefined
+                  ? {
+                      accuracyMeters: {
+                        ...(query.accuracyMin !== undefined ? { gte: query.accuracyMin } : {}),
+                        ...(query.accuracyMax !== undefined ? { lte: query.accuracyMax } : {}),
+                      },
+                    }
+                  : {}),
+                ...(query.search
+                  ? {
+                      messageId: { contains: query.search, mode: 'insensitive' },
+                    }
+                  : {}),
+                ...(query.source
+                  ? {
+                      messageEvents: {
+                        some: { source: { equals: query.source, mode: 'insensitive' } },
+                      },
+                    }
+                  : {}),
+              },
             },
           }
         : {}),
     };
 
-    const rows = await this.prisma.sosMessage.findMany({
-      where: messageWhere,
+    const incidents = await this.prisma.incident.findMany({
+      where: incidentWhere,
       take: pagination.limit + 1,
       ...(pagination.cursor
         ? { skip: 1, cursor: { id: pagination.cursor } }
         : {}),
-      orderBy: [{ priority: 'asc' }, { receivedAt: 'desc' }],
+      orderBy: { createdAt: 'desc' },
       select: {
         id: true,
-        messageId: true,
-        incidentId: true,
-        priority: true,
-        sosType: true,
-        deliveryState: true,
-        locationStatus: true,
-        latitude: true,
-        longitude: true,
-        accuracyMeters: true,
-        preciseLatitude: true,
-        preciseLongitude: true,
-        preciseAccuracyMeters: true,
-        receivedAt: true,
-        incident: { select: { state: true } },
-        messageEvents: {
-          select: { source: true },
-          orderBy: { createdAt: 'desc' },
-          take: 1,
+        state: true,
+        latestLatitude: true,
+        latestLongitude: true,
+        latestAccuracyMeters: true,
+        sosMessages: {
+          select: {
+            id: true,
+            messageId: true,
+            priority: true,
+            sosType: true,
+            deliveryState: true,
+            locationStatus: true,
+            latitude: true,
+            longitude: true,
+            accuracyMeters: true,
+            preciseLatitude: true,
+            preciseLongitude: true,
+            preciseAccuracyMeters: true,
+            receivedAt: true,
+            messageEvents: {
+              select: { source: true },
+              orderBy: { createdAt: 'desc' },
+              take: 1,
+            },
+          },
+          orderBy: { receivedAt: 'desc' },
         },
       },
     });
 
-    const withCursor = rows.map((row) => ({ id: row.id, ...this.toRow(row) }));
+    const rows = incidents.map((incident) => {
+      const messages = incident.sosMessages;
+      if (messages.length === 0) {
+        return null;
+      }
+
+      const latestMessage = messages[0];
+      const highestPriorityMessage = messages.reduce((prev, curr) =>
+        curr.priority < prev.priority ? curr : prev
+      );
+      const messageWithLocation = messages.find(
+        (msg) =>
+          (msg.preciseLatitude !== null && msg.preciseLongitude !== null) ||
+          (msg.latitude !== null && msg.longitude !== null)
+      );
+
+      const bestLocation = messageWithLocation
+        ? {
+            latitude: messageWithLocation.preciseLatitude ?? messageWithLocation.latitude,
+            longitude: messageWithLocation.preciseLongitude ?? messageWithLocation.longitude,
+            accuracyMeters: messageWithLocation.preciseAccuracyMeters ?? messageWithLocation.accuracyMeters,
+            locationApproximate: !messageWithLocation.preciseLatitude && !!messageWithLocation.latitude,
+            locationStatus: messageWithLocation.locationStatus,
+          }
+        : incident.latestLatitude && incident.latestLongitude
+        ? {
+            latitude: incident.latestLatitude,
+            longitude: incident.latestLongitude,
+            accuracyMeters: incident.latestAccuracyMeters,
+            locationApproximate: false,
+            locationStatus: 'INCIDENT_FALLBACK',
+          }
+        : {
+            latitude: null,
+            longitude: null,
+            accuracyMeters: null,
+            locationApproximate: false,
+            locationStatus: latestMessage.locationStatus,
+          };
+
+      return {
+        id: incident.id,
+        incidentId: incident.id,
+        incidentState: incident.state,
+        messageId: latestMessage.messageId,
+        sosMessageId: latestMessage.id,
+        priority: highestPriorityMessage.priority,
+        sosType: latestMessage.sosType,
+        deliveryState: latestMessage.deliveryState,
+        locationStatus: bestLocation.locationStatus,
+        latitude: bestLocation.latitude ? bestLocation.latitude.toNumber() : null,
+        longitude: bestLocation.longitude ? bestLocation.longitude.toNumber() : null,
+        accuracyMeters: bestLocation.accuracyMeters,
+        locationApproximate: bestLocation.locationApproximate,
+        receivedAt: latestMessage.receivedAt.toISOString(),
+        source: latestMessage.messageEvents[0]?.source ?? null,
+      };
+    }).filter((row): row is NonNullable<typeof row> => row !== null);
+
+    const withCursor = rows.map((row) => ({ ...row }));
     const page = buildPaginated(withCursor, pagination.limit);
     return {
       items: page.items.map(({ id: cursorId, ...rest }) => {
@@ -205,7 +278,7 @@ export class OperatorCasesService {
         personCount: true,
         operatorDisplayText: true,
         noteText: true,
-        incident: { select: { state: true, version: true, reviewStatus: true, deletedAt: true, archiveReason: true } },
+        incident: { select: { state: true, version: true, reviewStatus: true, deletedAt: true, archiveReason: true, latestLatitude: true, latestLongitude: true, latestAccuracyMeters: true } },
         messageEvents: {
           select: {
             id: true,
@@ -221,8 +294,69 @@ export class OperatorCasesService {
     if (!message) {
       return null;
     }
+
+    const allMessages = await this.prisma.sosMessage.findMany({
+      where: { incidentId },
+      orderBy: { receivedAt: 'desc' },
+      select: {
+        latitude: true,
+        longitude: true,
+        accuracyMeters: true,
+        preciseLatitude: true,
+        preciseLongitude: true,
+        preciseAccuracyMeters: true,
+      },
+    });
+
+    const messageWithLocation = allMessages.find(
+      (msg) =>
+        (msg.preciseLatitude !== null && msg.preciseLongitude !== null) ||
+        (msg.latitude !== null && msg.longitude !== null)
+    );
+
+    const bestLocationForBase = messageWithLocation
+      ? {
+          latitude: messageWithLocation.preciseLatitude ?? messageWithLocation.latitude,
+          longitude: messageWithLocation.preciseLongitude ?? messageWithLocation.longitude,
+          accuracyMeters: messageWithLocation.preciseAccuracyMeters ?? messageWithLocation.accuracyMeters,
+          preciseLatitude: messageWithLocation.preciseLatitude,
+          preciseLongitude: messageWithLocation.preciseLongitude,
+          preciseAccuracyMeters: messageWithLocation.preciseAccuracyMeters,
+        }
+      : message.incident.latestLatitude && message.incident.latestLongitude
+      ? {
+          latitude: message.incident.latestLatitude,
+          longitude: message.incident.latestLongitude,
+          accuracyMeters: message.incident.latestAccuracyMeters,
+          preciseLatitude: null,
+          preciseLongitude: null,
+          preciseAccuracyMeters: null,
+        }
+      : {
+          latitude: message.latitude,
+          longitude: message.longitude,
+          accuracyMeters: message.accuracyMeters,
+          preciseLatitude: message.preciseLatitude,
+          preciseLongitude: message.preciseLongitude,
+          preciseAccuracyMeters: message.preciseAccuracyMeters,
+        };
+
     const base = this.toRow({
-      ...message,
+      id: message.id,
+      messageId: message.messageId,
+      incidentId: message.incidentId,
+      priority: message.priority,
+      sosType: message.sosType,
+      deliveryState: message.deliveryState,
+      locationStatus: message.locationStatus,
+      latitude: bestLocationForBase.latitude,
+      longitude: bestLocationForBase.longitude,
+      accuracyMeters: bestLocationForBase.accuracyMeters,
+      preciseLatitude: bestLocationForBase.preciseLatitude,
+      preciseLongitude: bestLocationForBase.preciseLongitude,
+      preciseAccuracyMeters: bestLocationForBase.preciseAccuracyMeters,
+      receivedAt: message.receivedAt,
+      incident: { state: message.incident.state },
       messageEvents: message.messageEvents.length
         ? [{ source: message.messageEvents[message.messageEvents.length - 1].source }]
         : [],
@@ -316,18 +450,18 @@ export class OperatorCasesService {
       verifiedMetadata: {
         personCount: message.personCount,
         locationStatus: message.locationStatus,
-        latitude: message.preciseLatitude
-          ? message.preciseLatitude.toNumber()
-          : message.latitude
-          ? message.latitude.toNumber()
+        latitude: bestLocationForBase.preciseLatitude
+          ? bestLocationForBase.preciseLatitude.toNumber()
+          : bestLocationForBase.latitude
+          ? bestLocationForBase.latitude.toNumber()
           : null,
-        longitude: message.preciseLongitude
-          ? message.preciseLongitude.toNumber()
-          : message.longitude
-          ? message.longitude.toNumber()
+        longitude: bestLocationForBase.preciseLongitude
+          ? bestLocationForBase.preciseLongitude.toNumber()
+          : bestLocationForBase.longitude
+          ? bestLocationForBase.longitude.toNumber()
           : null,
-        accuracyMeters: message.preciseAccuracyMeters ?? message.accuracyMeters,
-        locationApproximate: !message.preciseLatitude && !!message.latitude,
+        accuracyMeters: bestLocationForBase.preciseAccuracyMeters ?? bestLocationForBase.accuracyMeters,
+        locationApproximate: !bestLocationForBase.preciseLatitude && !!bestLocationForBase.latitude,
       },
       ai: aiSuggestion,
       attachments: attachmentSummaries,

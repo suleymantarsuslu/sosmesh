@@ -150,17 +150,7 @@ export const OperatorMap = forwardRef<OperatorMapHandle, Props>(function Operato
     );
   }
 
-  if (plottable.length === 0) {
-    return (
-      <div className="operator-map-wrap operator-map-wrap--empty" data-testid="operator-map">
-        <div className="operator-map__empty-state">
-          <div className="operator-map__empty-icon">🗺️</div>
-          <h3 className="operator-map__empty-title">{t('web.cases.mapNoCases')}</h3>
-          <p className="operator-map__empty-hint">{t('web.cases.mapNoCasesHint')}</p>
-        </div>
-      </div>
-    );
-  }
+  const isEmpty = plottable.length === 0;
 
   return (
     <div className="operator-map-wrap operator-map-wrap--modern" data-testid="operator-map">
@@ -176,7 +166,7 @@ export const OperatorMap = forwardRef<OperatorMapHandle, Props>(function Operato
         mapStyle={resolveMapStyle() as maplibregl.StyleSpecification}
         onZoomEnd={(event) => onZoomChange(event.viewState.zoom)}
       >
-        {clusters.map((feature) => {
+        {!isEmpty && clusters.map((feature) => {
           const [lng, lat] = feature.geometry.coordinates;
           const props = feature.properties as ClusterProps;
           if (props.cluster) {
@@ -287,6 +277,16 @@ export const OperatorMap = forwardRef<OperatorMapHandle, Props>(function Operato
           );
         })}
       </Map>
+
+      {isEmpty && (
+        <div className="operator-map__empty-overlay">
+          <div className="operator-map__empty-state">
+            <div className="operator-map__empty-icon">🗺️</div>
+            <h3 className="operator-map__empty-title">{t('web.cases.mapNoCases')}</h3>
+            <p className="operator-map__empty-hint">{t('web.cases.mapNoCasesHint')}</p>
+          </div>
+        </div>
+      )}
       
       <div className="operator-map__legend" data-testid="map-legend">
         <h3 className="operator-map__legend-title">{t('web.cases.mapLegendTitle')}</h3>

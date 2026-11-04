@@ -29,6 +29,7 @@ final class AppModel: ObservableObject {
             handleReceivedInboxChange(old: oldValue, new: receivedInbox)
         }
     }
+    @Published var pendingRelayRequestBroadcast: ServerBroadcast? = nil
     @Published var lastUploadToken: String?
     @Published private(set) var relayDiagnostics = RelayDiagnosticsSnapshot()
     @Published var showDeliveredModal = false
@@ -96,6 +97,7 @@ final class AppModel: ObservableObject {
         self.outboxStorePathOverride = outboxStorePath
         self.meshRadioFactory = meshRadioFactory
         self.composer = try? IosSosMessageComposer(cryptoConfig: SosCryptoConfiguration.loadComposerConfig())
+        BroadcastNotificationManager.registerCategories()
         probe.onGateRefreshRequested = { [weak self] in
             Task { @MainActor in
                 await self?.refreshPermissionGate()
@@ -122,6 +124,10 @@ final class AppModel: ObservableObject {
             await refreshPermissionGate()
             await fetchAndNotifyBroadcasts()
         }
+    }
+
+    func enableRelay() async {
+        relayEnabled = true
     }
 
     func onPermissionGateBecameVisible() {
@@ -560,8 +566,14 @@ final class AppModel: ObservableObject {
         }
         
         let nowMs = Int64(Date().timeIntervalSince1970 * 1000)
+        let isActive = await UIApplication.shared.applicationState == .active
+        
         for broadcast in broadcasts {
-            await notificationManager.showNotification(broadcast: broadcast)
+            if isActive && broadcast.kind == "relay_request" {
+                pendingRelayRequestBroadcast = broadcast
+            } else {
+                await notificationManager.showNotification(broadcast: broadcast)
+            }
             
             let historyItem = NotificationHistoryItem(
                 id: broadcast.id,
@@ -582,6 +594,7 @@ final class AppModel: ObservableObject {
                     title: broadcast.title,
                     body: broadcast.body,
                     severity: broadcast.severity,
+                    kind: "standard",
                     createdAt: broadcast.createdAt,
                     expiresAt: broadcast.expiresAt,
                     regionLat: broadcast.regionLat,

@@ -59,6 +59,7 @@ export class BroadcastService {
       regionRadiusKm = Number(regionRadiusKm.toFixed(3));
     }
 
+    const kind = dto.kind || 'standard';
     const id = crypto.randomUUID();
     const signature = this.signer.signBroadcast(
       id,
@@ -69,7 +70,8 @@ export class BroadcastService {
       expiresAt,
       regionLatitude,
       regionLongitude,
-      regionRadiusKm
+      regionRadiusKm,
+      kind
     );
 
     const broadcast = await this.prisma.broadcastNotification.create({
@@ -78,6 +80,7 @@ export class BroadcastService {
         title: dto.title,
         body: dto.body,
         severity: dto.severity,
+        kind,
         createdById: userId,
         createdAt: now,
         expiresAt,
@@ -106,6 +109,7 @@ export class BroadcastService {
         title: dto.title,
         body: dto.body,
         severity: dto.severity,
+        kind,
       }).catch(() => {});
     });
 
@@ -144,6 +148,7 @@ export class BroadcastService {
       id: b.id,
       title: b.title,
       severity: b.severity,
+      kind: b.kind,
       createdBy: b.createdBy.displayName || b.createdBy.email,
       createdAt: b.createdAt.toISOString(),
       expiresAt: b.expiresAt.toISOString(),
@@ -174,6 +179,7 @@ export class BroadcastService {
       title: string;
       body: string;
       severity: string;
+      kind: string;
       createdAt: Date;
       expiresAt: Date;
       regionLatitude: Prisma.Decimal | null;
@@ -189,6 +195,7 @@ export class BroadcastService {
       title: broadcast.title,
       body: broadcast.body,
       severity: broadcast.severity,
+      kind: broadcast.kind,
       createdAt: broadcast.createdAt.toISOString(),
       expiresAt: broadcast.expiresAt.toISOString(),
       regionLatitude: broadcast.regionLatitude ? broadcast.regionLatitude.toNumber() : null,

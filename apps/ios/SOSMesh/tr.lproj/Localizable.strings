@@ -178,3 +178,5 @@
 "notifications.clear.confirm" = "Tüm bildirimler temizlensin mi?";
 "notifications.clear.yes" = "Tümünü temizle";
 "notifications.clear.cancel" = "İptal";
+"broadcast.relay_request.action.enable" = "Röleyi aç";
+"broadcast.relay_request.action.cancel" = "İptal";

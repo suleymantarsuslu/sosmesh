@@ -13,6 +13,7 @@ type RegionArea = {
 };
 
 type Props = {
+  broadcastKind: 'standard' | 'relay_request';
   title: string;
   body: string;
   severity: 'info' | 'warning' | 'critical';
@@ -34,6 +35,7 @@ type Props = {
   neighborhoodsError: { messageEN: string; messageTR: string } | null;
   streetsError: { messageEN: string; messageTR: string } | null;
   error: string | null;
+  onBroadcastKindChange: (value: 'standard' | 'relay_request') => void;
   onTitleChange: (value: string) => void;
   onBodyChange: (value: string) => void;
   onSeverityChange: (value: 'info' | 'warning' | 'critical') => void;
@@ -50,6 +52,7 @@ type Props = {
 };
 
 export function BroadcastComposer({
+  broadcastKind,
   title,
   body,
   severity,
@@ -71,6 +74,7 @@ export function BroadcastComposer({
   neighborhoodsError,
   streetsError,
   error,
+  onBroadcastKindChange,
   onTitleChange,
   onBodyChange,
   onSeverityChange,
@@ -125,6 +129,36 @@ export function BroadcastComposer({
         )}
 
         <form onSubmit={onSubmit} className="broadcast-form">
+          <div className="broadcast-form__field">
+            <label className="broadcast-form__label">
+              {t('web.broadcasts.notificationType')} *
+            </label>
+            <div className="broadcast-severity-pills">
+              <button
+                type="button"
+                className={`broadcast-severity-pill ${broadcastKind === 'standard' ? 'is-active' : ''}`}
+                onClick={() => {
+                  onBroadcastKindChange('standard');
+                }}
+              >
+                {t('web.broadcasts.typeStandard')}
+              </button>
+              <button
+                type="button"
+                className={`broadcast-severity-pill ${broadcastKind === 'relay_request' ? 'is-active' : ''}`}
+                onClick={() => {
+                  onBroadcastKindChange('relay_request');
+                  if (broadcastKind !== 'relay_request') {
+                    onTitleChange(t('web.broadcasts.relayRequestDefaultTitle'));
+                    onBodyChange(t('web.broadcasts.relayRequestDefaultBody'));
+                  }
+                }}
+              >
+                {t('web.broadcasts.typeRelayRequest')}
+              </button>
+            </div>
+          </div>
+
           <div className="broadcast-form__field">
             <label htmlFor="broadcast-title" className="broadcast-form__label">
               {t('web.broadcasts.notificationTitle')} *

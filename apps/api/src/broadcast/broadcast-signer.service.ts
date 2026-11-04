@@ -20,11 +20,13 @@ export class BroadcastSignerService implements OnModuleInit {
     regionLatitude?: number | null;
     regionLongitude?: number | null;
     regionRadiusKm?: number | null;
+    kind?: string;
   }): string {
     const regionPart = params.regionLatitude != null && params.regionLongitude != null && params.regionRadiusKm != null
       ? `|${params.regionLatitude}|${params.regionLongitude}|${params.regionRadiusKm}`
       : '';
-    return `BROADCAST|${params.id}|${params.title}|${params.body}|${params.severity}|${params.createdAt}|${params.expiresAt}${regionPart}`;
+    const kindPart = params.kind === 'relay_request' ? '|relay_request' : '';
+    return `BROADCAST|${params.id}|${params.title}|${params.body}|${params.severity}|${params.createdAt}|${params.expiresAt}${regionPart}${kindPart}`;
   }
 
   onModuleInit(): void {
@@ -52,13 +54,15 @@ export class BroadcastSignerService implements OnModuleInit {
     expiresAt: Date,
     regionLatitude?: number | null,
     regionLongitude?: number | null,
-    regionRadiusKm?: number | null
+    regionRadiusKm?: number | null,
+    kind?: string
   ): string {
     const regionPart = regionLatitude != null && regionLongitude != null && regionRadiusKm != null
       ? `|${regionLatitude}|${regionLongitude}|${regionRadiusKm}`
       : '';
+    const kindPart = kind === 'relay_request' ? '|relay_request' : '';
     const payload = Buffer.from(
-      `BROADCAST|${id}|${title}|${body}|${severity}|${createdAt.toISOString()}|${expiresAt.toISOString()}${regionPart}`,
+      `BROADCAST|${id}|${title}|${body}|${severity}|${createdAt.toISOString()}|${expiresAt.toISOString()}${regionPart}${kindPart}`,
       'utf8'
     );
     return sign(null, payload, this.privateKey).toString('base64');
@@ -74,14 +78,16 @@ export class BroadcastSignerService implements OnModuleInit {
     signature: string,
     regionLatitude?: number | null,
     regionLongitude?: number | null,
-    regionRadiusKm?: number | null
+    regionRadiusKm?: number | null,
+    kind?: string
   ): boolean {
     try {
       const regionPart = regionLatitude != null && regionLongitude != null && regionRadiusKm != null
         ? `|${regionLatitude}|${regionLongitude}|${regionRadiusKm}`
         : '';
+      const kindPart = kind === 'relay_request' ? '|relay_request' : '';
       const payload = Buffer.from(
-        `BROADCAST|${id}|${title}|${body}|${severity}|${createdAt}|${expiresAt}${regionPart}`,
+        `BROADCAST|${id}|${title}|${body}|${severity}|${createdAt}|${expiresAt}${regionPart}${kindPart}`,
         'utf8'
       );
       return verify(null, payload, this.publicKey, Buffer.from(signature, 'base64'));

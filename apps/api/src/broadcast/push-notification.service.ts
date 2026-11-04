@@ -8,6 +8,7 @@ interface PushNotificationPayload {
   title: string;
   body: string;
   severity: string;
+  kind: string;
 }
 
 @Injectable()
@@ -105,6 +106,7 @@ export class PushNotificationService implements OnModuleInit {
             token,
             data: {
               broadcastId: payload.broadcastId,
+              kind: payload.kind,
             },
             notification: {
               title: payload.title,
@@ -164,6 +166,7 @@ export class PushNotificationService implements OnModuleInit {
             sound: 'default',
           },
           broadcastId: payload.broadcastId,
+          kind: payload.kind,
         };
 
         const response = await fetch(`${url}/${token}`, {

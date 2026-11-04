@@ -5,6 +5,7 @@ struct RootTabView: View {
     @AppStorage("sosmesh.disclaimer.accepted") private var storedDisclaimer = false
     @AppStorage("sosmesh.profile.onboarding.done") private var profileOnboardingDone = false
     @State private var selectedTab = 0
+    @State private var showRelayRequestAlert = false
 
     var body: some View {
         Group {
@@ -44,6 +45,26 @@ struct RootTabView: View {
         }
         .onAppear {
             appModel.bootstrap()
+        }
+        .onChange(of: appModel.pendingRelayRequestBroadcast) { _, newValue in
+            showRelayRequestAlert = newValue != nil
+        }
+        .alert(
+            appModel.pendingRelayRequestBroadcast?.title ?? "",
+            isPresented: $showRelayRequestAlert,
+            presenting: appModel.pendingRelayRequestBroadcast
+        ) { broadcast in
+            Button(NSLocalizedString("broadcast.relay_request.action.enable", comment: "")) {
+                Task {
+                    await appModel.enableRelay()
+                    appModel.pendingRelayRequestBroadcast = nil
+                }
+            }
+            Button(NSLocalizedString("broadcast.relay_request.action.cancel", comment: ""), role: .cancel) {
+                appModel.pendingRelayRequestBroadcast = nil
+            }
+        } message: { broadcast in
+            Text(broadcast.body)
         }
     }
 }

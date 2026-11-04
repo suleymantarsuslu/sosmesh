@@ -17,8 +17,11 @@ import androidx.compose.material3.NavigationBar
 import androidx.compose.material3.NavigationBarItem
 import androidx.compose.material3.NavigationBarItemDefaults
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
+import androidx.compose.runtime.collectAsState
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.testTag
@@ -46,9 +49,16 @@ import com.sosmesh.android.ui.settings.SettingsRoute
 import com.sosmesh.android.ui.settings.SettingsViewModel
 import com.sosmesh.android.ui.theme.SosMeshTheme
 import dagger.hilt.android.AndroidEntryPoint
+import javax.inject.Inject
 
 @AndroidEntryPoint
 class MainActivity : ComponentActivity() {
+    @Inject
+    lateinit var broadcastDialogCoordinator: com.sosmesh.android.broadcast.BroadcastDialogCoordinator
+
+    @Inject
+    lateinit var relayController: com.sosmesh.android.core.data.relay.RelayController
+
     override fun onCreate(savedInstanceState: Bundle?) {
         installSplashScreen()
         super.onCreate(savedInstanceState)
@@ -56,6 +66,8 @@ class MainActivity : ComponentActivity() {
             val context = LocalContext.current
             var highContrast by remember { mutableStateOf(readHighContrast(context)) }
             var appUnlocked by remember { mutableStateOf(false) }
+            val pendingRelayRequest by broadcastDialogCoordinator.pendingRelayRequest.collectAsState()
+
             SosMeshTheme(highContrast = highContrast) {
                 Surface(color = MaterialTheme.colorScheme.background) {
                     PermissionGateRoute(
@@ -66,6 +78,29 @@ class MainActivity : ComponentActivity() {
                     if (appUnlocked) {
                         SosMeshNavHost(
                             onHighContrastChanged = { highContrast = readHighContrast(context) },
+                        )
+                    }
+
+                    pendingRelayRequest?.let { broadcast ->
+                        AlertDialog(
+                            onDismissRequest = { broadcastDialogCoordinator.dismissRelayRequestDialog() },
+                            title = { Text(broadcast.title) },
+                            text = { Text(broadcast.body) },
+                            confirmButton = {
+                                TextButton(onClick = {
+                                    relayController.setRelayEnabled(true)
+                                    broadcastDialogCoordinator.dismissRelayRequestDialog()
+                                }) {
+                                    Text(stringResource(R.string.broadcast_relay_request_action_enable))
+                                }
+                            },
+                            dismissButton = {
+                                TextButton(onClick = {
+                                    broadcastDialogCoordinator.dismissRelayRequestDialog()
+                                }) {
+                                    Text(stringResource(R.string.broadcast_relay_request_action_cancel))
+                                }
+                            },
                         )
                     }
                 }

@@ -79,6 +79,7 @@ public actor BroadcastRepository {
             return nil
         }
 
+        let kind = obj["kind"] as? String ?? "standard"
         let regionLat = obj["regionLatitude"] as? Double
         let regionLng = obj["regionLongitude"] as? Double
         let regionRadiusKm = obj["regionRadiusKm"] as? Double
@@ -88,6 +89,7 @@ public actor BroadcastRepository {
             title: title,
             body: body,
             severity: severity,
+            kind: kind,
             createdAt: createdAt,
             expiresAt: expiresAt,
             regionLat: regionLat,

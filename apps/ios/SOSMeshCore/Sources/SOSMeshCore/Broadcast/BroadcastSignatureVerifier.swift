@@ -17,7 +17,8 @@ public struct BroadcastSignatureVerifier {
         } else {
             regionPart = ""
         }
-        let payload = "BROADCAST|\(broadcast.id)|\(broadcast.title)|\(broadcast.body)|\(broadcast.severity)|\(broadcast.createdAt)|\(broadcast.expiresAt)\(regionPart)"
+        let kindPart = broadcast.kind == "relay_request" ? "|relay_request" : ""
+        let payload = "BROADCAST|\(broadcast.id)|\(broadcast.title)|\(broadcast.body)|\(broadcast.severity)|\(broadcast.createdAt)|\(broadcast.expiresAt)\(regionPart)\(kindPart)"
         
         guard let payloadData = payload.data(using: .utf8),
               let signatureData = Data(base64Encoded: broadcast.signature) else {

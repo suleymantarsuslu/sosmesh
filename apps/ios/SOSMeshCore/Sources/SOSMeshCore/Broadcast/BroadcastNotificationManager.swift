@@ -3,6 +3,33 @@ import UserNotifications
 
 public struct BroadcastNotificationManager {
     public init() {}
+    
+    public static func registerCategories() {
+        let center = UNUserNotificationCenter.current()
+        
+        let enableAction = UNNotificationAction(
+            identifier: "ENABLE_RELAY",
+            title: NSLocalizedString("broadcast.relay_request.action.enable", comment: ""),
+            options: [.foreground]
+        )
+        let cancelAction = UNNotificationAction(
+            identifier: "CANCEL",
+            title: NSLocalizedString("broadcast.relay_request.action.cancel", comment: ""),
+            options: []
+        )
+        let relayRequestCategory = UNNotificationCategory(
+            identifier: "RELAY_REQUEST",
+            actions: [enableAction, cancelAction],
+            intentIdentifiers: [],
+            options: []
+        )
+        
+        center.getNotificationCategories { existingCategories in
+            var allCategories = existingCategories
+            allCategories.insert(relayRequestCategory)
+            center.setNotificationCategories(allCategories)
+        }
+    }
 
     public func showNotification(broadcast: ServerBroadcast) async {
         let content = UNMutableNotificationContent()
@@ -17,6 +44,10 @@ public struct BroadcastNotificationManager {
             content.interruptionLevel = .timeSensitive
         default:
             content.interruptionLevel = .active
+        }
+
+        if broadcast.kind == "relay_request" {
+            content.categoryIdentifier = "RELAY_REQUEST"
         }
 
         let request = UNNotificationRequest(

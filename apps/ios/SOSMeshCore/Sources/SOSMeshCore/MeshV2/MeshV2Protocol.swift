@@ -103,6 +103,7 @@ public struct ServerBroadcast: Equatable {
     public let title: String
     public let body: String
     public let severity: String
+    public let kind: String
     public let createdAt: String
     public let expiresAt: String
     public let regionLat: Double?
@@ -116,6 +117,7 @@ public struct ServerBroadcast: Equatable {
         title: String,
         body: String,
         severity: String,
+        kind: String = "standard",
         createdAt: String,
         expiresAt: String,
         regionLat: Double? = nil,
@@ -128,6 +130,7 @@ public struct ServerBroadcast: Equatable {
         self.title = title
         self.body = body
         self.severity = severity
+        self.kind = kind
         self.createdAt = createdAt
         self.expiresAt = expiresAt
         self.regionLat = regionLat
@@ -336,6 +339,7 @@ public enum MeshV2Frame: Equatable {
                 title: title,
                 body: body,
                 severity: severity,
+                kind: "standard",
                 createdAt: createdAt,
                 expiresAt: expiresAt,
                 regionLat: regionLat,

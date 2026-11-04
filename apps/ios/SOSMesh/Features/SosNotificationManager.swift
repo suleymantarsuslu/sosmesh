@@ -7,7 +7,22 @@ final class SosNotificationManager: NSObject, UNUserNotificationCenterDelegate {
     
     var pendingSosIds: Set<String> = []
     private let notificationCenter = UNUserNotificationCenter.current()
-    private var notifiedIncomingSosIds: Set<String> = []
+    private static let notifiedIncomingKey = "sosmesh.notifiedIncomingSosIds"
+    private var notifiedIncomingSosIds: Set<String> = Set(
+        UserDefaults.standard.stringArray(forKey: SosNotificationManager.notifiedIncomingKey) ?? []
+    )
+
+    /// First run after install/update: remember already-stored SOS ids without notifying,
+    /// so old inbox records loaded from disk don't fire a burst of alerts.
+    func seedIncomingIfNeeded(_ sosIds: [String]) {
+        guard UserDefaults.standard.object(forKey: Self.notifiedIncomingKey) == nil else { return }
+        notifiedIncomingSosIds.formUnion(sosIds)
+        persistNotifiedIncoming()
+    }
+
+    private func persistNotifiedIncoming() {
+        UserDefaults.standard.set(Array(notifiedIncomingSosIds.suffix(500)), forKey: Self.notifiedIncomingKey)
+    }
     
     override init() {
         super.init()
@@ -61,6 +76,7 @@ final class SosNotificationManager: NSObject, UNUserNotificationCenterDelegate {
     func notifyIncomingSos(sosId: String, isRelayOnly: Bool) {
         guard !notifiedIncomingSosIds.contains(sosId) else { return }
         notifiedIncomingSosIds.insert(sosId)
+        persistNotifiedIncoming()
         
         let content = UNMutableNotificationContent()
         content.title = NSLocalizedString("notification.incoming.sos.title", comment: "")
@@ -80,11 +96,7 @@ final class SosNotificationManager: NSObject, UNUserNotificationCenterDelegate {
             trigger: nil
         )
         
-        notificationCenter.add(request) { error in
-            if let error = error {
-                print("Failed to post incoming SOS notification: \(error.localizedDescription)")
-            }
-        }
+        notificationCenter.add(request)
     }
     
     func scheduleTestNotification() {
@@ -101,11 +113,7 @@ final class SosNotificationManager: NSObject, UNUserNotificationCenterDelegate {
             trigger: trigger
         )
         
-        notificationCenter.add(request) { error in
-            if let error = error {
-                print("Failed to schedule test notification: \(error.localizedDescription)")
-            }
-        }
+        notificationCenter.add(request)
     }
     
     nonisolated func userNotificationCenter(

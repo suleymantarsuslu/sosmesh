@@ -692,6 +692,10 @@ extension AppModel {
     }
     
     private func handleReceivedInboxChange(old: [ReceivedSosRecord], new: [ReceivedSosRecord]) {
+        if old.isEmpty {
+            let ids = new.map(\.sosId)
+            Task { @MainActor in SosNotificationManager.shared.seedIncomingIfNeeded(ids) }
+        }
         let oldIds = Set(old.map(\.sosId))
         let newIds = Set(new.map(\.sosId))
         let addedIds = newIds.subtracting(oldIds)

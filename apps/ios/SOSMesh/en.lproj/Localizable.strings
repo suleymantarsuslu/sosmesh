@@ -169,3 +169,6 @@
 "profile.skip" = "Skip for now";
 "profile.delete" = "Delete profile from this phone";
 "profile.privacy_footer" = "Nothing here is shared until you send an SOS. Every field is optional.";
+"settings.notifications.test.section" = "Notification test";
+"settings.notifications.test.button" = "Send test notification (5 s)";
+"settings.notifications.test.footer" = "After tapping, background the app or lock the screen. A TEST notification should appear within 5 seconds.";

@@ -169,3 +169,6 @@
 "profile.skip" = "Şimdilik geç";
 "profile.delete" = "Profili bu telefondan sil";
 "profile.privacy_footer" = "SOS gönderene kadar buradaki hiçbir bilgi paylaşılmaz. Tüm alanlar isteğe bağlıdır.";
+"settings.notifications.test.section" = "Bildirim testi";
+"settings.notifications.test.button" = "Test bildirimi gönder (5 sn)";
+"settings.notifications.test.footer" = "Butona bastıktan sonra uygulamayı arka plana al veya ekranı kilitle. 5 saniye içinde TEST bildirimi görünmeli.";

@@ -484,7 +484,7 @@ export class OperatorCaseActionsService {
 
       await tx.incident.update({
         where: { id: incidentId },
-        data: { deletedAt },
+        data: { deletedAt, archiveReason: 'manual_delete' },
       });
 
       await tx.auditLog.create({
@@ -492,7 +492,7 @@ export class OperatorCaseActionsService {
           actorId: user.sub,
           incidentId,
           action: 'INCIDENT_DELETED',
-          detailsJson: { deletedAt: deletedAt.toISOString() },
+          detailsJson: { deletedAt: deletedAt.toISOString(), reason: 'manual_delete' },
         },
       });
     });

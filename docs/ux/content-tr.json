@@ -371,6 +371,11 @@
       "deleteSuccess": "Vaka arşivlendi",
       "deleteFailed": "Vaka silinemedi",
       "deleteCoordinatorOnly": "Yalnızca koordinatörler vaka silebilir",
+      "archiveStatusDeleted": "Silindi",
+      "archiveStatusCompleted": "Tamamlandı",
+      "archiveReasonManual": "Manuel silme",
+      "archiveReasonCompleted": "Tüm görevler tamamlandı",
+      "archivedBanner": "Bu vaka arşivlendi ve artık aktif değil",
       "auditTeam": "Ekip",
       "sender": {
         "profileTitle": "Gönderen profili",

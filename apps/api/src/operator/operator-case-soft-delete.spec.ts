@@ -101,7 +101,7 @@ describe('Incident Soft Delete', () => {
       expect(result.deletedAt).toBeDefined();
       expect(prisma.incident.update).toHaveBeenCalledWith({
         where: { id: 'incident-1' },
-        data: { deletedAt: expect.any(Date) },
+        data: { deletedAt: expect.any(Date), archiveReason: 'manual_delete' },
       });
       expect(prisma.auditLog.create).toHaveBeenCalledWith({
         data: expect.objectContaining({

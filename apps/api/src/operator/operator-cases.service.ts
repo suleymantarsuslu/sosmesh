@@ -50,6 +50,8 @@ export type OperatorAttachmentSummary = {
 export type OperatorCaseDetail = OperatorCaseRow & {
   version: number;
   reviewStatus: string;
+  deletedAt: string | null;
+  archiveReason: string | null;
   originalText: string | null;
   translatedText: string | null;
   detectedLanguage: string | null;
@@ -203,7 +205,7 @@ export class OperatorCasesService {
         personCount: true,
         operatorDisplayText: true,
         noteText: true,
-        incident: { select: { state: true, version: true, reviewStatus: true } },
+        incident: { select: { state: true, version: true, reviewStatus: true, deletedAt: true, archiveReason: true } },
         messageEvents: {
           select: {
             id: true,
@@ -306,6 +308,8 @@ export class OperatorCasesService {
       ...base,
       version: message.incident.version,
       reviewStatus: message.incident.reviewStatus,
+      deletedAt: message.incident.deletedAt?.toISOString() ?? null,
+      archiveReason: message.incident.archiveReason,
       originalText,
       translatedText,
       detectedLanguage,
@@ -398,6 +402,7 @@ export class OperatorCasesService {
         id: true,
         state: true,
         deletedAt: true,
+        archiveReason: true,
         createdAt: true,
         updatedAt: true,
         sosMessages: {
@@ -421,6 +426,7 @@ export class OperatorCasesService {
           incidentId: incident.id,
           incidentState: incident.state,
           deletedAt: incident.deletedAt?.toISOString() ?? null,
+          archiveReason: incident.archiveReason,
           createdAt: incident.createdAt.toISOString(),
           messageId: message?.messageId ?? null,
           sosMessageId: message?.id ?? null,

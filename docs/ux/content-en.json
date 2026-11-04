@@ -371,6 +371,11 @@
       "deleteSuccess": "Case archived",
       "deleteFailed": "Failed to delete case",
       "deleteCoordinatorOnly": "Only coordinators can delete cases",
+      "archiveStatusDeleted": "Deleted",
+      "archiveStatusCompleted": "Completed",
+      "archiveReasonManual": "Manual deletion",
+      "archiveReasonCompleted": "All tasks completed",
+      "archivedBanner": "This case is archived and no longer active",
       "auditTeam": "Team",
       "sender": {
         "profileTitle": "Sender profile",

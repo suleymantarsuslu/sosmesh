@@ -61,7 +61,7 @@ export class OperatorPanelController {
     });
     const scopeWhere = this.scope.incidentWhere(req.operatorUser);
     const rows = await this.prisma.incident.findMany({
-      where: scopeWhere,
+      where: { ...scopeWhere, deletedAt: null },
       take: pagination.limit + 1,
       ...(pagination.cursor
         ? { skip: 1, cursor: { id: pagination.cursor } }

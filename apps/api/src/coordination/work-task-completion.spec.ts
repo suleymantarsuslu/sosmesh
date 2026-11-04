@@ -60,6 +60,7 @@ describe('WorkTaskService - Task Completion and Auto Status', () => {
                   ...prisma.workTask,
                   findUnique: jest.fn().mockResolvedValue({ version: 0 }),
                   updateMany: jest.fn().mockResolvedValue({ count: 1 }),
+                  count: jest.fn().mockResolvedValue(1),
                 },
                 incident: prisma.incident,
                 auditLog: prisma.auditLog,

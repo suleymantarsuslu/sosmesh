@@ -12,14 +12,16 @@ final class RelayDeliveryCounter: RelayDeliveryCounterPort {
     }
     
     func recordDelivered(messageId: String) {
+        guard carriedMessageIds().contains(messageId) else { return }
         var delivered = deliveredMessageIds()
         if delivered.insert(messageId).inserted {
             persistDelivered(delivered)
         }
     }
     
+    /// Only messages this device carried for someone else count; its own SOS uploads never do.
     func deliveredCount() -> Int {
-        deliveredMessageIds().count
+        deliveredMessageIds().intersection(carriedMessageIds()).count
     }
     
     func recordCarriedMessage(messageId: String) {

@@ -10,6 +10,9 @@ final class RelayDeliveryCounterTests: XCTestCase {
         defaults = UserDefaults(suiteName: "test.relaycounter")
         defaults.removePersistentDomain(forName: "test.relaycounter")
         counter = RelayDeliveryCounter(defaults: defaults)
+        for id in ["msg-1", "msg-2", "msg-3"] {
+            counter.recordCarriedMessage(messageId: id)
+        }
     }
     
     override func tearDown() {
@@ -48,5 +51,14 @@ final class RelayDeliveryCounterTests: XCTestCase {
         
         newCounter.recordDelivered(messageId: "msg-3")
         XCTAssertEqual(newCounter.deliveredCount(), 3)
+    }
+
+    func testOwnMessagesNeverCount() {
+        counter.recordDelivered(messageId: "own-1")
+        counter.markCarriedMessagesDelivered(["own-2"])
+        XCTAssertEqual(counter.deliveredCount(), 0)
+
+        counter.recordDelivered(messageId: "msg-1")
+        XCTAssertEqual(counter.deliveredCount(), 1)
     }
 }

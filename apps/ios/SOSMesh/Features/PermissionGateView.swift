@@ -70,7 +70,7 @@ struct PermissionGateView: View {
     
     private var disclaimerSection: some View {
         let emergencyNumber = EmergencyNumberProvider.getEmergencyNumber()
-        SOSCard {
+        return SOSCard {
             HStack(spacing: DesignSystem.Spacing.sm) {
                 Image(systemName: "info.circle.fill")
                     .font(.system(size: 20))

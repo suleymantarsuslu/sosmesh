@@ -1,5 +1,6 @@
 import SwiftUI
 import UIKit
+import CoreLocation
 import SOSMeshCore
 import SOSMeshContracts
 
@@ -496,7 +497,7 @@ final class AppModel: ObservableObject {
         
         let nowMs = Int64(Date().timeIntervalSince1970 * 1000)
         for broadcast in broadcasts {
-            await notificationManager.show(broadcast: broadcast)
+            await notificationManager.showNotification(broadcast: broadcast)
             
             if let meshNode = meshNode {
                 let meshBroadcast = ServerBroadcast(
@@ -506,8 +507,8 @@ final class AppModel: ObservableObject {
                     severity: broadcast.severity,
                     createdAt: broadcast.createdAt,
                     expiresAt: broadcast.expiresAt,
-                    regionLat: broadcast.regionLatitude,
-                    regionLng: broadcast.regionLongitude,
+                    regionLat: broadcast.regionLat,
+                    regionLng: broadcast.regionLng,
                     regionRadiusKm: broadcast.regionRadiusKm,
                     signature: broadcast.signature,
                     hopsLeft: 8
@@ -575,17 +576,15 @@ final class AppModel: ObservableObject {
         if let notificationManager = broadcastNotificationManager {
             node.broadcastNotifier = { broadcast in
                 Task {
-                    await notificationManager.show(broadcast: broadcast)
+                    await notificationManager.showNotification(broadcast: broadcast)
                 }
             }
         }
         
-        node.locationProvider = { [weak self] in
-            guard let self else { return nil }
-            let snapshot = Task { await self.locationManager.requestLocationAsync(timeoutMs: 1000) }
-            let location = try? await snapshot.value
-            guard let lat = location?.latitude, let lng = location?.longitude else { return nil }
-            return (lat, lng)
+        node.locationProvider = {
+            // Last known fix only; nil when location is not authorized or unknown.
+            guard let location = CLLocationManager().location else { return nil }
+            return (location.coordinate.latitude, location.coordinate.longitude)
         }
         
         meshNode = node

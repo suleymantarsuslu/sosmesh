@@ -34,6 +34,8 @@ fun WearRootScreen(
         )
         WearScreen.RELAY -> WearRelayScreen(
             isRelayActive = relayViewModel.isRelayActive,
+            errorMessage = relayViewModel.errorMessage,
+            missingPermissions = relayViewModel.missingPermissions,
             onToggleRelay = relayViewModel::toggleRelay,
             onBack = { currentScreen = WearScreen.HOME },
         )

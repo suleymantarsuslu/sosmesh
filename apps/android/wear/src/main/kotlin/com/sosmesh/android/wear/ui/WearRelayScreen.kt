@@ -38,6 +38,8 @@ import com.sosmesh.android.wear.R
 @Composable
 fun WearRelayScreen(
     isRelayActive: Boolean,
+    errorMessage: String?,
+    missingPermissions: List<String>,
     onToggleRelay: (Boolean) -> Unit,
     onBack: () -> Unit,
 ) {
@@ -74,6 +76,28 @@ fun WearRelayScreen(
                     textAlign = TextAlign.Center,
                     modifier = Modifier.padding(bottom = 4.dp),
                 )
+            }
+            if (errorMessage != null) {
+                item {
+                    Text(
+                        text = errorMessage,
+                        style = MaterialTheme.typography.caption2,
+                        color = WearSosPalette.EmergencyRed,
+                        textAlign = TextAlign.Center,
+                        modifier = Modifier.padding(vertical = 4.dp),
+                    )
+                }
+            }
+            if (missingPermissions.isNotEmpty()) {
+                item {
+                    Text(
+                        text = "İzin gerekli: ${missingPermissions.size} izin",
+                        style = MaterialTheme.typography.caption2,
+                        color = WearSosPalette.TextMuted,
+                        textAlign = TextAlign.Center,
+                        modifier = Modifier.padding(vertical = 4.dp),
+                    )
+                }
             }
             item {
                 ToggleChip(

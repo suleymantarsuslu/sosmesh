@@ -14,6 +14,7 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
 import com.sosmesh.android.core.design.components.SosBadge
@@ -98,7 +99,7 @@ fun RelayScreen(
                     highlighted = true,
                 ) {
                     Text(
-                        text = stringResource(R.string.relay_delivered_count, state.deliveredCount),
+                        text = pluralStringResource(R.plurals.relay_delivered_count, state.deliveredCount, state.deliveredCount),
                         style = MaterialTheme.typography.bodyMedium,
                     )
                 }

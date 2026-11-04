@@ -22,12 +22,16 @@ class SosMeshApplication : Application(), Configuration.Provider {
     @Inject
     lateinit var meshV2OutboxSync: com.sosmesh.android.feature.relay.mesh.MeshV2OutboxSync
 
+    @Inject
+    lateinit var relayDeliveryTracker: com.sosmesh.android.feature.relay.mesh.RelayDeliveryTracker
+
     override fun onCreate() {
         super.onCreate()
         AppLocaleController.applyStoredLocale(this)
         crashReporter.install()
         meshV2Runtime.install(filesDir)
         meshV2OutboxSync.start()
+        relayDeliveryTracker.start()
         com.sosmesh.android.core.data.broadcast.BroadcastPoller.meshSink = { broadcast, nowMs ->
             com.sosmesh.android.meshv2.v2.MeshV2Runtime.installed?.node?.broadcasts?.put(
                 com.sosmesh.android.meshv2.v2.ServerBroadcast(

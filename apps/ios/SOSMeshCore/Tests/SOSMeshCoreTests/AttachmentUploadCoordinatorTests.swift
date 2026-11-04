@@ -157,4 +157,37 @@ final class AttachmentUploadCoordinatorTests: XCTestCase {
         let remaining = queue.listPending()
         XCTAssertEqual(remaining.count, 1, "Attachment without token should remain in queue")
     }
+    
+    func testAttachmentUploadAfterLateTokenArrival() async throws {
+        let testData = Data("test late token".utf8)
+        let attachment = try queue.enqueue(
+            sosMessageId: "sos-303",
+            uploadToken: nil,
+            kind: .image,
+            data: testData,
+            mimeType: "image/jpeg"
+        )
+        
+        let coordinator = AttachmentUploadCoordinator(queue: queue, baseURL: "http://localhost:9999")
+        
+        var statusUpdates: [AttachmentUploadStatus] = []
+        coordinator.onStatusChange = { _, status in
+            statusUpdates.append(status)
+        }
+        
+        await coordinator.processSosAttachments(sosId: "sos-303")
+        XCTAssertTrue(statusUpdates.isEmpty, "Should not attempt upload without token initially")
+        
+        try queue.setUploadToken("late-token", forSosId: "sos-303")
+        
+        await coordinator.processSosAttachments(sosId: "sos-303")
+        
+        let uploadingStatus = statusUpdates.first { status in
+            if case .uploading = status {
+                return true
+            }
+            return false
+        }
+        XCTAssertNotNil(uploadingStatus, "Should attempt upload after token is set")
+    }
 }

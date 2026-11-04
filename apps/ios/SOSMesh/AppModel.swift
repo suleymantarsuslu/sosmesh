@@ -337,8 +337,11 @@ final class AppModel: ObservableObject {
         // PEER_RECEIVED is only a nearby-phone ACK: once online the own upload still runs
         // (the server de-duplicates a packet a relay already forwarded).
         let nowMs = Int64(Date().timeIntervalSince1970 * 1000)
-        for entry in MeshUploadOrdering.ordered(entries) where (entry.state == "LOCAL_SAVED" || entry.state == "PEER_RECEIVED") && entry.origin == "ios" {
-            guard entry.retryAtMs <= nowMs,
+        for entry in MeshUploadOrdering.ordered(entries) where entry.origin == "ios" {
+            let needsUpload = (entry.state == "LOCAL_SAVED" || entry.state == "PEER_RECEIVED") ||
+                              (entry.state == "SERVER_ACCEPTED" && hasPendingAttachmentsWithoutToken(sosId: entry.sosId))
+            guard needsUpload,
+                  entry.retryAtMs <= nowMs,
                   nowMs - (lastOwnUploadAttemptMs[entry.sosId] ?? 0) >= 30_000,
                   !uploadsInFlight.contains(entry.sosId),
                   let data = Data(base64Encoded: entry.encryptedBlobBase64),
@@ -353,6 +356,12 @@ final class AppModel: ObservableObject {
             )
             uploadsInFlight.remove(entry.sosId)
         }
+    }
+    
+    private func hasPendingAttachmentsWithoutToken(sosId: String) -> Bool {
+        guard let queue = attachmentQueue else { return false }
+        let attachments = queue.listBySosId(sosId)
+        return attachments.contains { $0.uploadToken == nil }
     }
 
     private func attemptServerUpload(
@@ -418,8 +427,14 @@ final class AppModel: ObservableObject {
             }
         case .noNetwork:
             meshNode?.hops.noteInternetFailure()
-        case .httpError:
+        case .httpError(let code, _, let retryAfterSeconds):
             meshNode?.hops.noteInternetSuccess(nowMs: Int64(Date().timeIntervalSince1970 * 1000))
+            if (code == 429 || code == 503), let retryAfter = retryAfterSeconds, let service = try? requireOutbox() {
+                let nowMs = Int64(Date().timeIntervalSince1970 * 1000)
+                let retryAtMs = nowMs + Int64(retryAfter * 1000)
+                _ = try? service.setRetryAt(sosId: sosId, digest: digest, retryAtMs: retryAtMs, lastError: "rate_limited_\(code)")
+                await reloadOutbox()
+            }
         case .invalidReceipt, .error:
             break
         }

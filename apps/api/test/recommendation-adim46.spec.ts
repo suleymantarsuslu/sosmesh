@@ -367,6 +367,134 @@ describe('Assignment recommendations (ADIM 46)', () => {
     expect(task?.source).toBe('AI');
   });
 
+  it('confirms a recommendation for a selected team without an individual assignee', async () => {
+    const prisma = app.get(PrismaService);
+    const ids = {
+      incidentId: '00000000-0000-4000-8000-0000000004a1',
+      messageId: '00000000-0000-4000-8000-0000000004a2',
+      orgId: '00000000-0000-4000-8000-0000000004a3',
+      teamId: '00000000-0000-4000-8000-0000000004a4',
+      resourceId: '00000000-0000-4000-8000-0000000004a5',
+      assigneeId: '00000000-0000-4000-8000-0000000004a6',
+      coordinatorId: '00000000-0000-4000-8000-0000000004a7',
+    };
+    const otherTeamId = '00000000-0000-4000-8000-0000000004a8';
+    await seedIncidentWithFreshResource(prisma, ids);
+    await prisma.team.create({
+      data: {
+        id: otherTeamId,
+        name: 'rec-other-team-4a8',
+        organizationId: ids.orgId,
+        zoneCode: 'SYNTH-Z1',
+      },
+    });
+    const token = operatorBearerToken({
+      sub: ids.coordinatorId,
+      role: UserRole.COORDINATOR,
+      teamId: ids.teamId,
+      organizationId: ids.orgId,
+    });
+    const plan = await request(app.getHttpServer())
+      .post(`/v1/operator/incidents/${ids.incidentId}/recommendations/plan`)
+      .set('Authorization', `Bearer ${token}`)
+      .set('Origin', allowedOrigin);
+    const available = plan.body.items.find((row: { available: boolean }) => row.available);
+    expect(available.workTask).toBeNull();
+
+    // Nothing is dispatched by planning alone.
+    expect(await prisma.workTask.count({ where: { incidentId: ids.incidentId } })).toBe(0);
+
+    const confirm = await request(app.getHttpServer())
+      .post(`/v1/operator/recommendations/${available.id}/confirm`)
+      .set('Authorization', `Bearer ${token}`)
+      .set('Origin', allowedOrigin)
+      .send({ teamId: otherTeamId });
+    expect(confirm.status).toBe(201);
+    expect(confirm.body.recommendation.status).toBe('CONFIRMED');
+    expect(confirm.body.recommendation.confirmedAt).toBeTruthy();
+    expect(confirm.body.recommendation.workTask).toMatchObject({
+      id: confirm.body.taskId,
+      status: 'ASSIGNED',
+      teamId: otherTeamId,
+      teamName: 'rec-other-team-4a8',
+      assigneeDisplayName: null,
+    });
+
+    const task = await prisma.workTask.findUnique({ where: { id: confirm.body.taskId } });
+    expect(task).toMatchObject({
+      status: 'ASSIGNED',
+      source: 'AI',
+      teamId: otherTeamId,
+      assigneeId: null,
+      resourceId: null,
+      incidentId: ids.incidentId,
+    });
+
+    const tasks = await request(app.getHttpServer())
+      .get(`/v1/operator/tasks?incidentId=${ids.incidentId}`)
+      .set('Authorization', `Bearer ${token}`);
+    expect(tasks.status).toBe(200);
+    expect(tasks.body.items).toHaveLength(1);
+    expect(tasks.body.items[0]).toMatchObject({
+      teamId: otherTeamId,
+      teamName: 'rec-other-team-4a8',
+      status: 'ASSIGNED',
+    });
+
+    const audits = await prisma.auditLog.findMany({
+      where: { incidentId: ids.incidentId },
+      select: { action: true, detailsJson: true },
+    });
+    const actions = audits.map((row) => row.action);
+    expect(actions).toEqual(
+      expect.arrayContaining(['recommendation.confirm', 'work_task.assign_team'])
+    );
+    const confirmAudit = audits.find((row) => row.action === 'recommendation.confirm');
+    expect(confirmAudit?.detailsJson).toMatchObject({
+      workTaskId: confirm.body.taskId,
+      after: { teamId: otherTeamId, teamName: 'rec-other-team-4a8', teamOverridden: true },
+    });
+
+    // Reload shows the confirmed state with the team that was tasked.
+    const listed = await request(app.getHttpServer())
+      .get(`/v1/operator/incidents/${ids.incidentId}/recommendations`)
+      .set('Authorization', `Bearer ${token}`);
+    const confirmedRow = listed.body.items.find((row: { id: string }) => row.id === available.id);
+    expect(confirmedRow.workTask.teamName).toBe('rec-other-team-4a8');
+  });
+
+  it('rejects confirm for a team outside the coordinator organization', async () => {
+    const prisma = app.get(PrismaService);
+    const ids = {
+      incidentId: '00000000-0000-4000-8000-0000000004b1',
+      messageId: '00000000-0000-4000-8000-0000000004b2',
+      orgId: '00000000-0000-4000-8000-0000000004b3',
+      teamId: '00000000-0000-4000-8000-0000000004b4',
+      resourceId: '00000000-0000-4000-8000-0000000004b5',
+      assigneeId: '00000000-0000-4000-8000-0000000004b6',
+      coordinatorId: '00000000-0000-4000-8000-0000000004b7',
+    };
+    await seedIncidentWithFreshResource(prisma, ids);
+    const token = operatorBearerToken({
+      sub: ids.coordinatorId,
+      role: UserRole.COORDINATOR,
+      teamId: ids.teamId,
+      organizationId: ids.orgId,
+    });
+    const plan = await request(app.getHttpServer())
+      .post(`/v1/operator/incidents/${ids.incidentId}/recommendations/plan`)
+      .set('Authorization', `Bearer ${token}`)
+      .set('Origin', allowedOrigin);
+    const available = plan.body.items.find((row: { available: boolean }) => row.available);
+    const confirm = await request(app.getHttpServer())
+      .post(`/v1/operator/recommendations/${available.id}/confirm`)
+      .set('Authorization', `Bearer ${token}`)
+      .set('Origin', allowedOrigin)
+      .send({ teamId });
+    expect(confirm.status).toBe(404);
+    expect(await prisma.workTask.count({ where: { incidentId: ids.incidentId } })).toBe(0);
+  });
+
   it('records operator feedback for AI scoring without live training flag', async () => {
     const plan = await request(app.getHttpServer())
       .post(`/v1/operator/incidents/${incidentId}/recommendations/plan`)

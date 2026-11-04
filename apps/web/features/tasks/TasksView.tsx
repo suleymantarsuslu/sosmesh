@@ -1,10 +1,11 @@
 'use client';
 
 import Link from 'next/link';
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 
 import { useOperatorPreferences } from '../../components/operator/OperatorPreferencesProvider';
 import { Icon } from '../cases/detail/icons';
+import { displayTaskTitle } from './task-title';
 import {
   OpsChip,
   OpsEmpty,
@@ -23,6 +24,7 @@ export type TaskRow = {
   source: string;
   assigneeDisplayName: string | null;
   teamId: string;
+  teamName?: string | null;
   incidentId: string;
 };
 
@@ -52,11 +54,14 @@ type SourceFilter = 'all' | 'AI' | 'MANUAL';
 export function TasksView({
   tasks,
   teams = [],
+  focusTaskId,
   loading = false,
   error = false,
 }: {
   tasks: TaskRow[];
   teams?: TeamName[];
+  /** Highlights (and scrolls to) a task, e.g. when arriving from a confirmed assignment. */
+  focusTaskId?: string;
   loading?: boolean;
   error?: boolean;
 }) {
@@ -65,6 +70,14 @@ export function TasksView({
   const [status, setStatus] = useState<string>('all');
   const [source, setSource] = useState<SourceFilter>('all');
   const [view, setView] = useState<ViewMode>('list');
+
+  useEffect(() => {
+    if (focusTaskId) {
+      document
+        .querySelector(`[data-testid="task-${CSS.escape(focusTaskId)}"]`)
+        ?.scrollIntoView({ block: 'center' });
+    }
+  }, [focusTaskId, tasks.length]);
 
   const teamName = useMemo(() => new Map(teams.map((team) => [team.id, team.name])), [teams]);
 
@@ -107,7 +120,9 @@ export function TasksView({
 
   const renderCard = (task: TaskRow) => {
     const assignee = task.assigneeDisplayName;
-    const team = teamName.get(task.teamId);
+    const team = task.teamName ?? teamName.get(task.teamId);
+    const sentToTeam =
+      !assignee && team && (task.status === 'ASSIGNED' || task.status === 'ACCEPTED');
     return (
       <li
         key={task.id}
@@ -129,17 +144,20 @@ export function TasksView({
             </OpsChip>
           )}
         </div>
-        <h3 className="ops-task__title">{task.title}</h3>
+        <h3 className="ops-task__title">{displayTaskTitle(task.title, task.source, t)}</h3>
         <div className="ops-task__meta">
           <span className="ops-person" title={t('web.tasks.assignee')}>
             <span className="ops-avatar" aria-hidden="true">
               {assignee ? initialsOf(assignee) : <Icon name="user" size={12} />}
             </span>
             <span className={assignee ? '' : 'ops-muted'}>
-              {assignee ?? t('web.tasks.unassigned')}
+              {assignee ??
+                (sentToTeam
+                  ? t('web.tasks.sentToTeam').replace('{team}', team)
+                  : t('web.tasks.unassigned'))}
             </span>
           </span>
-          {team ? (
+          {team && !sentToTeam ? (
             <span className="ops-meta-item" title={t('web.tasks.team')}>
               <Icon name="users" size={13} />
               {team}

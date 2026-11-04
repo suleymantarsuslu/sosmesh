@@ -7,6 +7,7 @@ import { DeliveryStateBadge } from '../../components/cases/DeliveryStateBadge';
 import { useOperatorPreferences } from '../../components/operator/OperatorPreferencesProvider';
 import { TranslatedMessageDisplay } from './TranslatedMessageDisplay';
 import { Timeline } from '../../components/timeline/Timeline';
+import { auditActionLabel, auditTeamName } from '../../lib/audit-actions';
 import type {
   AiTriageView,
   TranscriptView,
@@ -55,13 +56,6 @@ function mergeTranscripts(
     list.push(fromBundle);
   }
   return list;
-}
-
-function humanizeAction(action: string): string {
-  return action
-    .split('_')
-    .map((word) => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
-    .join(' ');
 }
 
 function getSeverityClass(priority: number): string {
@@ -436,10 +430,15 @@ export function CaseDetailView({
                       style={{ backgroundColor: 'var(--color-info, #1976d2)' }}
                     />
                     <div className="timeline__content">
-                      <div className="timeline__title">{humanizeAction(entry.action)}</div>
+                      <div className="timeline__title">{auditActionLabel(t, entry.action)}</div>
                       {entry.actorDisplayName ? (
                         <div className="timeline__source">
                           {t('web.cases.actorLabel')}: {entry.actorDisplayName}
+                        </div>
+                      ) : null}
+                      {auditTeamName(entry.after) ? (
+                        <div className="timeline__source" data-testid="case-audit-team">
+                          {t('web.cases.auditTeam')}: {auditTeamName(entry.after)}
                         </div>
                       ) : null}
                       <time

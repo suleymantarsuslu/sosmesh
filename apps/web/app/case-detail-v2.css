@@ -1267,3 +1267,100 @@ html[data-theme='dark'] .cd2-map .maplibregl-canvas {
     width: 100%;
   }
 }
+
+/* Assignment preview: confirmed state, team select, feedback form. */
+.cd2 .assignment-preview__message--error {
+  color: var(--color-danger);
+  font-weight: 600;
+}
+
+.cd2 .assignment-preview__item--confirmed {
+  border-color: color-mix(in srgb, var(--color-success) 55%, var(--color-border));
+  background: color-mix(in srgb, var(--color-success) 8%, transparent);
+}
+
+.cd2 .assignment-preview__badge--confirmed {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  color: var(--color-success);
+  border-color: color-mix(in srgb, var(--color-success) 55%, var(--color-border));
+  background: color-mix(in srgb, var(--color-success) 16%, transparent);
+}
+
+.cd2 .assignment-preview__result {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 0.4rem;
+}
+
+.cd2 .assignment-preview__result-team {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  margin: 0;
+  font-weight: 700;
+}
+
+.cd2 .assignment-preview__confirm {
+  flex-direction: column;
+  align-items: stretch;
+}
+
+.cd2 .assignment-preview__confirm .cd2-select {
+  width: 100%;
+  text-transform: none;
+  letter-spacing: normal;
+  font-weight: 400;
+}
+
+.cd2 .assignment-preview__confirmbox {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  padding: 0.75rem 0.85rem;
+  border-radius: 10px;
+  border: 1px solid color-mix(in srgb, var(--cd2-accent) 50%, var(--color-border));
+  background: color-mix(in srgb, var(--cd2-accent) 8%, transparent);
+}
+
+.cd2 .assignment-preview__confirmbox p {
+  margin: 0;
+  font-size: 0.8125rem;
+  color: var(--color-text-secondary);
+}
+
+.cd2 .assignment-preview__feedback {
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+  padding: 0.7rem 0.85rem;
+  border-radius: 10px;
+  border: 1px dashed var(--color-border);
+}
+
+.cd2 .assignment-preview__rating {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem 1rem;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  font-size: 0.8125rem;
+}
+
+.cd2 .assignment-preview__rating legend {
+  margin-bottom: 0.3rem;
+  font-weight: 700;
+}
+
+.cd2 .assignment-preview__rating label {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+}
+
+.cd2 .assignment-preview__confirm .assignment-preview__assignee {
+  flex: 0 0 auto;
+}

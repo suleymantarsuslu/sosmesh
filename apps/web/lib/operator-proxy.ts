@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server';
 
 import { apiBaseUrl } from './config';
-import { getSessionToken } from './session';
+import { fetchWithSession, getSessionToken } from './session';
 
 /** Forwards a JSON write from the browser to the API with the session Bearer token. */
 export async function forwardOperatorJson(
@@ -35,5 +35,35 @@ export async function forwardOperatorJson(
     return NextResponse.json(data, { status: res.status });
   } catch {
     return NextResponse.json({ code: 'UPSTREAM_UNAVAILABLE' }, { status: 502 });
+  }
+}
+
+/** Authenticated passthrough for the operator API; always answers JSON, even when upstream does not. */
+export async function proxyOperatorJson(
+  path: string,
+  init?: { method?: string; body?: unknown }
+): Promise<NextResponse> {
+  try {
+    const res = await fetchWithSession(path, {
+      method: init?.method ?? 'GET',
+      ...(init?.body !== undefined ? { body: JSON.stringify(init.body) } : {}),
+    });
+    let data: unknown = null;
+    try {
+      data = await res.json();
+    } catch {
+      data = null;
+    }
+    return NextResponse.json(data, { status: res.status });
+  } catch {
+    return NextResponse.json({ code: 'UPSTREAM_UNAVAILABLE' }, { status: 502 });
+  }
+}
+
+export async function readJsonBody(request: Request): Promise<unknown> {
+  try {
+    return await request.json();
+  } catch {
+    return {};
   }
 }

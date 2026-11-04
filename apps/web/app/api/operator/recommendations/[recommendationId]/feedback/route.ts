@@ -1,16 +1,16 @@
-import { NextRequest, NextResponse } from 'next/server';
-
-import { fetchWithSession } from '../../../../../../lib/session';
+import { proxyOperatorJson, readJsonBody } from '../../../../../../lib/operator-proxy';
 
 type Params = { params: Promise<{ recommendationId: string }> };
 
-export async function POST(request: NextRequest, { params }: Params) {
+export async function POST(request: Request, { params }: Params) {
   const { recommendationId } = await params;
-  const body = await request.json();
-  const res = await fetchWithSession(
-    `/v1/operator/recommendations/${recommendationId}/feedback`,
-    { method: 'POST', body: JSON.stringify(body) }
+  const body = (await readJsonBody(request)) as { rating?: unknown; note?: unknown };
+  const payload: { rating?: unknown; note?: string } = { rating: body.rating };
+  if (typeof body.note === 'string' && body.note.trim()) {
+    payload.note = body.note.trim().slice(0, 1000);
+  }
+  return proxyOperatorJson(
+    `/v1/operator/recommendations/${encodeURIComponent(recommendationId)}/feedback`,
+    { method: 'POST', body: payload }
   );
-  const data = await res.json();
-  return NextResponse.json(data, { status: res.status });
 }

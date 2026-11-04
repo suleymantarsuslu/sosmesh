@@ -172,3 +172,8 @@
 "settings.notifications.test.section" = "Notification test";
 "settings.notifications.test.button" = "Send test notification (5 s)";
 "settings.notifications.test.footer" = "After tapping, background the app or lock the screen. A TEST notification should appear within 5 seconds.";
+"notifications.title" = "Notifications";
+"notifications.empty" = "No notifications";
+"notifications.clear.confirm" = "Clear all notifications?";
+"notifications.clear.yes" = "Clear all";
+"notifications.clear.cancel" = "Cancel";

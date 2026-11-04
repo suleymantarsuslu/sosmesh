@@ -549,6 +549,19 @@ final class AppModel: ObservableObject {
         for broadcast in broadcasts {
             await notificationManager.showNotification(broadcast: broadcast)
             
+            let historyItem = NotificationHistoryItem(
+                id: broadcast.id,
+                type: .broadcast,
+                title: broadcast.title,
+                body: broadcast.body,
+                severity: broadcast.severity,
+                regionName: nil,
+                sosId: nil,
+                timestampMs: nowMs,
+                isRead: false
+            )
+            NotificationHistoryStore.shared.addItem(historyItem)
+            
             if let meshNode = meshNode {
                 let meshBroadcast = ServerBroadcast(
                     id: broadcast.id,

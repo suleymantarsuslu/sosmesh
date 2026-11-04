@@ -97,6 +97,19 @@ final class SosNotificationManager: NSObject, UNUserNotificationCenterDelegate {
         )
         
         notificationCenter.add(request)
+        
+        let historyItem = NotificationHistoryItem(
+            id: "incoming-sos-\(sosId)",
+            type: .incomingSOS,
+            title: content.title,
+            body: content.body,
+            severity: nil,
+            regionName: nil,
+            sosId: sosId,
+            timestampMs: Int64(Date().timeIntervalSince1970 * 1000),
+            isRead: false
+        )
+        NotificationHistoryStore.shared.addItem(historyItem)
     }
     
     func scheduleTestNotification() {

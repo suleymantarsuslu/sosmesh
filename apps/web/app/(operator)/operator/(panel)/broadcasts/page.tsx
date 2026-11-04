@@ -62,6 +62,9 @@ export default function BroadcastsPage() {
   const [loadingNeighborhoods, setLoadingNeighborhoods] = useState(false);
   const [loadingStreets, setLoadingStreets] = useState(false);
 
+  const [neighborhoodsError, setNeighborhoodsError] = useState<{ messageEN: string; messageTR: string } | null>(null);
+  const [streetsError, setStreetsError] = useState<{ messageEN: string; messageTR: string } | null>(null);
+
   const [showConfirm, setShowConfirm] = useState(false);
   const [history, setHistory] = useState<BroadcastHistory[]>([]);
   const [loading, setLoading] = useState(false);
@@ -164,14 +167,23 @@ export default function BroadcastsPage() {
 
   const fetchNeighborhoods = async (districtOsmId: string) => {
     setLoadingNeighborhoods(true);
+    setNeighborhoodsError(null);
+    setNeighborhoods([]);
     try {
       const res = await fetch(`/api/operator/broadcasts/regions/neighborhoods?districtOsmId=${encodeURIComponent(districtOsmId)}`);
       if (res.ok) {
         const data = await res.json();
-        setNeighborhoods(data);
+        if (data.error) {
+          setNeighborhoodsError(data.error);
+        } else {
+          setNeighborhoods(data);
+        }
       }
     } catch (err) {
-      // Silent fail
+      setNeighborhoodsError({
+        messageEN: 'Network error. Please try again.',
+        messageTR: 'Ağ hatası. Lütfen tekrar deneyin.',
+      });
     } finally {
       setLoadingNeighborhoods(false);
     }
@@ -179,14 +191,23 @@ export default function BroadcastsPage() {
 
   const fetchStreets = async (neighborhoodOsmId: string) => {
     setLoadingStreets(true);
+    setStreetsError(null);
+    setStreets([]);
     try {
       const res = await fetch(`/api/operator/broadcasts/regions/streets?neighborhoodOsmId=${encodeURIComponent(neighborhoodOsmId)}`);
       if (res.ok) {
         const data = await res.json();
-        setStreets(data);
+        if (data.error) {
+          setStreetsError(data.error);
+        } else {
+          setStreets(data);
+        }
       }
     } catch (err) {
-      // Silent fail
+      setStreetsError({
+        messageEN: 'Network error. Please try again.',
+        messageTR: 'Ağ hatası. Lütfen tekrar deneyin.',
+      });
     } finally {
       setLoadingStreets(false);
     }
@@ -358,6 +379,8 @@ export default function BroadcastsPage() {
             loadingDistricts={loadingDistricts}
             loadingNeighborhoods={loadingNeighborhoods}
             loadingStreets={loadingStreets}
+            neighborhoodsError={neighborhoodsError}
+            streetsError={streetsError}
             error={error}
             onTitleChange={setTitle}
             onBodyChange={setBody}
@@ -384,6 +407,8 @@ export default function BroadcastsPage() {
               setSelectedStreet(null);
             }}
             onStreetChange={setSelectedStreet}
+            onRetryNeighborhoods={() => selectedDistrict && fetchNeighborhoods(selectedDistrict.osmId)}
+            onRetryStreets={() => selectedNeighborhood && fetchStreets(selectedNeighborhood.osmId)}
             onSubmit={handleSubmit}
           />
 

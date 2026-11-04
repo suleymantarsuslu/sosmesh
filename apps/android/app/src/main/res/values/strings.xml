@@ -120,4 +120,7 @@
     <string name="profile_section_person">Person</string>
     <string name="profile_section_address">Address</string>
     <string name="profile_section_contact">Contact</string>
+    <string name="notifications_title">Notifications</string>
+    <string name="notifications_clear_all">Clear all</string>
+    <string name="notifications_empty">No notifications</string>
 </resources>

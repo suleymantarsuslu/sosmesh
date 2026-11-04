@@ -1,16 +1,24 @@
 package com.sosmesh.android.ui.home
 
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.ExperimentalLayoutApi
 import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Notifications
 import androidx.compose.material.icons.filled.Sensors
 import androidx.compose.material.icons.automirrored.filled.TrendingUp
+import androidx.compose.material3.Badge
+import androidx.compose.material3.BadgedBox
 import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -51,6 +59,7 @@ fun HomeRoute(
     onOpenStatus: () -> Unit,
     onOpenRelay: () -> Unit,
     onOpenSettings: () -> Unit,
+    onOpenNotifications: () -> Unit,
     viewModel: HomeViewModel = hiltViewModel(),
 ) {
     val state by viewModel.uiState.collectAsState()
@@ -65,6 +74,7 @@ fun HomeRoute(
         onOpenStatus = onOpenStatus,
         onOpenRelay = onOpenRelay,
         onOpenSettings = onOpenSettings,
+        onOpenNotifications = onOpenNotifications,
     )
 }
 
@@ -78,12 +88,19 @@ internal fun HomeScreen(
     onOpenStatus: () -> Unit,
     onOpenRelay: () -> Unit,
     onOpenSettings: () -> Unit,
+    onOpenNotifications: () -> Unit,
 ) {
     val context = LocalContext.current
     val emergencyNumber = EmergencyNumberProvider.getEmergencyNumber(context)
     SosScreenScaffold(
         title = stringResource(R.string.home_title),
         showLogoInTopBar = true,
+        actions = {
+            NotificationButton(
+                unreadCount = state.notificationUnreadCount,
+                onClick = onOpenNotifications,
+            )
+        },
     ) { contentModifier ->
         SosScrollableScreenContent(contentModifier, spacing = SosSpacing.md) {
             DemoModeLabel(visible = BuildConfig.SHOW_DEMO_MODE_LABEL)
@@ -123,6 +140,36 @@ internal fun HomeScreen(
                     onClick = onOpenRadioDebug,
                 )
             }
+        }
+    }
+}
+
+@Composable
+private fun NotificationButton(
+    unreadCount: Int,
+    onClick: () -> Unit,
+) {
+    IconButton(onClick = onClick) {
+        BadgedBox(
+            badge = {
+                if (unreadCount > 0) {
+                    Badge(
+                        containerColor = SosIosColors.AccentBlue,
+                        contentColor = MaterialTheme.colorScheme.onPrimary,
+                    ) {
+                        Text(
+                            text = if (unreadCount > 99) "99+" else unreadCount.toString(),
+                            style = MaterialTheme.typography.labelSmall,
+                        )
+                    }
+                }
+            },
+        ) {
+            Icon(
+                imageVector = Icons.Filled.Notifications,
+                contentDescription = stringResource(R.string.notifications_title),
+                tint = SosIosColors.AccentBlueText,
+            )
         }
     }
 }

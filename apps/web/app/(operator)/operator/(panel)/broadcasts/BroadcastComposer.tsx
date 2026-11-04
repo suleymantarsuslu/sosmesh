@@ -31,6 +31,8 @@ type Props = {
   loadingDistricts: boolean;
   loadingNeighborhoods: boolean;
   loadingStreets: boolean;
+  neighborhoodsError: { messageEN: string; messageTR: string } | null;
+  streetsError: { messageEN: string; messageTR: string } | null;
   error: string | null;
   onTitleChange: (value: string) => void;
   onBodyChange: (value: string) => void;
@@ -42,6 +44,8 @@ type Props = {
   onDistrictChange: (value: RegionArea | null) => void;
   onNeighborhoodChange: (value: RegionArea | null) => void;
   onStreetChange: (value: RegionArea | null) => void;
+  onRetryNeighborhoods: () => void;
+  onRetryStreets: () => void;
   onSubmit: (e: React.FormEvent) => void;
 };
 
@@ -64,6 +68,8 @@ export function BroadcastComposer({
   loadingDistricts,
   loadingNeighborhoods,
   loadingStreets,
+  neighborhoodsError,
+  streetsError,
   error,
   onTitleChange,
   onBodyChange,
@@ -75,9 +81,11 @@ export function BroadcastComposer({
   onDistrictChange,
   onNeighborhoodChange,
   onStreetChange,
+  onRetryNeighborhoods,
+  onRetryStreets,
   onSubmit,
 }: Props) {
-  const { t } = useOperatorPreferences();
+  const { t, locale } = useOperatorPreferences();
 
   const charCount = body.length;
   const charLimit = 5000;
@@ -331,64 +339,102 @@ export function BroadcastComposer({
                     <label htmlFor="region-neighborhood" className="broadcast-form__label">
                       {t('web.broadcasts.neighborhood')}
                     </label>
-                    <div className="broadcast-select-wrapper">
-                      <select
-                        id="region-neighborhood"
-                        className="broadcast-form__select"
-                        value={selectedNeighborhood?.osmId || ''}
-                        onChange={(e) => {
-                          const neighborhood = neighborhoods.find((n) => n.osmId === e.target.value);
-                          onNeighborhoodChange(neighborhood || null);
-                        }}
-                        disabled={!selectedDistrict || loadingNeighborhoods}
-                      >
-                        <option value="">
-                          {loadingNeighborhoods ? t('web.broadcasts.loadingRegions') : t('web.broadcasts.selectNeighborhood')}
-                        </option>
-                        {neighborhoods.map((n) => (
-                          <option key={n.osmId} value={n.osmId}>
-                            {n.name}
-                          </option>
-                        ))}
-                      </select>
-                      {loadingNeighborhoods && (
-                        <div className="broadcast-select-spinner">
-                          <Icon name="refresh" size={14} />
+                    {neighborhoodsError ? (
+                      <div className="broadcast-region-error">
+                        <Icon name="alert" size={16} />
+                        <div className="broadcast-region-error__content">
+                          <p className="broadcast-region-error__message">
+                            {locale === 'tr' ? neighborhoodsError.messageTR : neighborhoodsError.messageEN}
+                          </p>
+                          <button
+                            type="button"
+                            className="broadcast-region-error__retry"
+                            onClick={onRetryNeighborhoods}
+                          >
+                            <Icon name="refresh" size={14} />
+                            {locale === 'tr' ? 'Tekrar Dene' : 'Retry'}
+                          </button>
                         </div>
-                      )}
-                    </div>
+                      </div>
+                    ) : (
+                      <div className="broadcast-select-wrapper">
+                        <select
+                          id="region-neighborhood"
+                          className="broadcast-form__select"
+                          value={selectedNeighborhood?.osmId || ''}
+                          onChange={(e) => {
+                            const neighborhood = neighborhoods.find((n) => n.osmId === e.target.value);
+                            onNeighborhoodChange(neighborhood || null);
+                          }}
+                          disabled={!selectedDistrict || loadingNeighborhoods}
+                        >
+                          <option value="">
+                            {loadingNeighborhoods ? t('web.broadcasts.loadingRegions') : t('web.broadcasts.selectNeighborhood')}
+                          </option>
+                          {neighborhoods.map((n) => (
+                            <option key={n.osmId} value={n.osmId}>
+                              {n.name}
+                            </option>
+                          ))}
+                        </select>
+                        {loadingNeighborhoods && (
+                          <div className="broadcast-select-spinner">
+                            <Icon name="refresh" size={14} />
+                          </div>
+                        )}
+                      </div>
+                    )}
                   </div>
 
                   <div className="broadcast-form__field">
                     <label htmlFor="region-street" className="broadcast-form__label">
                       {t('web.broadcasts.street')}
                     </label>
-                    <div className="broadcast-select-wrapper">
-                      <select
-                        id="region-street"
-                        className="broadcast-form__select"
-                        value={selectedStreet?.osmId || ''}
-                        onChange={(e) => {
-                          const street = streets.find((s) => s.osmId === e.target.value);
-                          onStreetChange(street || null);
-                        }}
-                        disabled={!selectedNeighborhood || loadingStreets}
-                      >
-                        <option value="">
-                          {loadingStreets ? t('web.broadcasts.loadingRegions') : t('web.broadcasts.selectStreet')}
-                        </option>
-                        {streets.map((s) => (
-                          <option key={s.osmId} value={s.osmId}>
-                            {s.name}
-                          </option>
-                        ))}
-                      </select>
-                      {loadingStreets && (
-                        <div className="broadcast-select-spinner">
-                          <Icon name="refresh" size={14} />
+                    {streetsError ? (
+                      <div className="broadcast-region-error">
+                        <Icon name="alert" size={16} />
+                        <div className="broadcast-region-error__content">
+                          <p className="broadcast-region-error__message">
+                            {locale === 'tr' ? streetsError.messageTR : streetsError.messageEN}
+                          </p>
+                          <button
+                            type="button"
+                            className="broadcast-region-error__retry"
+                            onClick={onRetryStreets}
+                          >
+                            <Icon name="refresh" size={14} />
+                            {locale === 'tr' ? 'Tekrar Dene' : 'Retry'}
+                          </button>
                         </div>
-                      )}
-                    </div>
+                      </div>
+                    ) : (
+                      <div className="broadcast-select-wrapper">
+                        <select
+                          id="region-street"
+                          className="broadcast-form__select"
+                          value={selectedStreet?.osmId || ''}
+                          onChange={(e) => {
+                            const street = streets.find((s) => s.osmId === e.target.value);
+                            onStreetChange(street || null);
+                          }}
+                          disabled={!selectedNeighborhood || loadingStreets}
+                        >
+                          <option value="">
+                            {loadingStreets ? t('web.broadcasts.loadingRegions') : t('web.broadcasts.selectStreet')}
+                          </option>
+                          {streets.map((s) => (
+                            <option key={s.osmId} value={s.osmId}>
+                              {s.name}
+                            </option>
+                          ))}
+                        </select>
+                        {loadingStreets && (
+                          <div className="broadcast-select-spinner">
+                            <Icon name="refresh" size={14} />
+                          </div>
+                        )}
+                      </div>
+                    )}
                   </div>
                 </div>
 

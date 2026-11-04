@@ -120,4 +120,7 @@
     <string name="profile_section_person">Kişi</string>
     <string name="profile_section_address">Adres</string>
     <string name="profile_section_contact">İletişim</string>
+    <string name="notifications_title">Bildirimler</string>
+    <string name="notifications_clear_all">Tümünü temizle</string>
+    <string name="notifications_empty">Bildirim yok</string>
 </resources>

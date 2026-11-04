@@ -111,16 +111,20 @@ internal fun WearSosHoldButton(
                                                 scope.launch {
                                                     progress.animateTo(1f, tween(HOLD_MILLIS, easing = LinearEasing))
                                                     haptic.performHapticFeedback(HapticFeedbackType.LongPress)
-                                                    onHoldComplete()
-                                                    progress.snapTo(0f)
                                                 }
-                                            tryAwaitRelease()
+                                            val released = tryAwaitRelease()
                                             pressed = false
                                             onPressedChange(false)
-                                            if (hold.isActive) {
+                                            // The confirmation opens only after the finger is lifted, so the hold
+                                            // gesture can never overlap the confirmation screen.
+                                            val holdCompleted = hold.isCompleted && !hold.isCancelled
+                                            if (!holdCompleted) {
                                                 hold.cancel()
-                                                scope.launch { progress.animateTo(0f, tween(180)) }
                                             }
+                                            if (released && holdCompleted) {
+                                                onHoldComplete()
+                                            }
+                                            scope.launch { progress.animateTo(0f, tween(180)) }
                                         },
                                     )
                                 }

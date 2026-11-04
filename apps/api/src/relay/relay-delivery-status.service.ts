@@ -9,6 +9,10 @@ export class RelayDeliveryStatusService {
   constructor(private readonly prisma: PrismaService) {}
 
   async checkDeliveryStatus(messageIds: string[]): Promise<RelayDeliveryStatusResponseDto> {
+    if (messageIds.length === 0) {
+      return { delivered: [] };
+    }
+
     const uniqueIds = [...new Set(messageIds)];
 
     const deliveredMessages = await this.prisma.sosMessage.findMany({

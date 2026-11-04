@@ -4,26 +4,26 @@ import {
   HttpCode,
   HttpStatus,
   Post,
-  UseGuards,
   Req,
 } from '@nestjs/common';
 import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
-import { Throttle } from '@nestjs/throttler';
 import type { Request } from 'express';
 
 import { RelayDeliveryStatusRequestDto, RelayDeliveryStatusResponseDto } from './relay-delivery-status.dto';
 import { RelayDeliveryStatusService } from './relay-delivery-status.service';
+import { IngestRateLimitService } from '../ingest/ingest-rate-limit.service';
+import { getClientKey } from '../common/utils/client-ip.util';
 
 @ApiTags('device')
 @Controller('v1/device/relay')
 export class RelayDeliveryStatusController {
   constructor(
     private readonly deliveryStatusService: RelayDeliveryStatusService,
+    private readonly rateLimit: IngestRateLimitService,
   ) {}
 
   @Post('delivery-status')
   @HttpCode(HttpStatus.OK)
-  @Throttle({ default: { limit: 10, ttl: 60000 } })
   @ApiOperation({
     summary: 'Check delivery status of carried relay messages',
     description: 'Returns which of the provided message IDs have been successfully ingested by the server',
@@ -45,6 +45,7 @@ export class RelayDeliveryStatusController {
     @Body() body: RelayDeliveryStatusRequestDto,
     @Req() req: Request,
   ): Promise<RelayDeliveryStatusResponseDto> {
+    this.rateLimit.assertAllowed(getClientKey(req));
     return this.deliveryStatusService.checkDeliveryStatus(body.messageIds);
   }
 }

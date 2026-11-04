@@ -12,7 +12,9 @@ describe('decideSenderRate', () => {
   it('rejects at hard limit without real content', () => {
     const decision = decideSenderRate(60, hourAgo, now, false);
     expect(decision.action).toBe('reject');
-    expect(decision.retryAfterSeconds).toBeGreaterThan(0);
+    if (decision.action === 'reject') {
+      expect(decision.retryAfterSeconds).toBeGreaterThan(0);
+    }
   });
 
   it('accepts at hard limit with real content via burst allowance', () => {
@@ -29,15 +31,19 @@ describe('decideSenderRate', () => {
     const oldest = new Date(now.getTime() - 2_700_000);
     const decision = decideSenderRate(60, oldest, now, false);
     expect(decision.action).toBe('reject');
-    expect(decision.retryAfterSeconds).toBeGreaterThan(850);
-    expect(decision.retryAfterSeconds).toBeLessThanOrEqual(900);
+    if (decision.action === 'reject') {
+      expect(decision.retryAfterSeconds).toBeGreaterThan(850);
+      expect(decision.retryAfterSeconds).toBeLessThanOrEqual(900);
+    }
   });
 
   it('computes retry-after when oldest is recent', () => {
     const oldest = new Date(now.getTime() - 100_000);
     const decision = decideSenderRate(60, oldest, now, false);
     expect(decision.action).toBe('reject');
-    expect(decision.retryAfterSeconds).toBeGreaterThan(3400);
-    expect(decision.retryAfterSeconds).toBeLessThanOrEqual(3600);
+    if (decision.action === 'reject') {
+      expect(decision.retryAfterSeconds).toBeGreaterThan(3400);
+      expect(decision.retryAfterSeconds).toBeLessThanOrEqual(3600);
+    }
   });
 });

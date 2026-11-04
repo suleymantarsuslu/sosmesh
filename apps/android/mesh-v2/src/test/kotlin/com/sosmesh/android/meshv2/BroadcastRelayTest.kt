@@ -1,5 +1,6 @@
 package com.sosmesh.android.meshv2
 
+import com.sosmesh.android.meshv2.v2.BroadcastReceiveOutcome
 import com.sosmesh.android.meshv2.v2.MeshV2Config
 import com.sosmesh.android.meshv2.v2.MeshV2Node
 import com.sosmesh.android.meshv2.v2.MeshV2Runtime
@@ -7,6 +8,7 @@ import com.sosmesh.android.meshv2.v2.ServerBroadcast
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNotNull
 import org.junit.Assert.assertNull
+import org.junit.Assert.assertTrue
 import org.junit.Test
 
 class BroadcastRelayTest {
@@ -72,6 +74,38 @@ class BroadcastRelayTest {
         
         val storedBroadcasts = runtimeB.node.broadcasts.ordered()
         assertEquals("One broadcast should be stored in node B", 1, storedBroadcasts.size)
+    }
+    
+    @Test
+    fun broadcast_rejected_when_verifier_missing() {
+        val config = MeshV2Config(
+            relayIdHex = "aaa",
+            receiptVerifyPublicKeySpkiBase64 = "test",
+            broadcastVerifier = null,
+            broadcastNotifier = null,
+            locationProvider = null,
+        )
+        
+        val runtime = MeshV2Runtime(config)
+        val nowMs = System.currentTimeMillis()
+        
+        val broadcast = ServerBroadcast(
+            id = "test-unverified",
+            title = "Test",
+            body = "Body",
+            severity = "info",
+            createdAt = java.time.Instant.ofEpochMilli(nowMs).toString(),
+            expiresAt = java.time.Instant.ofEpochMilli(nowMs + 3600_000).toString(),
+            regionLat = null,
+            regionLng = null,
+            regionRadiusKm = null,
+            signature = "sig",
+            hopsLeft = 8,
+        )
+        
+        val outcome = runtime.node.onBroadcastFrame(broadcast, nowMs)
+        assertTrue("Broadcast should be rejected (Invalid) when verifier is missing: was $outcome", outcome is BroadcastReceiveOutcome.Invalid)
+        assertEquals("Broadcast should not be stored when verifier is missing", 0, runtime.node.broadcasts.ordered().size)
     }
     
     @Test

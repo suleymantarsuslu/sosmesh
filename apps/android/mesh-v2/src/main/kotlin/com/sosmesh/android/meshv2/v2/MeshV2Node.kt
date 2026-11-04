@@ -134,8 +134,9 @@ class MeshV2Node(
             return BroadcastReceiveOutcome.MaxHops
         }
         
-        if (broadcastVerifier?.invoke(broadcast) == false) {
-            return BroadcastReceiveOutcome.Invalid("signature verification failed")
+        val verifier = broadcastVerifier ?: return BroadcastReceiveOutcome.Invalid("verifier_missing")
+        if (!verifier(broadcast)) {
+            return BroadcastReceiveOutcome.Invalid("signature_invalid")
         }
         
         if (broadcast.regionLat != null && broadcast.regionLng != null && broadcast.regionRadiusKm != null) {

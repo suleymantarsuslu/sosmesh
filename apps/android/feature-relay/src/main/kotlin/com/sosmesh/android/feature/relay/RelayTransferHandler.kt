@@ -31,6 +31,13 @@ class RelayTransferHandler
             outboxIoScope.launchOutboxWork {
                 val nowMs = System.currentTimeMillis()
                 if (meshV2.onTransferPayloadTombstones(payload, nowMs)) return@launchOutboxWork
+                
+                val broadcastFrame = MeshV2Wire.decode(payload) as? MeshV2Wire.MeshV2Frame.Broadcast
+                if (broadcastFrame != null) {
+                    meshV2.node.onBroadcastFrame(broadcastFrame.broadcast, nowMs)
+                    return@launchOutboxWork
+                }
+                
                 val node = meshV2.node
                 when (val parsed = node.classify(payload)) {
                     is MeshV2Payload.L1 -> {

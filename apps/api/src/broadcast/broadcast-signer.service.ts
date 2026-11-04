@@ -9,6 +9,23 @@ export class BroadcastSignerService implements OnModuleInit {
   private publicKeyBase64!: string;
 
   constructor(private readonly config: ConfigService) {}
+  
+  static canonicalize(params: {
+    id: string;
+    title: string;
+    body: string;
+    severity: string;
+    createdAt: string;
+    expiresAt: string;
+    regionLatitude?: number | null;
+    regionLongitude?: number | null;
+    regionRadiusKm?: number | null;
+  }): string {
+    const regionPart = params.regionLatitude != null && params.regionLongitude != null && params.regionRadiusKm != null
+      ? `|${params.regionLatitude}|${params.regionLongitude}|${params.regionRadiusKm}`
+      : '';
+    return `BROADCAST|${params.id}|${params.title}|${params.body}|${params.severity}|${params.createdAt}|${params.expiresAt}${regionPart}`;
+  }
 
   onModuleInit(): void {
     const encoded = this.config.get<string>('INGEST_RECEIPT_SIGNING_PRIVATE_KEY');

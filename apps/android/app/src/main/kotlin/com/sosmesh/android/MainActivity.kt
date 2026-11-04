@@ -118,8 +118,12 @@ private fun SosMeshNavHost(onHighContrastChanged: () -> Unit) {
                 val repository = entry.broadcastRepository()
                 val notificationManager = entry.broadcastNotificationManager()
                 val nowMs = System.currentTimeMillis()
-                val locationManager = appContext.getSystemService(Context.LOCATION_SERVICE) as? android.location.LocationManager
-                val location = locationManager?.getLastKnownLocation(android.location.LocationManager.PASSIVE_PROVIDER)
+                val location = try {
+                    val locationManager = appContext.getSystemService(Context.LOCATION_SERVICE) as? android.location.LocationManager
+                    locationManager?.getLastKnownLocation(android.location.LocationManager.PASSIVE_PROVIDER)
+                } catch (e: SecurityException) {
+                    null
+                }
                 val broadcasts = repository.fetchAndProcessBroadcasts(location)
                 
                 broadcasts.forEach { broadcast ->

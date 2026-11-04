@@ -68,11 +68,15 @@ abstract class AppReleaseModule {
                     )
                 },
                 locationProvider = {
-                    val locationManager = context.getSystemService(Context.LOCATION_SERVICE) as? android.location.LocationManager
-                    val location = locationManager?.getLastKnownLocation(android.location.LocationManager.PASSIVE_PROVIDER)
-                    if (location != null) {
-                        Pair(location.latitude, location.longitude)
-                    } else {
+                    try {
+                        val locationManager = context.getSystemService(Context.LOCATION_SERVICE) as? android.location.LocationManager
+                        val location = locationManager?.getLastKnownLocation(android.location.LocationManager.PASSIVE_PROVIDER)
+                        if (location != null) {
+                            Pair(location.latitude, location.longitude)
+                        } else {
+                            null
+                        }
+                    } catch (e: SecurityException) {
                         null
                     }
                 },

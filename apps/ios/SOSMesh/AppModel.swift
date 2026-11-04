@@ -26,6 +26,12 @@ final class AppModel: ObservableObject {
     @Published private(set) var receivedInbox: [ReceivedSosRecord] = []
     @Published var lastUploadToken: String?
     @Published private(set) var relayDiagnostics = RelayDiagnosticsSnapshot()
+    @Published var showDeliveredModal = false
+    @Published var deliveredModalSosId: String?
+
+    let deliveredModalTracker = DeliveredModalTracker()
+    let openCaseTracker = OpenCaseTracker()
+    let relayCounter = RelayDeliveryCounter()
 
     /// Debug-only fault injection (not the default data path).
     #if DEBUG
@@ -148,6 +154,8 @@ final class AppModel: ObservableObject {
         
         let location = await locationManager.requestLocationAsync(timeoutMs: 2000)
         
+        openCaseTracker.openCase(sosId: "", nowMs: nowMs)
+        
         let service = try requireOutbox()
         // Client rate limit (§8.1): never refuses. Replace an SOS that never left the device,
         // otherwise queue the new one until the window opens.
@@ -197,6 +205,8 @@ final class AppModel: ObservableObject {
             await reloadOutbox()
             return composed.message.id
         }
+        openCaseTracker.openCase(sosId: composed.message.id, nowMs: nowMs)
+        
         await reloadOutbox()
         
         if let sosMessageObject = try? JSONSerialization.jsonObject(with: composed.wirePayload) as? [String: Any] {
@@ -387,9 +397,15 @@ final class AppModel: ObservableObject {
                     self.lastUploadToken = receipt.uploadToken
                     Task { await self.reloadOutbox() }
                     
-                    if wasPending, UIApplication.shared.applicationState != .active {
-                        Task {
-                            await SosNotificationManager.shared.notifyServerAccepted(sosId: sosId)
+                    if wasPending {
+                        if UIApplication.shared.applicationState != .active {
+                            Task {
+                                await SosNotificationManager.shared.notifyServerAccepted(sosId: sosId)
+                            }
+                        } else if self.deliveredModalTracker.shouldShowModal(for: sosId) {
+                            self.deliveredModalSosId = sosId
+                            self.showDeliveredModal = true
+                            self.deliveredModalTracker.markModalShown(for: sosId)
                         }
                     }
                 }
@@ -543,12 +559,29 @@ extension AppModel {
             node.purgeExpired(nowMs: nowMs)
         }
         diagnostics.recordMesh(node.stats(nowMs: nowMs))
+        updateRelayCounter()
+    }
+    
+    private func updateRelayCounter() {
+        guard let node = meshNode else { return }
+        let tombstones = node.tombstones.allTombstones()
+        for tombstone in tombstones {
+            if tombstone.ackType == "SERVER_ACCEPTED" {
+                relayCounter.recordDelivered(messageId: tombstone.messageId)
+            }
+        }
     }
 
     func refreshRelayDiagnostics() {
         var snapshot = diagnostics.snapshot()
         snapshot.pendingForward = relayForwarder?.pendingCount() ?? 0
+        snapshot.relayDeliveredCount = relayCounter.deliveredCount()
         relayDiagnostics = snapshot
+    }
+    
+    func hasOpenCase() -> Bool {
+        let nowMs = Int64(Date().timeIntervalSince1970 * 1000)
+        return openCaseTracker.hasOpenCase(nowMs: nowMs)
     }
 
     fileprivate func relayUploader() -> RelayIngestUploading {

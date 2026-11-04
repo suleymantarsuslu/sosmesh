@@ -21,6 +21,7 @@ public struct RelayDiagnosticsSnapshot: Equatable {
     public var meshPeers = 0
     public var carriedCopies = 0
     public var tombstones = 0
+    public var relayDeliveredCount = 0
 
     public init() {}
 }

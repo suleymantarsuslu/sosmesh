@@ -38,6 +38,9 @@ struct HomeView: View {
             .task {
                 await appModel.reloadOutbox()
             }
+            .sheet(isPresented: $appModel.showDeliveredModal) {
+                SosDeliveredModal()
+            }
         }
     }
     
@@ -76,7 +79,11 @@ struct HomeView: View {
     private var sosButtonSection: some View {
         VStack(spacing: DesignSystem.Spacing.md) {
             NavigationLink {
-                SosSendView(navigateToStatus: navigateToStatus)
+                if appModel.hasOpenCase() {
+                    SosFollowUpView(navigateToStatus: navigateToStatus)
+                } else {
+                    SosSendView(navigateToStatus: navigateToStatus)
+                }
             } label: {
                 HStack(spacing: DesignSystem.Spacing.sm) {
                     Image(systemName: "exclamationmark.triangle.fill")

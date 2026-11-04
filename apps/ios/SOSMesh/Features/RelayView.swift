@@ -49,6 +49,21 @@ struct RelayView: View {
                         }
                     }
                     
+                    if appModel.relayDiagnostics.relayDeliveredCount > 0 {
+                        SOSCard {
+                            HStack(spacing: DesignSystem.Spacing.sm) {
+                                Image(systemName: "checkmark.circle.fill")
+                                    .font(.system(size: 24))
+                                    .foregroundStyle(DesignSystem.Colors.successGreen)
+                                    .accessibilityHidden(true)
+                                Text(String(format: NSLocalizedString("relay.delivered.count", comment: ""), appModel.relayDiagnostics.relayDeliveredCount))
+                                    .font(DesignSystem.Typography.callout)
+                                    .foregroundStyle(DesignSystem.Colors.textPrimary)
+                            }
+                        }
+                        .accessibilityLabel(Text(String(format: NSLocalizedString("relay.delivered.count", comment: ""), appModel.relayDiagnostics.relayDeliveredCount)))
+                    }
+                    
                     diagnosticsSection
 
                     infoSection

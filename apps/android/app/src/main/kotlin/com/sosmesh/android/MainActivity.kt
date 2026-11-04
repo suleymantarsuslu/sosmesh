@@ -22,7 +22,6 @@ import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
-import androidx.compose.runtime.collectAsState
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.testTag
@@ -158,7 +157,7 @@ private fun SosMeshNavHost(
 ) {
     val navController = rememberNavController()
     val appContext = LocalContext.current.applicationContext
-    val openSosFromWidget by androidx.compose.runtime.collectAsState(openSosFromWidgetFlow)
+    val openSosFromWidget by openSosFromWidgetFlow.collectAsState()
     
     androidx.compose.runtime.LaunchedEffect(Unit) {
         // mesh-v2 §7: optional profile once, after the permission gate (notification permission) is passed.

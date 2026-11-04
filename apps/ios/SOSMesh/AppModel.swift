@@ -10,6 +10,7 @@ final class AppModel: ObservableObject {
         didSet {
             guard relayEnabled != oldValue else { return }
             defaults.set(relayEnabled, forKey: AppModel.relayEnabledDefaultsKey)
+            meshNode?.relayEnabled = relayEnabled
             restartDiscoveryForCurrentMode()
         }
     }
@@ -57,6 +58,14 @@ final class AppModel: ObservableObject {
     private var attachmentCoordinator: AttachmentUploadCoordinator?
     private var attachmentQueue: AttachmentQueue?
     private var backgroundTaskId: UIBackgroundTaskIdentifier = .invalid
+    /// Mesh v2 state (docs/protocol/mesh-v2.md).
+    private(set) var meshNode: MeshV2Node?
+    private var gatewayProbe: GatewayProbe?
+    private var lastMeshPurgeMs: Int64 = 0
+    private var lastOwnUploadAttemptMs: [String: Int64] = [:]
+    private var profileSentThisSession = false
+    let identityStore = SosIdentityStore()
+    @Published var lastSubmitPlan: SosRateLimiter.Plan = .sendNow
 
     init(
         permissionProbe: AppPermissionProbing? = nil,
@@ -139,10 +148,41 @@ final class AppModel: ObservableObject {
         
         let location = await locationManager.requestLocationAsync(timeoutMs: 2000)
         
-        let composed = try composer.compose(
-            IosSosComposeRequest(note: note, languageTag: languageTag, nowMs: nowMs, location: location)
-        )
         let service = try requireOutbox()
+        // Client rate limit (§8.1): never refuses. Replace an SOS that never left the device,
+        // otherwise queue the new one until the window opens.
+        let ownEntries = ((try? service.listEntries()) ?? []).filter { $0.origin != SosOutboxService.relayOrigin }
+        let plan = SosRateLimiter.plan(ownEntries: ownEntries, nowMs: nowMs)
+        var releaseAtMs = nowMs
+        switch plan {
+        case .sendNow:
+            break
+        case .replace(let oldId, let oldDigest):
+            if let old = ownEntries.first(where: { $0.sosId == oldId && $0.digest == oldDigest }) {
+                releaseAtMs = max(nowMs, old.retryAtMs)
+            }
+            _ = try? service.removeEntry(sosId: oldId, digest: oldDigest)
+        case .queueUntil(let at):
+            releaseAtMs = at
+        }
+        lastSubmitPlan = plan
+
+        let profile = identityStore.loadProfile()
+        let changed = profile.map { identityStore.profileChanged($0) } ?? false
+        let includeProfile = profile != nil && (changed || !profileSentThisSession)
+        let context = SosInnerV2Context(
+            senderKey: identityStore.senderKey(),
+            seq: identityStore.nextSeq(),
+            profile: includeProfile ? profile : nil,
+            profileChanged: changed
+        )
+        let composed = try composer.compose(
+            IosSosComposeRequest(note: note, languageTag: languageTag, nowMs: nowMs, location: location, innerV2: context)
+        )
+        if includeProfile, let profile {
+            profileSentThisSession = true
+            identityStore.markProfileSent(profile)
+        }
         _ = try service.enqueueLocalSos(
             input: EnqueueInput(
                 sosId: composed.message.id,
@@ -152,6 +192,11 @@ final class AppModel: ObservableObject {
             ),
             nowMs: nowMs
         )
+        if releaseAtMs > nowMs {
+            try? service.setRetryAt(sosId: composed.message.id, digest: composed.digest, retryAtMs: releaseAtMs, lastError: "rate_limited_queued")
+            await reloadOutbox()
+            return composed.message.id
+        }
         await reloadOutbox()
         
         if let sosMessageObject = try? JSONSerialization.jsonObject(with: composed.wirePayload) as? [String: Any] {
@@ -263,11 +308,15 @@ final class AppModel: ObservableObject {
               let entries = try? service.listEntries() else { return }
         // PEER_RECEIVED is only a nearby-phone ACK: once online the own upload still runs
         // (the server de-duplicates a packet a relay already forwarded).
-        for entry in entries where (entry.state == "LOCAL_SAVED" || entry.state == "PEER_RECEIVED") && entry.origin == "ios" {
-            guard !uploadsInFlight.contains(entry.sosId),
+        let nowMs = Int64(Date().timeIntervalSince1970 * 1000)
+        for entry in MeshUploadOrdering.ordered(entries) where (entry.state == "LOCAL_SAVED" || entry.state == "PEER_RECEIVED") && entry.origin == "ios" {
+            guard entry.retryAtMs <= nowMs,
+                  nowMs - (lastOwnUploadAttemptMs[entry.sosId] ?? 0) >= 30_000,
+                  !uploadsInFlight.contains(entry.sosId),
                   let data = Data(base64Encoded: entry.encryptedBlobBase64),
                   let object = try? JSONSerialization.jsonObject(with: data) as? [String: Any] else { continue }
             uploadsInFlight.insert(entry.sosId)
+            lastOwnUploadAttemptMs[entry.sosId] = nowMs
             await attemptServerUpload(
                 sosId: entry.sosId,
                 digest: entry.digest,
@@ -292,16 +341,21 @@ final class AppModel: ObservableObject {
         
         guard let uploader = ingestUploader else { return }
         
+        // Own SOS: hopCount 0 (mesh v2 §9).
         let result = await uploader.upload(
             sosId: sosId,
             digest: digest,
             encryptedBlobBase64: encryptedBlobBase64,
-            sosMessageJson: sosMessage
+            sosMessageJson: sosMessage,
+            hopCount: 0
         )
         
         switch result {
         case .success(let receipt):
             let nowMs = Int64(Date().timeIntervalSince1970 * 1000)
+            meshNode?.hops.noteInternetSuccess(nowMs: nowMs)
+            // Keeps the receipt as a tombstone so carriers of this SOS can drop their copies.
+            meshNode?.recordServerReceipt(receipt, nowMs: nowMs)
             if let service = try? requireOutbox(),
                let entry = try? service.listEntries().first(where: { $0.sosId == sosId && $0.digest == digest }) {
                 let wasPending = entry.state == "LOCAL_SAVED"
@@ -328,7 +382,11 @@ final class AppModel: ObservableObject {
                     }
                 }
             }
-        case .noNetwork, .httpError, .invalidReceipt, .error:
+        case .noNetwork:
+            meshNode?.hops.noteInternetFailure()
+        case .httpError:
+            meshNode?.hops.noteInternetSuccess(nowMs: Int64(Date().timeIntervalSince1970 * 1000))
+        case .invalidReceipt, .error:
             break
         }
     }
@@ -391,16 +449,33 @@ final class AppModel: ObservableObject {
     private func startMeshIfNeeded() async {
         guard meshRadio == nil else { return }
         guard let outbox = try? requireOutbox() else { return }
+        let config = IngestConfig.production(deviceId: "")
+        let nowMs = Int64(Date().timeIntervalSince1970 * 1000)
+        let meshDirectory = try? FileManager.default.url(for: .applicationSupportDirectory, in: .userDomainMask, appropriateFor: nil, create: true)
+            .appendingPathComponent("sosmesh", isDirectory: true)
+        if let meshDirectory { try? FileManager.default.createDirectory(at: meshDirectory, withIntermediateDirectories: true) }
+        let node = MeshV2Node(
+            outbox: outbox,
+            relayIdHex: config.relayIdHex,
+            receiptKeySpkiBase64: config.receiptVerifyPublicKeySpkiBase64,
+            directory: meshDirectory,
+            nowMs: nowMs
+        )
+        node.relayEnabled = relayEnabled
+        meshNode = node
+        gatewayProbe = GatewayProbe(baseURL: config.baseURL)
         if let meshRadioFactory {
             meshRadio = meshRadioFactory(outbox, receivedInboxStore)
         } else {
-            meshRadio = LiveBleMeshRadio(outbox: outbox, inbox: receivedInboxStore, diagnostics: diagnostics)
+            meshRadio = LiveBleMeshRadio(outbox: outbox, inbox: receivedInboxStore, diagnostics: diagnostics, node: node)
         }
         relayForwarder = RelayForwarder(
             outbox: outbox,
             inbox: receivedInboxStore,
             uploader: relayUploader(),
-            diagnostics: diagnostics
+            diagnostics: diagnostics,
+            node: node,
+            lookup: ReceiptLookupClient(baseURL: config.baseURL, receiptKeySpkiBase64: config.receiptVerifyPublicKeySpkiBase64)
         )
         relayForwarder?.restoreInbox()
         restartDiscoveryForCurrentMode()
@@ -413,6 +488,9 @@ final class AppModel: ObservableObject {
                 self.meshRadio?.tick(nowMs: nowMs)
                 await self.reloadOutbox()
                 self.receivedInbox = self.receivedInboxStore.list()
+                await self.meshMaintenance(nowMs: nowMs)
+                // Own SOS first, then carried copies (mesh v2 §9).
+                await self.retryPendingServerUploads()
                 await self.forwardReceivedEnvelopes()
                 self.refreshRelayDiagnostics()
             }
@@ -437,6 +515,16 @@ extension AppModel {
         guard relayEnabled, let relayForwarder else { return }
         await relayForwarder.forwardDue()
         receivedInbox = receivedInboxStore.list()
+    }
+
+    func meshMaintenance(nowMs: Int64) async {
+        guard let node = meshNode else { return }
+        await gatewayProbe?.probeIfDue(nowMs: nowMs, tracker: node.hops)
+        if nowMs - lastMeshPurgeMs >= 60_000 {
+            lastMeshPurgeMs = nowMs
+            node.purgeExpired(nowMs: nowMs)
+        }
+        diagnostics.recordMesh(node.stats(nowMs: nowMs))
     }
 
     func refreshRelayDiagnostics() {

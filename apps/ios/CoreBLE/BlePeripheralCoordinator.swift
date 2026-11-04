@@ -45,9 +45,16 @@ public final class BlePeripheralCoordinator: NSObject, BlePeripheralCoordinating
             value: nil,
             permissions: [.readable, .writeable]
         )
-        service.characteristics = [control, data, ack]
+        // Mesh v2 MESH_INFO (16 bytes, read). Value nil = served per read request.
+        let meshInfo = CBMutableCharacteristic(
+            type: CBUUID(string: MeshV2.meshInfoCharacteristicUUID),
+            properties: [.read],
+            value: nil,
+            permissions: [.readable]
+        )
+        service.characteristics = [control, data, ack, meshInfo]
         peripheral.add(service)
-        return [control, data, ack]
+        return [control, data, ack, meshInfo]
     }
 
     public func peripheralManagerDidUpdateState(_ peripheral: CBPeripheralManager) {

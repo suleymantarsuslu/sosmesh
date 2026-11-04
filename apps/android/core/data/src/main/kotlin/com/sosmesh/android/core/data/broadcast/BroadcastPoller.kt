@@ -73,7 +73,6 @@ class BroadcastPoller
         suspend fun fetchAndProcess() {
             withContext(Dispatchers.IO) {
                 try {
-                    val runtime = com.sosmesh.android.meshv2.v2.MeshV2Runtime.installed
                     val location = getLastKnownLocation()
                     val broadcasts = repository.fetchAndProcessBroadcasts(location)
                     val nowMs = System.currentTimeMillis()
@@ -84,26 +83,17 @@ class BroadcastPoller
                         } catch (_: SecurityException) {
                         }
 
-                        runtime?.node?.broadcasts?.put(
-                            com.sosmesh.android.meshv2.v2.ServerBroadcast(
-                                id = broadcast.id,
-                                title = broadcast.title,
-                                body = broadcast.body,
-                                severity = broadcast.severity,
-                                createdAt = broadcast.createdAt,
-                                expiresAt = broadcast.expiresAt,
-                                regionLat = broadcast.regionLat,
-                                regionLng = broadcast.regionLng,
-                                regionRadiusKm = broadcast.regionRadiusKm,
-                                signature = broadcast.signature,
-                                hopsLeft = 8,
-                            ),
-                            nowMs,
-                        )
+                        meshSink?.invoke(broadcast, nowMs)
                     }
                 } catch (_: Exception) {
                 }
             }
+        }
+
+        companion object {
+            /** Set by the app module to hand verified broadcasts to the mesh relay (core:data can't depend on mesh-v2). */
+            @Volatile
+            var meshSink: ((ServerBroadcast, Long) -> Unit)? = null
         }
 
         private fun getLastKnownLocation(): Location? {

@@ -129,3 +129,33 @@
 "relay.diag.no" = "Hayır";
 "relay.diag.none" = "—";
 "relay.diag.footer" = "Yalnızca sayaçlar: mesaj metni, konum veya tam kimlik gösterilmez. Yakın telefon onayı sunucu alındısı değildir.";
+
+/* Mesh v2 */
+"relay.diag.hops" = "İnternete atlama (h)";
+"relay.diag.hops.offline" = "Çevrimdışı";
+"relay.diag.mesh_peers" = "Ağ komşuları";
+"relay.diag.carried" = "Taşınan kopyalar";
+"relay.diag.tombstones" = "Teslim kanıtları";
+"profile.title" = "Profilim";
+"profile.edit" = "Profili düzenle";
+"profile.intro" = "İsteğe bağlı. Yalnızca bu telefonda (Anahtar Zinciri) saklanır ve yalnızca şifreli bir SOS içinde gönderilir. Hiçbir şey doldurmadan SOS gönderebilirsiniz. Hayati tehlikede 112'yi arayın.";
+"profile.section.person" = "Kişi";
+"profile.section.address" = "Adres";
+"profile.section.contact" = "İletişim";
+"profile.full_name" = "Ad soyad";
+"profile.age" = "Yaş";
+"profile.household_size" = "Evde yaşayan kişi sayısı";
+"profile.address_line" = "Açık adres";
+"profile.district" = "İlçe";
+"profile.city" = "İl";
+"profile.postal_code" = "Posta kodu";
+"profile.floor" = "Kat";
+"profile.location.use_current" = "Şu anki konumumu ev konumu yap";
+"profile.location.saved" = "Ev konumu kaydedildi";
+"profile.location.footer" = "Kaydederken adres bu telefonda koordinata çevrilir. Kurtarma ekipleri olası eşleşmeyi yalnızca varsayım olarak görür.";
+"profile.phone" = "Telefon (+90…)";
+"profile.email" = "E-posta";
+"profile.save" = "Kaydet";
+"profile.skip" = "Şimdilik geç";
+"profile.delete" = "Profili bu telefondan sil";
+"profile.privacy_footer" = "SOS gönderene kadar buradaki hiçbir bilgi paylaşılmaz. Tüm alanlar isteğe bağlıdır.";

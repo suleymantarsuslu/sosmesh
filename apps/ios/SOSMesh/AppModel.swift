@@ -219,6 +219,24 @@ final class AppModel: ObservableObject {
         return composed.message.id
     }
 
+    // MARK: Profile (Keychain only)
+
+    func loadProfile() -> SosProfile? { identityStore.loadProfile() }
+
+    func saveProfile(_ profile: SosProfile) {
+        identityStore.saveProfile(profile)
+    }
+
+    func deleteProfile() {
+        identityStore.deleteProfile()
+    }
+
+    func currentCoordinate() async -> SosProfile.Coordinate? {
+        let snapshot = await locationManager.requestLocationAsync(timeoutMs: 5000)
+        guard let lat = snapshot.latitude, let lng = snapshot.longitude else { return nil }
+        return SosProfile.Coordinate(latitude: lat, longitude: lng)
+    }
+
     func reloadOutbox() async {
         guard let service = try? requireOutbox() else { return }
         // Envelopes held for other phones (origin `relay`) are not the user's own SOS history.

@@ -90,6 +90,10 @@ struct RelayView: View {
                 diagnosticRow("relay.diag.last_received", timeText(diag.lastReceivedAtMs))
                 diagnosticRow("relay.diag.pending", Text("\(diag.pendingForward)"))
                 diagnosticRow("relay.diag.forwarded", Text("\(diag.forwardedCount)"))
+                diagnosticRow("relay.diag.hops", diag.hopsToGateway <= 8 ? Text(verbatim: "\(diag.hopsToGateway)") : Text("relay.diag.hops.offline"))
+                diagnosticRow("relay.diag.mesh_peers", Text("\(diag.meshPeers)"))
+                diagnosticRow("relay.diag.carried", Text("\(diag.carriedCopies)"))
+                diagnosticRow("relay.diag.tombstones", Text("\(diag.tombstones)"))
                 if let code = diag.lastErrorCode {
                     diagnosticRow("relay.diag.last_error", Text(verbatim: code))
                 }

@@ -1,4 +1,12 @@
 import Foundation
+import SOSMeshContracts
+
+/// Outbox stand-in for senders without a BLE outbox (watchOS handoff): peer ACKs change nothing.
+public final class NullOutboxQueueUpdater: OutboxQueueUpdating {
+    public init() {}
+    public func updateState(sosId: String, digest: String, state: String, nowMs: Int64, lastError: String?) throws -> OutboxEntryMeta? { nil }
+    public func setRetryAt(sosId: String, digest: String, retryAtMs: Int64, lastError: String?) throws {}
+}
 
 /// One central-role visit to a peer (§5.2): OFFER → OFFER_REPLY → optional TOMBSTONE_REQUEST,
 /// tombstone push, then one ble-v1 transfer per WANT item. No CoreBluetooth here (testable).

@@ -123,6 +123,10 @@ final class AppModel: ObservableObject {
         }
     }
 
+    func enableRelay() async {
+        relayEnabled = true
+    }
+
     func onPermissionGateBecameVisible() {
         permissionProbe.primeBluetoothAuthorizationIfAlreadyAuthorized()
         Task { await refreshPermissionGate() }

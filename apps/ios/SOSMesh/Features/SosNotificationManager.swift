@@ -148,7 +148,13 @@ final class SosNotificationManager: NSObject, UNUserNotificationCenterDelegate {
     ) {
         let userInfo = response.notification.request.content.userInfo
         
-        if userInfo["action"] as? String == "viewStatus" {
+        if response.actionIdentifier == "ENABLE_RELAY" {
+            Task { @MainActor in
+                await AppModel.shared.enableRelay()
+            }
+        } else if response.actionIdentifier == "CANCEL" {
+            // Just dismiss
+        } else if userInfo["action"] as? String == "viewStatus" {
             NotificationCenter.default.post(name: .navigateToStatusTab, object: nil)
         } else if userInfo["action"] as? String == "viewRelay" {
             NotificationCenter.default.post(name: .navigateToRelayTab, object: nil)

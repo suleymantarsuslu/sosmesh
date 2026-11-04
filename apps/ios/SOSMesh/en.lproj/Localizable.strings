@@ -177,3 +177,5 @@
 "notifications.clear.confirm" = "Clear all notifications?";
 "notifications.clear.yes" = "Clear all";
 "notifications.clear.cancel" = "Cancel";
+"broadcast.relay_request.action.enable" = "Turn on relay";
+"broadcast.relay_request.action.cancel" = "Cancel";

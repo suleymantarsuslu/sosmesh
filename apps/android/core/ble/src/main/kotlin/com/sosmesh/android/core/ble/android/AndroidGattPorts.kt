@@ -114,6 +114,45 @@ class AndroidGattServerPort
                                 }
                                 writeListener?.onCharacteristicWrite(uuid, bytes, address)
                             }
+
+                            // iOS centrals wait for the CCCD (notification subscribe) write to be acknowledged
+                            // before the link is ready; Android never auto-responds to descriptor requests.
+                            override fun onDescriptorWriteRequest(
+                                device: BluetoothDevice?,
+                                requestId: Int,
+                                descriptor: BluetoothGattDescriptor?,
+                                preparedWrite: Boolean,
+                                responseNeeded: Boolean,
+                                offset: Int,
+                                value: ByteArray?,
+                            ) {
+                                val target = device ?: return
+                                if (!responseNeeded) return
+                                try {
+                                    sendResponseInternal(target, requestId, offset, value ?: ByteArray(0))
+                                } catch (_: SecurityException) {
+                                    // Permission revoked mid-session.
+                                }
+                            }
+
+                            override fun onDescriptorReadRequest(
+                                device: BluetoothDevice?,
+                                requestId: Int,
+                                offset: Int,
+                                descriptor: BluetoothGattDescriptor?,
+                            ) {
+                                val target = device ?: return
+                                try {
+                                    sendResponseInternal(
+                                        target,
+                                        requestId,
+                                        offset,
+                                        BluetoothGattDescriptor.DISABLE_NOTIFICATION_VALUE,
+                                    )
+                                } catch (_: SecurityException) {
+                                    // Permission revoked mid-session.
+                                }
+                            }
                         },
                     )
                 val service = BluetoothGattService(UUID.fromString(serviceUuid), BluetoothGattService.SERVICE_TYPE_PRIMARY)

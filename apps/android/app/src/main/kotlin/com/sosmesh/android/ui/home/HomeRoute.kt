@@ -8,7 +8,6 @@ import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.Sensors
 import androidx.compose.material.icons.automirrored.filled.TrendingUp
 import androidx.compose.material3.Icon
@@ -114,11 +113,6 @@ internal fun HomeScreen(
                 onClick = onOpenSos,
             )
             SosCall112Button(testTag = "home_call_112_button")
-            SosSecondaryButton(
-                text = stringResource(R.string.home_guided_sos_cta),
-                onClick = onOpenSos,
-                icon = Icons.Filled.Edit,
-            )
             MeshStatusCard(state = state, onOpenStatus = onOpenStatus)
             PlatformSelfRepairCard(hint = state.platformHint, onOpenPermissions = onOpenPermissions)
             CrossPlatformFaultCard(hint = state.crossPlatformFault, onOpenPermissions = onOpenPermissions)

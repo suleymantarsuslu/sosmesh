@@ -11,7 +11,6 @@
     <string name="home_radio_debug_cta">Radyo / peer keşfi (debug)</string>
     <string name="home_express_sos_cta">SOS</string>
     <string name="home_express_sos_content_description">Hızlı SOS; varsayılanlarla cihaza kaydet</string>
-    <string name="home_guided_sos_cta">Rehberli SOS sihirbazı</string>
     <string name="home_express_saved">Cihazda kaydedildi — ayrıntıları düzenlemek için rehberli akışı kullanın</string>
     <string name="home_settings_cta">Ayarlar ve veri kontrolü</string>
     <string name="platform_self_repair_title">Bağlantı veya izin sorunu</string>

@@ -49,6 +49,15 @@ import com.sosmesh.android.feature.sos.R
 import com.sosmesh.android.feature.sos.SosFormUiState
 import com.sosmesh.android.feature.sos.SosPeerDeliveryHint
 import com.sosmesh.android.feature.sos.SosWizardStep
+import android.content.Context
+import android.net.ConnectivityManager
+import android.net.Network
+import android.net.NetworkCapabilities
+import androidx.compose.runtime.DisposableEffect
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 
 @Composable
 fun SosFlowScreen(
@@ -164,7 +173,7 @@ private fun SosFormScreen(
     val context = LocalContext.current
     val emergencyNumber = EmergencyNumberProvider.getEmergencyNumber(context)
     SosScrollableScreenContent(contentModifier) {
-        OfflineBadge()
+        ConnectivityBadge()
         SosNot112Banner(disclaimerText = stringResource(R.string.sos_not112_disclaimer, emergencyNumber))
         SosCall112Button(testTag = "sos_call_112_button")
         Text(
@@ -389,9 +398,46 @@ private fun SosFollowupScreen(
 }
 
 @Composable
-private fun OfflineBadge() {
-    SosBadge(kind = SosBadgeKind.Warning, text = stringResource(R.string.sos_offline_badge))
+private fun ConnectivityBadge() {
+    val context = LocalContext.current
+    val connectivityManager =
+        remember(context) {
+            context.getSystemService(Context.CONNECTIVITY_SERVICE) as ConnectivityManager
+        }
+    var online by remember { mutableStateOf(isNetworkValidated(connectivityManager)) }
+    DisposableEffect(connectivityManager) {
+        val callback =
+            object : ConnectivityManager.NetworkCallback() {
+                override fun onCapabilitiesChanged(
+                    network: Network,
+                    capabilities: NetworkCapabilities,
+                ) {
+                    online = hasValidatedInternet(capabilities)
+                }
+
+                override fun onLost(network: Network) {
+                    online = isNetworkValidated(connectivityManager)
+                }
+            }
+        connectivityManager.registerDefaultNetworkCallback(callback)
+        onDispose { connectivityManager.unregisterNetworkCallback(callback) }
+    }
+    if (online) {
+        SosBadge(kind = SosBadgeKind.Success, text = stringResource(R.string.sos_online_badge))
+    } else {
+        SosBadge(kind = SosBadgeKind.Warning, text = stringResource(R.string.sos_offline_badge))
+    }
 }
+
+private fun isNetworkValidated(connectivityManager: ConnectivityManager): Boolean {
+    val network = connectivityManager.activeNetwork ?: return false
+    val capabilities = connectivityManager.getNetworkCapabilities(network) ?: return false
+    return hasValidatedInternet(capabilities)
+}
+
+private fun hasValidatedInternet(capabilities: NetworkCapabilities): Boolean =
+    capabilities.hasCapability(NetworkCapabilities.NET_CAPABILITY_INTERNET) &&
+        capabilities.hasCapability(NetworkCapabilities.NET_CAPABILITY_VALIDATED)
 
 @Composable
 private fun LocationFreshnessBadge(location: LocationSnapshot) {

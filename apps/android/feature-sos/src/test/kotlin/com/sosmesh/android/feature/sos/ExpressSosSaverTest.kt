@@ -55,6 +55,7 @@ class ExpressSosSaverTest {
                 NoOpSosPeerDeliveryPort,
                 testGrantAllBleMeshReadiness(),
                 testGrantAllPermissionCoordinator(),
+                OpenCaseTracker(context),
             )
     }
 

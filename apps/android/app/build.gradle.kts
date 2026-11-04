@@ -5,6 +5,11 @@ plugins {
     kotlin("kapt")
 }
 
+// Firebase client config is kept out of git; FCM is enabled only when the file is present.
+if (file("google-services.json").exists()) {
+    apply(plugin = "com.google.gms.google-services")
+}
+
 android {
     namespace = "com.sosmesh.android"
     compileSdk = 35

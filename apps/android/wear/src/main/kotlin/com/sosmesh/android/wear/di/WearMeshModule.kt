@@ -1,7 +1,6 @@
 package com.sosmesh.android.wear.di
 
 import android.content.Context
-import com.sosmesh.android.feature.relay.uplink.RelayIngestConfig
 import com.sosmesh.android.meshv2.v2.MeshV2Config
 import com.sosmesh.android.wear.BuildConfig
 import dagger.Module
@@ -19,6 +18,8 @@ annotation class BroadcastPublicKey
 @Module
 @InstallIn(SingletonComponent::class)
 object WearMeshModule {
+    private const val PROD_RECEIPT_PUBLIC_KEY = "MCowBQYDK2VwAyEAJgWsM1ZMJK9D9uPkDS/08DL/sOHrBlcCS/ETcKQ2OEs="
+
     @Provides
     @Singleton
     fun provideMeshV2Config(
@@ -30,7 +31,7 @@ object WearMeshModule {
         
         return MeshV2Config(
             relayIdHex = relayIdHex,
-            receiptVerifyPublicKeySpkiBase64 = RelayIngestConfig.PROD_RECEIPT_PUBLIC_KEY,
+            receiptVerifyPublicKeySpkiBase64 = PROD_RECEIPT_PUBLIC_KEY,
             isWatch = true,
             broadcastVerifier = { broadcast ->
                 verifier.verify(

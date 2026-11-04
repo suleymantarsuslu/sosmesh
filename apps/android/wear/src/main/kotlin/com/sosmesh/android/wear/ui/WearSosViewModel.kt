@@ -114,16 +114,17 @@ class WearSosViewModel
         private suspend fun submitSosViaMesh(nowMs: Long) =
             withContext(Dispatchers.IO) {
                 val request =
-                    SosComposeRequest(
-                        sosId = UUID.randomUUID().toString(),
+                    com.sosmesh.android.core.data.sos.SosComposeRequest(
                         sosType = SosType.DIGER,
                         personCount = 1,
                         note = "",
-                        language = "tr",
+                        location = com.sosmesh.android.core.data.sos.LocationSnapshot(
+                            source = com.sosmesh.android.core.data.sos.LocationSource.UNKNOWN,
+                        ),
+                        languageTag = "tr",
                         nowMs = nowMs,
+                        messageIdOverride = null,
                         sender = null,
-                        location = null,
-                        attachments = emptyList(),
                     )
 
                 val composed = sosComposer.compose(request)

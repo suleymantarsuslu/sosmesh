@@ -2,8 +2,8 @@ package com.sosmesh.android.wear.di
 
 import android.content.Context
 import androidx.room.Room
-import com.sosmesh.android.core.data.SosDatabase
 import com.sosmesh.android.core.data.outbox.OutboxDao
+import com.sosmesh.android.core.data.outbox.OutboxDatabase
 import com.sosmesh.android.core.data.outbox.RoomOutboxQueueAdapter
 import com.sosmesh.android.core.data.outbox.SosOutboxReader
 import com.sosmesh.android.core.data.di.IoDispatcher
@@ -21,18 +21,18 @@ import javax.inject.Singleton
 object WearDataModule {
     @Provides
     @Singleton
-    fun provideSosDatabase(
+    fun provideOutboxDatabase(
         @ApplicationContext context: Context,
-    ): SosDatabase =
+    ): OutboxDatabase =
         Room.databaseBuilder(
             context,
-            SosDatabase::class.java,
-            "wear_sos_db",
+            OutboxDatabase::class.java,
+            "wear_outbox_db",
         ).build()
 
     @Provides
     @Singleton
-    fun provideOutboxDao(db: SosDatabase): OutboxDao = db.outboxDao()
+    fun provideOutboxDao(db: OutboxDatabase): OutboxDao = db.outboxDao()
 
     @Provides
     @Singleton

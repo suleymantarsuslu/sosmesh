@@ -98,6 +98,46 @@ public enum MeshOfferStatus: UInt8, Equatable {
     case refused = 4
 }
 
+public struct ServerBroadcast: Equatable {
+    public let id: String
+    public let title: String
+    public let body: String
+    public let severity: String
+    public let createdAt: String
+    public let expiresAt: String
+    public let regionLat: Double?
+    public let regionLng: Double?
+    public let regionRadiusKm: Double?
+    public let signature: String
+    public let hopsLeft: UInt8
+
+    public init(
+        id: String,
+        title: String,
+        body: String,
+        severity: String,
+        createdAt: String,
+        expiresAt: String,
+        regionLat: Double? = nil,
+        regionLng: Double? = nil,
+        regionRadiusKm: Double? = nil,
+        signature: String,
+        hopsLeft: UInt8
+    ) {
+        self.id = id
+        self.title = title
+        self.body = body
+        self.severity = severity
+        self.createdAt = createdAt
+        self.expiresAt = expiresAt
+        self.regionLat = regionLat
+        self.regionLng = regionLng
+        self.regionRadiusKm = regionRadiusKm
+        self.signature = signature
+        self.hopsLeft = hopsLeft
+    }
+}
+
 /// Server-signed delivery tombstone = the `/v1/ingest` receipt + unsigned `hopsLeft` (§6).
 public struct DeliveryTombstone: Codable, Equatable {
     public var ackType: String
@@ -129,16 +169,18 @@ public enum MeshV2Frame: Equatable {
     case offerReply([MeshOfferStatus])
     case tombstoneRequest([Data])
     case tombstone(DeliveryTombstone)
+    case broadcast(ServerBroadcast)
 
     public static let offerType: UInt8 = 0x30
     public static let offerReplyType: UInt8 = 0x31
     public static let tombstoneRequestType: UInt8 = 0x32
     public static let tombstoneType: UInt8 = 0x34
+    public static let broadcastType: UInt8 = 0x35
 
-    /// v1 control types are 0x01..0x21, so a first byte in 0x30...0x34 is always a v2 frame.
+    /// v1 control types are 0x01..0x21, so a first byte in 0x30...0x35 is always a v2 frame.
     public static func isMeshV2(_ data: Data) -> Bool {
         guard let first = data.first else { return false }
-        return (0x30 ... 0x34).contains(first)
+        return (0x30 ... 0x35).contains(first)
     }
 
     public func encode() -> Data? {
@@ -163,6 +205,45 @@ public enum MeshV2Frame: Equatable {
             out.append(ts)
             out.append(sig)
             out.append(t.hopsLeft ?? 0)
+            return out
+        case .broadcast(let b):
+            let id = Data(b.id.utf8)
+            let title = Data(b.title.utf8)
+            let body = Data(b.body.utf8)
+            let severity = Data(b.severity.utf8)
+            let createdAt = Data(b.createdAt.utf8)
+            let expiresAt = Data(b.expiresAt.utf8)
+            guard id.count <= 64, title.count <= 200, body.count <= 5000,
+                  let sig = Data(base64Encoded: b.signature), sig.count == 64 else { return nil }
+            var out = Data([Self.broadcastType, UInt8(id.count)])
+            out.append(id)
+            out.append(UInt8(title.count))
+            out.append(title)
+            let bodySize = UInt16(body.count)
+            out.append(UInt8((bodySize >> 8) & 0xFF))
+            out.append(UInt8(bodySize & 0xFF))
+            out.append(body)
+            out.append(UInt8(severity.count))
+            out.append(severity)
+            out.append(UInt8(createdAt.count))
+            out.append(createdAt)
+            out.append(UInt8(expiresAt.count))
+            out.append(expiresAt)
+            let hasRegion = b.regionLat != nil && b.regionLng != nil && b.regionRadiusKm != nil
+            out.append(hasRegion ? 1 : 0)
+            if hasRegion {
+                let latBytes = Data("\(b.regionLat!)".utf8)
+                let lngBytes = Data("\(b.regionLng!)".utf8)
+                let radiusBytes = Data("\(b.regionRadiusKm!)".utf8)
+                out.append(UInt8(latBytes.count))
+                out.append(latBytes)
+                out.append(UInt8(lngBytes.count))
+                out.append(lngBytes)
+                out.append(UInt8(radiusBytes.count))
+                out.append(radiusBytes)
+            }
+            out.append(sig)
+            out.append(b.hopsLeft)
             return out
         }
     }
@@ -196,6 +277,73 @@ public enum MeshV2Frame: Equatable {
             i += tsLen
             let sig = Data(b[i ..< i + 64]).base64EncodedString(); i += 64
             return .tombstone(DeliveryTombstone(messageId: id, packetHash: hash, timestamp: ts, signature: sig, hopsLeft: b[i]))
+        case broadcastType:
+            var i = 1
+            guard b.count > i else { return nil }
+            let idLen = Int(b[i]); i += 1
+            guard let id = String(bytes: b[i ..< i + idLen], encoding: .utf8) else { return nil }
+            i += idLen
+            guard b.count > i else { return nil }
+            let titleLen = Int(b[i]); i += 1
+            guard let title = String(bytes: b[i ..< i + titleLen], encoding: .utf8) else { return nil }
+            i += titleLen
+            guard b.count > i + 1 else { return nil }
+            let bodyLen = (Int(b[i]) << 8) | Int(b[i + 1]); i += 2
+            guard let body = String(bytes: b[i ..< i + bodyLen], encoding: .utf8) else { return nil }
+            i += bodyLen
+            guard b.count > i else { return nil }
+            let severityLen = Int(b[i]); i += 1
+            guard let severity = String(bytes: b[i ..< i + severityLen], encoding: .utf8) else { return nil }
+            i += severityLen
+            guard b.count > i else { return nil }
+            let createdAtLen = Int(b[i]); i += 1
+            guard let createdAt = String(bytes: b[i ..< i + createdAtLen], encoding: .utf8) else { return nil }
+            i += createdAtLen
+            guard b.count > i else { return nil }
+            let expiresAtLen = Int(b[i]); i += 1
+            guard let expiresAt = String(bytes: b[i ..< i + expiresAtLen], encoding: .utf8) else { return nil }
+            i += expiresAtLen
+            guard b.count > i else { return nil }
+            let hasRegion = b[i]; i += 1
+            var regionLat: Double?
+            var regionLng: Double?
+            var regionRadiusKm: Double?
+            if hasRegion == 1 {
+                guard b.count > i else { return nil }
+                let latLen = Int(b[i]); i += 1
+                guard let latStr = String(bytes: b[i ..< i + latLen], encoding: .utf8),
+                      let lat = Double(latStr) else { return nil }
+                i += latLen
+                guard b.count > i else { return nil }
+                let lngLen = Int(b[i]); i += 1
+                guard let lngStr = String(bytes: b[i ..< i + lngLen], encoding: .utf8),
+                      let lng = Double(lngStr) else { return nil }
+                i += lngLen
+                guard b.count > i else { return nil }
+                let radiusLen = Int(b[i]); i += 1
+                guard let radiusStr = String(bytes: b[i ..< i + radiusLen], encoding: .utf8),
+                      let radius = Double(radiusStr) else { return nil }
+                i += radiusLen
+                regionLat = lat
+                regionLng = lng
+                regionRadiusKm = radius
+            }
+            guard b.count == i + 64 + 1 else { return nil }
+            let sig = Data(b[i ..< i + 64]).base64EncodedString(); i += 64
+            let hops = b[i]
+            return .broadcast(ServerBroadcast(
+                id: id,
+                title: title,
+                body: body,
+                severity: severity,
+                createdAt: createdAt,
+                expiresAt: expiresAt,
+                regionLat: regionLat,
+                regionLng: regionLng,
+                regionRadiusKm: regionRadiusKm,
+                signature: sig,
+                hopsLeft: hops
+            ))
         default:
             return nil
         }

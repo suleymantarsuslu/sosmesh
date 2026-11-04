@@ -45,5 +45,7 @@
 		<string>bluetooth-central</string>
 		<string>bluetooth-peripheral</string>
 	</array>
+	<key>SOSMeshBroadcastPublicKey</key>
+	<string>MCowBQYDK2VwAyEAJgWsM1ZMJK9D9uPkDS/08DL/sOHrBlcCS/ETcKQ2OEs=</string>
 </dict>
 </plist>

@@ -35,6 +35,7 @@ public final class MeshV2Node: @unchecked Sendable {
     public let hops: GatewayHopsTracker
     public let seen: MeshSeenCache
     public let tombstones: TombstoneStore
+    public let broadcasts: BroadcastCarryStore
     public let deviceHash: String
     private let verifier: TombstoneVerifier
     private let outbox: SosOutboxService
@@ -42,6 +43,9 @@ public final class MeshV2Node: @unchecked Sendable {
     private let lock = NSLock()
     private var relayEnabledValue = true
     public var isWatch = false
+    public var broadcastVerifier: ((ServerBroadcast) -> Bool)?
+    public var broadcastNotifier: ((ServerBroadcast) -> Void)?
+    public var locationProvider: (() -> (Double, Double)?)?
 
     public init(outbox: SosOutboxService, relayIdHex: String, receiptKeySpkiBase64: String, directory: URL?, nowMs: Int64) {
         self.outbox = outbox
@@ -51,6 +55,7 @@ public final class MeshV2Node: @unchecked Sendable {
         hops = GatewayHopsTracker(selfKey: MeshInfo.selfKey(relayIdHex: relayIdHex, nowMs: nowMs))
         seen = MeshSeenCache(fileURL: directory?.appendingPathComponent("mesh-v2-seen.json"))
         tombstones = TombstoneStore(fileURL: directory?.appendingPathComponent("mesh-v2-tombstones.json"))
+        broadcasts = BroadcastCarryStore()
     }
 
     public var relayEnabled: Bool {
@@ -81,6 +86,51 @@ public final class MeshV2Node: @unchecked Sendable {
 
     public func stats(nowMs: Int64) -> Stats {
         Stats(hops: hops.compute(nowMs: nowMs), peers: hops.freshNeighbors(nowMs: nowMs).count, carried: carried().count, tombstones: tombstones.count)
+    }
+    
+    public func onBroadcastFrame(_ broadcast: ServerBroadcast, nowMs: Int64) {
+        if broadcasts.contains(broadcast.id) {
+            return
+        }
+        
+        guard let expiresAt = MeshV2.parseISO8601Ms(broadcast.expiresAt), expiresAt > nowMs else {
+            return
+        }
+        
+        if broadcast.hopsLeft <= 0 {
+            return
+        }
+        
+        guard let verifier = broadcastVerifier, verifier(broadcast) else {
+            return
+        }
+        
+        if let regionLat = broadcast.regionLat, let regionLng = broadcast.regionLng, let regionRadiusKm = broadcast.regionRadiusKm {
+            if let location = locationProvider?() {
+                let distanceKm = calculateDistance(lat1: location.0, lng1: location.1, lat2: regionLat, lng2: regionLng)
+                if distanceKm > regionRadiusKm {
+                    return
+                }
+            }
+        }
+        
+        _ = broadcasts.put(broadcast, receivedAtMs: nowMs)
+        broadcastNotifier?(broadcast)
+    }
+    
+    private func calculateDistance(lat1: Double, lng1: Double, lat2: Double, lng2: Double) -> Double {
+        let r = 6371.0
+        let dLat = (lat2 - lat1) * .pi / 180.0
+        let dLng = (lng2 - lng1) * .pi / 180.0
+        let a = sin(dLat / 2) * sin(dLat / 2) +
+                cos(lat1 * .pi / 180.0) * cos(lat2 * .pi / 180.0) *
+                sin(dLng / 2) * sin(dLng / 2)
+        let c = 2 * atan2(sqrt(a), sqrt(1 - a))
+        return r * c
+    }
+    
+    public func takeBroadcastFor(peerId: String, nowMs: Int64) -> ServerBroadcast? {
+        broadcasts.takeForPeer(peerId, nowMs: nowMs)
     }
 
     // MARK: Peripheral side

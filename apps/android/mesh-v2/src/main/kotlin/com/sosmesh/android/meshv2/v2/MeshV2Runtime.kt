@@ -10,6 +10,9 @@ data class MeshV2Config(
     val relayIdHex: String,
     val receiptVerifyPublicKeySpkiBase64: String,
     val isWatch: Boolean = false,
+    val broadcastVerifier: ((ServerBroadcast) -> Boolean)? = null,
+    val broadcastNotifier: ((ServerBroadcast) -> Unit)? = null,
+    val locationProvider: (() -> Pair<Double, Double>?)? = null,
 )
 
 /**
@@ -28,6 +31,9 @@ class MeshV2Runtime
                 selfDeviceIdHash = MeshV2Wire.hex(MeshV2Wire.sha256(config.relayIdHex.toByteArray(Charsets.UTF_8))),
                 relayIdHex = config.relayIdHex,
                 isWatch = config.isWatch,
+                broadcastVerifier = config.broadcastVerifier,
+                broadcastNotifier = config.broadcastNotifier,
+                locationProvider = config.locationProvider,
             )
 
         /** Called for every verified tombstone (gateway receipt or mesh), e.g. to purge relay outbox rows. */
@@ -73,6 +79,21 @@ class MeshV2Runtime
                 fresh.forEach { sent += it.messageKey }
                 json.encodeToString(TombstoneBatchV2.serializer(), TombstoneBatchV2(items = fresh.map { it.copy(hopsLeft = it.hopsLeft - 1) }))
                     .toByteArray(Charsets.UTF_8)
+            }
+
+        private val broadcastPushedTo = HashMap<String, MutableSet<String>>()
+
+        fun takeBroadcastFor(peerId: String, nowMs: Long): ServerBroadcast? =
+            synchronized(broadcastPushedTo) {
+                node.broadcasts.prune(nowMs)
+                val sent = broadcastPushedTo.getOrPut(peerId) { HashSet() }
+                val ordered = node.broadcasts.ordered()
+                val fresh = ordered.firstOrNull { it.broadcast.hopsLeft > 0 && it.id !in sent }
+                if (fresh != null) {
+                    sent += fresh.id
+                    return node.forwardBroadcast(fresh.broadcast)
+                }
+                null
             }
 
         /** Peripheral path: a TombstoneBatchV2 transfer arrived. Returns true if it was a batch. */

@@ -30,6 +30,7 @@ import { PrivacyModule } from './privacy/privacy.module';
 import { ObservabilityModule } from './observability/observability.module';
 import { RecommendationModule } from './recommendation/recommendation.module';
 import { MediaModule } from './media/media.module';
+import { BroadcastModule } from './broadcast/broadcast.module';
 
 @Module({
   imports: [
@@ -86,6 +87,7 @@ import { MediaModule } from './media/media.module';
     ObservabilityModule,
     RecommendationModule,
     MediaModule,
+    BroadcastModule,
   ],
   providers: [
     HttpExceptionFilter,

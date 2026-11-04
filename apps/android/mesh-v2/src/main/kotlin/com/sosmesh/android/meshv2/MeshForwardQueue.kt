@@ -2,10 +2,17 @@ package com.sosmesh.android.meshv2
 
 import com.sosmesh.contracts.meshv2.MeshRelayEnvelopeV2
 
+enum class MeshForwardPriority {
+    SOS,
+    BROADCAST,
+    OTHER,
+}
+
 data class MeshForwardQueueItem(
     val envelope: MeshRelayEnvelopeV2,
     val wireBytes: ByteArray,
     val enqueuedAtMs: Long,
+    val priority: MeshForwardPriority = MeshForwardPriority.SOS,
 ) {
     override fun equals(other: Any?): Boolean {
         if (this === other) return true
@@ -55,7 +62,8 @@ class MeshForwardQueue(
             }
             items.addLast(item)
             items.sortWith(
-                compareBy<MeshForwardQueueItem> { it.envelope.ttlHops }
+                compareBy<MeshForwardQueueItem> { it.priority }
+                    .thenBy { it.envelope.ttlHops }
                     .thenBy { it.envelope.copyCount }
                     .thenBy { it.enqueuedAtMs },
             )

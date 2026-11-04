@@ -15,6 +15,7 @@ object MeshV2Wire {
     const val TYPE_OFFER_REPLY: Byte = 0x31
     const val TYPE_TOMBSTONE_REQUEST: Byte = 0x32
     const val TYPE_TOMBSTONE: Byte = 0x34
+    const val TYPE_BROADCAST: Byte = 0x35
 
     const val FLAG_RELAY_ON = 0x01
     const val FLAG_ACCEPTS_CARRY = 0x02
@@ -76,11 +77,27 @@ sealed class MeshV2Frame {
     data class TombstoneRequest(val keys: List<MessageKey>) : MeshV2Frame()
 
     data class Tombstone(val tombstone: DeliveryTombstone) : MeshV2Frame()
+
+    data class Broadcast(val broadcast: ServerBroadcast) : MeshV2Frame()
 }
+
+data class ServerBroadcast(
+    val id: String,
+    val title: String,
+    val body: String,
+    val severity: String,
+    val createdAt: String,
+    val expiresAt: String,
+    val regionLat: Double?,
+    val regionLng: Double?,
+    val regionRadiusKm: Double?,
+    val signature: String,
+    val hopsLeft: Int,
+)
 
 object MeshV2FrameCodec {
     fun isV2ControlFrame(bytes: ByteArray): Boolean =
-        bytes.isNotEmpty() && (bytes[0] == MeshV2Wire.TYPE_OFFER || bytes[0] == MeshV2Wire.TYPE_TOMBSTONE_REQUEST)
+        bytes.isNotEmpty() && (bytes[0] == MeshV2Wire.TYPE_OFFER || bytes[0] == MeshV2Wire.TYPE_TOMBSTONE_REQUEST || bytes[0] == MeshV2Wire.TYPE_BROADCAST)
 
     fun isV2AckFrame(bytes: ByteArray): Boolean =
         bytes.isNotEmpty() && (bytes[0] == MeshV2Wire.TYPE_OFFER_REPLY || bytes[0] == MeshV2Wire.TYPE_TOMBSTONE)
@@ -124,6 +141,7 @@ object MeshV2FrameCodec {
                 MeshV2Wire.TYPE_TOMBSTONE_REQUEST -> decodeKeys(bytes)?.let { MeshV2Frame.TombstoneRequest(it) }
                 MeshV2Wire.TYPE_OFFER_REPLY -> decodeOfferReply(bytes)
                 MeshV2Wire.TYPE_TOMBSTONE -> decodeTombstone(bytes)
+                MeshV2Wire.TYPE_BROADCAST -> decodeBroadcast(bytes)
                 else -> null
             }
         } catch (_: IndexOutOfBoundsException) {
@@ -183,6 +201,105 @@ object MeshV2FrameCodec {
                 messageId = id,
                 packetHash = hash,
                 timestamp = ts,
+                signature = sig,
+                hopsLeft = hops.coerceAtMost(MeshV2Wire.MAX_HOPS),
+            ),
+        )
+    }
+
+    fun encodeBroadcast(broadcast: ServerBroadcast): ByteArray {
+        val id = broadcast.id.toByteArray(Charsets.UTF_8)
+        val title = broadcast.title.toByteArray(Charsets.UTF_8)
+        val body = broadcast.body.toByteArray(Charsets.UTF_8)
+        val severity = broadcast.severity.toByteArray(Charsets.US_ASCII)
+        val createdAt = broadcast.createdAt.toByteArray(Charsets.US_ASCII)
+        val expiresAt = broadcast.expiresAt.toByteArray(Charsets.US_ASCII)
+        val sig = java.util.Base64.getDecoder().decode(broadcast.signature)
+        require(id.size in 1..64 && title.size <= 200 && body.size <= 5000 && sig.size == 64) { "invalid broadcast fields" }
+        val out = java.io.ByteArrayOutputStream()
+        out.write(MeshV2Wire.TYPE_BROADCAST.toInt())
+        out.write(id.size)
+        out.write(id)
+        out.write(title.size)
+        out.write(title)
+        val bodySize = body.size
+        out.write((bodySize shr 8) and 0xFF)
+        out.write(bodySize and 0xFF)
+        out.write(body)
+        out.write(severity.size)
+        out.write(severity)
+        out.write(createdAt.size)
+        out.write(createdAt)
+        out.write(expiresAt.size)
+        out.write(expiresAt)
+        val hasRegion = broadcast.regionLat != null && broadcast.regionLng != null && broadcast.regionRadiusKm != null
+        out.write(if (hasRegion) 1 else 0)
+        if (hasRegion) {
+            val latBytes = broadcast.regionLat!!.toString().toByteArray(Charsets.US_ASCII)
+            val lngBytes = broadcast.regionLng!!.toString().toByteArray(Charsets.US_ASCII)
+            val radiusBytes = broadcast.regionRadiusKm!!.toString().toByteArray(Charsets.US_ASCII)
+            out.write(latBytes.size)
+            out.write(latBytes)
+            out.write(lngBytes.size)
+            out.write(lngBytes)
+            out.write(radiusBytes.size)
+            out.write(radiusBytes)
+        }
+        out.write(sig)
+        out.write(broadcast.hopsLeft.coerceIn(0, MeshV2Wire.MAX_HOPS))
+        return out.toByteArray()
+    }
+
+    private fun decodeBroadcast(bytes: ByteArray): MeshV2Frame? {
+        var p = 1
+        val idLen = bytes[p++].toInt() and 0xFF
+        val id = String(bytes, p, idLen, Charsets.UTF_8)
+        p += idLen
+        val titleLen = bytes[p++].toInt() and 0xFF
+        val title = String(bytes, p, titleLen, Charsets.UTF_8)
+        p += titleLen
+        val bodyLen = ((bytes[p++].toInt() and 0xFF) shl 8) or (bytes[p++].toInt() and 0xFF)
+        val body = String(bytes, p, bodyLen, Charsets.UTF_8)
+        p += bodyLen
+        val severityLen = bytes[p++].toInt() and 0xFF
+        val severity = String(bytes, p, severityLen, Charsets.US_ASCII)
+        p += severityLen
+        val createdAtLen = bytes[p++].toInt() and 0xFF
+        val createdAt = String(bytes, p, createdAtLen, Charsets.US_ASCII)
+        p += createdAtLen
+        val expiresAtLen = bytes[p++].toInt() and 0xFF
+        val expiresAt = String(bytes, p, expiresAtLen, Charsets.US_ASCII)
+        p += expiresAtLen
+        val hasRegion = bytes[p++].toInt() and 0xFF
+        var regionLat: Double? = null
+        var regionLng: Double? = null
+        var regionRadiusKm: Double? = null
+        if (hasRegion == 1) {
+            val latLen = bytes[p++].toInt() and 0xFF
+            regionLat = String(bytes, p, latLen, Charsets.US_ASCII).toDouble()
+            p += latLen
+            val lngLen = bytes[p++].toInt() and 0xFF
+            regionLng = String(bytes, p, lngLen, Charsets.US_ASCII).toDouble()
+            p += lngLen
+            val radiusLen = bytes[p++].toInt() and 0xFF
+            regionRadiusKm = String(bytes, p, radiusLen, Charsets.US_ASCII).toDouble()
+            p += radiusLen
+        }
+        val sig = java.util.Base64.getEncoder().encodeToString(bytes.copyOfRange(p, p + 64))
+        p += 64
+        val hops = bytes[p++].toInt() and 0xFF
+        if (p != bytes.size) return null
+        return MeshV2Frame.Broadcast(
+            ServerBroadcast(
+                id = id,
+                title = title,
+                body = body,
+                severity = severity,
+                createdAt = createdAt,
+                expiresAt = expiresAt,
+                regionLat = regionLat,
+                regionLng = regionLng,
+                regionRadiusKm = regionRadiusKm,
                 signature = sig,
                 hopsLeft = hops.coerceAtMost(MeshV2Wire.MAX_HOPS),
             ),

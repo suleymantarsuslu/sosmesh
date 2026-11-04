@@ -123,6 +123,9 @@
     <string name="notifications_title">Bildirimler</string>
     <string name="notifications_clear_all">Tümünü temizle</string>
     <string name="notifications_empty">Bildirim yok</string>
+    <string name="widget_app_name">Acil Durum Ağı</string>
+    <string name="widget_sos_label">SOS</string>
+    <string name="widget_description">SOS göndermek için hızlı erişim</string>
     <string name="broadcast_relay_request_action_enable">Röleyi aç</string>
     <string name="broadcast_relay_request_action_cancel">İptal</string>
 </resources>

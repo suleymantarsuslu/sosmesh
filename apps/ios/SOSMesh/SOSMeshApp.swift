@@ -25,6 +25,11 @@ struct SOSMeshApp: App {
                         break
                     }
                 }
+                .onOpenURL { url in
+                    if url.scheme == "sosmesh", url.host == "sos" {
+                        appModel.shouldOpenSosFromWidget = true
+                    }
+                }
         }
     }
 }

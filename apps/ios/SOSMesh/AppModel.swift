@@ -34,6 +34,7 @@ final class AppModel: ObservableObject {
     @Published private(set) var relayDiagnostics = RelayDiagnosticsSnapshot()
     @Published var showDeliveredModal = false
     @Published var deliveredModalSosId: String?
+    @Published var shouldOpenSosFromWidget = false
 
     let deliveredModalTracker = DeliveredModalTracker()
     let openCaseTracker = OpenCaseTracker()

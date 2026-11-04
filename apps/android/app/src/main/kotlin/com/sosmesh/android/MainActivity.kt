@@ -1,6 +1,7 @@
 package com.sosmesh.android
 
 import android.content.Context
+import android.content.Intent
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
@@ -21,7 +22,6 @@ import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
-import androidx.compose.runtime.collectAsState
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.testTag
@@ -29,6 +29,8 @@ import androidx.compose.ui.res.stringResource
 import androidx.navigation.compose.currentBackStackEntryAsState
 import com.sosmesh.android.core.design.theme.SosIosColors
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -49,10 +51,15 @@ import com.sosmesh.android.ui.settings.SettingsRoute
 import com.sosmesh.android.ui.settings.SettingsViewModel
 import com.sosmesh.android.ui.theme.SosMeshTheme
 import dagger.hilt.android.AndroidEntryPoint
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.asStateFlow
 import javax.inject.Inject
 
 @AndroidEntryPoint
 class MainActivity : ComponentActivity() {
+    private val _openSosFromWidget = MutableStateFlow(false)
+    private val openSosFromWidget = _openSosFromWidget.asStateFlow()
+
     @Inject
     lateinit var broadcastDialogCoordinator: com.sosmesh.android.broadcast.BroadcastDialogCoordinator
 
@@ -62,6 +69,7 @@ class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         installSplashScreen()
         super.onCreate(savedInstanceState)
+        handleWidgetIntent(intent)
         setContent {
             val context = LocalContext.current
             var highContrast by remember { mutableStateOf(readHighContrast(context)) }
@@ -78,6 +86,8 @@ class MainActivity : ComponentActivity() {
                     if (appUnlocked) {
                         SosMeshNavHost(
                             onHighContrastChanged = { highContrast = readHighContrast(context) },
+                            openSosFromWidgetFlow = openSosFromWidget,
+                            onSosNavigationConsumed = { _openSosFromWidget.value = false },
                         )
                     }
 
@@ -107,6 +117,18 @@ class MainActivity : ComponentActivity() {
             }
         }
     }
+
+    override fun onNewIntent(intent: Intent) {
+        super.onNewIntent(intent)
+        setIntent(intent)
+        handleWidgetIntent(intent)
+    }
+
+    private fun handleWidgetIntent(intent: Intent?) {
+        if (intent?.getBooleanExtra(com.sosmesh.android.widget.SosWidgetProvider.EXTRA_OPEN_SOS, false) == true) {
+            _openSosFromWidget.value = true
+        }
+    }
 }
 
 private fun readHighContrast(context: Context): Boolean =
@@ -128,9 +150,15 @@ private val topLevelTabs =
     )
 
 @Composable
-private fun SosMeshNavHost(onHighContrastChanged: () -> Unit) {
+private fun SosMeshNavHost(
+    onHighContrastChanged: () -> Unit,
+    openSosFromWidgetFlow: kotlinx.coroutines.flow.StateFlow<Boolean>,
+    onSosNavigationConsumed: () -> Unit,
+) {
     val navController = rememberNavController()
     val appContext = LocalContext.current.applicationContext
+    val openSosFromWidget by openSosFromWidgetFlow.collectAsState()
+    
     androidx.compose.runtime.LaunchedEffect(Unit) {
         // mesh-v2 §7: optional profile once, after the permission gate (notification permission) is passed.
         val done =
@@ -142,7 +170,9 @@ private fun SosMeshNavHost(onHighContrastChanged: () -> Unit) {
                         .isOnboardingDone()
                 }.getOrDefault(true)
             }
-        if (!done) navController.navigate("profile")
+        if (!done) {
+            navController.navigate("profile")
+        }
 
         kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.IO) {
             runCatching {
@@ -150,6 +180,15 @@ private fun SosMeshNavHost(onHighContrastChanged: () -> Unit) {
                     .fromApplication(appContext, BroadcastEntryPoint::class.java)
                 entry.broadcastPoller().start()
             }
+        }
+    }
+    
+    androidx.compose.runtime.LaunchedEffect(openSosFromWidget) {
+        if (openSosFromWidget) {
+            navController.navigate("sos") {
+                launchSingleTop = true
+            }
+            onSosNavigationConsumed()
         }
     }
     val backStackEntry by navController.currentBackStackEntryAsState()

@@ -366,6 +366,11 @@
       "assignmentRefreshPlan": "Refresh recommendations",
       "assignmentNoneLeft": "No open recommendations. Refresh to generate a new plan.",
       "assignmentAlreadyFinalized": "This recommendation was already finalized. Reloading.",
+      "deleteIncident": "Delete case",
+      "deleteConfirm": "Are you sure you want to archive this case? It will be removed from active views but remain in history.",
+      "deleteSuccess": "Case archived",
+      "deleteFailed": "Failed to delete case",
+      "deleteCoordinatorOnly": "Only coordinators can delete cases",
       "auditTeam": "Team",
       "sender": {
         "profileTitle": "Sender profile",
@@ -703,7 +708,17 @@
       "clearFilters": "Clear filters",
       "columnEmpty": "Nothing here",
       "sentToTeam": "Sent to {team}",
-      "confirmedTaskTitle": "Assignment confirmed: {team}"
+      "confirmedTaskTitle": "Assignment confirmed: {team}",
+      "complete": "Complete",
+      "completeConfirm": "Are you sure you want to mark this task as completed?",
+      "completedBy": "Completed by: {name}",
+      "completedAt": "Completed: {time}",
+      "completeSuccess": "Task marked as completed",
+      "completeFailed": "Failed to complete task",
+      "historyTitle": "History",
+      "historySubtitle": "Completed tasks and closed cases",
+      "historyEmpty": "No completed work yet",
+      "historyIcon": "Show history"
     },
     "activity": {
       "title": "Notifications and activity",

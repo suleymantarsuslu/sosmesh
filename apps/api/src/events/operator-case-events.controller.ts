@@ -132,4 +132,9 @@ export class OperatorCaseEventsController {
   async getAudit(@Req() req: OperatorRequest, @Param('incidentId') incidentId: string) {
     return { items: await this.actions.listAudit(req.operatorUser, incidentId) };
   }
+
+  @Post(':incidentId/delete')
+  async deleteIncident(@Req() req: OperatorRequest, @Param('incidentId') incidentId: string) {
+    return this.actions.deleteIncident(req.operatorUser, incidentId);
+  }
 }

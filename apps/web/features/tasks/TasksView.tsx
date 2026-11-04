@@ -23,9 +23,13 @@ export type TaskRow = {
   status: string;
   source: string;
   assigneeDisplayName: string | null;
+  completedById: string | null;
+  completedByDisplayName: string | null;
+  completedAt: string | null;
   teamId: string;
   teamName?: string | null;
   incidentId: string;
+  version: number;
 };
 
 export type TeamName = { id: string; name: string };
@@ -57,6 +61,7 @@ export function TasksView({
   focusTaskId,
   loading = false,
   error = false,
+  onComplete,
 }: {
   tasks: TaskRow[];
   teams?: TeamName[];
@@ -64,12 +69,15 @@ export function TasksView({
   focusTaskId?: string;
   loading?: boolean;
   error?: boolean;
+  onComplete?: (taskId: string, version: number) => Promise<void>;
 }) {
   const { t } = useOperatorPreferences();
   const [query, setQuery] = useState('');
   const [status, setStatus] = useState<string>('all');
   const [source, setSource] = useState<SourceFilter>('all');
   const [view, setView] = useState<ViewMode>('list');
+  const [completing, setCompleting] = useState<string | null>(null);
+  const [confirmComplete, setConfirmComplete] = useState<string | null>(null);
 
   useEffect(() => {
     if (focusTaskId) {
@@ -118,11 +126,29 @@ export function TasksView({
     setSource('all');
   };
 
+  const handleComplete = async (task: TaskRow) => {
+    if (!onComplete) {
+      return;
+    }
+    setCompleting(task.id);
+    try {
+      await onComplete(task.id, task.version);
+      setConfirmComplete(null);
+    } finally {
+      setCompleting(null);
+    }
+  };
+
   const renderCard = (task: TaskRow) => {
     const assignee = task.assigneeDisplayName;
     const team = task.teamName ?? teamName.get(task.teamId);
     const sentToTeam =
       !assignee && team && (task.status === 'ASSIGNED' || task.status === 'ACCEPTED');
+    const canComplete =
+      task.status === 'ASSIGNED' || task.status === 'ACCEPTED' || task.status === 'PROPOSED';
+    const isCompleting = completing === task.id;
+    const showConfirm = confirmComplete === task.id;
+
     return (
       <li
         key={task.id}
@@ -164,14 +190,51 @@ export function TasksView({
             </span>
           ) : null}
         </div>
-        <Link
-          href={`/operator/cases/${task.incidentId}`}
-          className="ops-task__link"
-          aria-label={`${t('web.tasks.openCase')}: ${task.title}`}
-        >
-          {t('web.tasks.openCase')}
-          <Icon name="external" size={13} />
-        </Link>
+        <div className="ops-task__actions">
+          <Link
+            href={`/operator/cases/${task.incidentId}`}
+            className="ops-task__link"
+            aria-label={`${t('web.tasks.openCase')}: ${task.title}`}
+          >
+            {t('web.tasks.openCase')}
+            <Icon name="external" size={13} />
+          </Link>
+          {canComplete && onComplete ? (
+            showConfirm ? (
+              <div className="ops-task__confirm">
+                <p>{t('web.tasks.completeConfirm')}</p>
+                <div className="ops-task__confirm-actions">
+                  <button
+                    type="button"
+                    className="cd2-btn cd2-btn--primary cd2-btn--sm"
+                    onClick={() => handleComplete(task)}
+                    disabled={isCompleting}
+                  >
+                    {t('common.yes')}
+                  </button>
+                  <button
+                    type="button"
+                    className="cd2-btn cd2-btn--sm"
+                    onClick={() => setConfirmComplete(null)}
+                    disabled={isCompleting}
+                  >
+                    {t('common.cancel')}
+                  </button>
+                </div>
+              </div>
+            ) : (
+              <button
+                type="button"
+                className="cd2-btn cd2-btn--sm"
+                onClick={() => setConfirmComplete(task.id)}
+                disabled={isCompleting}
+              >
+                <Icon name="check" size={14} />
+                {t('web.tasks.complete')}
+              </button>
+            )
+          ) : null}
+        </div>
       </li>
     );
   };
@@ -185,11 +248,21 @@ export function TasksView({
         title={t('web.tasks.title')}
         subtitle={t('web.tasks.subtitle')}
         actions={
-          <span className="ops-count" data-testid="tasks-count">
-            {t('web.tasks.countOf')
-              .replace('{shown}', String(filtered.length))
-              .replace('{total}', String(tasks.length))}
-          </span>
+          <>
+            <Link
+              href="/operator/tasks/history"
+              className="cd2-btn cd2-btn--sm"
+              title={t('web.tasks.historyIcon')}
+            >
+              <Icon name="clock" size={14} />
+              {t('web.tasks.historyTitle')}
+            </Link>
+            <span className="ops-count" data-testid="tasks-count">
+              {t('web.tasks.countOf')
+                .replace('{shown}', String(filtered.length))
+                .replace('{total}', String(tasks.length))}
+            </span>
+          </>
         }
       />
       <p className="tasks-view__hint ops-hint">

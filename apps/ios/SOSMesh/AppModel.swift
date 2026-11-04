@@ -29,6 +29,7 @@ final class AppModel: ObservableObject {
             handleReceivedInboxChange(old: oldValue, new: receivedInbox)
         }
     }
+    @Published var pendingRelayRequestBroadcast: ServerBroadcast? = nil
     @Published var lastUploadToken: String?
     @Published private(set) var relayDiagnostics = RelayDiagnosticsSnapshot()
     @Published var showDeliveredModal = false

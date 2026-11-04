@@ -9,7 +9,7 @@
     <string name="home_relay_cta">Volunteer relay mode</string>
     <string name="home_start_relay">Mesh connection (foreground)</string>
     <string name="home_radio_debug_cta">Radio / peer discovery (debug)</string>
-    <string name="home_express_sos_cta">Quick SOS</string>
+    <string name="home_express_sos_cta">SOS</string>
     <string name="home_express_sos_content_description">Quick SOS; save on device with defaults</string>
     <string name="home_guided_sos_cta">Guided SOS wizard</string>
     <string name="home_express_saved">Saved on device — use the guided flow to edit details</string>
@@ -100,4 +100,25 @@
     <string name="settings_profile">Edit profile</string>
     <string name="profile_use_current_location">Use my current location</string>
     <string name="profile_location_failed">Current location could not be read. Check location permission and GPS.</string>
+    <string name="app_tagline">Emergency mesh network</string>
+    <string name="nav_home">Home</string>
+    <string name="nav_status">Status</string>
+    <string name="nav_relay">Relay</string>
+    <string name="nav_settings">Settings</string>
+    <string name="home_mesh_status_title">Mesh status</string>
+    <string name="home_chip_online">Online</string>
+    <string name="home_chip_offline">Offline</string>
+    <string name="home_chip_relay_on">Relay on</string>
+    <string name="home_chip_relay_off">Relay off</string>
+    <string name="home_chip_queued">%1$d queued</string>
+    <string name="home_chip_delivered">%1$d reached server</string>
+    <string name="settings_section_profile">My profile</string>
+    <string name="settings_section_permissions">Permissions</string>
+    <string name="settings_section_display">Display</string>
+    <string name="settings_section_radio">Radio and battery</string>
+    <string name="settings_section_data">Data</string>
+    <string name="settings_permissions_cta">Check permissions</string>
+    <string name="profile_section_person">Person</string>
+    <string name="profile_section_address">Address</string>
+    <string name="profile_section_contact">Contact</string>
 </resources>

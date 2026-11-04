@@ -52,13 +52,13 @@
     <string name="sos_attach_uploaded">Uploaded</string>
     <string name="sos_attach_failed">Upload failed</string>
     <string name="sos_attach_online_only">Attachments are only available when online</string>
-    <string name="sos_sent_title">SOS Gönderiliyor</string>
-    <string name="sos_sent_online">Mesajınız sunucuya gönderiliyor.</string>
-    <string name="sos_sent_offline">Mesajınız cihazda kaydedildi ve yakındaki cihazlar üzerinden aktarılacak veya internet bağlantısı kurulduğunda gönderilecek.</string>
-    <string name="sos_sent_not112">SOSMesh, 112\'nin yerine geçmez.</string>
-    <string name="sos_sent_action_ok">Tamam</string>
-    <string name="notification_sos_delivered_title">Mesajınız gönderildi</string>
-    <string name="notification_sos_delivered_body">SOS mesajınız sunucuya ulaştı.</string>
+    <string name="sos_sent_title">SOS Being Sent</string>
+    <string name="sos_sent_online">Your message is being sent to the server.</string>
+    <string name="sos_sent_offline">Your message has been saved on your device and will be relayed via nearby devices or sent when internet connection is restored.</string>
+    <string name="sos_sent_not112">SOSMesh does not replace 112.</string>
+    <string name="sos_sent_action_ok">OK</string>
+    <string name="notification_sos_delivered_title">Your message has been delivered</string>
+    <string name="notification_sos_delivered_body">Your SOS message has reached the server.</string>
     <string name="notification_channel_sos_delivery">SOS Delivery</string>
     <string name="notification_channel_sos_delivery_desc">Notifications when your SOS message is delivered to the server</string>
 </resources>

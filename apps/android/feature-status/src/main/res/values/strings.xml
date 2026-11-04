@@ -22,4 +22,12 @@
     <string name="status_evidence_last_error">Last error code: %1$s</string>
     <string name="status_hop_reached">✓ %1$s</string>
     <string name="status_hop_pending">○ %1$s</string>
+    <string name="status_badge_local">Saved on device</string>
+    <string name="status_badge_peer">Handed to nearby device</string>
+    <string name="status_badge_server">Reached server</string>
+    <string name="status_badge_operator">Seen by operator</string>
+    <string name="status_badge_case">In progress</string>
+    <string name="status_badge_failed">Failed</string>
+    <string name="status_badge_expired">Expired</string>
+    <string name="status_header_hint">Delivery steps of your messages</string>
 </resources>

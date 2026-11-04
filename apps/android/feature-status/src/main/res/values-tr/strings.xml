@@ -22,4 +22,12 @@
     <string name="status_evidence_last_error">Son hata kodu: %1$s</string>
     <string name="status_hop_reached">✓ %1$s</string>
     <string name="status_hop_pending">○ %1$s</string>
+    <string name="status_badge_local">Cihazda kayıtlı</string>
+    <string name="status_badge_peer">Yakın cihaza aktarıldı</string>
+    <string name="status_badge_server">Sunucuya ulaştı</string>
+    <string name="status_badge_operator">Operatör gördü</string>
+    <string name="status_badge_case">İşlemde</string>
+    <string name="status_badge_failed">Başarısız</string>
+    <string name="status_badge_expired">Süresi doldu</string>
+    <string name="status_header_hint">Mesajlarınızın iletim adımları</string>
 </resources>

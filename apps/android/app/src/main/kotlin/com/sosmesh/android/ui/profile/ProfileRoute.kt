@@ -1,24 +1,40 @@
 package com.sosmesh.android.ui.profile
 
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.text.KeyboardOptions
-import androidx.compose.material3.Button
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.CheckCircle
+import androidx.compose.material.icons.filled.Delete
+import androidx.compose.material.icons.filled.MyLocation
+import androidx.compose.material.icons.filled.Warning
+import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
+import androidx.compose.material3.ButtonDefaults
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.collectAsState
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.sosmesh.android.R
 import com.sosmesh.android.core.design.components.SosCall112Button
+import com.sosmesh.android.core.design.components.SosCard
+import com.sosmesh.android.core.design.components.SosPrimaryButton
 import com.sosmesh.android.core.design.components.SosScreenScaffold
 import com.sosmesh.android.core.design.components.SosScrollableScreenContent
+import com.sosmesh.android.core.design.components.SosSecondaryButton
+import com.sosmesh.android.core.design.components.SosSectionHeader
+import com.sosmesh.android.core.design.theme.SosIosColors
+import com.sosmesh.android.core.design.theme.SosShapes
+import com.sosmesh.android.core.design.theme.SosSpacing
 
 /** Optional profile (mesh-v2 §7). Every field optional; Skip and SOS always reachable; 112 visible. */
 @Composable
@@ -30,49 +46,106 @@ fun ProfileRoute(
     val f by viewModel.form.collectAsState()
     SosScreenScaffold(
         title = stringResource(R.string.profile_title),
+        showLogoInTopBar = false,
         onNavigateBack = { viewModel.skip(onDone) },
     ) { contentModifier ->
         SosScrollableScreenContent(contentModifier) {
             SosCall112Button()
-            Button(onClick = onOpenSos, modifier = Modifier.fillMaxWidth()) { Text(stringResource(R.string.profile_open_sos)) }
-            Text(stringResource(R.string.profile_intro), style = MaterialTheme.typography.bodyMedium)
-            Field(R.string.profile_full_name, f.fullName) { v -> viewModel.update { it.copy(fullName = v) } }
-            Field(R.string.profile_age, f.age, KeyboardType.Number) { v -> viewModel.update { it.copy(age = v) } }
-            Field(R.string.profile_address_line, f.addressLine) { v -> viewModel.update { it.copy(addressLine = v) } }
-            Field(R.string.profile_district, f.district) { v -> viewModel.update { it.copy(district = v) } }
-            Field(R.string.profile_city, f.city) { v -> viewModel.update { it.copy(city = v) } }
-            Field(R.string.profile_postal_code, f.postalCode) { v -> viewModel.update { it.copy(postalCode = v) } }
-            Field(R.string.profile_country, f.country) { v -> viewModel.update { it.copy(country = v) } }
-            Field(R.string.profile_floor, f.floor, KeyboardType.Number) { v -> viewModel.update { it.copy(floor = v) } }
-            Field(R.string.profile_phone, f.phone, KeyboardType.Phone) { v -> viewModel.update { it.copy(phone = v) } }
-            Field(R.string.profile_email, f.email, KeyboardType.Email) { v -> viewModel.update { it.copy(email = v) } }
-            Field(R.string.profile_household_size, f.householdSize, KeyboardType.Number) { v ->
-                viewModel.update { it.copy(householdSize = v) }
-            }
-            Text(
-                stringResource(if (f.homeLat != null) R.string.profile_location_set else R.string.profile_location_hint),
-                style = MaterialTheme.typography.bodySmall,
+            SosPrimaryButton(
+                text = stringResource(R.string.profile_open_sos),
+                onClick = onOpenSos,
+                destructive = true,
             )
-            OutlinedButton(onClick = viewModel::useCurrentLocation, enabled = !f.locating, modifier = Modifier.fillMaxWidth()) {
-                Text(stringResource(R.string.profile_use_current_location))
+            Text(
+                stringResource(R.string.profile_intro),
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
+
+            SosSectionHeader(stringResource(R.string.profile_section_person))
+            SosCard {
+                FieldGroup {
+                    Field(R.string.profile_full_name, f.fullName) { v -> viewModel.update { it.copy(fullName = v) } }
+                    Field(R.string.profile_age, f.age, KeyboardType.Number) { v -> viewModel.update { it.copy(age = v) } }
+                    Field(R.string.profile_household_size, f.householdSize, KeyboardType.Number) { v ->
+                        viewModel.update { it.copy(householdSize = v) }
+                    }
+                }
             }
-            if (f.locationFailed) {
-                Text(stringResource(R.string.profile_location_failed), style = MaterialTheme.typography.bodySmall)
+
+            SosSectionHeader(stringResource(R.string.profile_section_address))
+            SosCard {
+                FieldGroup {
+                    Field(R.string.profile_address_line, f.addressLine) { v -> viewModel.update { it.copy(addressLine = v) } }
+                    Field(R.string.profile_district, f.district) { v -> viewModel.update { it.copy(district = v) } }
+                    Field(R.string.profile_city, f.city) { v -> viewModel.update { it.copy(city = v) } }
+                    Field(R.string.profile_postal_code, f.postalCode) { v -> viewModel.update { it.copy(postalCode = v) } }
+                    Field(R.string.profile_country, f.country) { v -> viewModel.update { it.copy(country = v) } }
+                    Field(R.string.profile_floor, f.floor, KeyboardType.Number) { v -> viewModel.update { it.copy(floor = v) } }
+                }
+                SosSecondaryButton(
+                    text = stringResource(R.string.profile_use_current_location),
+                    onClick = viewModel::useCurrentLocation,
+                    enabled = !f.locating,
+                    icon = if (f.homeLat != null) Icons.Filled.CheckCircle else Icons.Filled.MyLocation,
+                )
+                Text(
+                    stringResource(if (f.homeLat != null) R.string.profile_location_set else R.string.profile_location_hint),
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                )
+                if (f.locationFailed) {
+                    WarningLine(stringResource(R.string.profile_location_failed))
+                }
+                if (f.geocodeFailed) {
+                    WarningLine(stringResource(R.string.profile_geocode_failed))
+                }
             }
-            if (f.geocodeFailed) {
-                Text(stringResource(R.string.profile_geocode_failed), style = MaterialTheme.typography.bodySmall)
+
+            SosSectionHeader(stringResource(R.string.profile_section_contact))
+            SosCard {
+                FieldGroup {
+                    Field(R.string.profile_phone, f.phone, KeyboardType.Phone) { v -> viewModel.update { it.copy(phone = v) } }
+                    Field(R.string.profile_email, f.email, KeyboardType.Email) { v -> viewModel.update { it.copy(email = v) } }
+                }
             }
-            Text(stringResource(R.string.profile_privacy_note), style = MaterialTheme.typography.bodySmall)
-            Button(onClick = { viewModel.save(onDone) }, enabled = !f.saving, modifier = Modifier.fillMaxWidth()) {
-                Text(stringResource(R.string.profile_save))
-            }
-            OutlinedButton(onClick = { viewModel.skip(onDone) }, modifier = Modifier.fillMaxWidth()) {
-                Text(stringResource(R.string.profile_skip))
-            }
-            TextButton(onClick = { viewModel.delete {} }, modifier = Modifier.fillMaxWidth()) {
-                Text(stringResource(R.string.profile_delete))
+
+            Text(
+                stringResource(R.string.profile_privacy_note),
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
+            SosPrimaryButton(
+                text = stringResource(R.string.profile_save),
+                onClick = { viewModel.save(onDone) },
+                enabled = !f.saving,
+            )
+            SosSecondaryButton(
+                text = stringResource(R.string.profile_skip),
+                onClick = { viewModel.skip(onDone) },
+            )
+            TextButton(
+                onClick = { viewModel.delete {} },
+                modifier = Modifier.fillMaxWidth(),
+                colors = ButtonDefaults.textButtonColors(contentColor = MaterialTheme.colorScheme.error),
+            ) {
+                Icon(imageVector = Icons.Filled.Delete, contentDescription = null)
+                Text(stringResource(R.string.profile_delete), modifier = Modifier.padding(start = SosSpacing.xs))
             }
         }
+    }
+}
+
+@Composable
+private fun FieldGroup(content: @Composable () -> Unit) {
+    Column(verticalArrangement = Arrangement.spacedBy(SosSpacing.sm)) { content() }
+}
+
+@Composable
+private fun WarningLine(text: String) {
+    androidx.compose.foundation.layout.Row(horizontalArrangement = Arrangement.spacedBy(SosSpacing.xs)) {
+        Icon(imageVector = Icons.Filled.Warning, contentDescription = null, tint = SosIosColors.WarningOrange)
+        Text(text, style = MaterialTheme.typography.bodySmall)
     }
 }
 
@@ -88,7 +161,16 @@ private fun Field(
         onValueChange = onChange,
         label = { Text(stringResource(label)) },
         singleLine = true,
+        shape = SosShapes.button,
         keyboardOptions = KeyboardOptions(keyboardType = keyboard),
+        colors =
+            OutlinedTextFieldDefaults.colors(
+                unfocusedBorderColor = SosIosColors.Separator,
+                focusedBorderColor = SosIosColors.AccentBlueText,
+                focusedLabelColor = SosIosColors.AccentBlueText,
+                unfocusedLabelColor = SosIosColors.LabelSecondary,
+                cursorColor = SosIosColors.AccentBlueText,
+            ),
         modifier = Modifier.fillMaxWidth(),
     )
 }

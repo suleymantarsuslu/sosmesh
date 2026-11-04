@@ -1,6 +1,5 @@
 package com.sosmesh.android.core.design.theme
 
-import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.darkColorScheme
 import androidx.compose.material3.lightColorScheme
@@ -34,27 +33,30 @@ private val LightColors =
 
 private val DarkColors =
     darkColorScheme(
-        primary = SosBrandColors.SosRedBright,
+        primary = SosIosColors.EmergencyRed,
         onPrimary = SosBrandColors.OnSosRed,
-        primaryContainer = Color(0xFF93000A),
+        primaryContainer = Color(0xFF4A1512),
         onPrimaryContainer = Color(0xFFFFDAD6),
-        secondary = Color(0xFF90A4AE),
-        onSecondary = Color(0xFF1A252C),
-        secondaryContainer = Color(0xFF37474F),
-        onSecondaryContainer = Color(0xFFCFD8DC),
-        tertiary = SosBrandColors.AccentAmber,
-        onTertiary = Color(0xFF261A00),
-        background = SosBrandColors.DarkBackground,
-        onBackground = SosBrandColors.DarkOnBackground,
-        surface = SosBrandColors.DarkSurface,
-        onSurface = SosBrandColors.DarkOnBackground,
-        surfaceVariant = SosBrandColors.NavyMuted,
-        onSurfaceVariant = Color(0xFFCBD5E1),
-        error = Color(0xFFFFB4AB),
-        onError = Color(0xFF690005),
-        errorContainer = Color(0xFF93000A),
+        secondary = SosIosColors.AccentBlue,
+        onSecondary = Color(0xFFFFFFFF),
+        secondaryContainer = Color(0xFF0B2547),
+        onSecondaryContainer = SosIosColors.AccentBlueText,
+        tertiary = SosIosColors.WarningOrange,
+        onTertiary = Color(0xFF1A1000),
+        tertiaryContainer = Color(0xFF3D2800),
+        onTertiaryContainer = Color(0xFFFFD9A0),
+        background = SosIosColors.ScreenBackground,
+        onBackground = SosIosColors.LabelPrimary,
+        surface = SosIosColors.ScreenBackground,
+        onSurface = SosIosColors.LabelPrimary,
+        surfaceVariant = SosIosColors.CardBackgroundRaised,
+        onSurfaceVariant = SosIosColors.LabelSecondary,
+        error = Color(0xFFFF6B60),
+        onError = Color(0xFF1A0000),
+        errorContainer = Color(0xFF4A1512),
         onErrorContainer = Color(0xFFFFDAD6),
-        outline = SosBrandColors.OutlineDark,
+        outline = SosIosColors.LabelTertiary,
+        outlineVariant = SosIosColors.Separator,
     )
 
 private val HighContrastLightColors =
@@ -84,13 +86,14 @@ private val HighContrastDarkColors =
 object SosContrastPairs {
     val lightTextOnBackground = SosBrandColors.LightOnBackground to SosBrandColors.LightBackground
     val lightTextOnPrimary = SosBrandColors.OnSosRed to SosBrandColors.SosRed
-    val darkTextOnBackground = SosBrandColors.DarkOnBackground to SosBrandColors.DarkBackground
-    val darkTextOnPrimary = SosBrandColors.OnSosRed to SosBrandColors.SosRedBright
+    val darkTextOnBackground = SosIosColors.LabelPrimary to SosIosColors.ScreenBackground
+    val darkSecondaryTextOnCard = SosIosColors.LabelSecondary to SosIosColors.CardBackground
+    val darkTextOnPrimary = SosBrandColors.OnSosRed to SosIosColors.EmergencyRed
 }
 
 @Composable
 fun SosMeshTheme(
-    darkTheme: Boolean = isSystemInDarkTheme(),
+    darkTheme: Boolean = true,
     highContrast: Boolean = false,
     content: @Composable () -> Unit,
 ) {

@@ -1,22 +1,17 @@
 package com.sosmesh.android.core.permissions.ui
 
 import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.heightIn
-import androidx.compose.material3.Button
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.semantics.Role
-import androidx.compose.ui.semantics.contentDescription
-import androidx.compose.ui.semantics.role
-import androidx.compose.ui.semantics.semantics
 import com.sosmesh.android.core.design.components.SosMeshLogo
 import com.sosmesh.android.core.design.components.SosNot112Banner
+import com.sosmesh.android.core.design.components.SosPrimaryButton
+import com.sosmesh.android.core.design.components.SosSecondaryButton
 import com.sosmesh.android.core.design.components.SosScreenScaffold
 import com.sosmesh.android.core.design.components.SosScrollableScreenContent
 import com.sosmesh.android.core.design.theme.SosSpacing
@@ -47,39 +42,22 @@ fun PermissionRationaleScreen(
             SosMeshLogo(size = SosSpacing.xl + SosSpacing.lg)
             SosNot112Banner(
                 disclaimerText = stringResource(R.string.permission_disclaimer_not112),
+                showCall112 = true,
             )
             Text(text = state.rationaleMessage, style = MaterialTheme.typography.bodyLarge)
             val requestLabel = stringResource(R.string.permission_request_button)
-            Button(
+            SosPrimaryButton(
+                text = requestLabel,
                 onClick = onRequestPermission,
-                modifier =
-                    Modifier
-                        .fillMaxWidth()
-                        .heightIn(min = SosSpacing.touchMin)
-                        .testTag("permission_request_button")
-                        .semantics {
-                            contentDescription = requestLabel
-                            role = Role.Button
-                        },
-            ) {
-                Text(requestLabel)
-            }
+                testTag = "permission_request_button",
+            )
             if (state.showSettingsAction) {
                 val settingsLabel = stringResource(R.string.permission_open_settings_button)
-                Button(
+                SosSecondaryButton(
+                    text = settingsLabel,
                     onClick = onOpenSettings,
-                    modifier =
-                        Modifier
-                            .fillMaxWidth()
-                            .heightIn(min = SosSpacing.touchMin)
-                            .testTag("permission_settings_button")
-                            .semantics {
-                                contentDescription = settingsLabel
-                                role = Role.Button
-                            },
-                ) {
-                    Text(settingsLabel)
-                }
+                    testTag = "permission_settings_button",
+                )
             }
             Spacer(modifier = Modifier.height(SosSpacing.xs))
             languagePicker?.invoke()

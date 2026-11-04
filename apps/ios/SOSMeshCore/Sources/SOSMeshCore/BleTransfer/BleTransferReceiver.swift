@@ -35,6 +35,16 @@ public final class BleTransferReceiver {
 
     public func getState() -> BleTransferState { state }
 
+    /// Drops partial transfer state so a new HELLO is accepted (new connection or finished transfer).
+    public func resetToIdle() {
+        chunks.removeAll()
+        expectedTotal = 0
+        receivedDigest = nil
+        negotiatedMtu = 0
+        currentTransferId = nil
+        state = .idle
+    }
+
     public func getReceivedChunkSeqs() -> [Int] {
         chunks.keys.sorted()
     }
@@ -64,9 +74,19 @@ public final class BleTransferReceiver {
     private func handleData(_ data: Data) {
         guard !data.isEmpty else { return }
         let msgType = Int(data[0])
-        if msgType == Int(BleTransferMessageType.hello.rawValue), state == .idle {
-            handleHello(data)
-            return
+        if msgType == Int(BleTransferMessageType.hello.rawValue) {
+            switch state {
+            case .idle:
+                handleHello(data)
+                return
+            case .completed, .failed, .resuming:
+                // A new HELLO after a finished/aborted transfer starts a fresh transfer.
+                resetToIdle()
+                handleHello(data)
+                return
+            default:
+                break
+            }
         }
         let controlTypes: Set<Int> = [
             Int(BleTransferMessageType.transferVerified.rawValue),

@@ -19,6 +19,28 @@ public final class SosOutboxService: OutboxQueueUpdating, @unchecked Sendable {
         try queue.enqueue(input: input, nowMs: nowMs)
     }
 
+    /// Origin tag for envelopes received from a nearby phone and waiting to be forwarded to the server.
+    public static let relayOrigin = "relay"
+
+    /// Persists a received SOS envelope (opaque bytes) for forwarding. Idempotent per (sosId, digest).
+    @discardableResult
+    public func enqueueRelayEnvelope(
+        sosId: String,
+        digest: String,
+        envelope: Data,
+        nowMs: Int64
+    ) throws -> OutboxEntryMeta {
+        try queue.enqueue(
+            input: EnqueueInput(
+                sosId: sosId,
+                digest: digest,
+                origin: SosOutboxService.relayOrigin,
+                encryptedBlobBase64: envelope.base64EncodedString()
+            ),
+            nowMs: nowMs
+        )
+    }
+
     public func listEntries() throws -> [OutboxEntryMeta] {
         try queue.listAll()
     }

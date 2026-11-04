@@ -107,3 +107,25 @@
 "sos.sent.action.status" = "Go to status";
 "notification.sos.delivered.title" = "Your message has been delivered";
 "notification.sos.delivered.body" = "Your SOS message has reached the server.";
+
+/* Relay diagnostics (counters only) */
+"relay.diag.title" = "Relay diagnostics";
+"relay.diag.bluetooth" = "Bluetooth";
+"relay.diag.bt.on" = "On";
+"relay.diag.bt.off" = "Off";
+"relay.diag.bt.unauthorized" = "Not allowed";
+"relay.diag.bt.unsupported" = "Unsupported";
+"relay.diag.bt.unknown" = "Starting…";
+"relay.diag.scanning" = "Scanning";
+"relay.diag.advertising" = "Advertising";
+"relay.diag.peers" = "Nearby phones seen";
+"relay.diag.connected" = "Connected";
+"relay.diag.last_sent" = "Last sent to a nearby phone";
+"relay.diag.last_received" = "Last received";
+"relay.diag.pending" = "Waiting to reach the server";
+"relay.diag.forwarded" = "Delivered to the server";
+"relay.diag.last_error" = "Last issue";
+"relay.diag.yes" = "Yes";
+"relay.diag.no" = "No";
+"relay.diag.none" = "—";
+"relay.diag.footer" = "Counters only: no message text, location or full IDs. A nearby-phone ACK is not a server receipt.";

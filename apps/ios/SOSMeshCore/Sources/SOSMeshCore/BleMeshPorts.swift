@@ -84,11 +84,26 @@ public struct ReceivedSosRecord: Equatable, Identifiable {
     public let sosId: String
     public let digest: String
     public let receivedAtMs: Int64
+    /// Opaque SOS wire envelope exactly as received (outer JSON with the encrypted payload).
+    /// The relay stores and forwards these bytes unchanged and never opens the encrypted payload.
+    public let envelope: Data?
+    /// Set only after the server accepted the packet (signed receipt verified).
+    public let forwardedAtMs: Int64?
 
-    public init(sosId: String, digest: String, receivedAtMs: Int64) {
+    public var isForwarded: Bool { forwardedAtMs != nil }
+
+    public init(
+        sosId: String,
+        digest: String,
+        receivedAtMs: Int64,
+        envelope: Data? = nil,
+        forwardedAtMs: Int64? = nil
+    ) {
         self.sosId = sosId
         self.digest = digest
         self.receivedAtMs = receivedAtMs
+        self.envelope = envelope
+        self.forwardedAtMs = forwardedAtMs
     }
 }
 
@@ -99,9 +114,36 @@ public final class ReceivedSosInbox: @unchecked Sendable {
     public init() {}
 
     public func append(sosId: String, digest: String, nowMs: Int64) {
+        append(sosId: sosId, digest: digest, envelope: nil, nowMs: nowMs)
+    }
+
+    /// Stores a received envelope once per (sosId, digest); duplicates (peer retries) are ignored.
+    @discardableResult
+    public func append(sosId: String, digest: String, envelope: Data?, nowMs: Int64) -> Bool {
         lock.lock()
         defer { lock.unlock() }
-        records.append(ReceivedSosRecord(sosId: sosId, digest: digest, receivedAtMs: nowMs))
+        if envelope != nil,
+           records.contains(where: { $0.sosId == sosId && $0.digest == digest }) {
+            return false
+        }
+        records.append(ReceivedSosRecord(sosId: sosId, digest: digest, receivedAtMs: nowMs, envelope: envelope))
+        return true
+    }
+
+    public func markForwarded(sosId: String, digest: String, nowMs: Int64) {
+        lock.lock()
+        defer { lock.unlock() }
+        guard let index = records.firstIndex(where: { $0.sosId == sosId && $0.digest == digest }) else {
+            return
+        }
+        let old = records[index]
+        records[index] = ReceivedSosRecord(
+            sosId: old.sosId,
+            digest: old.digest,
+            receivedAtMs: old.receivedAtMs,
+            envelope: old.envelope,
+            forwardedAtMs: nowMs
+        )
     }
 
     public func list() -> [ReceivedSosRecord] {
@@ -111,16 +153,32 @@ public final class ReceivedSosInbox: @unchecked Sendable {
     }
 }
 
+/// Durable store for received envelopes (the app backs it with the on-disk outbox, origin `relay`).
+public protocol ReceivedEnvelopeStoring: AnyObject {
+    func storeReceivedEnvelope(sosId: String, digest: String, envelope: Data, nowMs: Int64) throws
+}
+
 public final class BleIncomingPayloadRouter: BleTransferReceiver.Listener {
     private let inbox: ReceivedSosInbox
     private let nowMs: () -> Int64
+    private let store: ReceivedEnvelopeStoring?
+    private let diagnostics: RelayDiagnostics?
 
-    public init(inbox: ReceivedSosInbox, nowMs: @escaping () -> Int64 = { Int64(Date().timeIntervalSince1970 * 1000) }) {
+    public init(
+        inbox: ReceivedSosInbox,
+        store: ReceivedEnvelopeStoring? = nil,
+        diagnostics: RelayDiagnostics? = nil,
+        nowMs: @escaping () -> Int64 = { Int64(Date().timeIntervalSince1970 * 1000) }
+    ) {
         self.inbox = inbox
+        self.store = store
+        self.diagnostics = diagnostics
         self.nowMs = nowMs
     }
 
     public func onCompleted(payload: Data) {
+        // Only the outer wire JSON is parsed (to read the message id); the encrypted payload
+        // inside stays opaque.
         guard let json = String(data: payload, encoding: .utf8),
               let data = json.data(using: .utf8),
               let object = try? JSONSerialization.jsonObject(with: data) as? [String: Any],
@@ -129,8 +187,18 @@ public final class BleIncomingPayloadRouter: BleTransferReceiver.Listener {
             return
         }
         let digest = BleProtocol.calculateSHA256(payload).base64EncodedString()
-        inbox.append(sosId: sosId, digest: digest, nowMs: nowMs())
+        let now = nowMs()
+        let isNew = inbox.append(sosId: sosId, digest: digest, envelope: payload, nowMs: now)
+        diagnostics?.recordReceived(sosId: sosId, nowMs: now)
+        guard isNew else { return }
+        do {
+            try store?.storeReceivedEnvelope(sosId: sosId, digest: digest, envelope: payload, nowMs: now)
+        } catch {
+            diagnostics?.recordError(code: "relay_store_failed")
+        }
     }
 
-    public func onFailed(code: BleTransferErrorCode, message: String) {}
+    public func onFailed(code: BleTransferErrorCode, message: String) {
+        diagnostics?.recordError(code: "recv_\(code.rawValue)")
+    }
 }

@@ -40,7 +40,7 @@ public final class GattBleTransferTransport: BleTransferTransport {
 
     public func deliverIncoming(uuid: String, value: Data) {
         guard !value.isEmpty else { return }
-        let normalized = uuid.uppercased()
+        let normalized = BleMeshConstants.canonicalUuid(uuid)
         let allowed = [
             BleMeshConstants.controlCharacteristicUUID.uppercased(),
             BleMeshConstants.dataCharacteristicUUID.uppercased(),

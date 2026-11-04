@@ -70,6 +70,8 @@ public enum BleTransferProtocolConstants {
     public static let chunkHeaderSize: Int = 12
     public static let attOverhead: Int = 3
     public static let helloTimeoutMs: Int64 = 5_000
+    public static let minMtu: Int = 100
+    public static let maxMtu: Int = 512
 }
 
 public struct BleTransferChunkHeader: Equatable {

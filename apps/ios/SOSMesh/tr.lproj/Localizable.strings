@@ -107,3 +107,25 @@
 "sos.sent.action.status" = "Durum ekranına git";
 "notification.sos.delivered.title" = "Mesajınız gönderildi";
 "notification.sos.delivered.body" = "SOS mesajınız sunucuya ulaştı.";
+
+/* Relay diagnostics (counters only) */
+"relay.diag.title" = "Relay tanılama";
+"relay.diag.bluetooth" = "Bluetooth";
+"relay.diag.bt.on" = "Açık";
+"relay.diag.bt.off" = "Kapalı";
+"relay.diag.bt.unauthorized" = "İzin verilmedi";
+"relay.diag.bt.unsupported" = "Desteklenmiyor";
+"relay.diag.bt.unknown" = "Başlatılıyor…";
+"relay.diag.scanning" = "Taranıyor";
+"relay.diag.advertising" = "Yayın yapılıyor";
+"relay.diag.peers" = "Görülen yakın telefon";
+"relay.diag.connected" = "Bağlı";
+"relay.diag.last_sent" = "Yakın telefona son gönderim";
+"relay.diag.last_received" = "Son alınan";
+"relay.diag.pending" = "Sunucuya ulaşmayı bekleyen";
+"relay.diag.forwarded" = "Sunucuya iletilen";
+"relay.diag.last_error" = "Son sorun";
+"relay.diag.yes" = "Evet";
+"relay.diag.no" = "Hayır";
+"relay.diag.none" = "—";
+"relay.diag.footer" = "Yalnızca sayaçlar: mesaj metni, konum veya tam kimlik gösterilmez. Yakın telefon onayı sunucu alındısı değildir.";

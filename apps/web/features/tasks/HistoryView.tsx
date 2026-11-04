@@ -30,6 +30,7 @@ export type HistoryIncidentRow = {
   incidentId: string;
   incidentState: string;
   deletedAt: string | null;
+  archiveReason: string | null;
   createdAt: string;
   messageId: string | null;
   sosType: string | null;
@@ -185,7 +186,9 @@ export function HistoryView({
                         </p>
                         {deletedTime ? (
                           <p className="ops-muted ops-incident-card__time">
-                            {t('web.cases.deleteSuccess')}: {deletedTime}
+                            {incident.archiveReason === 'completed' 
+                              ? t('cases.archiveStatusCompleted') 
+                              : t('cases.archiveStatusDeleted')}: {deletedTime}
                           </p>
                         ) : null}
                         <Link

@@ -1364,3 +1364,23 @@ html[data-theme='dark'] .cd2-map .maplibregl-canvas {
 .cd2 .assignment-preview__confirm .assignment-preview__assignee {
   flex: 0 0 auto;
 }
+
+/* Archived banner */
+.archived-banner {
+  background: rgba(217, 130, 43, 0.15);
+  border: 1px solid rgba(217, 130, 43, 0.4);
+  border-radius: 8px;
+  padding: 1rem;
+  margin-bottom: 1rem;
+  display: flex;
+  align-items: center;
+  color: #d9822b;
+}
+
+.archived-banner__content {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.95rem;
+  font-weight: 500;
+}

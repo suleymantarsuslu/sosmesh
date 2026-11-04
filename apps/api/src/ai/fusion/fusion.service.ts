@@ -96,6 +96,7 @@ export class FusionService {
       where: {
         id: { not: incidentId },
         state: { in: ['PENDING', 'ASSIGNED', 'IN_PROGRESS'] },
+        deletedAt: null,
         sosMessages: {
           some: {
             receivedAt: { gte: cutoff },

@@ -77,6 +77,8 @@ export type OperatorCaseDetail = OperatorCaseRow & {
   sender?: CaseSenderView | null;
   version: number;
   reviewStatus: string;
+  deletedAt: string | null;
+  archiveReason: string | null;
   originalText: string | null;
   translatedText: string | null;
   detectedLanguage: string | null;

@@ -97,6 +97,10 @@ export function CaseDetailView({
   const [conflictMessage, setConflictMessage] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
   const [hasAttemptedRefresh, setHasAttemptedRefresh] = useState(false);
+  const isArchived = Boolean(detail.deletedAt);
+  const archiveReasonLabel = detail.archiveReason === 'completed' 
+    ? t('cases.archiveStatusCompleted') 
+    : t('cases.archiveStatusDeleted');
 
   const caseCoordinates =
     detail.verifiedMetadata.latitude !== null && detail.verifiedMetadata.longitude !== null
@@ -204,6 +208,13 @@ export function CaseDetailView({
 
   return (
     <article className="case-detail-modern cd2" data-testid="operator-case-detail">
+      {isArchived && (
+        <div className="archived-banner" role="alert">
+          <div className="archived-banner__content">
+            <span>ℹ️ {t('cases.archivedBanner')} - {archiveReasonLabel}</span>
+          </div>
+        </div>
+      )}
       <header className="cd2-header">
         <div className="cd2-header__top">
           <Link href="/operator/cases" className="cd2-back">

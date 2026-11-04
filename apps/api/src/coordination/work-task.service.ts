@@ -163,6 +163,7 @@ export class WorkTaskService {
     const rows = await this.prisma.workTask.findMany({
       where: {
         ...scopeWhere,
+        incident: { deletedAt: null },
         ...(query.incidentId ? { incidentId: query.incidentId } : {}),
         ...(query.status ? { status: query.status } : {}),
       },
@@ -527,6 +528,47 @@ export class WorkTaskService {
           },
         },
       });
+
+      if (params.markCompleted) {
+        const remainingActiveTasks = await tx.workTask.count({
+          where: {
+            incidentId: existing.incidentId,
+            id: { not: taskId },
+            status: {
+              in: [WorkTaskStatus.PROPOSED, WorkTaskStatus.ASSIGNED, WorkTaskStatus.ACCEPTED],
+            },
+          },
+        });
+
+        if (remainingActiveTasks === 0) {
+          const incident = await tx.incident.findUnique({
+            where: { id: existing.incidentId },
+            select: { deletedAt: true },
+          });
+
+          if (incident && !incident.deletedAt) {
+            await tx.incident.update({
+              where: { id: existing.incidentId },
+              data: {
+                deletedAt: new Date(),
+                archiveReason: 'completed',
+              },
+            });
+
+            await tx.auditLog.create({
+              data: {
+                actorId: user.sub,
+                incidentId: existing.incidentId,
+                action: 'INCIDENT_AUTO_ARCHIVED',
+                detailsJson: {
+                  reason: 'all_tasks_completed',
+                  lastTaskId: taskId,
+                },
+              },
+            });
+          }
+        }
+      }
 
       if (params.nextStatus === WorkTaskStatus.ASSIGNED) {
         const incident = await tx.incident.findUnique({

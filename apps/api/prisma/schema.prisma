@@ -102,6 +102,7 @@ model Incident {
   createdAt   DateTime       @default(now()) @map("created_at")
   updatedAt   DateTime       @updatedAt @map("updated_at")
   deletedAt   DateTime?      @map("deleted_at")
+  archiveReason String?        @map("archive_reason") @db.VarChar(50)
   sosMessages SosMessage[]
   assignments Assignment[]
   aiAnalyses  AiAnalysis[]

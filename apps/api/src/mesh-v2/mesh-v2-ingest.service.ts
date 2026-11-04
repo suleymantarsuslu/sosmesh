@@ -106,6 +106,7 @@ export class MeshV2IngestService {
       where: {
         senderId,
         state: { in: OPEN_STATES },
+        deletedAt: null,
         updatedAt: { gte: new Date(now.getTime() - MERGE_WINDOW_MS) },
       },
       orderBy: { updatedAt: 'desc' },

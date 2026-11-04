@@ -56,7 +56,17 @@ export class OperatorFeedService {
     let incidentIdFilter: { incidentId: { in: string[] } } | undefined;
     if (incidentScope) {
       const allowed = await this.prisma.incident.findMany({
-        where: incidentScope,
+        where: { ...incidentScope, deletedAt: null },
+        select: { id: true },
+        take: 500,
+      });
+      incidentIdFilter = { incidentId: { in: allowed.map((row) => row.id) } };
+      if (allowed.length === 0) {
+        return [];
+      }
+    } else {
+      const allowed = await this.prisma.incident.findMany({
+        where: { deletedAt: null },
         select: { id: true },
         take: 500,
       });

@@ -228,6 +228,7 @@ Remember: You are an advisor. The operator makes all decisions.`;
     const openIncidents = await this.prisma.incident.findMany({
       where: {
         state: { in: ['PENDING', 'ASSIGNED', 'IN_PROGRESS'] },
+        deletedAt: null,
       },
       include: {
         aiAnalyses: {
@@ -287,6 +288,7 @@ Remember: You are an advisor. The operator makes all decisions.`;
       this.prisma.incident.count({
         where: {
           createdAt: { gte: oneHourAgo },
+          deletedAt: null,
         },
       }),
       this.prisma.incident.count({
@@ -333,6 +335,7 @@ Remember: You are an advisor. The operator makes all decisions.`;
     return this.prisma.incident.findMany({
       where: {
         id: { in: scope.incidentIds },
+        deletedAt: null,
       },
       include: {
         aiAnalyses: {

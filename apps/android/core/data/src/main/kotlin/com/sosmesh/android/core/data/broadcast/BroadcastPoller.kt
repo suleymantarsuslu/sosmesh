@@ -23,6 +23,7 @@ class BroadcastPoller
         private val context: Context,
         private val repository: BroadcastRepository,
         private val notificationManager: BroadcastNotificationManager,
+        private val historyStore: com.sosmesh.android.core.data.notifications.NotificationHistoryStore,
     ) : DefaultLifecycleObserver {
         private val scope = CoroutineScope(Dispatchers.Main + Job())
         private var pollingJob: Job? = null
@@ -81,6 +82,23 @@ class BroadcastPoller
                         try {
                             notificationManager.showNotification(broadcast)
                         } catch (_: SecurityException) {
+                        }
+
+                        val historyItem =
+                            com.sosmesh.android.core.data.notifications.NotificationHistoryItem(
+                                id = broadcast.id,
+                                type = com.sosmesh.android.core.data.notifications.NotificationType.BROADCAST,
+                                title = broadcast.title,
+                                body = broadcast.body,
+                                severity = broadcast.severity,
+                                regionName = null,
+                                sosId = null,
+                                timestampMs = nowMs,
+                                isRead = false,
+                            )
+                        try {
+                            historyStore.addItem(historyItem)
+                        } catch (_: Exception) {
                         }
 
                         meshSink?.invoke(broadcast, nowMs)

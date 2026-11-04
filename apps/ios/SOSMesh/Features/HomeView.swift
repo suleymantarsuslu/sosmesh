@@ -6,8 +6,10 @@ import SOSMeshCore
 struct HomeView: View {
     @EnvironmentObject private var appModel: AppModel
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
+    @ObservedObject private var historyStore = NotificationHistoryStore.shared
+    @State private var showNotifications = false
     let navigateToStatus: () -> Void
-
+    
     var body: some View {
         NavigationStack {
             ScrollView {
@@ -34,12 +36,36 @@ struct HomeView: View {
                             .font(DesignSystem.Typography.headline)
                     }
                 }
+                ToolbarItem(placement: .navigationBarTrailing) {
+                    Button {
+                        showNotifications = true
+                    } label: {
+                        ZStack(alignment: .topTrailing) {
+                            Image(systemName: "bell.fill")
+                                .font(.system(size: 20))
+                                .foregroundStyle(DesignSystem.Colors.accentBlue)
+                            
+                            if historyStore.unreadCount > 0 {
+                                Text("\(historyStore.unreadCount > 99 ? "99+" : "\(historyStore.unreadCount)")")
+                                    .font(.system(size: 10, weight: .bold))
+                                    .foregroundColor(.white)
+                                    .padding(3)
+                                    .background(DesignSystem.Colors.emergencyRed)
+                                    .clipShape(Circle())
+                                    .offset(x: 8, y: -8)
+                            }
+                        }
+                    }
+                }
             }
             .task {
                 await appModel.reloadOutbox()
             }
             .sheet(isPresented: $appModel.showDeliveredModal) {
                 SosDeliveredModal()
+            }
+            .sheet(isPresented: $showNotifications) {
+                NotificationsView()
             }
         }
     }

@@ -43,6 +43,16 @@ export class TeamsResourcesService {
     private readonly scope: IncidentScopeService
   ) {}
 
+  private async defaultOrganizationId(): Promise<string> {
+    const org = await this.prisma.organization.upsert({
+      where: { slug: 'default' },
+      update: {},
+      create: { name: 'SOSMesh', slug: 'default' },
+      select: { id: true },
+    });
+    return org.id;
+  }
+
   private assertCanModifyTeams(user: OperatorRequestUser): void {
     if (user.role !== UserRole.COORDINATOR && user.role !== UserRole.ADMIN) {
       throw new ForbiddenException({
@@ -103,17 +113,13 @@ export class TeamsResourcesService {
       });
     }
 
-    if (!orgId) {
-      throw new ForbiddenException({
-        code: 'FORBIDDEN',
-        message: 'Admin users must specify an organization',
-      });
-    }
+    // Admins without an organization create teams in the default organization.
+    const organizationId = orgId ?? (await this.defaultOrganizationId());
 
     const team = await this.prisma.$transaction(async (tx) => {
       const created = await tx.team.create({
         data: {
-          organizationId: orgId,
+          organizationId,
           name: input.name,
           type: input.type,
           capacity: input.capacity,

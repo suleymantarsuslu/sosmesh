@@ -153,6 +153,13 @@ private fun SosMeshNavHost(onHighContrastChanged: () -> Unit) {
                     onOpenStatus = { navigateToTab("status") },
                     onOpenRelay = { navigateToTab("relay") },
                     onOpenSettings = { navigateToTab("settings") },
+                    onOpenNotifications = { navController.navigate("notifications") },
+                )
+            }
+            composable("notifications") {
+                com.sosmesh.android.ui.notifications.NotificationsRoute(
+                    onNavigateToRelay = { navigateToTab("relay") },
+                    onBack = { navController.popBackStack() },
                 )
             }
             composable("permissions") {

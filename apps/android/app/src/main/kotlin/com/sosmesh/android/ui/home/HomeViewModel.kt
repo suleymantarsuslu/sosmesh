@@ -27,6 +27,7 @@ data class HomeUiState(
     val relayEnabled: Boolean = false,
     val queuedCount: Int = 0,
     val deliveredCount: Int = 0,
+    val notificationUnreadCount: Int = 0,
 )
 
 @HiltViewModel
@@ -36,9 +37,19 @@ class HomeViewModel
         private val platformBridge: MeshPlatformSignalBridge,
         private val expressSosSaver: ExpressSosSaver,
         private val outbox: OutboxQueueAdapter,
+        private val notificationHistoryStore: com.sosmesh.android.core.data.notifications.NotificationHistoryStore,
     ) : ViewModel() {
         private val _uiState = MutableStateFlow(HomeUiState())
         val uiState: StateFlow<HomeUiState> = _uiState.asStateFlow()
+
+        init {
+            viewModelScope.launch {
+                notificationHistoryStore.items.collect { items ->
+                    val unreadCount = items.count { !it.isRead }
+                    _uiState.update { it.copy(notificationUnreadCount = unreadCount) }
+                }
+            }
+        }
 
         fun refreshPlatform() {
             val evaluation = platformBridge.refresh()

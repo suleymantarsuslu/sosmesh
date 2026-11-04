@@ -1,6 +1,7 @@
 import Foundation
+import SOSMeshCore
 
-final class RelayDeliveryCounter {
+final class RelayDeliveryCounter: RelayDeliveryCounterPort {
     private let defaults: UserDefaults
     private let deliveredKey = "sosmesh.relay_delivered_messages"
     private let carriedKey = "sosmesh.relay_carried_messages"

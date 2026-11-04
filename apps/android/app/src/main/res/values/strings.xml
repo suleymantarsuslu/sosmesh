@@ -98,4 +98,6 @@
     <string name="profile_skip">Skip</string>
     <string name="profile_delete">Delete profile</string>
     <string name="settings_profile">Edit profile</string>
+    <string name="profile_use_current_location">Use my current location</string>
+    <string name="profile_location_failed">Current location could not be read. Check location permission and GPS.</string>
 </resources>

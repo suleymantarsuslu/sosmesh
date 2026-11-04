@@ -63,9 +63,12 @@ object BleModule {
         guard: PermissionAndAdapterGuard,
         peerRegistry: PeerRegistry,
     ): BleScanner {
-        return BleScanner(scannerPort, guard) { payload ->
-            peerRegistry.recordDiscovery(payload, PeerRole.BOTH)
-        }
+        return BleScanner(
+            scannerPort = scannerPort,
+            guard = guard,
+            onPeerAdvertisement = { payload -> peerRegistry.recordDiscovery(payload, PeerRole.BOTH) },
+            onSighting = { address, rssi, _, h -> peerRegistry.recordSighting(address, rssi, h) },
+        )
     }
 
     @Provides

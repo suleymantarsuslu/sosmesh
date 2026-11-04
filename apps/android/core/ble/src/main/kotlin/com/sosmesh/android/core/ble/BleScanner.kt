@@ -8,8 +8,19 @@ import com.sosmesh.android.core.platform.EnergyRadioProfile
 class BleScanner(
     private val scannerPort: BleScannerPort,
     private val guard: PermissionAndAdapterGuard,
+    private val onSighting: ((address: String, rssi: Int, manufacturerPayload: ByteArray?, h: Int) -> Unit)? = null,
     private val onPeerAdvertisement: (manufacturerPayload: ByteArray?) -> Unit,
 ) : ScanCallbackPort {
+    override fun onPeerSighting(
+        address: String,
+        rssi: Int,
+        manufacturerPayload: ByteArray?,
+        h: Int,
+    ) {
+        val sink = onSighting
+        if (sink != null) sink(address, rssi, manufacturerPayload, h) else onPeerAdvertisement(manufacturerPayload)
+    }
+
     private var scanning: Boolean = false
 
     fun start(foregroundVisible: Boolean): Result<Unit> {

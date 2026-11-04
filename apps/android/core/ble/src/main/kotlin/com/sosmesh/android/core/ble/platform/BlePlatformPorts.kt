@@ -1,5 +1,7 @@
 package com.sosmesh.android.core.ble.platform
 
+import com.sosmesh.android.core.ble.BleMeshConstants
+
 interface BluetoothAdapterPort {
     fun isEnabled(): Boolean
 }
@@ -19,6 +21,16 @@ interface ScanCallbackPort {
         serviceUuid: String,
         manufacturerPayload: ByteArray?,
     )
+
+    /** Connectable peer with its BLE address and mesh-v2 h (0xFF = offline/unknown). */
+    fun onPeerSighting(
+        address: String,
+        rssi: Int,
+        manufacturerPayload: ByteArray?,
+        h: Int,
+    ) {
+        onScanResult(BleMeshConstants.SERVICE_UUID, manufacturerPayload)
+    }
 }
 
 interface BleScannerPort {
@@ -125,4 +137,7 @@ interface GattClientPort {
     fun enableAckNotifications(): Result<Unit>
 
     fun setClientDataListener(listener: GattClientCallbackPort?)
+
+    /** True when the connected peer exposes [uuid] (mesh-v2: FFF4 ⇒ v2 peer). */
+    fun hasCharacteristic(uuid: String): Boolean = false
 }

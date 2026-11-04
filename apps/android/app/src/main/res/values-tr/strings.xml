@@ -98,4 +98,6 @@
     <string name="profile_skip">Atla</string>
     <string name="profile_delete">Profili sil</string>
     <string name="settings_profile">Profili düzenle</string>
+    <string name="profile_use_current_location">Şu anki konumumu kullan</string>
+    <string name="profile_location_failed">Şu anki konum alınamadı. Konum iznini ve GPS’i kontrol edin.</string>
 </resources>

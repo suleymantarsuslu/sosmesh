@@ -108,6 +108,18 @@ class PeerDeliveryReceiveOrchestrationTest {
 
         override suspend fun purgeExpired(nowMs: Long): Int = 0
 
+        override suspend fun setUploadRetryAt(
+            sosId: String,
+            digest: String,
+            retryAtMs: Long,
+            lastError: String?,
+        ) = Unit
+
+        override suspend fun clearUploadRetry(
+            sosId: String,
+            digest: String,
+        ) = Unit
+
         override fun close() = Unit
     }
 }
@@ -128,8 +140,10 @@ private fun relayHandler(
     val context = ApplicationProvider.getApplicationContext<android.content.Context>()
     return RelayTransferHandler(
         registrar = registrar,
-        meshV2RelayCoordinator = meshV2RelayCoordinator,
-        relayIdentityProvider = RelayIdentityProvider(context),
+        meshV2 =
+            com.sosmesh.android.meshv2.v2.MeshV2Runtime(
+                com.sosmesh.android.meshv2.v2.MeshV2Config(RelayIdentityProvider(context).relayIdHex, ""),
+            ),
         outboxIoScope = OutboxIoScope(Dispatchers.Unconfined),
     )
 }

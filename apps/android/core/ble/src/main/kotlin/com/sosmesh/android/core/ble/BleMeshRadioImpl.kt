@@ -22,6 +22,12 @@ class BleMeshRadioImpl
 
         override fun connectFirstDiscoveredPeer(): Result<Unit> = coordinator.connectToFirstPeer()
 
+        override fun connectBestPeer(exclude: Set<String>): Result<String> = coordinator.connectToBestPeer(exclude)
+
+        override fun connectedPeerId(): String? = coordinator.connectedPeerId()
+
+        override fun peerHops(): Map<String, Int> = coordinator.peerHops()
+
         override fun disconnectPeerSession() {
             coordinator.disconnectGatt()
         }

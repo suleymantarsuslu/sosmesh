@@ -22,7 +22,25 @@ import org.junit.Before
 import org.junit.Test
 
 class MeshRelayForwardOrchestratorTest {
-    private lateinit var meshV2: MeshV2RelayCoordinator
+    private lateinit var meshV2: com.sosmesh.android.meshv2.v2.MeshV2Runtime
+    private val l2 = """{"version":1,"id":"fwd-1","envelope":{"timestamp":"2026-11-01T12:00:00Z","priority":1},"encryptedPayload":"x"}"""
+    private val outbox =
+        FakeListOutbox(
+            listOf(
+                com.sosmesh.contracts.transport.OutboxEntryMeta(
+                    sosId = "fwd-1",
+                    digest = "d",
+                    origin = "relay",
+                    encryptedBlobBase64 = java.util.Base64.getEncoder().encodeToString(l2.toByteArray()),
+                    state = "LOCAL_SAVED",
+                    retryAtMs = 0,
+                    expiresAtMs = Long.MAX_VALUE,
+                    lastError = null,
+                    createdAtMs = 0,
+                    updatedAtMs = 0,
+                ),
+            ),
+        )
     private lateinit var radio: FakeRadio
     private lateinit var engine: FakeEngine
     private lateinit var orchestrator: MeshRelayForwardOrchestrator
@@ -31,16 +49,21 @@ class MeshRelayForwardOrchestratorTest {
 
     @Before
     fun setUp() {
-        meshV2 =
-            MeshV2RelayCoordinator(
-                forwardQueue = MeshForwardQueue(maxDepth = 4),
-                routeSelector = MeshRouteSelector(),
-            )
+        meshV2 = com.sosmesh.android.meshv2.v2.MeshV2Runtime(com.sosmesh.android.meshv2.v2.MeshV2Config(relayHash, ""))
+        meshV2.carryMeta.put(
+            "fwd-1",
+            com.sosmesh.android.meshv2.v2.CarryMetaStore.Meta(
+                receivedHopCount = 1,
+                originCreatedAtMs = System.currentTimeMillis(),
+                receivedAtMs = System.currentTimeMillis(),
+            ),
+        )
         radio = FakeRadio()
         engine = FakeEngine()
         orchestrator =
             MeshRelayForwardOrchestrator(
-                meshV2RelayCoordinator = meshV2,
+                outbox = outbox,
+                    meshV2 = meshV2,
                 engine = engine,
                 radio = radio,
                 permissions = testGrantAllPermissionCoordinator(),
@@ -67,15 +90,6 @@ class MeshRelayForwardOrchestratorTest {
                   "hopChainReceipt": { "relayDeviceIdHashes": [] }
                 }
                 """.trimIndent().toByteArray()
-            val ingest =
-                meshV2.onWirePayload(
-                    payload = payload,
-                    relayDeviceIdHash = relayHash,
-                    nowMs = 1L,
-                    batteryQuotaAllowsForward = true,
-                    uplinkInternetAvailable = false,
-                )
-            assertEquals(MeshV2RelayAction.QueuedForForward, ingest.action)
             radio.gattState = GattUiConnectionState.READY
             val result = orchestrator.runForwardCycle(foregroundVisible = true)
             assertEquals(MeshRelayForwardCycleResult.ForwardStarted, result)
@@ -89,7 +103,8 @@ class MeshRelayForwardOrchestratorTest {
             val deniedPermissions = permissionsMissing("android.permission.BLUETOOTH_CONNECT")
             val denied =
                 MeshRelayForwardOrchestrator(
-                    meshV2RelayCoordinator = meshV2,
+                    outbox = outbox,
+                    meshV2 = meshV2,
                     engine = engine,
                     radio = radio,
                     permissions = deniedPermissions,
@@ -111,13 +126,6 @@ class MeshRelayForwardOrchestratorTest {
                   "hopChainReceipt": { "relayDeviceIdHashes": [] }
                 }
                 """.trimIndent().toByteArray()
-            meshV2.onWirePayload(
-                payload = payload,
-                relayDeviceIdHash = relayHash,
-                nowMs = 1L,
-                batteryQuotaAllowsForward = true,
-                uplinkInternetAvailable = false,
-            )
             val result = denied.runForwardCycle(foregroundVisible = true)
             assertTrue(result is MeshRelayForwardCycleResult.PermissionsMissing)
             assertEquals(0, engine.opaqueCalls.size)

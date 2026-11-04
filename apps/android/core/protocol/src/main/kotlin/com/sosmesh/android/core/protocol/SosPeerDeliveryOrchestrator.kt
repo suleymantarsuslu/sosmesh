@@ -88,14 +88,14 @@ class SosPeerDeliveryOrchestrator
             radio.tickGattReconnect()
             var status = radio.refreshStatus()
             if (status.gattState != GattUiConnectionState.READY) {
-                if (status.peerCount == 0) {
+                if (status.peerCount == 0 && radio.peerHops().isEmpty()) {
                     scheduleRetry(due, nowMs + 5_000L, "no_peer")
                     return SosPeerDeliveryCycleResult.Blocked("no_peer")
                 }
                 if (status.gattState == GattUiConnectionState.NONE ||
                     status.gattState == GattUiConnectionState.BACKOFF
                 ) {
-                    radio.connectFirstDiscoveredPeer().onFailure { error ->
+                    radio.connectBestPeer().onFailure { error ->
                         scheduleRetry(due, nowMs + 5_000L, error.message ?: "connect_failed")
                         return mapRadioFailure(error, due, nowMs)
                     }
@@ -118,6 +118,17 @@ class SosPeerDeliveryOrchestrator
                 return SosPeerDeliveryCycleResult.Blocked("digest_mismatch")
             }
             engine.onGattReady()
+            when (val pre = MeshV2CentralSession.preflight(engine, radio.connectedPeerId(), listOf(due.sosId), nowMs)) {
+                MeshV2Preflight.V1Peer -> Unit
+                MeshV2Preflight.TombstoneBatchSent -> return SosPeerDeliveryCycleResult.TransferStarted
+                is MeshV2Preflight.Statuses ->
+                    if (!pre.wants(due.sosId)) {
+                        // Peer already has it (HAVE) or it reached the server (DELIVERED): never resend; try another peer later.
+                        radio.disconnectPeerSession()
+                        scheduleRetry(due, nowMs + PEER_HAS_RETRY_MS, "peer_has_copy")
+                        return SosPeerDeliveryCycleResult.Idle
+                    }
+            }
             engine.sendOutbound(due.sosId, due.digest, payload)
             return SosPeerDeliveryCycleResult.TransferStarted
         }
@@ -167,3 +178,5 @@ class SosPeerDeliveryOrchestrator
                 }
             }
     }
+
+private const val PEER_HAS_RETRY_MS = 60_000L

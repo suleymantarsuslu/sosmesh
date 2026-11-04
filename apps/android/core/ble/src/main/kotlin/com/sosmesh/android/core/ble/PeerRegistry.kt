@@ -36,12 +36,44 @@ class PeerRegistry(
         return updated
     }
 
+    /** Connectable peers by BLE address (Android and iOS), with mesh-v2 h and RSSI. */
+    data class AddressPeer(val address: String, val h: Int, val rssi: Int, val lastSeenMillis: Long)
+
+    private val addressPeers = linkedMapOf<String, AddressPeer>()
+
+    @Synchronized
+    fun recordSighting(
+        address: String,
+        rssi: Int,
+        h: Int,
+    ): AddressPeer {
+        val now = clock.currentTimeMillis()
+        val peer = AddressPeer(address, h, rssi, now)
+        addressPeers[address] = peer
+        addressPeers.entries.removeIf { it.value.lastSeenMillis < now - ttlMillis }
+        return peer
+    }
+
+    /** mesh-v2 §4.3: lowest h, then strongest RSSI, then least recently attempted. */
+    @Synchronized
+    fun bestAddressPeer(exclude: Set<String> = emptySet()): AddressPeer? {
+        val now = clock.currentTimeMillis()
+        addressPeers.entries.removeIf { it.value.lastSeenMillis < now - ttlMillis }
+        return addressPeers.values
+            .filter { it.address !in exclude }
+            .sortedWith(compareBy<AddressPeer> { it.h }.thenByDescending { it.rssi }.thenBy { reconnectAttempts[it.address] ?: 0 })
+            .firstOrNull()
+    }
+
+    @Synchronized
+    fun addressPeers(): List<AddressPeer> = addressPeers.values.toList()
+
     fun activePeers(): List<DiscoveredPeer> {
         pruneExpired(clock.currentTimeMillis())
         return peers.values.toList()
     }
 
-    fun activePeerCount(): Int = activePeers().size
+    fun activePeerCount(): Int = maxOf(activePeers().size, synchronized(this) { addressPeers.size })
 
     fun pruneExpired(now: Long = clock.currentTimeMillis()) {
         val cutoff = now - ttlMillis

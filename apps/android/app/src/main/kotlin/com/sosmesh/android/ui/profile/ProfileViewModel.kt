@@ -40,6 +40,10 @@ data class ProfileForm(
     val loaded: Boolean = false,
     val saving: Boolean = false,
     val geocodeFailed: Boolean = false,
+    val locating: Boolean = false,
+    val locationFailed: Boolean = false,
+    /** True when the user explicitly chose the current GPS fix as home location (address geocoding then does not override it). */
+    val homeFromGps: Boolean = false,
 )
 
 /** mesh-v2 §7 onboarding profile. Values stay on device (EncryptedSharedPreferences); never logged. */
@@ -48,6 +52,7 @@ class ProfileViewModel
     @Inject
     constructor(
         private val store: SosProfileStore,
+        private val locationProvider: com.sosmesh.android.feature.sos.location.SosLocationProvider,
         @ApplicationContext private val context: Context,
     ) : ViewModel() {
         private val _form = MutableStateFlow(ProfileForm())
@@ -67,7 +72,7 @@ class ProfileViewModel
             _form.update { it.copy(saving = true, geocodeFailed = false) }
             viewModelScope.launch {
                 val address = SosProfileAddress(f.addressLine, f.district, f.city, f.postalCode, f.country).sanitized()
-                val home = address.geocodeQuery()?.let { geocode(it) }
+                val home = if (f.homeFromGps) null else address.geocodeQuery()?.let { geocode(it) }
                 val profile =
                     SosProfile(
                         fullName = f.fullName,
@@ -80,8 +85,31 @@ class ProfileViewModel
                         householdSize = f.householdSize.trim().toIntOrNull(),
                     )
                 withContext(Dispatchers.IO) { runCatching { store.saveProfile(profile) } }
-                _form.update { it.copy(saving = false, geocodeFailed = address.geocodeQuery() != null && home == null) }
+                _form.update { it.copy(saving = false, geocodeFailed = !f.homeFromGps && address.geocodeQuery() != null && home == null) }
                 onDone()
+            }
+        }
+
+        /** "Use my current location": one GPS fix, kept only in the encrypted profile. */
+        fun useCurrentLocation() {
+            _form.update { it.copy(locating = true, locationFailed = false) }
+            viewModelScope.launch {
+                val provider = locationProvider
+                val snap =
+                    if (provider is com.sosmesh.android.feature.sos.location.AndroidGpsLocationProvider) {
+                        provider.requestLocationAsync()
+                    } else {
+                        withContext(Dispatchers.IO) { provider.currentLocation() }
+                    }
+                val lat = snap.latitude
+                val lng = snap.longitude
+                _form.update {
+                    if (snap.isKnown && lat != null && lng != null) {
+                        it.copy(homeLat = lat, homeLng = lng, homeFromGps = true, locating = false)
+                    } else {
+                        it.copy(locating = false, locationFailed = true)
+                    }
+                }
             }
         }
 

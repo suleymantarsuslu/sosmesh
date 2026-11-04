@@ -50,6 +50,12 @@ interface OutboxDao {
         lastError: String?,
     ): Int
 
+    @Query("DELETE FROM outbox WHERE sos_id = :sosId AND digest = :digest")
+    fun deleteByKey(
+        sosId: String,
+        digest: String,
+    ): Int
+
     @Query("DELETE FROM outbox WHERE expires_at <= :nowMs")
     fun deleteExpired(nowMs: Long): Int
 

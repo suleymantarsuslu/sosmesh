@@ -53,6 +53,12 @@ fun ProfileRoute(
                 stringResource(if (f.homeLat != null) R.string.profile_location_set else R.string.profile_location_hint),
                 style = MaterialTheme.typography.bodySmall,
             )
+            OutlinedButton(onClick = viewModel::useCurrentLocation, enabled = !f.locating, modifier = Modifier.fillMaxWidth()) {
+                Text(stringResource(R.string.profile_use_current_location))
+            }
+            if (f.locationFailed) {
+                Text(stringResource(R.string.profile_location_failed), style = MaterialTheme.typography.bodySmall)
+            }
             if (f.geocodeFailed) {
                 Text(stringResource(R.string.profile_geocode_failed), style = MaterialTheme.typography.bodySmall)
             }

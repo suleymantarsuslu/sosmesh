@@ -76,7 +76,22 @@ class BleRadioCoordinator(
         advertisingActive = false
     }
 
+    /** Connects to the best addressable peer (lowest h). Returns its address. */
+    fun connectToBestPeer(exclude: Set<String>): Result<String> {
+        val best =
+            peerRegistry.bestAddressPeer(exclude)
+                ?: return Result.failure(IllegalStateException("no_peer"))
+        return gattSession.connect(best.address, best.address).map { best.address }
+    }
+
+    fun connectedPeerId(): String? = gattSession.activePeer()
+
+    fun peerHops(): Map<String, Int> = peerRegistry.addressPeers().associate { it.address to it.h }
+
     fun connectToFirstPeer(): Result<Unit> {
+        peerRegistry.bestAddressPeer()?.let { best ->
+            return gattSession.connect(best.address, best.address)
+        }
         val peer =
             peerRegistry.activePeers().firstOrNull()
                 ?: return Result.failure(IllegalStateException("Keşfedilen peer yok"))

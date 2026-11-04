@@ -156,6 +156,7 @@ class SosFormViewModel
 
         private val rateLimiter = com.sosmesh.android.meshv2.v2.SosRateLimiter()
         private var lastOwnMessageId: String? = null
+        private var lastOwnDigest: String? = null
         private var lastOwnLeftDevice: Boolean = false
 
         fun confirmAndSave(nowMs: Long = System.currentTimeMillis()) {
@@ -171,7 +172,14 @@ class SosFormViewModel
                     rateLimiter.recordRelease(saveAt)
                     _uiState.update { it.copy(queuedUntilMs = null) }
                 }
-                runCatching { performSaveAfterPreview(saveAt) }
+                val replaced =
+                    (decision as? com.sosmesh.android.meshv2.v2.SosRateLimiter.Decision.ReplacePrevious)?.let { r ->
+                        lastOwnDigest?.let { d -> r.previousMessageId to d }
+                    }
+                runCatching {
+                    performSaveAfterPreview(saveAt)
+                    replaced?.let { (id, digest) -> submitRepository.deleteIfUnsent(id, digest) }
+                }
                     .onFailure { throwable ->
                         if (throwable is CancellationException) throw throwable
                         Log.e("SosFormViewModel", "sos_save_failed", throwable)
@@ -235,6 +243,7 @@ class SosFormViewModel
                 }
             notificationManager.trackPendingSos(composed.message.id)
             lastOwnMessageId = composed.message.id
+            lastOwnDigest = composed.digest
             lastOwnLeftDevice = delivery is SosPeerDeliveryKickResult.TransferStarted
             
             _uiState.update {

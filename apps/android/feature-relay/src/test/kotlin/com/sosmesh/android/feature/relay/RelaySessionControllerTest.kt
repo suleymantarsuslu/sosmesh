@@ -54,11 +54,8 @@ class RelaySessionControllerTest {
         val policy = RelayBatteryPolicy(settings, budget)
         val meshForward =
             MeshRelayForwardOrchestrator(
-                meshV2RelayCoordinator =
-                    MeshV2RelayCoordinator(
-                        forwardQueue = MeshForwardQueue(maxDepth = 4),
-                        routeSelector = MeshRouteSelector(),
-                    ),
+                outbox = com.sosmesh.android.feature.relay.mesh.EmptyOutboxForTests,
+                meshV2 = com.sosmesh.android.meshv2.v2.MeshV2Runtime(com.sosmesh.android.meshv2.v2.MeshV2Config("a".repeat(64), "")),
                 engine = NoOpTransferEngine(),
                 radio = radio,
                 permissions = testGrantAllPermissionCoordinator(),

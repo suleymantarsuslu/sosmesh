@@ -342,6 +342,8 @@ class AndroidGattClientPort
             }
         }
 
+        override fun hasCharacteristic(uuid: String): Boolean = charMap.containsKey(uuid.uppercase())
+
         override fun setClientDataListener(listener: GattClientCallbackPort?) {
             dataListener = listener
         }
@@ -422,6 +424,7 @@ class AndroidGattClientPort
                         BleMeshConstants.CONTROL_CHAR_UUID,
                         BleMeshConstants.DATA_CHAR_UUID,
                         BleMeshConstants.ACK_CHAR_UUID,
+                        MeshV2Hooks.MESH_INFO_CHAR_UUID,
                     ).forEach { id ->
                         service.getCharacteristic(UUID.fromString(id))?.let { charMap[id.uppercase()] = it }
                     }

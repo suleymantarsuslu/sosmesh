@@ -6,6 +6,7 @@ import com.sosmesh.android.core.ble.platform.GattClientCallbackPort
 import com.sosmesh.android.core.ble.platform.GattClientPort
 import com.sosmesh.android.core.ble.platform.GattServerPort
 import com.sosmesh.android.core.ble.platform.GattServerWriteListener
+import kotlinx.coroutines.sync.withLock
 import javax.inject.Inject
 import javax.inject.Singleton
 
@@ -77,11 +78,49 @@ class BleTransferEngine
                         uuid: String,
                         value: ByteArray,
                     ) {
+                        if (uuid.equals(BleMeshConstants.ACK_CHAR_UUID, ignoreCase = true) && value.isNotEmpty() &&
+                            (value[0] == MESH_V2_OFFER_REPLY || value[0] == MESH_V2_TOMBSTONE)
+                        ) {
+                            meshV2Replies.trySend(value.copyOf())
+                            return
+                        }
                         centralTransport.deliverIncoming(uuid, value)
                     }
                 },
             )
         }
+
+        private val meshV2Replies = kotlinx.coroutines.channels.Channel<ByteArray>(kotlinx.coroutines.channels.Channel.UNLIMITED)
+        private val meshV2Mutex = kotlinx.coroutines.sync.Mutex()
+
+        override suspend fun meshV2Exchange(
+            frame: ByteArray,
+            replyType: Byte,
+            windowMs: Long,
+            maxFrames: Int,
+        ): List<ByteArray>? =
+            meshV2Mutex.withLock {
+                if (!clientPort.hasCharacteristic(MeshV2Hooks.MESH_INFO_CHAR_UUID)) return@withLock null
+                while (meshV2Replies.tryReceive().isSuccess) Unit
+                clientPort.enableAckNotifications()
+                var written = false
+                for (attempt in 0 until WRITE_ATTEMPTS) {
+                    kotlinx.coroutines.delay(WRITE_RETRY_MS)
+                    if (clientPort.writeCharacteristic(BleMeshConstants.CONTROL_CHAR_UUID, frame).isSuccess) {
+                        written = true
+                        break
+                    }
+                }
+                if (!written) return@withLock emptyList()
+                val out = mutableListOf<ByteArray>()
+                kotlinx.coroutines.withTimeoutOrNull(windowMs) {
+                    while (out.size < maxFrames) {
+                        val next = meshV2Replies.receive()
+                        if (next[0] == replyType) out += next
+                    }
+                }
+                out
+            }
 
         fun setRelayListener(listener: BleTransferReceiver.Listener) {
             receiver.setListener(listener)
@@ -119,3 +158,7 @@ class BleTransferEngine
 
 /** TOMBSTONE frames are ≤ 170 B; conservative default ATT payload for a 185 MTU link. */
 private const val MESH_V2_MAX_NOTIFY_BYTES = 182
+private const val MESH_V2_OFFER_REPLY: Byte = 0x31
+private const val MESH_V2_TOMBSTONE: Byte = 0x34
+private const val WRITE_ATTEMPTS = 6
+private const val WRITE_RETRY_MS = 120L

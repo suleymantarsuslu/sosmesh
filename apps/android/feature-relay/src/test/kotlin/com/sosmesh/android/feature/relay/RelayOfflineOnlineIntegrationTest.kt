@@ -62,7 +62,7 @@ class RelayOfflineOnlineIntegrationTest {
         budget.resetForTests()
         scriptedUplink = ScriptedVerifiedUplink()
         val policy = RelayBatteryPolicy(settings, budget)
-        executor = RelayUploadExecutor(settings, policy, budget, reader, adapter, scriptedUplink)
+        executor = RelayUploadExecutor(settings, policy, budget, reader, adapter, scriptedUplink, com.sosmesh.android.feature.relay.uplink.RelayIngestConfig("https://example.invalid/v1/ingest", "", "a".repeat(64)), null, null, null)
     }
 
     @After

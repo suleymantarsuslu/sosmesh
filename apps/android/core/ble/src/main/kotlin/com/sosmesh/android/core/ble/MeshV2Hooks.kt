@@ -26,6 +26,26 @@ interface MeshV2BleHooks {
         shortServiceUuids: List<Int>,
         nowMs: Long,
     )
+
+    /** Central: OFFER frame for up to 8 messageIds. */
+    fun offerFrame(messageIds: List<String>): ByteArray
+
+    /** Central: OFFER_REPLY statuses (0 WANT, 1 HAVE, 2 DELIVERED, 3 FULL, 4 REFUSED) or null if malformed. */
+    fun parseOfferReply(frame: ByteArray): List<Int>?
+
+    fun tombstoneRequestFrame(messageIds: List<String>): ByteArray
+
+    /** Central: verify + apply TOMBSTONE frames received from a peripheral. */
+    fun onTombstoneFrames(
+        frames: List<ByteArray>,
+        nowMs: Long,
+    )
+
+    /** Central: TombstoneBatchV2 JSON (≤ 16) the peer has not been sent yet, or null. Marks them as pushed. */
+    fun takeTombstoneBatchFor(
+        peerId: String,
+        nowMs: Long,
+    ): ByteArray?
 }
 
 object MeshV2Hooks {

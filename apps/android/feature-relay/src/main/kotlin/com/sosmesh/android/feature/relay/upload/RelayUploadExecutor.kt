@@ -196,7 +196,8 @@ class RelayUploadExecutor
                             entry.sosId,
                             entry.digest,
                             entry.encryptedBlobBase64,
-                            RELAYED_UPLOAD_MIN_HOP_COUNT,
+                            com.sosmesh.android.meshv2.v2.MeshV2Runtime.installed?.carryMeta?.get(entry.sosId)?.uploadHopCount
+                                ?: RELAYED_UPLOAD_MIN_HOP_COUNT,
                         )
                 ) {
                     is RelayIngestResult.Success -> {

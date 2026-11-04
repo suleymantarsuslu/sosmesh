@@ -79,7 +79,7 @@ public final class IngestClient: IngestClientPort {
     
     public func upload(request: IngestRequest) async -> IngestResult {
         guard let url = URL(string: "\(baseURL)/v1/ingest") else {
-            return .httpError(0, "Invalid URL")
+            return .httpError(0, "Invalid URL", retryAfterSeconds: nil)
         }
         
         var urlRequest = URLRequest(url: url)
@@ -88,7 +88,7 @@ public final class IngestClient: IngestClientPort {
         
         let encoder = JSONEncoder()
         guard let body = try? encoder.encode(request) else {
-            return .httpError(0, "Failed to encode request")
+            return .httpError(0, "Failed to encode request", retryAfterSeconds: nil)
         }
         urlRequest.httpBody = body
         
@@ -96,7 +96,7 @@ public final class IngestClient: IngestClientPort {
             let (data, response) = try await session.data(for: urlRequest)
             
             guard let httpResponse = response as? HTTPURLResponse else {
-                return .httpError(0, "Invalid response")
+                return .httpError(0, "Invalid response", retryAfterSeconds: nil)
             }
             
             guard (200...299).contains(httpResponse.statusCode) else {

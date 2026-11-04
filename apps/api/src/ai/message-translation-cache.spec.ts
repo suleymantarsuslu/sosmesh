@@ -130,4 +130,32 @@ describe('MessageTranslationService - same-language verdict is cached and billed
 
     expect(metaClient.chatJson).toHaveBeenCalledTimes(2);
   });
+
+  describe('getTranscriptTranslationFields', () => {
+    it('returns nulls without any lookup when the transcript is already in the UI language', async () => {
+      const { service, prisma, metaClient } = build(null, {});
+      const fields = await service.getTranscriptTranslationFields('t-1', 'Yardım edin', 'tr', 'tr');
+      expect(fields).toEqual({ translatedTranscript: null, translatedText: null, translationLanguage: null });
+      expect(prisma.aiTranslationCache.findFirst).not.toHaveBeenCalled();
+      expect(metaClient.chatJson).not.toHaveBeenCalled();
+    });
+
+    it('returns the cached translation with the UI locale as translation language', async () => {
+      const { service, metaClient } = build({ translatedText: 'Help us', sourceLanguage: 'tr' }, {});
+      const fields = await service.getTranscriptTranslationFields('t-1', 'Yardım edin', 'tr', 'en');
+      expect(fields).toEqual({
+        translatedTranscript: 'Help us',
+        translatedText: 'Help us',
+        translationLanguage: 'en',
+      });
+      expect(metaClient.chatJson).not.toHaveBeenCalled();
+    });
+
+    it('falls back to nulls when the translation fails', async () => {
+      const { service, metaClient } = build(null, {});
+      metaClient.chatJson.mockResolvedValue({ ok: false, error: 'http_503' });
+      const fields = await service.getTranscriptTranslationFields('t-2', 'Yardım edin', 'tr', 'en');
+      expect(fields).toEqual({ translatedTranscript: null, translatedText: null, translationLanguage: null });
+    });
+  });
 });

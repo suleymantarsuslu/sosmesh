@@ -7,6 +7,7 @@ import { Injectable } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { MetaModelClient } from '../ai/meta-model-client';
 import { BudgetGuardService } from '../ai/budget-guard.service';
+import { MessageTranslationService } from '../ai/message-translation.service';
 import { AiJobQueueService } from '../ai/ai-job-queue.service';
 import { LocaleContentService, type OperatorLocale } from '../ai/locale-content.service';
 import type { AiStatusView } from '../ai/contracts/ai-status-view';
@@ -22,7 +23,8 @@ export class OperatorAiService {
     private readonly metaClient: MetaModelClient,
     private readonly budgetGuard: BudgetGuardService,
     private readonly aiJobQueue: AiJobQueueService,
-    private readonly localeContent: LocaleContentService
+    private readonly localeContent: LocaleContentService,
+    private readonly messageTranslation: MessageTranslationService
   ) {}
 
   async getStatus(): Promise<AiStatusView> {
@@ -135,6 +137,12 @@ export class OperatorAiService {
           language: withTranscript.transcript.language,
           audioDurationMs: withTranscript.transcript.audioDurationMs,
           createdAt: withTranscript.transcript.createdAt.toISOString(),
+          ...(await this.messageTranslation.getTranscriptTranslationFields(
+            withTranscript.transcript.id,
+            withTranscript.transcript.transcript,
+            withTranscript.transcript.language,
+            locale
+          )),
         }
       : null;
 

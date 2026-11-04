@@ -4,7 +4,7 @@ import { PrismaService } from '../prisma/prisma.service';
 import { BroadcastSignerService } from './broadcast-signer.service';
 import { CreateBroadcastDto } from './dto/create-broadcast.dto';
 import { BroadcastHistoryDto, BroadcastResponseDto } from './dto/broadcast-response.dto';
-import { StructuredEventLoggerService } from '../observability/structured-event-logger.service';
+import { StructuredEventLogger } from '../observability/structured-event-logger.service';
 import { Subject } from 'rxjs';
 
 @Injectable()
@@ -14,7 +14,7 @@ export class BroadcastService {
   constructor(
     private readonly prisma: PrismaService,
     private readonly signer: BroadcastSignerService,
-    private readonly logger: StructuredEventLoggerService
+    private readonly logger: StructuredEventLogger
   ) {}
 
   getBroadcastStream() {
@@ -59,7 +59,7 @@ export class BroadcastService {
       },
     });
 
-    this.logger.structuredLog('broadcast_created', {
+    this.logger.emit('broadcast_created', {
       broadcastId: id,
       userId,
       severity: dto.severity,

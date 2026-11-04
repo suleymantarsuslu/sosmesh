@@ -1025,6 +1025,7 @@
       "regionLatitude": "Center latitude",
       "regionLongitude": "Center longitude",
       "regionRadiusKm": "Radius (km)",
+      "manualCoordinates": "Manual coordinates (advanced)",
       "selectOnMap": "Select region on map",
       "clearRegion": "Clear region",
       "confirmTitle": "Confirm broadcast",

@@ -108,6 +108,14 @@ private fun SosMeshNavHost(onHighContrastChanged: () -> Unit) {
                 }.getOrDefault(true)
             }
         if (!done) navController.navigate("profile")
+
+        kotlinx.coroutines.launch(kotlinx.coroutines.Dispatchers.IO) {
+            runCatching {
+                val entry = dagger.hilt.android.EntryPointAccessors
+                    .fromApplication(appContext, BroadcastEntryPoint::class.java)
+                entry.fetchAndNotifyBroadcasts()
+            }
+        }
     }
     val backStackEntry by navController.currentBackStackEntryAsState()
     val currentRoute = backStackEntry?.destination?.route
@@ -209,4 +217,10 @@ private fun SosBottomBar(
 @dagger.hilt.InstallIn(dagger.hilt.components.SingletonComponent::class)
 interface ProfileEntryPoint {
     fun profileStore(): com.sosmesh.android.core.data.profile.SosProfileStore
+}
+
+@dagger.hilt.EntryPoint
+@dagger.hilt.InstallIn(dagger.hilt.components.SingletonComponent::class)
+interface BroadcastEntryPoint {
+    fun fetchAndNotifyBroadcasts(): suspend () -> Unit
 }

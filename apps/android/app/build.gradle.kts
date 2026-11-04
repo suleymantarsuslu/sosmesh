@@ -48,6 +48,7 @@ android {
             buildConfigField("String", "INGEST_BASE_URL", "\"https://api.demo.sosmesh.local\"")
             buildConfigField("boolean", "SHOW_DEMO_MODE_LABEL", "true")
             buildConfigField("boolean", "REQUIRE_HTTPS_INGEST", "true")
+            buildConfigField("String", "BROADCAST_PUBLIC_KEY", "\"MCowBQYDK2VwAyEA8khtxRdN7Y5EbVHqD8jFL8N2Y8LyBxnH1eJPRMCXCrk=\"")
         }
         create("staging") {
             dimension = "environment"
@@ -57,6 +58,7 @@ android {
             buildConfigField("String", "INGEST_BASE_URL", "\"https://sosmesh.antiosoft.com\"")
             buildConfigField("boolean", "SHOW_DEMO_MODE_LABEL", "false")
             buildConfigField("boolean", "REQUIRE_HTTPS_INGEST", "true")
+            buildConfigField("String", "BROADCAST_PUBLIC_KEY", "\"MCowBQYDK2VwAyEA8khtxRdN7Y5EbVHqD8jFL8N2Y8LyBxnH1eJPRMCXCrk=\"")
         }
         create("prod") {
             dimension = "environment"
@@ -69,6 +71,7 @@ android {
             )
             buildConfigField("boolean", "SHOW_DEMO_MODE_LABEL", "false")
             buildConfigField("boolean", "REQUIRE_HTTPS_INGEST", "true")
+            buildConfigField("String", "BROADCAST_PUBLIC_KEY", "\"MCowBQYDK2VwAyEA8khtxRdN7Y5EbVHqD8jFL8N2Y8LyBxnH1eJPRMCXCrk=\"")
         }
     }
 

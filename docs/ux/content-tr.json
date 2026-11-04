@@ -1025,6 +1025,7 @@
       "regionLatitude": "Merkez enlem",
       "regionLongitude": "Merkez boylam",
       "regionRadiusKm": "Yarıçap (km)",
+      "manualCoordinates": "Manuel koordinatlar (gelişmiş)",
       "selectOnMap": "Haritada bölge seç",
       "clearRegion": "Bölgeyi temizle",
       "confirmTitle": "Bildirimi onayla",

@@ -1,10 +1,11 @@
 import { Injectable, OnModuleInit } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
-import { createPrivateKey, sign, verify, type KeyObject } from 'node:crypto';
+import { createPrivateKey, createPublicKey, sign, verify, type KeyObject } from 'node:crypto';
 
 @Injectable()
 export class BroadcastSignerService implements OnModuleInit {
   private privateKey!: KeyObject;
+  private publicKey!: KeyObject;
   private publicKeyBase64!: string;
 
   constructor(private readonly config: ConfigService) {}
@@ -16,7 +17,8 @@ export class BroadcastSignerService implements OnModuleInit {
     }
     const der = Buffer.from(encoded, 'base64');
     this.privateKey = createPrivateKey({ key: der, format: 'der', type: 'pkcs8' });
-    const publicKeyDer = this.privateKey.export({ type: 'spki', format: 'der' });
+    this.publicKey = createPublicKey(this.privateKey);
+    const publicKeyDer = this.publicKey.export({ type: 'spki', format: 'der' });
     this.publicKeyBase64 = Buffer.from(publicKeyDer as Buffer).toString('base64');
   }
 
@@ -65,8 +67,7 @@ export class BroadcastSignerService implements OnModuleInit {
         `BROADCAST|${id}|${title}|${body}|${severity}|${createdAt}|${expiresAt}${regionPart}`,
         'utf8'
       );
-      const publicKey = this.privateKey.export({ type: 'spki', format: 'der' });
-      return verify(null, payload, { key: publicKey, format: 'der', type: 'spki' }, Buffer.from(signature, 'base64'));
+      return verify(null, payload, this.publicKey, Buffer.from(signature, 'base64'));
     } catch {
       return false;
     }

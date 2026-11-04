@@ -2,7 +2,7 @@ import { Test, TestingModule } from '@nestjs/testing';
 import { BroadcastService } from './broadcast.service';
 import { PrismaService } from '../prisma/prisma.service';
 import { BroadcastSignerService } from './broadcast-signer.service';
-import { StructuredEventLoggerService } from '../observability/structured-event-logger.service';
+import { StructuredEventLogger } from '../observability/structured-event-logger.service';
 import { BadRequestException } from '@nestjs/common';
 
 describe('BroadcastService', () => {
@@ -31,9 +31,9 @@ describe('BroadcastService', () => {
           },
         },
         {
-          provide: StructuredEventLoggerService,
+          provide: StructuredEventLogger,
           useValue: {
-            structuredLog: jest.fn(),
+            emit: jest.fn(),
           },
         },
       ],
@@ -49,7 +49,7 @@ describe('BroadcastService', () => {
     const dto = {
       title: 'Test Alert',
       body: 'This is a test',
-      severity: 'info' as const,
+      severity: 'info',
       expiryHours: 24,
     };
 
@@ -69,9 +69,9 @@ describe('BroadcastService', () => {
       meshRelayCount: 0,
     };
 
-    prisma.broadcastNotification.create.mockResolvedValue(mockBroadcast as any);
+    (prisma.broadcastNotification.create as jest.Mock).mockResolvedValue(mockBroadcast as any);
 
-    const result = await service.create(userId, dto);
+    const result = await service.create(userId, dto as any);
 
     expect(result.id).toBe('test-id');
     expect(result.title).toBe(dto.title);
@@ -84,7 +84,7 @@ describe('BroadcastService', () => {
     const dto = {
       title: 'Regional Alert',
       body: 'This is a regional test',
-      severity: 'warning' as const,
+      severity: 'warning',
       expiryHours: 48,
       regionLatitude: 40.7128,
       regionLongitude: -74.0060,
@@ -107,9 +107,9 @@ describe('BroadcastService', () => {
       meshRelayCount: 0,
     };
 
-    prisma.broadcastNotification.create.mockResolvedValue(mockBroadcast as any);
+    (prisma.broadcastNotification.create as jest.Mock).mockResolvedValue(mockBroadcast as any);
 
-    const result = await service.create(userId, dto);
+    const result = await service.create(userId, dto as any);
 
     expect(result.regionLatitude).toBe(dto.regionLatitude);
     expect(result.regionLongitude).toBe(dto.regionLongitude);
@@ -118,10 +118,10 @@ describe('BroadcastService', () => {
 
   it('should reject partial region data', async () => {
     const userId = 'test-user-id';
-    const dto = {
+    const dto: any = {
       title: 'Bad Regional Alert',
       body: 'Missing radius',
-      severity: 'info' as const,
+      severity: 'info',
       expiryHours: 24,
       regionLatitude: 40.7128,
       regionLongitude: -74.0060,
@@ -150,7 +150,7 @@ describe('BroadcastService', () => {
       },
     ];
 
-    prisma.broadcastNotification.findMany.mockResolvedValue(mockBroadcasts as any);
+    (prisma.broadcastNotification.findMany as jest.Mock).mockResolvedValue(mockBroadcasts as any);
 
     const result = await service.listActive(new Date(now.getTime() - 3600000));
 

@@ -1,6 +1,8 @@
 'use client';
 
 import React, { useState } from 'react';
+
+import { BroadcastRegionMap } from '../../../../../components/broadcasts/BroadcastRegionMap';
 import { useOperatorPreferences } from '../../../../../components/operator/OperatorPreferencesProvider';
 import { Button } from '../../../../../components/ui/Button';
 
@@ -210,44 +212,58 @@ export default function BroadcastsPage() {
 
             {!noRegionRestriction && (
               <div className="region-fields">
-                <div className="form-field">
-                  <label htmlFor="region-lat">{t('web.broadcasts.regionLatitude')}</label>
-                  <input
-                    id="region-lat"
-                    type="number"
-                    step="0.000001"
-                    min={-90}
-                    max={90}
-                    value={regionLatitude ?? ''}
-                    onChange={(e) => setRegionLatitude(e.target.value ? parseFloat(e.target.value) : undefined)}
-                  />
-                </div>
+                <BroadcastRegionMap
+                  latitude={regionLatitude}
+                  longitude={regionLongitude}
+                  radiusKm={regionRadiusKm}
+                  onLocationChange={(lat, lng) => {
+                    setRegionLatitude(lat);
+                    setRegionLongitude(lng);
+                  }}
+                  onRadiusChange={(radius) => setRegionRadiusKm(radius)}
+                />
 
-                <div className="form-field">
-                  <label htmlFor="region-lng">{t('web.broadcasts.regionLongitude')}</label>
-                  <input
-                    id="region-lng"
-                    type="number"
-                    step="0.000001"
-                    min={-180}
-                    max={180}
-                    value={regionLongitude ?? ''}
-                    onChange={(e) => setRegionLongitude(e.target.value ? parseFloat(e.target.value) : undefined)}
-                  />
-                </div>
+                <details className="manual-coordinates">
+                  <summary>{t('web.broadcasts.manualCoordinates')}</summary>
+                  <div className="form-field">
+                    <label htmlFor="region-lat">{t('web.broadcasts.regionLatitude')}</label>
+                    <input
+                      id="region-lat"
+                      type="number"
+                      step="0.000001"
+                      min={-90}
+                      max={90}
+                      value={regionLatitude ?? ''}
+                      onChange={(e) => setRegionLatitude(e.target.value ? parseFloat(e.target.value) : undefined)}
+                    />
+                  </div>
 
-                <div className="form-field">
-                  <label htmlFor="region-radius">{t('web.broadcasts.regionRadiusKm')}</label>
-                  <input
-                    id="region-radius"
-                    type="number"
-                    step="0.1"
-                    min={0.1}
-                    max={10000}
-                    value={regionRadiusKm ?? ''}
-                    onChange={(e) => setRegionRadiusKm(e.target.value ? parseFloat(e.target.value) : undefined)}
-                  />
-                </div>
+                  <div className="form-field">
+                    <label htmlFor="region-lng">{t('web.broadcasts.regionLongitude')}</label>
+                    <input
+                      id="region-lng"
+                      type="number"
+                      step="0.000001"
+                      min={-180}
+                      max={180}
+                      value={regionLongitude ?? ''}
+                      onChange={(e) => setRegionLongitude(e.target.value ? parseFloat(e.target.value) : undefined)}
+                    />
+                  </div>
+
+                  <div className="form-field">
+                    <label htmlFor="region-radius">{t('web.broadcasts.regionRadiusKm')}</label>
+                    <input
+                      id="region-radius"
+                      type="number"
+                      step="0.1"
+                      min={0.1}
+                      max={10000}
+                      value={regionRadiusKm ?? ''}
+                      onChange={(e) => setRegionRadiusKm(e.target.value ? parseFloat(e.target.value) : undefined)}
+                    />
+                  </div>
+                </details>
               </div>
             )}
 

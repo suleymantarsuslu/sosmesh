@@ -33,6 +33,15 @@ sealed class ReceiveOutcome {
     data object Ignored : ReceiveOutcome()
 }
 
+sealed class BroadcastReceiveOutcome {
+    data object Stored : BroadcastReceiveOutcome()
+    data object AlreadySeen : BroadcastReceiveOutcome()
+    data object Expired : BroadcastReceiveOutcome()
+    data object MaxHops : BroadcastReceiveOutcome()
+    data object Full : BroadcastReceiveOutcome()
+    data class Invalid(val reason: String) : BroadcastReceiveOutcome()
+}
+
 /**
  * Platform-independent mesh v2 node state: seen cache, carry store (incl. own outbox mirror), tombstones and h.
  * Relays never decrypt: only envelope fields of L2 are read and the L2 bytes are kept verbatim.
@@ -41,6 +50,7 @@ class MeshV2Node(
     val seen: SeenCache = SeenCache(),
     val tombstones: TombstoneStore = TombstoneStore(),
     val carry: CarryStore = CarryStore(),
+    val broadcasts: BroadcastCarryStore = BroadcastCarryStore(),
     val hops: GatewayHopsTracker = GatewayHopsTracker(),
     private val verifier: TombstoneVerifier,
     private val selfDeviceIdHash: String,
@@ -95,8 +105,38 @@ class MeshV2Node(
                     val out = MeshV2FrameCodec.encodeTombstone(t.copy(hopsLeft = maxOf(0, t.hopsLeft - 1)))
                     out.takeIf { it.size <= maxNotifyBytes }
                 }
+            is MeshV2Frame.Broadcast -> {
+                onBroadcastFrame(frame.broadcast, nowMs)
+                emptyList()
+            }
             else -> emptyList()
         }
+
+    fun onBroadcastFrame(broadcast: ServerBroadcast, nowMs: Long): BroadcastReceiveOutcome {
+        if (broadcasts.contains(broadcast.id)) {
+            return BroadcastReceiveOutcome.AlreadySeen
+        }
+        val expiresAt = try {
+            java.time.Instant.parse(broadcast.expiresAt).toEpochMilli()
+        } catch (e: Exception) {
+            return BroadcastReceiveOutcome.Invalid("bad expiresAt")
+        }
+        if (expiresAt <= nowMs) {
+            return BroadcastReceiveOutcome.Expired
+        }
+        if (broadcast.hopsLeft <= 0) {
+            return BroadcastReceiveOutcome.MaxHops
+        }
+        if (!broadcasts.put(broadcast, nowMs)) {
+            return BroadcastReceiveOutcome.Full
+        }
+        return BroadcastReceiveOutcome.Stored
+    }
+
+    fun forwardBroadcast(broadcast: ServerBroadcast): ServerBroadcast? {
+        if (broadcast.hopsLeft <= 0) return null
+        return broadcast.copy(hopsLeft = broadcast.hopsLeft - 1)
+    }
 
     fun classify(payload: ByteArray): MeshV2Payload {
         val root =

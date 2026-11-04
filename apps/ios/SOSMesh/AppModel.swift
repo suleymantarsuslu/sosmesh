@@ -72,6 +72,8 @@ final class AppModel: ObservableObject {
     private var profileSentThisSession = false
     let identityStore = SosIdentityStore()
     @Published var lastSubmitPlan: SosRateLimiter.Plan = .sendNow
+    private var broadcastRepository: BroadcastRepository?
+    private var broadcastNotificationManager: BroadcastNotificationManager?
 
     init(
         permissionProbe: AppPermissionProbing? = nil,
@@ -105,7 +107,11 @@ final class AppModel: ObservableObject {
         }
         permissionProbe.primeBluetoothAuthorizationIfAlreadyAuthorized()
         initializeAttachmentCoordinator()
-        Task { await refreshPermissionGate() }
+        initializeBroadcasts()
+        Task {
+            await refreshPermissionGate()
+            await fetchAndNotifyBroadcasts()
+        }
     }
 
     func onPermissionGateBecameVisible() {
@@ -277,6 +283,7 @@ final class AppModel: ObservableObject {
         Task {
             await refreshPermissionGate()
             await attachmentCoordinator?.processQueue()
+            await fetchAndNotifyBroadcasts()
         }
     }
 
@@ -462,6 +469,33 @@ final class AppModel: ObservableObject {
         self.attachmentCoordinator = coordinator
         
         coordinator.start()
+    }
+
+    private func initializeBroadcasts() {
+        let config = IngestConfig.production(deviceId: "")
+        guard let publicKey = Bundle.main.object(forInfoDictionaryKey: "SOSMeshBroadcastPublicKey") as? String,
+              let repository = try? BroadcastRepository(apiBaseUrl: config.baseURL, publicKeyBase64: publicKey) else {
+            return
+        }
+        self.broadcastRepository = repository
+        self.broadcastNotificationManager = BroadcastNotificationManager()
+    }
+
+    private func fetchAndNotifyBroadcasts() async {
+        guard let repository = broadcastRepository,
+              let notificationManager = broadcastNotificationManager else {
+            return
+        }
+        let location = await locationManager.requestLocationAsync(timeoutMs: 2000)
+        let clLocation = location.latitude != nil && location.longitude != nil
+            ? CLLocation(latitude: location.latitude!, longitude: location.longitude!)
+            : nil
+        guard let broadcasts = try? await repository.fetchAndProcessBroadcasts(currentLocation: clLocation) else {
+            return
+        }
+        for broadcast in broadcasts {
+            await notificationManager.show(broadcast: broadcast)
+        }
     }
     
     private func processAttachmentUploads(sosId: String, uploadToken: String) async {

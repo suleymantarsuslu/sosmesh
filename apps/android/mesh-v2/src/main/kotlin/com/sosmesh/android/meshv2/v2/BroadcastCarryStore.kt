@@ -1,54 +1,50 @@
 package com.sosmesh.android.meshv2.v2
 
-import java.time.Instant
+import java.util.concurrent.ConcurrentHashMap
 
-data class BroadcastCarryItem(
+data class CarriedBroadcast(
     val id: String,
-    val wireBytes: ByteArray,
-    val expiresAt: String,
-    val hopsLeft: Int,
-    val addedAtMs: Long,
+    val broadcast: ServerBroadcast,
+    val receivedAtMs: Long,
+)
+
+class BroadcastCarryStore(
+    private val maxCapacity: Int = 20,
 ) {
-    override fun equals(other: Any?): Boolean {
-        if (this === other) return true
-        if (javaClass != other?.javaClass) return false
-        other as BroadcastCarryItem
-        return id == other.id
-    }
+    private val carried = ConcurrentHashMap<String, CarriedBroadcast>()
 
-    override fun hashCode(): Int = id.hashCode()
-}
-
-class BroadcastCarryStore(private val maxCapacity: Int = 50) {
-    private val items = mutableMapOf<String, BroadcastCarryItem>()
-
-    @Synchronized
-    fun add(item: BroadcastCarryItem): Boolean {
-        if (items.containsKey(item.id)) return false
-        
-        val now = Instant.now()
-        items.values.removeAll { Instant.parse(it.expiresAt).isBefore(now) }
-        
-        if (items.size >= maxCapacity) return false
-        
-        items[item.id] = item
+    fun put(broadcast: ServerBroadcast, receivedAtMs: Long): Boolean {
+        if (carried.size >= maxCapacity && !carried.containsKey(broadcast.id)) {
+            return false
+        }
+        carried[broadcast.id] = CarriedBroadcast(broadcast.id, broadcast, receivedAtMs)
         return true
     }
 
-    @Synchronized
-    fun get(id: String): BroadcastCarryItem? = items[id]
+    fun contains(id: String): Boolean = carried.containsKey(id)
 
-    @Synchronized
-    fun getAll(nowMs: Long): List<BroadcastCarryItem> {
-        val now = Instant.now()
-        return items
-            .values
-            .filter { Instant.parse(it.expiresAt).isAfter(now) && it.hopsLeft > 0 }
-            .toList()
+    fun ordered(): List<CarriedBroadcast> {
+        val now = System.currentTimeMillis()
+        return carried.values
+            .filter {
+                val expiresAt = try {
+                    java.time.Instant.parse(it.broadcast.expiresAt).toEpochMilli()
+                } catch (e: Exception) {
+                    now
+                }
+                expiresAt > now
+            }
+            .sortedBy { it.receivedAtMs }
     }
 
-    @Synchronized
-    fun markSeen(id: String) {
-        items.remove(id)
+    fun prune(nowMs: Long) {
+        carried.values.removeIf {
+            val expiresAt = try {
+                java.time.Instant.parse(it.broadcast.expiresAt).toEpochMilli()
+            } catch (e: Exception) {
+                nowMs
+            }
+            expiresAt <= nowMs
+        }
     }
 }

@@ -39,5 +39,13 @@ abstract class AppReleaseModule {
                 requireHttps = BuildConfig.REQUIRE_HTTPS_INGEST,
             )
         }
+
+        @Provides
+        @com.sosmesh.android.core.data.di.ApiBaseUrl
+        fun provideApiBaseUrl(): String = BuildConfig.INGEST_BASE_URL.trimEnd('/')
+
+        @Provides
+        @com.sosmesh.android.core.data.di.BroadcastPublicKey
+        fun provideBroadcastPublicKey(): String = BuildConfig.BROADCAST_PUBLIC_KEY
     }
 }

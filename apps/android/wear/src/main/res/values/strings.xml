@@ -27,7 +27,7 @@
     <string name="relay_running">Relay active</string>
     <string name="relay_stopped">Relay off</string>
     <string name="relay_toggle_on">Turn on relay</string>
-    <string name="relay_toggle_off">Turn off relay
+    <string name="relay_toggle_off">Turn off relay</string>
     <string name="status_failed_headline">Could not reach phone</string>
     <string name="status_failed_detail">Will retry. Call %1$s if in danger.</string>
     <string name="status_stale_headline">Status out of date</string>

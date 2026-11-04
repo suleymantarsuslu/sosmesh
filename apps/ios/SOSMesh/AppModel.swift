@@ -497,11 +497,9 @@ final class AppModel: ObservableObject {
     
     func didRegisterForRemoteNotifications(token: Data) {
         guard let pushTokenManager = pushTokenManager else { return }
+        let deviceId = UIDevice.current.identifierForVendor?.uuidString ?? UUID().uuidString
         Task {
-            await pushTokenManager.registerToken(
-                token,
-                deviceId: UIDevice.current.identifierForVendor?.uuidString ?? UUID().uuidString
-            )
+            await pushTokenManager.registerToken(token, deviceId: deviceId)
         }
     }
     

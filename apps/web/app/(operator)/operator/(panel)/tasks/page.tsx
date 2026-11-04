@@ -1,12 +1,20 @@
-import { TasksView, type TaskRow } from '../../../../../features/tasks/TasksView';
+import { TasksView, type TaskRow, type TeamName } from '../../../../../features/tasks/TasksView';
 import { fetchWithSession } from '../../../../../lib/session';
 
 export default async function OperatorTasksPage() {
-  const res = await fetchWithSession('/v1/operator/tasks');
+  const [res, teamsRes] = await Promise.all([
+    fetchWithSession('/v1/operator/tasks'),
+    fetchWithSession('/v1/operator/teams').catch(() => null),
+  ]);
   let items: TaskRow[] = [];
+  let teams: TeamName[] = [];
   if (res.ok) {
     const body = (await res.json()) as { items: TaskRow[] };
     items = body.items ?? [];
   }
-  return <TasksView tasks={items} error={!res.ok} />;
+  if (teamsRes?.ok) {
+    const body = (await teamsRes.json()) as { items: TeamName[] };
+    teams = (body.items ?? []).map((team) => ({ id: team.id, name: team.name }));
+  }
+  return <TasksView tasks={items} teams={teams} error={!res.ok} />;
 }

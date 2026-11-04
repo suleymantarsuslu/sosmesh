@@ -11,6 +11,7 @@ import './marketing.css';
 import './ai.css';
 import './cases-modern.css';
 import './case-detail-v2.css';
+import './ops-pages.css';
 
 const siteUrl =
   process.env.NEXT_PUBLIC_SITE_URL ??

@@ -1,14 +1,12 @@
 import { AiDashboardView } from '../../../../../features/ai/AiDashboardView';
 import type { AiStatusView } from '../../../../../features/ai/types';
+import { fetchWithSession } from '../../../../../lib/session';
 
 export const dynamic = 'force-dynamic';
 
 async function getAiStatus(): Promise<AiStatusView> {
   try {
-    const apiUrl = process.env.API_URL || 'http://localhost:3001';
-    const res = await fetch(`${apiUrl}/v1/operator/ai/status`, {
-      cache: 'no-store',
-    });
+    const res = await fetchWithSession('/v1/operator/ai/status');
 
     if (!res.ok) {
       return {

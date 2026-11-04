@@ -72,7 +72,7 @@ private fun NotificationsScreen(
 ) {
     SosScreenScaffold(
         title = stringResource(R.string.notifications_title),
-        onBack = onBack,
+        onNavigateBack = onBack,
         actions = {
             if (state.items.isNotEmpty()) {
                 IconButton(onClick = onClearAll) {
@@ -143,15 +143,16 @@ private fun NotificationCard(
                         maxLines = if (isExpanded) Int.MAX_VALUE else 1,
                         overflow = TextOverflow.Ellipsis,
                     )
-                    if (item.severity != null) {
+                    val severity = item.severity
+                    if (severity != null) {
                         SosBadge(
                             kind =
-                                when (item.severity) {
+                                when (severity) {
                                     "critical" -> SosBadgeKind.Error
                                     "warning" -> SosBadgeKind.Warning
                                     else -> SosBadgeKind.Neutral
                                 },
-                            text = item.severity,
+                            text = severity,
                         )
                     }
                 }

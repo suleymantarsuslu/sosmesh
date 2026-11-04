@@ -95,6 +95,7 @@ final class AppModel: ObservableObject {
         self.outboxStorePathOverride = outboxStorePath
         self.meshRadioFactory = meshRadioFactory
         self.composer = try? IosSosMessageComposer(cryptoConfig: SosCryptoConfiguration.loadComposerConfig())
+        BroadcastNotificationManager.registerCategories()
         probe.onGateRefreshRequested = { [weak self] in
             Task { @MainActor in
                 await self?.refreshPermissionGate()

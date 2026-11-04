@@ -150,7 +150,10 @@ final class SosNotificationManager: NSObject, UNUserNotificationCenterDelegate {
         
         if response.actionIdentifier == "ENABLE_RELAY" {
             Task { @MainActor in
-                await AppModel.shared.enableRelay()
+                if let appDelegate = UIApplication.shared.delegate as? AppDelegate,
+                   let appModel = appDelegate.appModel {
+                    await appModel.enableRelay()
+                }
             }
         } else if response.actionIdentifier == "CANCEL" {
             // Just dismiss

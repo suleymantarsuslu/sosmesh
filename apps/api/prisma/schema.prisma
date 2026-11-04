@@ -285,6 +285,7 @@ model User {
   notifyPrefs              NotificationPreference?
   recommendationFeedback   RecommendationFeedback[]
   incidentLinkDecisions    IncidentLinkSuggestion[]
+  broadcastNotifications   BroadcastNotification[]
 
   @@map("users")
 }
@@ -676,4 +677,32 @@ model RegionalClusterSummary {
   @@index([status])
   @@index([expiresAt])
   @@map("regional_cluster_summaries")
+}
+
+enum BroadcastSeverity {
+  info
+  warning
+  critical
+}
+
+/// Operator-sent broadcast notifications for mesh relay
+model BroadcastNotification {
+  id                String             @id @default(uuid()) @db.Uuid
+  title             String             @db.VarChar(200)
+  body              String             @db.Text
+  severity          BroadcastSeverity
+  createdById       String             @map("created_by_id") @db.Uuid
+  createdBy         User               @relation(fields: [createdById], references: [id], onDelete: SetNull)
+  createdAt         DateTime           @default(now()) @map("created_at")
+  expiresAt         DateTime           @map("expires_at")
+  regionLatitude    Decimal?           @map("region_latitude") @db.Decimal(10, 7)
+  regionLongitude   Decimal?           @map("region_longitude") @db.Decimal(10, 7)
+  regionRadiusKm    Float?             @map("region_radius_km")
+  signature         String             @db.Text
+  deliveredCount    Int                @default(0) @map("delivered_count")
+  meshRelayCount    Int                @default(0) @map("mesh_relay_count")
+
+  @@index([expiresAt])
+  @@index([createdAt(sort: Desc)])
+  @@map("broadcast_notifications")
 }

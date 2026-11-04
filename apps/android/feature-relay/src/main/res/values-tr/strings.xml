@@ -16,4 +16,15 @@
     <string name="relay_stop_exit">Röleyi durdur ve çık</string>
     <string name="relay_opt_out_label">Gönüllü röleyi kapat</string>
     <string name="relay_opt_out_hint">Kapattığınızda şifreli paket taşımayı durdurursunuz; cihazdaki SOS kayıtlarınız silinmez.</string>
+    <string name="relay_how_it_works">Röle nasıl çalışır</string>
+    <string name="relay_diag_title">Relay tanılama</string>
+    <string name="relay_diag_pending">Sunucuya ulaşmayı bekleyen</string>
+    <string name="relay_diag_battery">Pil</string>
+    <string name="relay_diag_impact">Pil etkisi (saatlik)</string>
+    <string name="relay_diag_threshold">Pil sınırının altında durur</string>
+    <string name="relay_diag_data_cap">Saatlik veri sınırı</string>
+    <string name="relay_battery_warning">Pil tüketimi artar</string>
+    <string name="relay_status_active">Relay etkin</string>
+    <string name="relay_status_paused">Relay duraklatıldı</string>
+    <string name="relay_status_off">Relay kapalı</string>
 </resources>

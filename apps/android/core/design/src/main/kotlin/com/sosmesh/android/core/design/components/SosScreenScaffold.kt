@@ -7,17 +7,19 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.filled.Inbox
+import androidx.compose.material3.CenterAlignedTopAppBar
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
-import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
@@ -25,9 +27,13 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.unit.Dp
+import androidx.compose.ui.unit.dp
 import com.sosmesh.android.core.design.R
 import com.sosmesh.android.core.design.theme.SosSpacing
 
+/** iOS-style screen: grouped background, centered inline title, optional back arrow. */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun SosScreenScaffold(
@@ -39,17 +45,18 @@ fun SosScreenScaffold(
 ) {
     Scaffold(
         modifier = modifier.fillMaxSize(),
+        containerColor = MaterialTheme.colorScheme.background,
         topBar = {
-            TopAppBar(
+            CenterAlignedTopAppBar(
                 title = {
                     Row(
                         verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.spacedBy(SosSpacing.sm),
+                        horizontalArrangement = Arrangement.spacedBy(SosSpacing.xs),
                     ) {
                         if (showLogoInTopBar) {
-                            SosMeshLogo(size = SosSpacing.lg)
+                            SosMeshLogo(size = SosSpacing.xl)
                         }
-                        Text(text = title, style = MaterialTheme.typography.titleLarge)
+                        Text(text = title, style = MaterialTheme.typography.titleMedium)
                     }
                 },
                 navigationIcon = {
@@ -68,8 +75,9 @@ fun SosScreenScaffold(
                 },
                 colors =
                     TopAppBarDefaults.topAppBarColors(
-                        containerColor = MaterialTheme.colorScheme.surface,
-                        titleContentColor = MaterialTheme.colorScheme.onSurface,
+                        containerColor = MaterialTheme.colorScheme.background,
+                        titleContentColor = MaterialTheme.colorScheme.onBackground,
+                        navigationIconContentColor = MaterialTheme.colorScheme.onBackground,
                     ),
             )
         },
@@ -78,7 +86,7 @@ fun SosScreenScaffold(
             Modifier
                 .fillMaxSize()
                 .padding(innerPadding)
-                .padding(horizontal = SosSpacing.lg, vertical = SosSpacing.md),
+                .padding(horizontal = SosSpacing.md, vertical = SosSpacing.sm),
         )
     }
 }
@@ -86,6 +94,7 @@ fun SosScreenScaffold(
 @Composable
 fun SosScrollableScreenContent(
     modifier: Modifier = Modifier,
+    spacing: Dp = SosSpacing.md,
     content: @Composable ColumnScope.() -> Unit,
 ) {
     Column(
@@ -93,31 +102,19 @@ fun SosScrollableScreenContent(
             modifier
                 .fillMaxSize()
                 .verticalScroll(rememberScrollState()),
-        verticalArrangement = Arrangement.spacedBy(SosSpacing.md),
+        verticalArrangement = Arrangement.spacedBy(spacing),
         content = content,
     )
 }
 
+/** Plain card (iOS SOSCard): black surface, 12dp radius, 16dp padding. */
 @Composable
 fun SosStatusCard(
     modifier: Modifier = Modifier,
-    content: @Composable () -> Unit,
+    highlighted: Boolean = false,
+    content: @Composable ColumnScope.() -> Unit,
 ) {
-    androidx.compose.material3.Card(
-        modifier = modifier.fillMaxWidth(),
-        shape = com.sosmesh.android.core.design.theme.SosShapes.card,
-        colors =
-            androidx.compose.material3.CardDefaults.cardColors(
-                containerColor = MaterialTheme.colorScheme.surfaceVariant,
-            ),
-    ) {
-        Column(
-            modifier = Modifier.padding(SosSpacing.md),
-            verticalArrangement = Arrangement.spacedBy(SosSpacing.xs),
-        ) {
-            content()
-        }
-    }
+    SosCard(modifier = modifier, highlighted = highlighted, content = content)
 }
 
 @Composable
@@ -130,11 +127,17 @@ fun SosEmptyState(
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.spacedBy(SosSpacing.md),
     ) {
-        SosMeshLogo(size = SosSpacing.xl + SosSpacing.lg)
+        Icon(
+            imageVector = Icons.Filled.Inbox,
+            contentDescription = null,
+            tint = MaterialTheme.colorScheme.outline,
+            modifier = Modifier.size(64.dp),
+        )
         Text(
             text = message,
-            style = MaterialTheme.typography.bodyLarge,
+            style = MaterialTheme.typography.headlineSmall,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
+            textAlign = TextAlign.Center,
         )
     }
 }
@@ -145,22 +148,5 @@ fun SosTimelineStep(
     reached: Boolean,
     modifier: Modifier = Modifier,
 ) {
-    val style =
-        if (reached) {
-            MaterialTheme.typography.titleSmall
-        } else {
-            MaterialTheme.typography.bodySmall
-        }
-    val color =
-        if (reached) {
-            MaterialTheme.colorScheme.primary
-        } else {
-            MaterialTheme.colorScheme.onSurfaceVariant
-        }
-    Text(
-        text = label,
-        style = style,
-        color = color,
-        modifier = modifier.fillMaxWidth(),
-    )
+    SosTimelineRow(label = label, reached = reached, modifier = modifier)
 }

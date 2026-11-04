@@ -8,4 +8,6 @@
     <string name="design_language_system">System default</string>
     <string name="design_language_english">English</string>
     <string name="design_language_turkish">Turkish</string>
+    <string name="design_step_done">done</string>
+    <string name="design_step_pending">pending</string>
 </resources>

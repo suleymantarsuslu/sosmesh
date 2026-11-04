@@ -1,18 +1,27 @@
 package com.sosmesh.android.feature.sos.ui
 
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.ExperimentalLayoutApi
+import androidx.compose.foundation.layout.FlowRow
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.Send
+import androidx.compose.material3.FilterChipDefaults
+import androidx.compose.ui.graphics.Color
+import com.sosmesh.android.core.design.components.SosBadge
+import com.sosmesh.android.core.design.components.SosBadgeKind
+import com.sosmesh.android.core.design.components.SosCall112Button
+import com.sosmesh.android.core.design.components.SosCard
+import com.sosmesh.android.core.design.components.SosPrimaryButton
+import com.sosmesh.android.core.design.components.SosSecondaryButton
+import com.sosmesh.android.core.design.theme.SosIosColors
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.defaultMinSize
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.selection.selectableGroup
-import androidx.compose.material3.Button
 import androidx.compose.material3.Checkbox
 import androidx.compose.material3.FilterChip
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
-import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
@@ -34,7 +43,6 @@ import com.sosmesh.android.core.design.components.SosScrollableScreenContent
 import com.sosmesh.android.core.design.components.SosStatusCard
 import com.sosmesh.android.core.design.theme.SosSpacing
 import com.sosmesh.android.core.model.SosType
-import com.sosmesh.android.core.permissions.ui.EmergencyCall112Button
 import com.sosmesh.android.feature.sos.R
 import com.sosmesh.android.feature.sos.SosFormUiState
 import com.sosmesh.android.feature.sos.SosPeerDeliveryHint
@@ -114,6 +122,7 @@ fun SosFlowScreen(
     }
 }
 
+@OptIn(ExperimentalLayoutApi::class)
 @Composable
 private fun SosFormScreen(
     state: SosFormUiState,
@@ -134,87 +143,103 @@ private fun SosFormScreen(
     SosScrollableScreenContent(contentModifier) {
         OfflineBadge()
         SosNot112Banner(disclaimerText = stringResource(R.string.sos_not112_disclaimer))
-        EmergencyCall112Button(modifier = Modifier.fillMaxWidth(), testTag = "sos_call_112_button")
-        Text(text = stringResource(R.string.sos_secondary_continue_hint), style = MaterialTheme.typography.bodySmall)
-        Text(text = stringResource(R.string.sos_type_label), style = MaterialTheme.typography.titleMedium)
-        Row(
-            modifier = Modifier.selectableGroup(),
-            horizontalArrangement = Arrangement.spacedBy(SosSpacing.xs),
-        ) {
-            for (type in SosType.entries) {
-                val labelText = typeLabel(type)
-                FilterChip(
-                    selected = state.selectedType == type,
-                    onClick = { onSelectType(type) },
-                    label = { Text(labelText) },
-                    modifier =
-                        Modifier.semantics {
-                            contentDescription = labelText
-                            role = Role.RadioButton
-                        },
-                )
+        SosCall112Button(testTag = "sos_call_112_button")
+        Text(
+            text = stringResource(R.string.sos_secondary_continue_hint),
+            style = MaterialTheme.typography.bodySmall,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+        )
+        SosCard {
+            Text(text = stringResource(R.string.sos_type_label), style = MaterialTheme.typography.titleMedium)
+            FlowRow(
+                modifier = Modifier.selectableGroup(),
+                horizontalArrangement = Arrangement.spacedBy(SosSpacing.xs),
+            ) {
+                for (type in SosType.entries) {
+                    val labelText = typeLabel(type)
+                    FilterChip(
+                        selected = state.selectedType == type,
+                        onClick = { onSelectType(type) },
+                        label = { Text(labelText) },
+                        colors =
+                            FilterChipDefaults.filterChipColors(
+                                selectedContainerColor = SosIosColors.EmergencyRed,
+                                selectedLabelColor = Color.White,
+                            ),
+                        modifier =
+                            Modifier.semantics {
+                                contentDescription = labelText
+                                role = Role.RadioButton
+                            },
+                    )
+                }
             }
         }
-        Text(text = stringResource(R.string.sos_person_count_label))
-        if (!state.personCountUnknown) {
+        SosCard {
+            Text(text = stringResource(R.string.sos_person_count_label), style = MaterialTheme.typography.titleMedium)
+            if (!state.personCountUnknown) {
+                OutlinedTextField(
+                    value = state.personCountText,
+                    onValueChange = onPersonCountChange,
+                    modifier = Modifier.fillMaxWidth().testTag("sos_person_count"),
+                    singleLine = true,
+                )
+            }
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Checkbox(checked = state.personCountUnknown, onCheckedChange = onPersonUnknownChange)
+                Text(stringResource(R.string.sos_person_unknown))
+            }
+            validationText(state.validationError)?.let {
+                Text(text = it, color = MaterialTheme.colorScheme.error)
+            }
+        }
+        SosCard {
             OutlinedTextField(
-                value = state.personCountText,
-                onValueChange = onPersonCountChange,
-                modifier = Modifier.fillMaxWidth().testTag("sos_person_count"),
-                singleLine = true,
+                value = state.note,
+                onValueChange = onNoteChange,
+                label = { Text(stringResource(R.string.sos_note_label)) },
+                placeholder = { Text(stringResource(R.string.sos_note_hint)) },
+                modifier = Modifier.fillMaxWidth().testTag("sos_note"),
             )
         }
-        Row(verticalAlignment = Alignment.CenterVertically) {
-            Checkbox(checked = state.personCountUnknown, onCheckedChange = onPersonUnknownChange)
-            Text(stringResource(R.string.sos_person_unknown))
+        SosCard {
+            MediaAttachmentSection(
+                hasPhoto = state.photoUri != null,
+                photoUri = state.photoUri,
+                hasVoice = state.voiceFile != null,
+                voiceDuration = state.voiceDuration,
+                isRecording = state.isRecording,
+                onPhotoSelected = onPhotoSelected,
+                onVoiceRecorded = { file ->
+                    onVoiceRecorded(file)
+                    onStopRecording(file != null)
+                },
+                onStartRecording = onStartRecording,
+                onStopRecording = onStopRecording,
+                onRemovePhoto = { onPhotoSelected(null) },
+                onRemoveVoice = { onVoiceRecorded(null) },
+                modifier = Modifier.fillMaxWidth(),
+            )
         }
-        validationText(state.validationError)?.let {
-            Text(text = it, color = MaterialTheme.colorScheme.error)
+        SosCard {
+            LocationSection(
+                location = state.gpsLocation,
+                useManual = state.useManualLocation,
+                manualLat = state.manualLat,
+                manualLng = state.manualLng,
+                onManualToggle = onManualToggle,
+                onManualLat = onManualLat,
+                onManualLng = onManualLng,
+            )
         }
-        OutlinedTextField(
-            value = state.note,
-            onValueChange = onNoteChange,
-            label = { Text(stringResource(R.string.sos_note_label)) },
-            placeholder = { Text(stringResource(R.string.sos_note_hint)) },
-            modifier = Modifier.fillMaxWidth().testTag("sos_note"),
-        )
-        MediaAttachmentSection(
-            hasPhoto = state.photoUri != null,
-            photoUri = state.photoUri,
-            hasVoice = state.voiceFile != null,
-            voiceDuration = state.voiceDuration,
-            isRecording = state.isRecording,
-            onPhotoSelected = onPhotoSelected,
-            onVoiceRecorded = { file ->
-                onVoiceRecorded(file)
-                onStopRecording(file != null)
-            },
-            onStartRecording = onStartRecording,
-            onStopRecording = onStopRecording,
-            onRemovePhoto = { onPhotoSelected(null) },
-            onRemoveVoice = { onVoiceRecorded(null) },
-            modifier = Modifier.fillMaxWidth()
-        )
-        LocationSection(
-            location = state.gpsLocation,
-            useManual = state.useManualLocation,
-            manualLat = state.manualLat,
-            manualLng = state.manualLng,
-            onManualToggle = onManualToggle,
-            onManualLat = onManualLat,
-            onManualLng = onManualLng,
-        )
-        Button(
+        SosPrimaryButton(
+            text = stringResource(R.string.sos_continue),
             onClick = onContinue,
             enabled = state.canContinue,
-            modifier =
-                Modifier
-                    .fillMaxWidth()
-                    .defaultMinSize(minHeight = SosSpacing.touchMin)
-                    .testTag("sos_continue_button"),
-        ) {
-            Text(stringResource(R.string.sos_continue))
-        }
+            destructive = true,
+            icon = Icons.AutoMirrored.Filled.Send,
+            testTag = "sos_continue_button",
+        )
     }
 }
 
@@ -241,21 +266,17 @@ private fun SosPreviewScreen(
             }
             LocationPreview(state)
         }
-        Row(horizontalArrangement = Arrangement.spacedBy(SosSpacing.xs)) {
-            Button(onClick = onBack, modifier = Modifier.defaultMinSize(minHeight = SosSpacing.touchMin)) {
-                Text(stringResource(R.string.sos_preview_back))
-            }
-            Button(
-                onClick = onConfirm,
-                modifier =
-                    Modifier
-                        .weight(1f)
-                        .defaultMinSize(minHeight = SosSpacing.touchMin)
-                        .testTag("sos_confirm_button"),
-            ) {
-                Text(stringResource(R.string.sos_preview_confirm))
-            }
-        }
+        SosPrimaryButton(
+            text = stringResource(R.string.sos_preview_confirm),
+            onClick = onConfirm,
+            destructive = true,
+            icon = Icons.AutoMirrored.Filled.Send,
+            testTag = "sos_confirm_button",
+        )
+        SosSecondaryButton(
+            text = stringResource(R.string.sos_preview_back),
+            onClick = onBack,
+        )
     }
 }
 
@@ -283,16 +304,7 @@ private fun SosDoneScreen(
 
 @Composable
 private fun OfflineBadge() {
-    Surface(
-        color = MaterialTheme.colorScheme.errorContainer,
-        shape = com.sosmesh.android.core.design.theme.SosShapes.banner,
-    ) {
-        Text(
-            text = stringResource(R.string.sos_offline_badge),
-            modifier = Modifier.padding(horizontal = SosSpacing.sm, vertical = SosSpacing.xs),
-            style = MaterialTheme.typography.labelLarge,
-        )
-    }
+    SosBadge(kind = SosBadgeKind.Warning, text = stringResource(R.string.sos_offline_badge))
 }
 
 @Composable
@@ -309,18 +321,17 @@ private fun LocationFreshnessBadge(location: LocationSnapshot) {
             LocationFreshnessTier.STALE -> stringResource(R.string.sos_location_stale)
             LocationFreshnessTier.UNKNOWN -> stringResource(R.string.sos_location_unknown)
         }
-    Surface(
-        color =
+    SosBadge(
+        kind =
             when (tier) {
-                LocationFreshnessTier.STALE -> MaterialTheme.colorScheme.errorContainer
-                LocationFreshnessTier.AGING -> MaterialTheme.colorScheme.secondaryContainer
-                else -> MaterialTheme.colorScheme.surfaceVariant
+                LocationFreshnessTier.STALE -> SosBadgeKind.Error
+                LocationFreshnessTier.AGING -> SosBadgeKind.Warning
+                LocationFreshnessTier.FRESH -> SosBadgeKind.Success
+                LocationFreshnessTier.UNKNOWN -> SosBadgeKind.Neutral
             },
+        text = label,
         modifier = Modifier.testTag("sos_location_freshness"),
-        shape = com.sosmesh.android.core.design.theme.SosShapes.chip,
-    ) {
-        Text(text = label, modifier = Modifier.padding(horizontal = SosSpacing.xs, vertical = SosSpacing.xxs))
-    }
+    )
 }
 
 @Composable

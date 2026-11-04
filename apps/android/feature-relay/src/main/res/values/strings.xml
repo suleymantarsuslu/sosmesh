@@ -16,4 +16,15 @@
     <string name="relay_stop_exit">Stop relay and exit</string>
     <string name="relay_opt_out_label">Turn off volunteer relay</string>
     <string name="relay_opt_out_hint">When off, you stop carrying encrypted packets; your own SOS records on device are not deleted.</string>
+    <string name="relay_how_it_works">How relay works</string>
+    <string name="relay_diag_title">Relay diagnostics</string>
+    <string name="relay_diag_pending">Waiting to reach the server</string>
+    <string name="relay_diag_battery">Battery</string>
+    <string name="relay_diag_impact">Battery impact (per hour)</string>
+    <string name="relay_diag_threshold">Pauses below battery</string>
+    <string name="relay_diag_data_cap">Hourly data cap</string>
+    <string name="relay_battery_warning">Battery use increases</string>
+    <string name="relay_status_active">Relay active</string>
+    <string name="relay_status_paused">Relay paused</string>
+    <string name="relay_status_off">Relay off</string>
 </resources>

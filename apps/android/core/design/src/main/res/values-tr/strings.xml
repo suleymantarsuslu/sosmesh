@@ -8,4 +8,6 @@
     <string name="design_language_system">Sistem varsayılanı</string>
     <string name="design_language_english">İngilizce</string>
     <string name="design_language_turkish">Türkçe</string>
+    <string name="design_step_done">tamamlandı</string>
+    <string name="design_step_pending">bekliyor</string>
 </resources>

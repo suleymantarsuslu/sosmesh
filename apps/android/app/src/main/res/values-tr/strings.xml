@@ -9,7 +9,7 @@
     <string name="home_relay_cta">Gönüllü röle modu</string>
     <string name="home_start_relay">Mesh bağlantısı (ön plan)</string>
     <string name="home_radio_debug_cta">Radyo / peer keşfi (debug)</string>
-    <string name="home_express_sos_cta">Hızlı SOS</string>
+    <string name="home_express_sos_cta">SOS</string>
     <string name="home_express_sos_content_description">Hızlı SOS; varsayılanlarla cihaza kaydet</string>
     <string name="home_guided_sos_cta">Rehberli SOS sihirbazı</string>
     <string name="home_express_saved">Cihazda kaydedildi — ayrıntıları düzenlemek için rehberli akışı kullanın</string>
@@ -100,4 +100,25 @@
     <string name="settings_profile">Profili düzenle</string>
     <string name="profile_use_current_location">Şu anki konumumu kullan</string>
     <string name="profile_location_failed">Şu anki konum alınamadı. Konum iznini ve GPS’i kontrol edin.</string>
+    <string name="app_tagline">Acil durum mesh ağı</string>
+    <string name="nav_home">Ana Sayfa</string>
+    <string name="nav_status">Durum</string>
+    <string name="nav_relay">Relay</string>
+    <string name="nav_settings">Ayarlar</string>
+    <string name="home_mesh_status_title">Mesh durumu</string>
+    <string name="home_chip_online">Çevrimiçi</string>
+    <string name="home_chip_offline">Çevrimdışı</string>
+    <string name="home_chip_relay_on">Relay açık</string>
+    <string name="home_chip_relay_off">Relay kapalı</string>
+    <string name="home_chip_queued">%1$d beklemede</string>
+    <string name="home_chip_delivered">%1$d sunucuya ulaştı</string>
+    <string name="settings_section_profile">Profilim</string>
+    <string name="settings_section_permissions">İzinler</string>
+    <string name="settings_section_display">Görünüm</string>
+    <string name="settings_section_radio">Radyo ve pil</string>
+    <string name="settings_section_data">Veri</string>
+    <string name="settings_permissions_cta">İzinleri kontrol et</string>
+    <string name="profile_section_person">Kişi</string>
+    <string name="profile_section_address">Adres</string>
+    <string name="profile_section_contact">İletişim</string>
 </resources>

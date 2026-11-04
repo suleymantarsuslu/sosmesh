@@ -1,8 +1,8 @@
 package com.sosmesh.android.feature.relay
 
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.collectAsState
 import androidx.compose.ui.Modifier
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.sosmesh.android.feature.relay.ui.RelayScreen
@@ -18,7 +18,6 @@ fun RelayRoute(
         state = state,
         onToggleRelay = viewModel::setRelayEnabled,
         onStopAndExit = { viewModel.stopRelayAndExit(onBack) },
-        onNavigateBack = onBack,
         modifier = modifier,
     )
 }

@@ -147,9 +147,9 @@ export class OperatorCasesService {
       select: {
         id: true,
         state: true,
-        latitude: true,
-        longitude: true,
-        accuracyMeters: true,
+        latestLatitude: true,
+        latestLongitude: true,
+        latestAccuracyMeters: true,
         sosMessages: {
           select: {
             id: true,
@@ -200,11 +200,11 @@ export class OperatorCasesService {
             locationApproximate: !messageWithLocation.preciseLatitude && !!messageWithLocation.latitude,
             locationStatus: messageWithLocation.locationStatus,
           }
-        : incident.latitude && incident.longitude
+        : incident.latestLatitude && incident.latestLongitude
         ? {
-            latitude: incident.latitude,
-            longitude: incident.longitude,
-            accuracyMeters: incident.accuracyMeters,
+            latitude: incident.latestLatitude,
+            longitude: incident.latestLongitude,
+            accuracyMeters: incident.latestAccuracyMeters,
             locationApproximate: false,
             locationStatus: 'INCIDENT_FALLBACK',
           }
@@ -278,7 +278,7 @@ export class OperatorCasesService {
         personCount: true,
         operatorDisplayText: true,
         noteText: true,
-        incident: { select: { state: true, version: true, reviewStatus: true, deletedAt: true, archiveReason: true, latitude: true, longitude: true, accuracyMeters: true } },
+        incident: { select: { state: true, version: true, reviewStatus: true, deletedAt: true, archiveReason: true, latestLatitude: true, latestLongitude: true, latestAccuracyMeters: true } },
         messageEvents: {
           select: {
             id: true,
@@ -323,11 +323,11 @@ export class OperatorCasesService {
           preciseLongitude: messageWithLocation.preciseLongitude,
           preciseAccuracyMeters: messageWithLocation.preciseAccuracyMeters,
         }
-      : message.incident.latitude && message.incident.longitude
+      : message.incident.latestLatitude && message.incident.latestLongitude
       ? {
-          latitude: message.incident.latitude,
-          longitude: message.incident.longitude,
-          accuracyMeters: message.incident.accuracyMeters,
+          latitude: message.incident.latestLatitude,
+          longitude: message.incident.latestLongitude,
+          accuracyMeters: message.incident.latestAccuracyMeters,
           preciseLatitude: null,
           preciseLongitude: null,
           preciseAccuracyMeters: null,
@@ -342,13 +342,21 @@ export class OperatorCasesService {
         };
 
     const base = this.toRow({
-      ...message,
+      id: message.id,
+      messageId: message.messageId,
+      incidentId: message.incidentId,
+      priority: message.priority,
+      sosType: message.sosType,
+      deliveryState: message.deliveryState,
+      locationStatus: message.locationStatus,
       latitude: bestLocationForBase.latitude,
       longitude: bestLocationForBase.longitude,
       accuracyMeters: bestLocationForBase.accuracyMeters,
       preciseLatitude: bestLocationForBase.preciseLatitude,
       preciseLongitude: bestLocationForBase.preciseLongitude,
       preciseAccuracyMeters: bestLocationForBase.preciseAccuracyMeters,
+      receivedAt: message.receivedAt,
+      incident: { state: message.incident.state },
       messageEvents: message.messageEvents.length
         ? [{ source: message.messageEvents[message.messageEvents.length - 1].source }]
         : [],

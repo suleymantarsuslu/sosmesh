@@ -151,7 +151,7 @@ describe('Operator cases map/list API', () => {
       const prisma = app.get(PrismaService);
       await prisma.incident.createMany({
         data: [
-          { id: incidentManyMessages, state: 'PENDING', latitude: 40.0, longitude: 33.0, accuracyMeters: 100 },
+          { id: incidentManyMessages, state: 'PENDING', latestLatitude: 40.0, latestLongitude: 33.0, latestAccuracyMeters: 100 },
           { id: incidentWithLocation, state: 'PENDING' },
         ],
         skipDuplicates: true,

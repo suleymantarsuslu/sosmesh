@@ -214,6 +214,7 @@ public enum MeshV2Frame: Equatable {
             let title = Data(b.title.utf8)
             let body = Data(b.body.utf8)
             let severity = Data(b.severity.utf8)
+            let kind = Data(b.kind.utf8)
             let createdAt = Data(b.createdAt.utf8)
             let expiresAt = Data(b.expiresAt.utf8)
             guard id.count <= 64, title.count <= 200, body.count <= 5000,
@@ -228,6 +229,8 @@ public enum MeshV2Frame: Equatable {
             out.append(body)
             out.append(UInt8(severity.count))
             out.append(severity)
+            out.append(UInt8(kind.count))
+            out.append(kind)
             out.append(UInt8(createdAt.count))
             out.append(createdAt)
             out.append(UInt8(expiresAt.count))
@@ -298,6 +301,19 @@ public enum MeshV2Frame: Equatable {
             let severityLen = Int(b[i]); i += 1
             guard let severity = String(bytes: b[i ..< i + severityLen], encoding: .utf8) else { return nil }
             i += severityLen
+            let kind: String
+            if i < b.count {
+                let kindLen = Int(b[i]); i += 1
+                if kindLen > 0 && i + kindLen <= b.count {
+                    guard let k = String(bytes: b[i ..< i + kindLen], encoding: .utf8) else { return nil }
+                    kind = k
+                    i += kindLen
+                } else {
+                    kind = "standard"
+                }
+            } else {
+                kind = "standard"
+            }
             guard b.count > i else { return nil }
             let createdAtLen = Int(b[i]); i += 1
             guard let createdAt = String(bytes: b[i ..< i + createdAtLen], encoding: .utf8) else { return nil }
@@ -339,6 +355,7 @@ public enum MeshV2Frame: Equatable {
                 title: title,
                 body: body,
                 severity: severity,
+                kind: kind,
                 createdAt: createdAt,
                 expiresAt: expiresAt,
                 regionLat: regionLat,

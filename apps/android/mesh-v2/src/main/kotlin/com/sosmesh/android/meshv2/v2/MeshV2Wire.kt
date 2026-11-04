@@ -212,6 +212,7 @@ object MeshV2FrameCodec {
         val title = broadcast.title.toByteArray(Charsets.UTF_8)
         val body = broadcast.body.toByteArray(Charsets.UTF_8)
         val severity = broadcast.severity.toByteArray(Charsets.US_ASCII)
+        val kind = broadcast.kind.toByteArray(Charsets.US_ASCII)
         val createdAt = broadcast.createdAt.toByteArray(Charsets.US_ASCII)
         val expiresAt = broadcast.expiresAt.toByteArray(Charsets.US_ASCII)
         val sig = java.util.Base64.getDecoder().decode(broadcast.signature)
@@ -228,6 +229,8 @@ object MeshV2FrameCodec {
         out.write(body)
         out.write(severity.size)
         out.write(severity)
+        out.write(kind.size)
+        out.write(kind)
         out.write(createdAt.size)
         out.write(createdAt)
         out.write(expiresAt.size)
@@ -264,6 +267,14 @@ object MeshV2FrameCodec {
         val severityLen = bytes[p++].toInt() and 0xFF
         val severity = String(bytes, p, severityLen, Charsets.US_ASCII)
         p += severityLen
+        val kindLen = if (p < bytes.size) bytes[p++].toInt() and 0xFF else 0
+        val kind = if (kindLen > 0 && p + kindLen <= bytes.size) {
+            val k = String(bytes, p, kindLen, Charsets.US_ASCII)
+            p += kindLen
+            k
+        } else {
+            "standard"
+        }
         val createdAtLen = bytes[p++].toInt() and 0xFF
         val createdAt = String(bytes, p, createdAtLen, Charsets.US_ASCII)
         p += createdAtLen
@@ -295,6 +306,7 @@ object MeshV2FrameCodec {
                 title = title,
                 body = body,
                 severity = severity,
+                kind = kind,
                 createdAt = createdAt,
                 expiresAt = expiresAt,
                 regionLat = regionLat,

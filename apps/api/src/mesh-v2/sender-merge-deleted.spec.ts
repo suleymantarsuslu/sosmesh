@@ -5,7 +5,6 @@ import { IncidentState } from '@prisma/client';
 
 describe('Mesh v2 sender merge with deleted incidents', () => {
   let service: MeshV2IngestService;
-  let prisma: PrismaService;
 
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
@@ -19,7 +18,6 @@ describe('Mesh v2 sender merge with deleted incidents', () => {
     }).compile();
 
     service = module.get<MeshV2IngestService>(MeshV2IngestService);
-    prisma = module.get<PrismaService>(PrismaService);
   });
 
   const mockTx = {

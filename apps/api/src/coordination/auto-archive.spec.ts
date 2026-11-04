@@ -6,7 +6,6 @@ import { UserRole, WorkTaskStatus } from '@prisma/client';
 
 describe('Auto-archive on task completion', () => {
   let service: WorkTaskService;
-  let prisma: PrismaService;
 
   const mockUser = {
     sub: 'user-1',
@@ -53,7 +52,6 @@ describe('Auto-archive on task completion', () => {
     }).compile();
 
     service = module.get<WorkTaskService>(WorkTaskService);
-    prisma = module.get<PrismaService>(PrismaService);
   });
 
   const mockTx = {

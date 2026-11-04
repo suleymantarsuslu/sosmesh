@@ -85,22 +85,22 @@ export default function BroadcastsPage() {
   }, [selectedProvince]);
 
   useEffect(() => {
-    if (selectedDistrict && selectedProvince) {
-      fetchNeighborhoods(selectedDistrict.name, selectedProvince.name);
+    if (selectedDistrict) {
+      fetchNeighborhoods(selectedDistrict.osmId);
     } else {
       setNeighborhoods([]);
       setSelectedNeighborhood(null);
     }
-  }, [selectedDistrict, selectedProvince]);
+  }, [selectedDistrict]);
 
   useEffect(() => {
-    if (selectedNeighborhood && selectedDistrict && selectedProvince) {
-      fetchStreets(selectedNeighborhood.name, selectedDistrict.name, selectedProvince.name);
+    if (selectedNeighborhood) {
+      fetchStreets(selectedNeighborhood.osmId);
     } else {
       setStreets([]);
       setSelectedStreet(null);
     }
-  }, [selectedNeighborhood, selectedDistrict, selectedProvince]);
+  }, [selectedNeighborhood]);
 
   const fetchCountries = async () => {
     try {
@@ -147,12 +147,10 @@ export default function BroadcastsPage() {
     }
   };
 
-  const fetchNeighborhoods = async (districtName: string, provinceName: string) => {
+  const fetchNeighborhoods = async (districtOsmId: string) => {
     setLoadingNeighborhoods(true);
     try {
-      const res = await fetch(
-        `/api/operator/broadcasts/regions/neighborhoods?districtName=${encodeURIComponent(districtName)}&provinceName=${encodeURIComponent(provinceName)}`
-      );
+      const res = await fetch(`/api/operator/broadcasts/regions/neighborhoods?districtOsmId=${encodeURIComponent(districtOsmId)}`);
       if (res.ok) {
         const data = await res.json();
         setNeighborhoods(data);
@@ -164,12 +162,10 @@ export default function BroadcastsPage() {
     }
   };
 
-  const fetchStreets = async (neighborhoodName: string, districtName: string, provinceName: string) => {
+  const fetchStreets = async (neighborhoodOsmId: string) => {
     setLoadingStreets(true);
     try {
-      const res = await fetch(
-        `/api/operator/broadcasts/regions/streets?neighborhoodName=${encodeURIComponent(neighborhoodName)}&districtName=${encodeURIComponent(districtName)}&provinceName=${encodeURIComponent(provinceName)}`
-      );
+      const res = await fetch(`/api/operator/broadcasts/regions/streets?neighborhoodOsmId=${encodeURIComponent(neighborhoodOsmId)}`);
       if (res.ok) {
         const data = await res.json();
         setStreets(data);
@@ -215,12 +211,7 @@ export default function BroadcastsPage() {
         severity: string;
         expiryHours: number;
         selectedRegion?: {
-          countryOsmId?: string;
-          provinceOsmId?: string;
-          provinceName?: string;
-          districtName?: string;
-          neighborhoodName?: string;
-          streetName?: string;
+          label: string;
           lat: number;
           lon: number;
           boundingBox: [number, number, number, number];
@@ -239,13 +230,25 @@ export default function BroadcastsPage() {
         if (!region) {
           throw new Error('No region selected');
         }
+        const parts: string[] = [];
+        if (selectedCountry && selectedCountry.osmId === 'relation/174737') {
+          parts.push('Türkiye');
+        }
+        if (selectedProvince) {
+          parts.push(selectedProvince.name);
+        }
+        if (selectedDistrict) {
+          parts.push(selectedDistrict.name);
+        }
+        if (selectedNeighborhood) {
+          parts.push(selectedNeighborhood.name);
+        }
+        if (selectedStreet) {
+          parts.push(selectedStreet.name);
+        }
+        
         dto.selectedRegion = {
-          countryOsmId: selectedCountry?.osmId,
-          provinceOsmId: selectedProvince?.osmId,
-          provinceName: selectedProvince?.name,
-          districtName: selectedDistrict?.name,
-          neighborhoodName: selectedNeighborhood?.name,
-          streetName: selectedStreet?.name,
+          label: parts.join(' / '),
           lat: region.lat,
           lon: region.lon,
           boundingBox: region.boundingBox,
@@ -413,6 +416,7 @@ export default function BroadcastsPage() {
                   <div className="cd2-form__field">
                     <label htmlFor="region-province" className="cd2-label">
                       {t('web.broadcasts.province')} *
+                      {loadingProvinces && <span className="cd2-spinner cd2-spinner--sm" />}
                     </label>
                     <select
                       id="region-province"
@@ -427,7 +431,9 @@ export default function BroadcastsPage() {
                       }}
                       disabled={loadingProvinces}
                     >
-                      <option value="">{t('web.broadcasts.selectProvince')}</option>
+                      <option value="">
+                        {loadingProvinces ? t('web.broadcasts.loadingRegions') : t('web.broadcasts.selectProvince')}
+                      </option>
                       {provinces.map((p) => (
                         <option key={p.osmId} value={p.osmId}>
                           {p.name}
@@ -439,6 +445,7 @@ export default function BroadcastsPage() {
                   <div className="cd2-form__field">
                     <label htmlFor="region-district" className="cd2-label">
                       {t('web.broadcasts.district')}
+                      {loadingDistricts && <span className="cd2-spinner cd2-spinner--sm" />}
                     </label>
                     <select
                       id="region-district"
@@ -452,7 +459,9 @@ export default function BroadcastsPage() {
                       }}
                       disabled={!selectedProvince || loadingDistricts}
                     >
-                      <option value="">{t('web.broadcasts.selectDistrict')}</option>
+                      <option value="">
+                        {loadingDistricts ? t('web.broadcasts.loadingRegions') : t('web.broadcasts.selectDistrict')}
+                      </option>
                       {districts.map((d) => (
                         <option key={d.osmId} value={d.osmId}>
                           {d.name}
@@ -466,6 +475,7 @@ export default function BroadcastsPage() {
                   <div className="cd2-form__field">
                     <label htmlFor="region-neighborhood" className="cd2-label">
                       {t('web.broadcasts.neighborhood')}
+                      {loadingNeighborhoods && <span className="cd2-spinner cd2-spinner--sm" />}
                     </label>
                     <select
                       id="region-neighborhood"
@@ -478,7 +488,9 @@ export default function BroadcastsPage() {
                       }}
                       disabled={!selectedDistrict || loadingNeighborhoods}
                     >
-                      <option value="">{t('web.broadcasts.selectNeighborhood')}</option>
+                      <option value="">
+                        {loadingNeighborhoods ? t('web.broadcasts.loadingRegions') : t('web.broadcasts.selectNeighborhood')}
+                      </option>
                       {neighborhoods.map((n) => (
                         <option key={n.osmId} value={n.osmId}>
                           {n.name}
@@ -490,6 +502,7 @@ export default function BroadcastsPage() {
                   <div className="cd2-form__field">
                     <label htmlFor="region-street" className="cd2-label">
                       {t('web.broadcasts.street')}
+                      {loadingStreets && <span className="cd2-spinner cd2-spinner--sm" />}
                     </label>
                     <select
                       id="region-street"
@@ -501,7 +514,9 @@ export default function BroadcastsPage() {
                       }}
                       disabled={!selectedNeighborhood || loadingStreets}
                     >
-                      <option value="">{t('web.broadcasts.selectStreet')}</option>
+                      <option value="">
+                        {loadingStreets ? t('web.broadcasts.loadingRegions') : t('web.broadcasts.selectStreet')}
+                      </option>
                       {streets.map((s) => (
                         <option key={s.osmId} value={s.osmId}>
                           {s.name}

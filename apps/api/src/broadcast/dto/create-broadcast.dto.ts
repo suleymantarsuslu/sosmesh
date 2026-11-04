@@ -7,12 +7,7 @@ export enum BroadcastSeverity {
 }
 
 export type SelectedRegion = {
-  countryOsmId?: string;
-  provinceOsmId?: string;
-  provinceName?: string;
-  districtName?: string;
-  neighborhoodName?: string;
-  streetName?: string;
+  label: string;
   lat: number;
   lon: number;
   boundingBox: [number, number, number, number];

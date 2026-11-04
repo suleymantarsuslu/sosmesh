@@ -36,26 +36,19 @@ export class RegionsController {
 
   @Get('neighborhoods')
   @Roles(UserRole.ADMIN)
-  async getNeighborhoods(
-    @Query('districtName') districtName: string,
-    @Query('provinceName') provinceName: string
-  ): Promise<RegionArea[]> {
-    if (!districtName || !provinceName) {
+  async getNeighborhoods(@Query('districtOsmId') districtOsmId: string): Promise<RegionArea[]> {
+    if (!districtOsmId) {
       return [];
     }
-    return this.regionsService.getNeighborhoods(districtName, provinceName);
+    return this.regionsService.getNeighborhoods(districtOsmId);
   }
 
   @Get('streets')
   @Roles(UserRole.ADMIN)
-  async getStreets(
-    @Query('neighborhoodName') neighborhoodName: string,
-    @Query('districtName') districtName: string,
-    @Query('provinceName') provinceName: string
-  ): Promise<RegionArea[]> {
-    if (!neighborhoodName || !districtName || !provinceName) {
+  async getStreets(@Query('neighborhoodOsmId') neighborhoodOsmId: string): Promise<RegionArea[]> {
+    if (!neighborhoodOsmId) {
       return [];
     }
-    return this.regionsService.getStreets(neighborhoodName, districtName, provinceName);
+    return this.regionsService.getStreets(neighborhoodOsmId);
   }
 }

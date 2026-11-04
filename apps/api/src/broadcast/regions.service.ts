@@ -52,27 +52,61 @@ type NominatimResult = {
   boundingbox: [string, string, string, string];
 };
 
-const NOMINATIM_BASE = 'https://nominatim.openstreetmap.org';
-const USER_AGENT = 'SOSMesh/1.0 (Emergency Coordination System)';
-const RATE_LIMIT_MS = 1100;
+const OVERPASS_API = 'https://overpass-api.de/api/interpreter';
+const USER_AGENT = 'SOSMesh/1.0 (+https://sosmesh.antiosoft.com)';
+const OVERPASS_TIMEOUT_MS = 60000;
+
+type OverpassElement = {
+  type: string;
+  id: number;
+  tags?: Record<string, string>;
+  center?: { lat: number; lon: number };
+  bounds?: { minlat: number; minlon: number; maxlat: number; maxlon: number };
+};
+
+type OverpassResponse = {
+  elements: OverpassElement[];
+};
 
 @Injectable()
 export class RegionsService {
   private readonly logger = new Logger(RegionsService.name);
-  private readonly cache = new SimpleCache<string, RegionArea[]>({ max: 500, ttl: 1000 * 60 * 60 });
+  private readonly cache = new SimpleCache<string, RegionArea[]>({ max: 500, ttl: 1000 * 60 * 60 * 24 });
   private lastRequestTime = 0;
+  private readonly requestQueue = Promise.resolve();
 
-  private async rateLimitedFetch(url: string): Promise<Response> {
+  private async overpassQuery(query: string): Promise<OverpassResponse> {
+    await this.requestQueue;
+    
     const now = Date.now();
     const elapsed = now - this.lastRequestTime;
-    if (elapsed < RATE_LIMIT_MS) {
-      await new Promise((resolve) => setTimeout(resolve, RATE_LIMIT_MS - elapsed));
+    if (elapsed < 1100) {
+      await new Promise((resolve) => setTimeout(resolve, 1100 - elapsed));
     }
     this.lastRequestTime = Date.now();
-    return fetch(url, {
-      headers: { 'User-Agent': USER_AGENT },
-      signal: AbortSignal.timeout(10000),
-    });
+
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), OVERPASS_TIMEOUT_MS);
+
+    try {
+      const res = await fetch(OVERPASS_API, {
+        method: 'POST',
+        headers: { 
+          'User-Agent': USER_AGENT,
+          'Content-Type': 'application/x-www-form-urlencoded',
+        },
+        body: `data=${encodeURIComponent(query)}`,
+        signal: controller.signal,
+      });
+
+      if (!res.ok) {
+        throw new Error(`Overpass returned ${res.status}`);
+      }
+
+      return await res.json();
+    } finally {
+      clearTimeout(timeout);
+    }
   }
 
   async getCountries(): Promise<RegionArea[]> {
@@ -83,7 +117,7 @@ export class RegionsService {
         displayName: 'Türkiye',
         lat: 39.0,
         lon: 35.0,
-        boundingBox: [36.0, 42.0, 26.0, 45.0],
+        boundingBox: [35.8, 42.1, 25.7, 44.8],
       },
     ];
   }
@@ -95,20 +129,40 @@ export class RegionsService {
       return cached;
     }
 
-    if (countryOsmId === 'relation/174737') {
-      const provinces: RegionArea[] = TURKEY_PROVINCES.map((p) => ({
-        osmId: `province:${p.code}`,
-        name: p.name,
-        displayName: p.name,
-        lat: p.lat,
-        lon: p.lon,
-        boundingBox: [p.boundingBox[0], p.boundingBox[1], p.boundingBox[2], p.boundingBox[3]] as [number, number, number, number],
-      }));
-      this.cache.set(cacheKey, provinces);
-      return provinces;
+    if (countryOsmId !== 'relation/174737') {
+      return [];
     }
 
-    return [];
+    try {
+      const query = `
+        [out:json][timeout:50];
+        area["ISO3166-1"="TR"]->.a;
+        rel(area.a)[boundary=administrative][admin_level=4];
+        out tags center bb;
+      `;
+
+      const data = await this.overpassQuery(query);
+      const provinces: RegionArea[] = data.elements
+        .filter((el) => el.tags?.name && el.center && el.bounds)
+        .map((el) => {
+          const bounds = el.bounds!;
+          return {
+            osmId: `relation/${el.id}`,
+            name: el.tags!.name,
+            displayName: el.tags!.name,
+            lat: el.center!.lat,
+            lon: el.center!.lon,
+            boundingBox: [bounds.minlat, bounds.maxlat, bounds.minlon, bounds.maxlon] as [number, number, number, number],
+          };
+        })
+        .sort((a, b) => a.name.localeCompare(b.name, 'tr'));
+
+      this.cache.set(cacheKey, provinces);
+      return provinces;
+    } catch (err) {
+      this.logger.error(`Failed to fetch provinces from Overpass`, err);
+      return [];
+    }
   }
 
   async getDistricts(provinceOsmId: string): Promise<RegionArea[]> {
@@ -118,124 +172,185 @@ export class RegionsService {
       return cached;
     }
 
-    const provinceCode = provinceOsmId.replace('province:', '');
-    const province = TURKEY_PROVINCES.find((p) => p.code === provinceCode);
-    if (!province) {
+    const match = provinceOsmId.match(/^relation\/(\d+)$/);
+    if (!match) {
       return [];
     }
 
+    const relationId = match[1];
+    const areaId = 3600000000 + parseInt(relationId, 10);
+
     try {
-      const url = `${NOMINATIM_BASE}/search?` +
-        `q=${encodeURIComponent(province.name)}&` +
-        `country=TR&` +
-        `addressdetails=1&` +
-        `format=json&` +
-        `limit=100`;
+      const query = `
+        [out:json][timeout:50];
+        area(${areaId})->.a;
+        rel(area.a)[boundary=administrative][admin_level=6];
+        out tags center bb;
+      `;
 
-      const res = await this.rateLimitedFetch(url);
-      if (!res.ok) {
-        this.logger.warn(`Nominatim returned ${res.status} for districts of ${province.name}`);
-        return [];
-      }
-
-      const data = (await res.json()) as NominatimResult[];
-      const districts = data
-        .filter((item) => item.osm_type === 'relation' || item.osm_type === 'way')
-        .map((item) => ({
-          osmId: `${item.osm_type}/${item.osm_id}`,
-          name: item.display_name.split(',')[0].trim(),
-          displayName: item.display_name,
-          lat: parseFloat(item.lat),
-          lon: parseFloat(item.lon),
-          boundingBox: item.boundingbox.map((v) => parseFloat(v)) as [number, number, number, number],
-        }));
+      const data = await this.overpassQuery(query);
+      const districts: RegionArea[] = data.elements
+        .filter((el) => el.tags?.name && el.center && el.bounds)
+        .map((el) => {
+          const bounds = el.bounds!;
+          return {
+            osmId: `relation/${el.id}`,
+            name: el.tags!.name,
+            displayName: el.tags!.name,
+            lat: el.center!.lat,
+            lon: el.center!.lon,
+            boundingBox: [bounds.minlat, bounds.maxlat, bounds.minlon, bounds.maxlon] as [number, number, number, number],
+          };
+        })
+        .sort((a, b) => a.name.localeCompare(b.name, 'tr'));
 
       this.cache.set(cacheKey, districts);
       return districts;
     } catch (err) {
-      this.logger.error(`Failed to fetch districts for ${province.name}`, err);
+      this.logger.error(`Failed to fetch districts for ${provinceOsmId}`, err);
       return [];
     }
   }
 
-  async getNeighborhoods(districtName: string, provinceName: string): Promise<RegionArea[]> {
-    const cacheKey = `neighborhoods:${provinceName}:${districtName}`;
+  async getNeighborhoods(districtOsmId: string): Promise<RegionArea[]> {
+    const cacheKey = `neighborhoods:${districtOsmId}`;
     const cached = this.cache.get(cacheKey);
     if (cached) {
       return cached;
     }
 
+    const match = districtOsmId.match(/^relation\/(\d+)$/);
+    if (!match) {
+      return [];
+    }
+
+    const relationId = match[1];
+    const areaId = 3600000000 + parseInt(relationId, 10);
+
     try {
-      const url = `${NOMINATIM_BASE}/search?` +
-        `q=${encodeURIComponent(districtName + ', ' + provinceName)}&` +
-        `country=TR&` +
-        `addressdetails=1&` +
-        `format=json&` +
-        `limit=100`;
+      const query = `
+        [out:json][timeout:50];
+        area(${areaId})->.a;
+        (
+          rel(area.a)[boundary=administrative][admin_level=8];
+          node(area.a)[place~"neighbourhood|quarter"];
+        );
+        out tags center bb;
+      `;
 
-      const res = await this.rateLimitedFetch(url);
-      if (!res.ok) {
-        this.logger.warn(`Nominatim returned ${res.status} for neighborhoods of ${districtName}`);
-        return [];
-      }
+      const data = await this.overpassQuery(query);
+      const neighborhoods: RegionArea[] = data.elements
+        .filter((el) => el.tags?.name)
+        .map((el) => {
+          let lat = 0, lon = 0;
+          let boundingBox: [number, number, number, number] = [0, 0, 0, 0];
 
-      const data = (await res.json()) as NominatimResult[];
-      const neighborhoods = data
-        .filter((item) => item.display_name.toLowerCase().includes('mahalle'))
-        .map((item) => ({
-          osmId: `${item.osm_type}/${item.osm_id}`,
-          name: item.display_name.split(',')[0].trim(),
-          displayName: item.display_name,
-          lat: parseFloat(item.lat),
-          lon: parseFloat(item.lon),
-          boundingBox: item.boundingbox.map((v) => parseFloat(v)) as [number, number, number, number],
-        }));
+          if (el.type === 'relation' && el.center && el.bounds) {
+            lat = el.center.lat;
+            lon = el.center.lon;
+            boundingBox = [el.bounds.minlat, el.bounds.maxlat, el.bounds.minlon, el.bounds.maxlon];
+          } else if (el.type === 'node') {
+            lat = (el as any).lat || 0;
+            lon = (el as any).lon || 0;
+            const delta = 0.01;
+            boundingBox = [lat - delta, lat + delta, lon - delta, lon + delta];
+          } else {
+            return null;
+          }
+
+          return {
+            osmId: `${el.type}/${el.id}`,
+            name: el.tags!.name,
+            displayName: el.tags!.name,
+            lat,
+            lon,
+            boundingBox,
+          };
+        })
+        .filter((n): n is RegionArea => n !== null)
+        .sort((a, b) => a.name.localeCompare(b.name, 'tr'));
 
       this.cache.set(cacheKey, neighborhoods);
       return neighborhoods;
     } catch (err) {
-      this.logger.error(`Failed to fetch neighborhoods for ${districtName}`, err);
+      this.logger.error(`Failed to fetch neighborhoods for ${districtOsmId}`, err);
       return [];
     }
   }
 
-  async getStreets(neighborhoodName: string, districtName: string, provinceName: string): Promise<RegionArea[]> {
-    const cacheKey = `streets:${provinceName}:${districtName}:${neighborhoodName}`;
+  async getStreets(neighborhoodOsmId: string): Promise<RegionArea[]> {
+    const cacheKey = `streets:${neighborhoodOsmId}`;
     const cached = this.cache.get(cacheKey);
     if (cached) {
       return cached;
     }
 
-    try {
-      const url = `${NOMINATIM_BASE}/search?` +
-        `q=${encodeURIComponent(neighborhoodName + ', ' + districtName + ', ' + provinceName)}&` +
-        `country=TR&` +
-        `addressdetails=1&` +
-        `format=json&` +
-        `limit=100`;
+    const match = neighborhoodOsmId.match(/^(relation|node)\/(\d+)$/);
+    if (!match) {
+      return [];
+    }
 
-      const res = await this.rateLimitedFetch(url);
-      if (!res.ok) {
-        this.logger.warn(`Nominatim returned ${res.status} for streets of ${neighborhoodName}`);
-        return [];
+    const [, type, idStr] = match;
+    let areaId: number;
+
+    if (type === 'relation') {
+      areaId = 3600000000 + parseInt(idStr, 10);
+    } else if (type === 'node') {
+      areaId = 3400000000 + parseInt(idStr, 10);
+    } else {
+      return [];
+    }
+
+    try {
+      const query = `
+        [out:json][timeout:50];
+        area(${areaId})->.a;
+        way(area.a)[highway][name];
+        out tags center bb;
+      `;
+
+      const data = await this.overpassQuery(query);
+      
+      const streetMap = new Map<string, { ways: OverpassElement[]; minlat: number; maxlat: number; minlon: number; maxlon: number }>();
+      
+      for (const el of data.elements) {
+        if (!el.tags?.name || !el.center || !el.bounds) {
+          continue;
+        }
+        
+        const name = el.tags.name;
+        if (!streetMap.has(name)) {
+          streetMap.set(name, { ways: [], minlat: el.bounds.minlat, maxlat: el.bounds.maxlat, minlon: el.bounds.minlon, maxlon: el.bounds.maxlon });
+        }
+        
+        const entry = streetMap.get(name)!;
+        entry.ways.push(el);
+        entry.minlat = Math.min(entry.minlat, el.bounds.minlat);
+        entry.maxlat = Math.max(entry.maxlat, el.bounds.maxlat);
+        entry.minlon = Math.min(entry.minlon, el.bounds.minlon);
+        entry.maxlon = Math.max(entry.maxlon, el.bounds.maxlon);
       }
 
-      const data = (await res.json()) as NominatimResult[];
-      const streets = data
-        .filter((item) => item.display_name.toLowerCase().includes('sokak') || item.display_name.toLowerCase().includes('cadde'))
-        .map((item) => ({
-          osmId: `${item.osm_type}/${item.osm_id}`,
-          name: item.display_name.split(',')[0].trim(),
-          displayName: item.display_name,
-          lat: parseFloat(item.lat),
-          lon: parseFloat(item.lon),
-          boundingBox: item.boundingbox.map((v) => parseFloat(v)) as [number, number, number, number],
-        }));
+      const streets: RegionArea[] = Array.from(streetMap.entries())
+        .map(([name, { ways, minlat, maxlat, minlon, maxlon }]) => {
+          const centerLat = (minlat + maxlat) / 2;
+          const centerLon = (minlon + maxlon) / 2;
+          
+          return {
+            osmId: `way/${ways[0].id}`,
+            name,
+            displayName: name,
+            lat: centerLat,
+            lon: centerLon,
+            boundingBox: [minlat, maxlat, minlon, maxlon] as [number, number, number, number],
+          };
+        })
+        .sort((a, b) => a.name.localeCompare(b.name, 'tr'));
 
       this.cache.set(cacheKey, streets);
       return streets;
     } catch (err) {
-      this.logger.error(`Failed to fetch streets for ${neighborhoodName}`, err);
+      this.logger.error(`Failed to fetch streets for ${neighborhoodOsmId}`, err);
       return [];
     }
   }
@@ -245,26 +360,9 @@ export class RegionsService {
     const latDiff = maxLat - minLat;
     const lonDiff = maxLon - minLon;
     const latKm = latDiff * 111.32;
-    const lonKm = lonDiff * 111.32 * Math.cos((minLat + maxLat) / 2 * Math.PI / 180);
+    const lonKm = lonDiff * 111.32 * Math.cos(((minLat + maxLat) / 2) * (Math.PI / 180));
     const diagonal = Math.sqrt(latKm * latKm + lonKm * lonKm);
     const radius = diagonal / 2;
-    const min = 0.3;
-    const max = 500;
-    return Math.max(min, Math.min(max, radius));
+    return Math.max(0.3, Math.min(radius, 500));
   }
 }
-
-const TURKEY_PROVINCES = [
-  { code: '01', name: 'Adana', lat: 37.0, lon: 35.3213, boundingBox: [36.5, 37.5, 34.5, 36.2] },
-  { code: '06', name: 'Ankara', lat: 39.9334, lon: 32.8597, boundingBox: [39.5, 40.5, 32.0, 33.5] },
-  { code: '34', name: 'İstanbul', lat: 41.0082, lon: 28.9784, boundingBox: [40.8, 41.3, 28.5, 29.5] },
-  { code: '35', name: 'İzmir', lat: 38.4237, lon: 27.1428, boundingBox: [38.0, 39.0, 26.5, 28.0] },
-  { code: '02', name: 'Adıyaman', lat: 37.7648, lon: 38.2772, boundingBox: [37.5, 38.0, 37.5, 39.0] },
-  { code: '03', name: 'Afyonkarahisar', lat: 38.7507, lon: 30.5567, boundingBox: [38.0, 39.5, 29.5, 31.5] },
-  { code: '04', name: 'Ağrı', lat: 39.7191, lon: 43.0503, boundingBox: [39.0, 40.5, 42.0, 44.0] },
-  { code: '05', name: 'Amasya', lat: 40.6499, lon: 35.8353, boundingBox: [40.0, 41.0, 35.0, 36.5] },
-  { code: '07', name: 'Antalya', lat: 36.8969, lon: 30.7133, boundingBox: [36.0, 37.5, 29.5, 32.5] },
-  { code: '08', name: 'Artvin', lat: 41.1828, lon: 41.8183, boundingBox: [40.5, 41.5, 41.0, 42.5] },
-  { code: '09', name: 'Aydın', lat: 37.8560, lon: 27.8416, boundingBox: [37.0, 38.5, 27.0, 29.0] },
-  { code: '10', name: 'Balıkesir', lat: 39.6484, lon: 27.8826, boundingBox: [39.0, 40.5, 26.5, 29.0] },
-];

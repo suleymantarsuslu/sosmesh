@@ -34,24 +34,7 @@ export class BroadcastService {
       regionLatitude = Number(selected.lat.toFixed(7));
       regionLongitude = Number(selected.lon.toFixed(7));
       regionRadiusKm = this.regionsService.computeRadiusKm(selected.boundingBox);
-
-      const parts: string[] = [];
-      if (selected.countryOsmId === 'relation/174737') {
-        parts.push('Türkiye');
-      }
-      if (selected.provinceName) {
-        parts.push(selected.provinceName);
-      }
-      if (selected.districtName) {
-        parts.push(selected.districtName);
-      }
-      if (selected.neighborhoodName) {
-        parts.push(selected.neighborhoodName);
-      }
-      if (selected.streetName) {
-        parts.push(selected.streetName);
-      }
-      regionLabel = parts.join(' / ');
+      regionLabel = selected.label;
     }
 
     const hasRegion = regionLatitude != null && regionLongitude != null && regionRadiusKm != null;

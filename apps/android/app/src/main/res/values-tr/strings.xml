@@ -99,7 +99,7 @@
     <string name="settings_profile">Profili düzenle</string>
     <string name="profile_use_current_location">Şu anki konumumu kullan</string>
     <string name="profile_location_failed">Şu anki konum alınamadı. Konum iznini ve GPS’i kontrol edin.</string>
-    <string name="app_tagline">Acil durum mesh ağı</string>
+    <string name="app_tagline">Acil durum ağı</string>
     <string name="nav_home">Ana Sayfa</string>
     <string name="nav_status">Durum</string>
     <string name="nav_relay">Relay</string>

@@ -26,6 +26,7 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
@@ -41,6 +42,7 @@ import com.sosmesh.android.core.design.components.SosNot112Banner
 import com.sosmesh.android.core.design.components.SosScreenScaffold
 import com.sosmesh.android.core.design.components.SosScrollableScreenContent
 import com.sosmesh.android.core.design.components.SosStatusCard
+import com.sosmesh.android.core.design.emergency.EmergencyNumberProvider
 import com.sosmesh.android.core.design.theme.SosSpacing
 import com.sosmesh.android.core.model.SosType
 import com.sosmesh.android.feature.sos.R
@@ -169,9 +171,11 @@ private fun SosFormScreen(
     onContinue: () -> Unit,
     contentModifier: Modifier,
 ) {
+    val context = LocalContext.current
+    val emergencyNumber = EmergencyNumberProvider.getEmergencyNumber(context)
     SosScrollableScreenContent(contentModifier) {
         ConnectivityBadge()
-        SosNot112Banner(disclaimerText = stringResource(R.string.sos_not112_disclaimer))
+        SosNot112Banner(disclaimerText = stringResource(R.string.sos_not112_disclaimer, emergencyNumber))
         SosCall112Button(testTag = "sos_call_112_button")
         Text(
             text = stringResource(R.string.sos_secondary_continue_hint),
@@ -342,8 +346,10 @@ private fun SosFollowupScreen(
     onSendFollowup: () -> Unit,
     contentModifier: Modifier,
 ) {
+    val context = LocalContext.current
+    val emergencyNumber = EmergencyNumberProvider.getEmergencyNumber(context)
     SosScrollableScreenContent(contentModifier) {
-        SosNot112Banner(disclaimerText = stringResource(R.string.sos_not112_disclaimer))
+        SosNot112Banner(disclaimerText = stringResource(R.string.sos_not112_disclaimer, emergencyNumber))
         
         SosStatusCard {
             Text(

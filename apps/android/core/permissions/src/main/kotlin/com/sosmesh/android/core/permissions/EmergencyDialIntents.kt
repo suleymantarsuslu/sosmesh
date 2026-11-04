@@ -6,9 +6,11 @@ import android.net.Uri
 import android.provider.Settings
 
 object EmergencyDialIntents {
-    fun dial112(context: Context): Intent =
-        Intent(Intent.ACTION_DIAL, Uri.parse("tel:112"))
+    fun dial112(context: Context): Intent {
+        val number = com.sosmesh.android.core.design.emergency.EmergencyNumberProvider.getEmergencyNumber(context)
+        return Intent(Intent.ACTION_DIAL, Uri.parse("tel:$number"))
             .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+    }
 }
 
 object LocationSettingsIntents {

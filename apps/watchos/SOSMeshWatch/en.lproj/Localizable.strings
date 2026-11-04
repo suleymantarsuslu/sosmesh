@@ -4,7 +4,7 @@
 "watch.confirm.cancel" = "Cancel";
 "watch.help.title" = "Help";
 "watch.help.link" = "Help";
-"watch.offline.emergency_warning" = "Always call 112 first in emergencies.";
+"watch.offline.emergency_warning" = "Always call %@ first in emergencies.";
 "watch.complication.headline.unreachable" = "Phone unreachable";
 "watch.complication.headline.default" = "SOS";
 "watch.complication.detail.default" = "Confirmation required";
@@ -13,6 +13,6 @@
 "watch.cancel.headline" = "SOS not sent";
 "watch.cancel.detail" = "Cancelled.";
 "watch.mesh.searching" = "Phone not reachable. Looking for a nearby SOSMesh phone…";
-"watch.mesh.peer_received" = "Reached a nearby phone (not yet delivered). Call 112 if in danger.";
-"watch.mesh.no_peer" = "No nearby SOSMesh phone found. Call 112 if in danger.";
-"watch.mesh.failed" = "Could not hand over. Call 112 if in danger.";
+"watch.mesh.peer_received" = "Reached a nearby phone (not yet delivered). Call %@ if in danger.";
+"watch.mesh.no_peer" = "No nearby SOSMesh phone found. Call %@ if in danger.";
+"watch.mesh.failed" = "Could not hand over. Call %@ if in danger.";

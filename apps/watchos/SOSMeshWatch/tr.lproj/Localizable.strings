@@ -4,7 +4,7 @@
 "watch.confirm.cancel" = "İptal";
 "watch.help.title" = "Yardım";
 "watch.help.link" = "Yardım";
-"watch.offline.emergency_warning" = "Acil durumlarda önce 112'yi arayın.";
+"watch.offline.emergency_warning" = "Acil durumlarda önce %@'yi arayın.";
 "watch.complication.headline.unreachable" = "Telefona ulaşılamıyor";
 "watch.complication.headline.default" = "SOS";
 "watch.complication.detail.default" = "Onay gerekli";
@@ -13,6 +13,6 @@
 "watch.cancel.headline" = "SOS gönderilmedi";
 "watch.cancel.detail" = "İptal edildi.";
 "watch.mesh.searching" = "Telefona ulaşılamıyor. Yakındaki bir SOSMesh telefonu aranıyor…";
-"watch.mesh.peer_received" = "Yakındaki bir telefona ulaştı (henüz teslim edilmedi). Tehlikedeyseniz 112'yi arayın.";
-"watch.mesh.no_peer" = "Yakında SOSMesh telefonu bulunamadı. Tehlikedeyseniz 112'yi arayın.";
-"watch.mesh.failed" = "Aktarılamadı. Tehlikedeyseniz 112'yi arayın.";
+"watch.mesh.peer_received" = "Yakındaki bir telefona ulaştı (henüz teslim edilmedi). Tehlikedeyseniz %@'yi arayın.";
+"watch.mesh.no_peer" = "Yakında SOSMesh telefonu bulunamadı. Tehlikedeyseniz %@'yi arayın.";
+"watch.mesh.failed" = "Aktarılamadı. Tehlikedeyseniz %@'yi arayın.";

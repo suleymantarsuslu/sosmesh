@@ -1,10 +1,10 @@
 "app.name" = "SOSMesh";
-"app.tagline" = "Acil durum mesh ağı";
+"app.tagline" = "Acil durum ağı";
 "nav.home" = "Ana Sayfa";
 "nav.status" = "Durum";
 "nav.relay" = "Relay";
 "nav.settings" = "Ayarlar";
-"onboarding.not112" = "SOSMesh, 112'nin yerine geçmez. Acil durumlarda 112'yi arayın.";
+"onboarding.not112" = "SOSMesh, %@'nin yerine geçmez. Acil durumlarda %@'yi arayın.";
 "onboarding.experimental" = "SOSMesh deneysel bir mesh sistemidir; fiziksel yardım garantisi vermez.";
 "onboarding.accept" = "Anladım, kabul ediyorum";
 "sos.button.label" = "SOS";
@@ -51,7 +51,7 @@
 "settings.multihop.footer" = "Varsayılan kapalı. iPhone 7/24 tekrarlayıcı değildir; arka plan ve force-quit sınırları geçerlidir.";
 "settings.multihop.toggle" = "Araştırma çok atlama rölesini etkinleştir";
 "help.title" = "Yardım";
-"help.not112" = "SOSMesh, 112'nin yerine geçmez. Acil durumda 112'yi arayın.";
+"help.not112" = "SOSMesh, %@'nin yerine geçmez. Acil durumda %@'yi arayın.";
 "help.offline.title" = "Çevrimdışı kullanım";
 "help.offline.body" = "SOS cihazda şifreli kuyrukta kalır; yakın BLE aktarımı AI olmadan denenir.";
 "help.ackLevels.title" = "Durum adımları";
@@ -72,7 +72,7 @@
 "gate.action.allow_notifications" = "Bildirimlere izin ver";
 "gate.action.open_settings" = "Ayarları aç";
 "gate.action.open_settings.hint" = "SOSMesh izinleri için iOS Ayarlarını açar";
-"gate.action.call112" = "112'yi ara";
+"gate.action.call112" = "%@'yi ara";
 "gate.action.call112.hint" = "Acil çağrı için telefon uygulamasını açar";
 "gate.hint.bluetooth_off" = "Bluetooth kapalı. Denetim Merkezi veya Ayarlar'dan açın.";
 "gate.hint.open_settings" = "İzin reddedildi. Ayarlar'dan izin verip SOSMesh'e dönün.";
@@ -102,13 +102,13 @@
 "sos.sent.title" = "SOS Gönderiliyor";
 "sos.sent.online" = "Mesajınız sunucuya gönderiliyor.";
 "sos.sent.offline" = "Mesajınız cihazda kaydedildi ve yakındaki cihazlar üzerinden aktarılacak veya internet bağlantısı kurulduğunda gönderilecek.";
-"sos.sent.not112" = "SOSMesh, 112'nin yerine geçmez.";
+"sos.sent.not112" = "SOSMesh, %@'nin yerine geçmez.";
 "sos.sent.action.ok" = "Tamam";
 "sos.sent.action.status" = "Durum ekranına git";
 "notification.sos.delivered.title" = "Mesajınız gönderildi";
 "notification.sos.delivered.body" = "SOS mesajınız sunucuya ulaştı.";
 "sos.delivered.title" = "Yardım talebiniz iletildi";
-"sos.delivered.message" = "Bu, 112'nin yerine geçmez. Acil yardım için 112'yi arayın.";
+"sos.delivered.message" = "Bu, %@'nin yerine geçmez. Acil yardım için %@'yi arayın.";
 "sos.followup.title" = "Mesajınız gönderildi. Eklemek istediğiniz bir şey varsa ekleyin";
 "sos.followup.send" = "Ek mesaj gönder";
 "relay.delivered.count" = "Sizin aracılığınızla %d adet yardım mesajı iletilmiştir";
@@ -143,7 +143,7 @@
 "relay.diag.tombstones" = "Teslim kanıtları";
 "profile.title" = "Profilim";
 "profile.edit" = "Profili düzenle";
-"profile.intro" = "İsteğe bağlı. Yalnızca bu telefonda (Anahtar Zinciri) saklanır ve yalnızca şifreli bir SOS içinde gönderilir. Hiçbir şey doldurmadan SOS gönderebilirsiniz. Hayati tehlikede 112'yi arayın.";
+"profile.intro" = "İsteğe bağlı. Yalnızca bu telefonda (Anahtar Zinciri) saklanır ve yalnızca şifreli bir SOS içinde gönderilir. Hiçbir şey doldurmadan SOS gönderebilirsiniz. Hayati tehlikede %@'yi arayın.";
 "profile.section.person" = "Kişi";
 "profile.section.address" = "Adres";
 "profile.section.contact" = "İletişim";

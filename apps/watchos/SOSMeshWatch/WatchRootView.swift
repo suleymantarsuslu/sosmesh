@@ -161,7 +161,7 @@ struct WatchOfflineHelpView: View {
                             .fontWeight(.semibold)
                     }
                     
-                    Text("watch.offline.emergency_warning")
+                    Text(String(format: NSLocalizedString("watch.offline.emergency_warning", comment: ""), EmergencyNumberProvider.getEmergencyNumber()))
                         .font(.caption2)
                         .foregroundStyle(.secondary)
                 }

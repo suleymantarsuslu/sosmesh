@@ -110,12 +110,13 @@ struct OnboardingDisclaimerView: View {
                 .padding(.top, DesignSystem.Spacing.xxl)
                 
                 VStack(spacing: DesignSystem.Spacing.md) {
+                    let emergencyNumber = EmergencyNumberProvider.getEmergencyNumber()
                     SOSCard {
                         HStack(alignment: .top, spacing: DesignSystem.Spacing.sm) {
                             Image(systemName: "exclamationmark.triangle.fill")
                                 .font(.system(size: 24))
                                 .foregroundStyle(DesignSystem.Colors.warningOrange)
-                            Text("onboarding.not112")
+                            Text(String(format: NSLocalizedString("onboarding.not112", comment: ""), emergencyNumber, emergencyNumber))
                                 .font(DesignSystem.Typography.headline)
                                 .foregroundStyle(DesignSystem.Colors.textPrimary)
                                 .fixedSize(horizontal: false, vertical: true)

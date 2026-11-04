@@ -117,6 +117,18 @@ class RelayDedupKeyTest {
 
         override suspend fun purgeExpired(nowMs: Long): Int = 0
 
+        override suspend fun setUploadRetryAt(
+            sosId: String,
+            digest: String,
+            retryAtMs: Long,
+            lastError: String?,
+        ) = Unit
+
+        override suspend fun clearUploadRetry(
+            sosId: String,
+            digest: String,
+        ) = Unit
+
         override fun close() = Unit
     }
 }

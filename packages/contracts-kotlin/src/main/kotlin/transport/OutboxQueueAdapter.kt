@@ -37,6 +37,12 @@ interface OutboxQueueAdapter {
 
     suspend fun listAll(): List<OutboxEntryMeta>
 
+    /** Deletes one row (mesh-v2: purge a relayed copy after a verified tombstone, or a replaced unsent own SOS). */
+    suspend fun deleteEntry(
+        sosId: String,
+        digest: String,
+    ): Boolean = false
+
     suspend fun updateState(
         sosId: String,
         digest: String,

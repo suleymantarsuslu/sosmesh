@@ -253,5 +253,10 @@ private class LatchBlockingOutboxDao(
 
     override fun listDueAndroidPeerSend(nowMs: Long): List<OutboxEntity> = delegate.listDueAndroidPeerSend(nowMs)
 
+    override fun deleteByKey(
+        sosId: String,
+        digest: String,
+    ): Int = delegate.deleteByKey(sosId, digest)
+
     override fun listDueOwnUpload(nowMs: Long): List<OutboxEntity> = delegate.listDueOwnUpload(nowMs)
 }

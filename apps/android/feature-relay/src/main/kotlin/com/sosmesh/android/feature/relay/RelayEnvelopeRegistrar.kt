@@ -21,6 +21,31 @@ class RelayEnvelopeRegistrar
         private val outbox: OutboxQueueAdapter,
         private val uploadScheduler: RelayUploadCommands,
     ) {
+        /** Stores verbatim L2 v1 wire bytes for upload / forwarding (mesh-v2: the persisted part of the carry store). */
+        suspend fun registerL2(
+            messageId: String,
+            l2Bytes: ByteArray,
+            nowMs: Long,
+        ): Result<Unit> =
+            try {
+                val digest = Base64.getEncoder().encodeToString(BleProtocol.calculateSHA256(l2Bytes))
+                if (outbox.getByKey(messageId, digest) == null) {
+                    outbox.enqueue(
+                        EnqueueInput(
+                            sosId = messageId,
+                            digest = digest,
+                            origin = "relay",
+                            encryptedBlobBase64 = Base64.getEncoder().encodeToString(l2Bytes),
+                        ),
+                        nowMs,
+                    )
+                    uploadScheduler.scheduleUpload(nowMs)
+                }
+                Result.success(Unit)
+            } catch (ex: Exception) {
+                Result.failure(ex)
+            }
+
         suspend fun registerFromWirePayload(
             payload: ByteArray,
             nowMs: Long,

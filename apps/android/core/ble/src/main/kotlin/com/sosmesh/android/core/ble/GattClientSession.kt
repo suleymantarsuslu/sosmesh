@@ -27,6 +27,8 @@ class GattClientSession(
 
     fun currentState(): GattSessionState = state
 
+    fun activePeer(): String? = activePeerId
+
     fun backoffUntil(): Long = backoffUntilMillis
 
     fun connect(

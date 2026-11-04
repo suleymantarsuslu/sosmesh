@@ -53,7 +53,7 @@ class RelayUploadExecutorTest {
         budget.resetForTests()
         fakeUplink = FakeRelayIngestUplink()
         val policy = RelayBatteryPolicy(settings, budget)
-        executor = RelayUploadExecutor(settings, policy, budget, reader, adapter, fakeUplink)
+        executor = RelayUploadExecutor(settings, policy, budget, reader, adapter, fakeUplink, com.sosmesh.android.feature.relay.uplink.RelayIngestConfig("https://example.invalid/v1/ingest", "", "a".repeat(64)), null, null, null)
     }
 
     @After
@@ -154,7 +154,7 @@ class RelayUploadExecutorTest {
             budget.resetForTests()
             budget.recordSent((limit - 10).toInt(), 4_000L)
             val policy = RelayBatteryPolicy(settings, budget)
-            executor = RelayUploadExecutor(settings, policy, budget, reader, adapter, fakeUplink)
+            executor = RelayUploadExecutor(settings, policy, budget, reader, adapter, fakeUplink, com.sosmesh.android.feature.relay.uplink.RelayIngestConfig("https://example.invalid/v1/ingest", "", "a".repeat(64)), null, null, null)
             fakeUplink.nextResult = RelayIngestResult.Success(null)
             val summary =
                 executor.runUploadCycle(

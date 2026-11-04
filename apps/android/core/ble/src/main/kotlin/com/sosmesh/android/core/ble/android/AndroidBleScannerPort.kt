@@ -84,7 +84,12 @@ class AndroidBleScannerPort
                                 hooks.onAdvertisement(address, result.rssi, serviceData, uuids, System.currentTimeMillis())
                             }
                         }
-                        callback.onScanResult(request.serviceUuid, payload)
+                        val sightingAddress = result.device?.address
+                        if (sightingAddress != null) {
+                            callback.onPeerSighting(sightingAddress, result.rssi, payload, meshHops(record))
+                        } else {
+                            callback.onScanResult(request.serviceUuid, payload)
+                        }
                     }
                 }
             activeCallback = scanCallback
@@ -147,3 +152,25 @@ private fun iosHopsFilters(): List<ScanFilter> =
             .setServiceUuid(ParcelUuid(UUID.fromString(String.format("0000%04X-0000-1000-8000-00805F9B34FB", short))))
             .build()
     }
+
+/** mesh-v2 §4.2: Android service data [0x02, h, flags] or iOS hops UUID 0xFFE0 + h; else offline. */
+private fun meshHops(record: android.bluetooth.le.ScanRecord): Int {
+    val data = record.getServiceData(ParcelUuid(UUID.fromString(BleMeshConstants.SERVICE_UUID)))
+    if (data != null && data.size >= 3 && data[0] == 0x02.toByte()) {
+        val h = data[1].toInt() and 0xFF
+        if (h <= 8) return h
+    }
+    val hops =
+        record.serviceUuids.orEmpty().mapNotNull { parcel ->
+            val msb = parcel.uuid.mostSignificantBits
+            val short = ((msb ushr 32) and 0xFFFFL).toInt()
+            if (parcel.uuid.leastSignificantBits == BASE_UUID_LSB &&
+                short in MeshV2Hooks.IOS_HOPS_UUID_FIRST..MeshV2Hooks.IOS_HOPS_UUID_LAST
+            ) {
+                short - MeshV2Hooks.IOS_HOPS_UUID_FIRST
+            } else {
+                null
+            }
+        }
+    return hops.minOrNull() ?: 0xFF
+}

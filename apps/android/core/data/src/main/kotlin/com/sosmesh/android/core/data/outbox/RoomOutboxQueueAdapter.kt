@@ -35,6 +35,11 @@ class RoomOutboxQueueAdapter
                 dao.getByKey(sosId, digest)?.toMeta()
             }
 
+        override suspend fun deleteEntry(
+            sosId: String,
+            digest: String,
+        ): Boolean = withContext(ioDispatcher) { dao.deleteByKey(sosId, digest) > 0 }
+
         override suspend fun listAll(): List<OutboxEntryMeta> =
             withContext(ioDispatcher) {
                 dao.listAll().map { it.toMeta() }

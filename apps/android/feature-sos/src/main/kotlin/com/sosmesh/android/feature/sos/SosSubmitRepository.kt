@@ -22,6 +22,16 @@ class SosSubmitRepository
         @IoDispatcher private val ioDispatcher: CoroutineDispatcher,
         private val senderContext: com.sosmesh.android.core.data.profile.SosSenderContextSource,
     ) {
+        /** mesh-v2 §8.1 replace: delete the previous own SOS only if it never left the device (LOCAL_SAVED). */
+        suspend fun deleteIfUnsent(
+            sosId: String,
+            digest: String,
+        ): Boolean =
+            withContext(ioDispatcher) {
+                val row = outbox.getByKey(sosId, digest) ?: return@withContext false
+                if (row.state == "LOCAL_SAVED" && row.lastError?.startsWith("http_") != true) outbox.deleteEntry(sosId, digest) else false
+            }
+
         suspend fun submit(request: SosComposeRequest): ComposedSosMessage =
             withContext(ioDispatcher) {
                 // mesh-v2 inner payload; if the secure store is unavailable, fall back to v1 inner (SOS never blocked).

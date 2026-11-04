@@ -45,11 +45,39 @@ class PeerDeliveryReceiveOrchestrationTest {
     @Test
     fun onCompleted_storesRelayOutboxWithoutDecrypt() =
         runBlocking {
-            val wire = javaClass.classLoader!!.getResourceAsStream("valid-sos.json")!!.readBytes()
-            handler.onCompleted(wire)
+            // Fixture timestamp is fixed; mesh-v2 time TTL (originCreatedAt + 24 h) needs a fresh one.
+            handler.onCompleted(freshBareL2())
             assertEquals(1, outbox.enqueued.size)
             assertEquals("relay", outbox.enqueued.single().origin)
         }
+
+    @Test
+    fun onCompleted_l1Envelope_storesInnerL2ForRelay() =
+        runBlocking {
+            val l2 = freshBareL2()
+            val l1 =
+                """{"protocolVersion":2,"messageId":"m-l1","hopCount":1,"maxHops":8,"ttlHops":7,""" +
+                    """"copyCount":1,"maxCopyCount":16,"originCreatedAt":"${java.time.Instant.now()}",""" +
+                    """"opaqueCiphertextBase64":"${java.util.Base64.getEncoder().encodeToString(l2)}",""" +
+                    """"hopChainReceipt":{"relayDeviceIdHashes":[]}}"""
+            handler.onCompleted(l1.toByteArray())
+            assertEquals(1, outbox.enqueued.size)
+            val stored = java.util.Base64.getDecoder().decode(outbox.enqueued.single().encryptedBlobBase64)
+            assertEquals(l2.decodeToString(), stored.decodeToString())
+        }
+
+    @Test
+    fun onCompleted_bareL2OlderThan24h_isDroppedPerTimeTtl() =
+        runBlocking {
+            val stale = java.time.Instant.now().minusSeconds(25 * 3600).toString()
+            handler.onCompleted(fixture().replace(FIXTURE_TS, stale).toByteArray())
+            assertEquals(0, outbox.enqueued.size)
+        }
+
+    private fun fixture(): String =
+        javaClass.classLoader!!.getResourceAsStream("valid-sos.json")!!.readBytes().decodeToString()
+
+    private fun freshBareL2(): ByteArray = fixture().replace(FIXTURE_TS, java.time.Instant.now().toString()).toByteArray()
 
     @Test
     fun onFailed_doesNotEnqueue() {
@@ -108,6 +136,18 @@ class PeerDeliveryReceiveOrchestrationTest {
 
         override suspend fun purgeExpired(nowMs: Long): Int = 0
 
+        override suspend fun setUploadRetryAt(
+            sosId: String,
+            digest: String,
+            retryAtMs: Long,
+            lastError: String?,
+        ) = Unit
+
+        override suspend fun clearUploadRetry(
+            sosId: String,
+            digest: String,
+        ) = Unit
+
         override fun close() = Unit
     }
 }
@@ -121,6 +161,8 @@ private object NoOpRelayUploadCommands : RelayUploadCommands {
     override fun cancelUpload() = Unit
 }
 
+private const val FIXTURE_TS = "2026-10-29T16:00:00Z"
+
 private fun relayHandler(
     registrar: RelayEnvelopeRegistrar,
     meshV2RelayCoordinator: MeshV2RelayCoordinator,
@@ -128,8 +170,10 @@ private fun relayHandler(
     val context = ApplicationProvider.getApplicationContext<android.content.Context>()
     return RelayTransferHandler(
         registrar = registrar,
-        meshV2RelayCoordinator = meshV2RelayCoordinator,
-        relayIdentityProvider = RelayIdentityProvider(context),
+        meshV2 =
+            com.sosmesh.android.meshv2.v2.MeshV2Runtime(
+                com.sosmesh.android.meshv2.v2.MeshV2Config(RelayIdentityProvider(context).relayIdHex, ""),
+            ),
         outboxIoScope = OutboxIoScope(Dispatchers.Unconfined),
     )
 }

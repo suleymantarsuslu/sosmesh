@@ -22,6 +22,7 @@ import { CaseAudioCard } from './detail/CaseAudioCard';
 import { CaseLocationCard } from './detail/CaseLocationCard';
 import { CasePhotoGallery } from './detail/CasePhotoGallery';
 import { CaseSection } from './detail/CaseSection';
+import { CaseSenderCard } from './detail/CaseSenderCard';
 import { formatAccuracyMeters, interpolate } from './detail/format';
 import { Icon } from './detail/icons';
 import {
@@ -349,6 +350,8 @@ export function CaseDetailView({
         </div>
 
         <div className="cd2-col">
+          <CaseSenderCard sender={detail.sender} />
+
           <CaseLocationCard
             latitude={caseCoordinates?.latitude ?? null}
             longitude={caseCoordinates?.longitude ?? null}

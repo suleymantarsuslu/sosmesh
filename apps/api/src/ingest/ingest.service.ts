@@ -21,6 +21,7 @@ import { ReceiptSignerService } from './receipt-signer.service';
 import { SosMeshMetricsService } from '../observability/sosmesh-metrics.service';
 import { StructuredEventLogger } from '../observability/structured-event-logger.service';
 import { extractClientAad } from './envelope-aad-builder';
+import { MeshV2IngestService, type MeshV2Context } from '../mesh-v2/mesh-v2-ingest.service';
 
 type RelayWindow = { count: number; windowStartMs: number };
 
@@ -37,7 +38,8 @@ export class IngestService {
     private readonly aiJobQueue: AiJobQueueService,
     private readonly metrics: SosMeshMetricsService,
     private readonly events: StructuredEventLogger,
-    private readonly uploadToken: DeviceUploadTokenService
+    private readonly uploadToken: DeviceUploadTokenService,
+    private readonly meshV2: MeshV2IngestService
   ) {}
 
   async processIngest(
@@ -65,14 +67,15 @@ export class IngestService {
     }
 
     try {
-      const created = await this.createFirstAccept(
+      const { message: created, merged } = await this.createFirstAccept(
         messageId,
         sosMessage,
         dto,
         clientKey,
         packetHash
       );
-      return this.buildReceipt(created);
+      const response = this.buildReceipt(created);
+      return merged === null ? response : { ...response, merged };
     } catch (error) {
       if (
         error instanceof Prisma.PrismaClientKnownRequestError &&
@@ -139,7 +142,7 @@ export class IngestService {
     dto: IngestRequestDto,
     clientKey: string,
     packetHash: string
-  ): Promise<SosMessage> {
+  ): Promise<{ message: SosMessage; merged: boolean | null }> {
     const envelope = sosMessage.envelope as Record<string, unknown>;
     const geo = parseEnvelopeGeo(envelope);
     const priority = typeof envelope.priority === 'number' ? envelope.priority : 3;
@@ -153,10 +156,32 @@ export class IngestService {
     const clientAad = extractClientAad(envelope);
     const originalEnvelopeAad = canonicalJSON(clientAad);
 
+    // Mesh v2 (§8.2): decrypt L3 in memory; v1 / undecryptable payloads skip all of this.
+    const inner = await this.meshV2.decryptInner(encryptedPayload, clientAad);
+    const v2: MeshV2Context | null = inner ? await this.meshV2.prepare(inner, receiptAt) : null;
+
     return this.prisma.$transaction(async (tx) => {
-      const incident = await tx.incident.create({
-        data: { state: IncidentState.PENDING },
-      });
+      const mergeTarget = v2 ? await this.meshV2.findMergeTarget(tx, v2.senderId, receiptAt) : null;
+      const locationUpdate = v2 ? this.meshV2.latestLocationUpdate(v2.inner, mergeTarget?.latestLocationAt ?? null) : null;
+      const incident = mergeTarget
+        ? await tx.incident.update({
+            where: { id: mergeTarget.id },
+            data: {
+              mergedMessageCount: { increment: 1 },
+              lastMessageAt: receiptAt,
+              ...(locationUpdate ?? {}),
+            },
+          })
+        : await tx.incident.create({
+            data: {
+              state: IncidentState.PENDING,
+              ...(v2 ? { senderId: v2.senderId, lastMessageAt: receiptAt, ...(locationUpdate ?? {}) } : {}),
+            },
+          });
+      if (v2) {
+        await this.meshV2.storeLatestProfile(tx, v2);
+      }
+      const innerLoc = v2?.inner.location;
 
       const message = await tx.sosMessage.create({
         data: {
@@ -174,6 +199,23 @@ export class IngestService {
           packetHash,
           serverReceiptAt: receiptAt,
           needsHumanReview,
+          ...(v2
+            ? {
+                senderId: v2.senderId,
+                innerVersion: 2,
+                senderSeq: BigInt(v2.inner.seq),
+                ...(v2.inner.sosType ? { sosType: v2.inner.sosType } : {}),
+                ...(v2.inner.personCount ? { personCount: v2.inner.personCount } : {}),
+                ...(innerLoc
+                  ? {
+                      preciseLatitude: innerLoc.latitude,
+                      preciseLongitude: innerLoc.longitude,
+                      preciseAccuracyMeters: innerLoc.accuracyMeters ?? null,
+                      preciseCapturedAt: new Date(innerLoc.timestamp),
+                    }
+                  : {}),
+              }
+            : {}),
         },
       });
 
@@ -186,6 +228,7 @@ export class IngestService {
             relayId: dto.relayInfo.relayId,
             hopCount: dto.relayInfo.hopCount,
             needsHumanReview,
+            ...(mergeTarget ? { event: 'SOS_MERGED' } : {}),
           },
         },
       });
@@ -201,8 +244,8 @@ export class IngestService {
 
       await this.operatorFeed.insertFirstAcceptInTransaction(tx, message);
 
-      return { message, incidentId: incident.id };
-    }).then(({ message, incidentId }) => {
+      return { message, incidentId: incident.id, merged: mergeTarget !== null };
+    }).then(({ message, incidentId, merged }) => {
       this.metrics.recordIngestAccepted();
       this.metrics.recordServerAck();
       this.metrics.recordRadioAck();
@@ -212,9 +255,13 @@ export class IngestService {
         incidentId,
         needsHumanReview,
       });
-      
-      // Enqueue AI job AFTER transaction commits (never delay receipt)
-      if (process.env.AI_ENABLED === 'true') {
+      if (v2 && merged) {
+        this.events.emit('sos_merged', { messageId, incidentId, senderTag: v2.senderTag });
+      }
+
+      // Enqueue AI job AFTER transaction commits (never delay receipt).
+      // Mesh v2: above 30/h per sender messages are still accepted and merged, but not re-triaged.
+      if (process.env.AI_ENABLED === 'true' && (v2?.fullProcessing ?? true)) {
         void this.aiJobQueue.enqueue({
           kind: 'triage',
           incidentId,
@@ -228,7 +275,7 @@ export class IngestService {
         });
       }
       
-      return message;
+      return { message, merged: v2 ? merged : null };
     });
   }
 

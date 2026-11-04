@@ -110,7 +110,18 @@ model Incident {
   attachments               Attachment[]
   incidentLinksA            IncidentLinkSuggestion[] @relation("IncidentLinkA")
   incidentLinksB            IncidentLinkSuggestion[] @relation("IncidentLinkB")
+  /// Mesh v2: the sender whose messages are merged into this incident (null for v1 / unknown sender).
+  senderId           String?    @map("sender_id") @db.Uuid
+  sender             SosSender? @relation(fields: [senderId], references: [id], onDelete: SetNull)
+  /// Mesh v2: newest precise location across merged messages (by inner location.timestamp).
+  latestLatitude     Decimal?   @map("latest_latitude") @db.Decimal(10, 7)
+  latestLongitude    Decimal?   @map("latest_longitude") @db.Decimal(10, 7)
+  latestAccuracyMeters Float?   @map("latest_accuracy_meters")
+  latestLocationAt   DateTime?  @map("latest_location_at")
+  mergedMessageCount Int        @default(1) @map("merged_message_count")
+  lastMessageAt      DateTime?  @map("last_message_at")
 
+  @@index([senderId, updatedAt(sort: Desc)], map: "incidents_sender_id_updated_at_idx")
   @@map("incidents")
 }
 
@@ -151,8 +162,15 @@ model SosMessage {
   messageEvents       MessageEvent[]
   relayReceipts       RelayReceipt[]
   attachments         Attachment[]
+  /// Mesh v2: sender identity (hash only, see SosSender). Null for v1 messages.
+  senderId            String?        @map("sender_id") @db.Uuid
+  sender              SosSender?     @relation(fields: [senderId], references: [id], onDelete: SetNull)
+  /// Inner payload version (2 for mesh v2, null for v1 / undecryptable).
+  innerVersion        Int?           @map("inner_version") @db.SmallInt
+  senderSeq           BigInt?        @map("sender_seq")
 
   @@index([incidentId])
+  @@index([senderId, receivedAt(sort: Desc)], map: "sos_messages_sender_id_received_at_idx")
   @@index([priority, receivedAt(sort: Desc)], map: "sos_messages_priority_received_at_idx")
   @@index([receivedAt(sort: Desc)], map: "sos_messages_received_at_idx")
   @@map("sos_messages")
@@ -608,4 +626,30 @@ model AiTranslationCache {
   @@unique([sourceType, sourceId, sourceField, targetLanguage], map: "ai_translation_cache_unique")
   @@index([sourceType, sourceId], map: "ai_translation_cache_source_idx")
   @@map("ai_translation_cache")
+}
+
+/// Mesh v2 sender. Stores ONLY SHA-256 of the 32-byte senderKey, never the key itself.
+model SosSender {
+  id            String            @id @default(uuid()) @db.Uuid
+  senderKeyHash String            @unique @map("sender_key_hash") @db.Char(64)
+  createdAt     DateTime          @default(now()) @map("created_at")
+  lastSeenAt    DateTime          @default(now()) @map("last_seen_at")
+  messages      SosMessage[]
+  incidents     Incident[]
+  profile       SosSenderProfile?
+
+  @@map("sos_senders")
+}
+
+/// Latest onboarding profile per sender, AES-256-GCM encrypted at rest. One row per sender (no per-message copies).
+model SosSenderProfile {
+  senderId        String    @id @map("sender_id") @db.Uuid
+  sender          SosSender @relation(fields: [senderId], references: [id], onDelete: Cascade)
+  ciphertext      String    @db.Text
+  keyVersion      String    @map("key_version") @db.VarChar(16)
+  /// seq of the SOS that carried this profile; older profiles never overwrite newer ones.
+  sourceSeq       BigInt    @map("source_seq")
+  updatedAt       DateTime  @default(now()) @updatedAt @map("updated_at")
+
+  @@map("sos_sender_profiles")
 }

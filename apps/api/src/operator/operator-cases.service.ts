@@ -7,6 +7,7 @@ import { OperatorRequestUser } from './guards/operator-auth.guard';
 import { IncidentScopeService } from '../organization/incident-scope.service';
 import { ListOperatorCasesQuery } from './dto/list-operator-cases.query';
 import { TranscriptView } from '../ai/contracts/transcript-view';
+import { buildCaseSenderView, type CaseSenderView } from '../mesh-v2/case-sender-view';
 import { MessageTranslationService } from '../ai/message-translation.service';
 import { OperatorLocale } from '../ai/locale-content.service';
 
@@ -63,6 +64,8 @@ export type OperatorCaseDetail = OperatorCaseRow & {
   ai: OperatorAiSuggestion | null;
   attachments: OperatorAttachmentSummary[];
   transcripts: TranscriptView[];
+  /** Mesh v2 sender block (profile, address assumption, merged messages); null for v1 incidents. */
+  sender: CaseSenderView | null;
   timeline: {
     id: string;
     deliveryState: string;
@@ -324,6 +327,7 @@ export class OperatorCasesService {
       ai: aiSuggestion,
       attachments: attachmentSummaries,
       transcripts,
+      sender: await buildCaseSenderView(this.prisma, incidentId),
       timeline: message.messageEvents.map((event) => ({
         id: event.id,
         deliveryState: event.deliveryState,

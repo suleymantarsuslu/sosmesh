@@ -68,4 +68,8 @@ export class IngestReceiptDto {
 export class IngestResponseDto {
   @ApiProperty()
   receipt!: IngestReceiptDto;
+
+  /** Mesh v2: true when the message was merged into the sender's open incident. Absent for v1 inners. */
+  @ApiProperty({ required: false })
+  merged?: boolean;
 }

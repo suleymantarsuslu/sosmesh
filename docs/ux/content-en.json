@@ -366,7 +366,28 @@
       "assignmentRefreshPlan": "Refresh recommendations",
       "assignmentNoneLeft": "No open recommendations. Refresh to generate a new plan.",
       "assignmentAlreadyFinalized": "This recommendation was already finalized. Reloading.",
-      "auditTeam": "Team"
+      "auditTeam": "Team",
+      "sender": {
+        "profileTitle": "Sender profile",
+        "profileHint": "From the device onboarding profile; visible to operators only.",
+        "profileEmpty": "No profile was sent.",
+        "fullName": "Name",
+        "age": "Age",
+        "phone": "Phone",
+        "email": "Email",
+        "address": "Address",
+        "floor": "Floor",
+        "householdSize": "Household size",
+        "assumptionTitle": "Assumption",
+        "assumptionText": "Possibly at home address, floor {{floor}}, {{people}} people",
+        "assumptionUnknown": "?",
+        "assumptionHint": "Inference only: GPS is within {{meters}} m of the address the device geocoded. Does not trigger dispatch.",
+        "mergedTitle": "Merged messages",
+        "mergedCount": "{{count}} messages from this sender merged into this case",
+        "mergedEmpty": "Empty message",
+        "mergedHasNote": "note",
+        "mergedHasLocation": "location"
+      }
     },
     "ai": {
       "title": "AI Intelligence Panel",

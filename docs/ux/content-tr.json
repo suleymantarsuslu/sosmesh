@@ -366,7 +366,28 @@
       "assignmentRefreshPlan": "Önerileri yenile",
       "assignmentNoneLeft": "Açık öneri kalmadı. Yeni plan için yenileyin.",
       "assignmentAlreadyFinalized": "Bu öneri zaten sonuçlandırılmış. Yeniden yükleniyor.",
-      "auditTeam": "Ekip"
+      "auditTeam": "Ekip",
+      "sender": {
+        "profileTitle": "Gönderen profili",
+        "profileHint": "Cihazdaki kayıt profilinden; yalnızca operatörler görür.",
+        "profileEmpty": "Profil gönderilmedi.",
+        "fullName": "Ad soyad",
+        "age": "Yaş",
+        "phone": "Telefon",
+        "email": "E-posta",
+        "address": "Adres",
+        "floor": "Kat",
+        "householdSize": "Hanedeki kişi sayısı",
+        "assumptionTitle": "Varsayım",
+        "assumptionText": "Muhtemelen ev adresinde, {{floor}}. kat, {{people}} kişi",
+        "assumptionUnknown": "?",
+        "assumptionHint": "Yalnızca çıkarım: GPS, cihazın adres konumuna {{meters}} m mesafede. Otomatik sevk yapmaz.",
+        "mergedTitle": "Birleştirilen mesajlar",
+        "mergedCount": "Bu göndericiden {{count}} mesaj bu vakada birleştirildi",
+        "mergedEmpty": "Boş mesaj",
+        "mergedHasNote": "not",
+        "mergedHasLocation": "konum"
+      }
     },
     "ai": {
       "title": "AI İstihbarat Paneli",

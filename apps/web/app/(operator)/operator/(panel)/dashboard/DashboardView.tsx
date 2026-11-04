@@ -7,6 +7,7 @@ import { useOperatorPreferences } from '../../../../../components/operator/Opera
 import { StatCard } from '../../../../../components/ui/StatCard';
 import { useToast } from '../../../../../components/ui/ToastProvider';
 import { ScreenState } from '../../../../../design-system';
+import { RegionalSituationPanel } from '../../../../../features/situation/RegionalSituationPanel';
 
 type Stats = {
   newSos: number | null;
@@ -95,6 +96,8 @@ export function DashboardView({
               />
             ))}
           </div>
+
+          <RegionalSituationPanel />
 
           <div className="dashboard__lower-grid">
             <section

@@ -13,7 +13,8 @@
     "loading": "Loading...",
     "error": "An error occurred",
     "saving": "Saving",
-    "refresh": "Refresh"
+    "refresh": "Refresh",
+    "more": "more"
   },
   "nav": {
     "home": "Home",
@@ -137,7 +138,57 @@
       "emptyHint": "No data yet",
       "chartEmpty": "Status distribution will appear when cases arrive.",
       "tableEmptyTitle": "No recent cases",
-      "tableEmptyHint": "New SOS events will show up here once they reach the panel."
+      "tableEmptyHint": "New SOS events will show up here once they reach the panel.",
+      "regionalSituation": {
+        "title": "Regional Situation",
+        "description": "Active SOS incidents analyzed and grouped by regional problems and disasters",
+        "empty": "No regional situation to display",
+        "emptyHint": "Regional clusters will appear as active cases emerge.",
+        "liveLabel": "Live",
+        "lastUpdated": "Last updated",
+        "filters": {
+          "timeWindow": "Time window",
+          "window1h": "Last 1 hour",
+          "window6h": "Last 6 hours",
+          "window24h": "Last 24 hours",
+          "minUrgency": "Min. urgency"
+        },
+        "card": {
+          "sosCount": "{{count}} SOS",
+          "peopleAffected": "{{count}} people affected (estimated)",
+          "timeSpan": "First: {{first}}, Last: {{last}}",
+          "topNeeds": "Needs",
+          "topHazards": "Hazards",
+          "viewDetails": "Open case detail",
+          "aiSummary": "AI summary",
+          "aiSummaryDisclaimer": "AI summary — decision belongs to operator",
+          "aiSummaryComputing": "Generating summary...",
+          "aiSummaryFailed": "Failed to generate summary"
+        },
+        "severity": {
+          "label": "Severity",
+          "CRITICAL": "Critical",
+          "HIGH": "High",
+          "MEDIUM": "Medium",
+          "LOW": "Low"
+        },
+        "urgency": {
+          "label": "Urgency",
+          "CRITICAL": "Critical",
+          "HIGH": "High",
+          "MEDIUM": "Medium",
+          "LOW": "Low"
+        },
+        "hazardTypes": {
+          "MEDICAL": "Medical",
+          "TRAPPED": "Trapped",
+          "FIRE": "Fire",
+          "FLOOD": "Flood",
+          "EARTHQUAKE": "Earthquake",
+          "COLLAPSE": "Collapse",
+          "GENERAL": "General"
+        }
+      }
     },
     "map": {
       "title": "Map",

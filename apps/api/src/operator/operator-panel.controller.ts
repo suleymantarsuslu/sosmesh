@@ -21,6 +21,7 @@ import { RolesGuard } from './guards/roles.guard';
 import { IncidentScopeService } from '../organization/incident-scope.service';
 import { OperatorDashboardService } from './operator-dashboard.service';
 import { OperatorCasesService } from './operator-cases.service';
+import { OperatorSituationService } from './operator-situation.service';
 import { LocaleContentService } from '../ai/locale-content.service';
 import {
   parseListOperatorCasesQuery,
@@ -36,12 +37,23 @@ export class OperatorPanelController {
     private readonly scope: IncidentScopeService,
     private readonly dashboard: OperatorDashboardService,
     private readonly cases: OperatorCasesService,
+    private readonly situation: OperatorSituationService,
     private readonly localeContent: LocaleContentService
   ) {}
 
   @Get('dashboard/stats')
   async dashboardStats(@Req() req: OperatorRequest) {
     return this.dashboard.getStats(req.operatorUser);
+  }
+
+  @Get('situation/regions')
+  async regionalSituation(
+    @Req() req: OperatorRequest,
+    @Query('windowHours') windowHours?: string,
+    @Query('minUrgency') minUrgency?: string
+  ) {
+    const hours = windowHours ? Number(windowHours) : 24;
+    return this.situation.getRegionalSituation(req.operatorUser, hours, minUrgency);
   }
 
   @Get('history')

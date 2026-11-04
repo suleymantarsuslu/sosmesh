@@ -34,8 +34,6 @@ type OperatorPreferencesContextValue = {
   savedViews: SavedView[];
   saveCurrentView: (name: string, href: string) => void;
   removeSavedView: (id: string) => void;
-  activeIncidentId: string | null;
-  setActiveIncidentId: (id: string | null) => void;
 };
 
 const OperatorPreferencesContext = createContext<OperatorPreferencesContextValue | null>(
@@ -48,7 +46,6 @@ type StoredPreferences = {
   locale?: OperatorLocale;
   theme?: 'light' | 'dark';
   savedViews?: SavedView[];
-  activeIncidentId?: string | null;
 };
 
 function readStored(): StoredPreferences {
@@ -70,7 +67,6 @@ export function OperatorPreferencesProvider({ children }: { children: ReactNode 
   const [locale, setLocaleState] = useState<OperatorLocale>(DEFAULT_LOCALE);
   const [theme, setThemeState] = useState<'light' | 'dark'>('dark');
   const [savedViews, setSavedViews] = useState<SavedView[]>([]);
-  const [activeIncidentId, setActiveIncidentId] = useState<string | null>(null);
 
   useEffect(() => {
     const stored = readStored();
@@ -83,9 +79,6 @@ export function OperatorPreferencesProvider({ children }: { children: ReactNode 
     if (stored.savedViews) {
       setSavedViews(stored.savedViews);
     }
-    if (stored.activeIncidentId) {
-      setActiveIncidentId(stored.activeIncidentId);
-    }
   }, []);
 
   useEffect(() => {
@@ -94,9 +87,9 @@ export function OperatorPreferencesProvider({ children }: { children: ReactNode 
     document.cookie = `${LOCALE_COOKIE_NAME}=${locale};path=/;max-age=31536000;SameSite=Lax`;
     window.localStorage.setItem(
       STORAGE_KEY,
-      JSON.stringify({ locale, theme, savedViews, activeIncidentId })
+      JSON.stringify({ locale, theme, savedViews })
     );
-  }, [locale, theme, savedViews, activeIncidentId]);
+  }, [locale, theme, savedViews]);
 
   const setLocale = useCallback((next: OperatorLocale) => {
     setLocaleState(next);
@@ -128,8 +121,6 @@ export function OperatorPreferencesProvider({ children }: { children: ReactNode 
       savedViews,
       saveCurrentView,
       removeSavedView,
-      activeIncidentId,
-      setActiveIncidentId,
     }),
     [
       locale,
@@ -139,7 +130,6 @@ export function OperatorPreferencesProvider({ children }: { children: ReactNode 
       savedViews,
       saveCurrentView,
       removeSavedView,
-      activeIncidentId,
     ]
   );
 

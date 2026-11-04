@@ -1,24 +1,41 @@
 'use client';
 
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
 import { useOperatorPreferences } from '../../components/operator/OperatorPreferencesProvider';
 import { pickActivePreview } from './pick-active-preview';
 import type { AssignmentPreviewRoute, AssignmentRecommendationRow } from './types';
 
+function fill(template: string, values: Record<string, string | number>): string {
+  return Object.entries(values).reduce(
+    (acc, [key, value]) => acc.split(`{{${key}}}`).join(String(value)),
+    template
+  );
+}
+
 type Props = {
   incidentId: string;
   caseCoordinates: { latitude: number; longitude: number } | null;
   onPreviewChange?: (route: AssignmentPreviewRoute | null) => void;
+  /** Hide the visible heading when the surrounding card already shows the title. */
+  hideTitle?: boolean;
 };
 
-export function AssignmentPreviewPanel({ incidentId, caseCoordinates, onPreviewChange }: Props) {
+export function AssignmentPreviewPanel({
+  incidentId,
+  caseCoordinates,
+  onPreviewChange,
+  hideTitle = false,
+}: Props) {
   const { t } = useOperatorPreferences();
   const [items, setItems] = useState<AssignmentRecommendationRow[]>([]);
   const [role, setRole] = useState<'OPERATOR' | 'COORDINATOR' | 'ADMIN'>('OPERATOR');
   const [assigneeId, setAssigneeId] = useState('');
   const [busy, setBusy] = useState(false);
   const [message, setMessage] = useState<string | null>(null);
+  const [loaded, setLoaded] = useState(false);
+  const tRef = useRef(t);
+  tRef.current = t;
 
   const loadRole = useCallback(async () => {
     const res = await fetch('/api/operator/organization', { cache: 'no-store' });
@@ -40,11 +57,13 @@ export function AssignmentPreviewPanel({ incidentId, caseCoordinates, onPreviewC
     });
     setBusy(false);
     if (!res.ok) {
-      setMessage('Öneri planı yüklenemedi.');
+      setMessage(tRef.current('web.cases.assignmentLoadError'));
+      setLoaded(true);
       return;
     }
     const body = (await res.json()) as { items: AssignmentRecommendationRow[] };
     setItems(body.items);
+    setLoaded(true);
   }, [incidentId]);
 
   useEffect(() => {
@@ -68,7 +87,7 @@ export function AssignmentPreviewPanel({ incidentId, caseCoordinates, onPreviewC
     });
     setBusy(false);
     if (!res.ok) {
-      setMessage('Reddetme başarısız.');
+      setMessage(t('web.cases.assignmentRejectFailed'));
       return;
     }
     await loadPlan();
@@ -76,7 +95,7 @@ export function AssignmentPreviewPanel({ incidentId, caseCoordinates, onPreviewC
 
   const confirm = async (recommendationId: string) => {
     if (!assigneeId.trim()) {
-      setMessage('Koordinatör onayı için görevli seçin.');
+      setMessage(t('web.cases.assignmentPickAssignee'));
       return;
     }
     setBusy(true);
@@ -87,14 +106,14 @@ export function AssignmentPreviewPanel({ incidentId, caseCoordinates, onPreviewC
     });
     setBusy(false);
     if (res.status === 403) {
-      setMessage('Bu işlem yalnızca koordinatör onayı ile yapılır.');
+      setMessage(t('web.cases.assignmentCoordinatorOnlyError'));
       return;
     }
     if (!res.ok) {
-      setMessage('Onaylı atama kaydedilemedi.');
+      setMessage(t('web.cases.assignmentConfirmFailed'));
       return;
     }
-    setMessage('Görev koordinatör onayı ile kaydedildi (otomatik fiziksel sevk yok).');
+    setMessage(t('web.cases.assignmentConfirmed'));
     await loadPlan();
   };
 
@@ -108,32 +127,71 @@ export function AssignmentPreviewPanel({ incidentId, caseCoordinates, onPreviewC
 
   const canConfirm = role === 'COORDINATOR' || role === 'ADMIN';
 
+  const noteFor = (row: AssignmentRecommendationRow): string => {
+    const parts: string[] = [];
+    if (row.available) {
+      parts.push(
+        row.resourceName
+          ? fill(t('web.cases.assignmentNoteAvailable'), {
+              team: row.teamName,
+              resource: row.resourceName,
+            })
+          : fill(t('web.cases.assignmentNoteTeamAvailable'), { team: row.teamName })
+      );
+    } else {
+      parts.push(fill(t('web.cases.assignmentNoteBusy'), { team: row.teamName }));
+    }
+    if (row.distanceKm !== null && row.distanceKm !== undefined) {
+      parts.push(fill(t('web.cases.assignmentNoteDistance'), { km: row.distanceKm.toFixed(1) }));
+    }
+    parts.push(t('web.cases.assignmentNoteDecision'));
+    return parts.join(' ');
+  };
+
   return (
     <section
       className="assignment-preview"
       aria-labelledby="assignment-preview-title"
       data-testid="assignment-preview-panel"
     >
-      <h2 id="assignment-preview-title">{t('web.cases.assignmentPreviewTitle')}</h2>
+      <h2 id="assignment-preview-title" className={hideTitle ? 'cd2-sr-only' : undefined}>
+        {t('web.cases.assignmentPreviewTitle')}
+      </h2>
       <p className="assignment-preview__disclaimer" data-testid="assignment-preview-disclaimer">
         {t('web.cases.assignmentDisclaimer')}
       </p>
       {message ? (
-        <p role="status" data-testid="assignment-preview-message">
+        <p role="status" className="assignment-preview__message" data-testid="assignment-preview-message">
           {message}
         </p>
       ) : null}
-      {items.length === 0 ? (
+      {!loaded && items.length === 0 ? (
+        <p className="assignment-preview__loading" data-testid="assignment-preview-loading">
+          {t('web.cases.assignmentLoadingPlan')}
+        </p>
+      ) : items.length === 0 ? (
         <p data-testid="assignment-preview-empty">{t('web.cases.assignmentEmpty')}</p>
       ) : (
         <ul className="assignment-preview__list">
           {items.map((row) => (
             <li key={row.id} data-testid={`assignment-preview-item-${row.rank}`}>
-              <strong>
-                #{row.rank} {row.teamName}
-                {row.resourceName ? ` · ${row.resourceName}` : ''}
-              </strong>
-              <p>{row.deterministicNote}</p>
+              <div className="assignment-preview__head">
+                <span className="assignment-preview__rank">#{row.rank}</span>
+                <strong>
+                  {row.teamName}
+                  {row.resourceName ? ` · ${row.resourceName}` : ''}
+                </strong>
+                <span
+                  className={`assignment-preview__badge ${
+                    row.available ? 'assignment-preview__badge--ok' : 'assignment-preview__badge--busy'
+                  }`}
+                >
+                  {row.available
+                    ? t('web.cases.assignmentAvailable')
+                    : t('web.cases.assignmentUnavailable')}
+                </span>
+              </div>
+              <p className="assignment-preview__note">{noteFor(row)}</p>
               {row.aiRationale ? <p className="assignment-preview__ai">{row.aiRationale}</p> : null}
               {row.missingInfo.length > 0 ? (
                 <ul data-testid="assignment-preview-missing">
@@ -143,13 +201,14 @@ export function AssignmentPreviewPanel({ incidentId, caseCoordinates, onPreviewC
                 </ul>
               ) : null}
               <p className="assignment-preview__freshness">
-                {t('web.cases.assignmentDataAge')}: {row.dataFreshness.ageMinutes} dk
+                {t('web.cases.assignmentDataAge')}: {row.dataFreshness.ageMinutes}{' '}
+                {t('web.cases.assignmentMinutesShort')}
                 {row.dataFreshness.stale ? ` · ${t('web.cases.assignmentStale')}` : ''}
               </p>
               <div className="assignment-preview__actions">
                 <button
                   type="button"
-                  className="ui-button ui-button--secondary"
+                  className="cd2-btn cd2-btn--ghost"
                   disabled={busy || row.status !== 'PROPOSED'}
                   onClick={() => reject(row.id)}
                   data-testid={`assignment-reject-${row.rank}`}
@@ -158,39 +217,41 @@ export function AssignmentPreviewPanel({ incidentId, caseCoordinates, onPreviewC
                 </button>
                 <button
                   type="button"
-                  className="ui-button ui-button--secondary"
+                  className="cd2-btn cd2-btn--ghost"
                   disabled={busy || row.status !== 'PROPOSED'}
                   onClick={() => sendFeedback(row.id, 'NOT_HELPFUL')}
                   data-testid={`assignment-feedback-${row.rank}`}
                 >
-                  Geri bildirim kaydet
+                  {t('web.cases.assignmentFeedback')}
                 </button>
-                {canConfirm ? (
-                  <>
-                    <label className="assignment-preview__assignee">
-                      Görevli ID
-                      <input
-                        value={assigneeId}
-                        onChange={(event) => setAssigneeId(event.target.value)}
-                        data-testid="assignment-assignee-input"
-                      />
-                    </label>
-                    <button
-                      type="button"
-                      className="ui-button"
-                      disabled={busy || row.status !== 'PROPOSED' || !row.available}
-                      onClick={() => confirm(row.id)}
-                      data-testid={`assignment-confirm-${row.rank}`}
-                    >
-                      Koordinatör onayıyla kaydet
-                    </button>
-                  </>
-                ) : (
-                  <p data-testid="assignment-coordinator-only">
-                    Onaylı commit yalnızca koordinatör rolündedir.
-                  </p>
-                )}
               </div>
+              {canConfirm ? (
+                <div className="assignment-preview__confirm">
+                  <label className="assignment-preview__assignee">
+                    <span>{t('web.cases.assignmentAssigneeId')}</span>
+                    <input
+                      className="cd2-input"
+                      value={assigneeId}
+                      placeholder={t('web.cases.assignmentAssigneePlaceholder')}
+                      onChange={(event) => setAssigneeId(event.target.value)}
+                      data-testid="assignment-assignee-input"
+                    />
+                  </label>
+                  <button
+                    type="button"
+                    className="cd2-btn cd2-btn--primary"
+                    disabled={busy || row.status !== 'PROPOSED' || !row.available}
+                    onClick={() => confirm(row.id)}
+                    data-testid={`assignment-confirm-${row.rank}`}
+                  >
+                    {t('web.cases.assignmentConfirm')}
+                  </button>
+                </div>
+              ) : (
+                <p className="assignment-preview__coordinator-only" data-testid="assignment-coordinator-only">
+                  {t('web.cases.assignmentCoordinatorOnly')}
+                </p>
+              )}
             </li>
           ))}
         </ul>

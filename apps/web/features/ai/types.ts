@@ -54,6 +54,9 @@ export type SparkVisionSummary = {
   estimatedPersonCount: number | null;
   hazardsVisible: string[];
   uncertainty: string | null;
+  possiblePeopleIndicators?: string | null;
+  accessIssues?: string[];
+  confidence?: 'low' | 'medium' | 'high' | null;
 };
 
 export type SamSegmentResult = {

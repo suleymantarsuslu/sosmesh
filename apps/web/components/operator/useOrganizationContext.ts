@@ -2,7 +2,8 @@
 
 import { useEffect, useState } from 'react';
 
-import type { IncidentOption } from './IncidentSwitcher';
+
+export type IncidentOption = { id: string; state: string };
 
 export type OrganizationContext = {
   organization: { id: string; name: string; slug: string } | null;

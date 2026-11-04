@@ -11,7 +11,6 @@ import { FixedPanel } from '../ui/FixedPanel';
 
 import { CommandPalette } from './CommandPalette';
 import { DemoModeBanner } from './DemoModeBanner';
-import { IncidentSwitcher } from './IncidentSwitcher';
 import { MobileNavDrawer } from './MobileNavDrawer';
 import { OperatorLiveStatus } from './OperatorLiveStatus';
 import { useOperatorPreferences } from './OperatorPreferencesProvider';
@@ -187,10 +186,7 @@ export function OperatorShell({
             <SosMeshLogo size={32} />
           </div>
           <OperatorLiveStatus />
-          <div className="operator-topbar__cluster operator-topbar__cluster--desktop">
-            <IncidentSwitcher incidents={context?.incidents ?? []} />
-          </div>
-          <OperatorTopbarOverflow incidents={context?.incidents ?? []} />
+          <OperatorTopbarOverflow />
           <div className="operator-topbar__controls">
             <LocaleSwitcher
               className="operator-topbar__locale operator-topbar__locale--desktop"

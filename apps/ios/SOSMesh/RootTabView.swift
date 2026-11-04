@@ -46,5 +46,25 @@ struct RootTabView: View {
         .onAppear {
             appModel.bootstrap()
         }
+        .onChange(of: appModel.pendingRelayRequestBroadcast) { _, newValue in
+            showRelayRequestAlert = newValue != nil
+        }
+        .alert(
+            appModel.pendingRelayRequestBroadcast?.title ?? "",
+            isPresented: $showRelayRequestAlert,
+            presenting: appModel.pendingRelayRequestBroadcast
+        ) { broadcast in
+            Button(NSLocalizedString("broadcast.relay_request.action.enable", comment: "")) {
+                Task {
+                    await appModel.enableRelay()
+                    appModel.pendingRelayRequestBroadcast = nil
+                }
+            }
+            Button(NSLocalizedString("broadcast.relay_request.action.cancel", comment: ""), role: .cancel) {
+                appModel.pendingRelayRequestBroadcast = nil
+            }
+        } message: { broadcast in
+            Text(broadcast.body)
+        }
     }
 }

@@ -1,4 +1,5 @@
 import Foundation
+import SOSMeshContracts
 
 /// Privacy-safe BLE relay diagnostics: counters, flags and short hashes only.
 /// Never stores payloads, note text, coordinates or full message ids.

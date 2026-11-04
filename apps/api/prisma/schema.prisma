@@ -698,6 +698,7 @@ model BroadcastNotification {
   regionLatitude    Decimal?           @map("region_latitude") @db.Decimal(10, 7)
   regionLongitude   Decimal?           @map("region_longitude") @db.Decimal(10, 7)
   regionRadiusKm    Float?             @map("region_radius_km")
+  regionLabel       String?            @map("region_label") @db.VarChar(500)
   signature         String             @db.Text
   deliveredCount    Int                @default(0) @map("delivered_count")
   meshRelayCount    Int                @default(0) @map("mesh_relay_count")

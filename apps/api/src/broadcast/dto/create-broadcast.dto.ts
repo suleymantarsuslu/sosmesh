@@ -6,6 +6,13 @@ export enum BroadcastSeverity {
   critical = 'critical',
 }
 
+export type SelectedRegion = {
+  label: string;
+  lat: number;
+  lon: number;
+  boundingBox: [number, number, number, number];
+};
+
 export class CreateBroadcastDto {
   @IsString()
   @IsNotEmpty()
@@ -42,4 +49,7 @@ export class CreateBroadcastDto {
   @Min(0.1)
   @Max(10000)
   regionRadiusKm?: number;
+
+  @IsOptional()
+  selectedRegion?: SelectedRegion;
 }

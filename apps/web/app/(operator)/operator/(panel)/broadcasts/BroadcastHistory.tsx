@@ -9,6 +9,7 @@ type BroadcastHistory = {
   title: string;
   body: string;
   severity: string;
+  kind: string;
   createdBy: string;
   createdAt: string;
   expiresAt: string;
@@ -82,9 +83,16 @@ export function BroadcastHistory({ history, loading, onRefresh }: Props) {
           <article key={item.id} className="broadcast-history-item">
             <div className="broadcast-history-item__header">
               <h3 className="broadcast-history-item__title">{item.title}</h3>
-              <OpsChip tone={getSeverityTone(item.severity)} icon="alert">
-                {t(`web.broadcasts.severity${item.severity.charAt(0).toUpperCase() + item.severity.slice(1)}`)}
-              </OpsChip>
+              <div className="broadcast-history-item__badges">
+                {item.kind === 'relay_request' && (
+                  <OpsChip tone="info" icon="bell">
+                    {t('web.broadcasts.typeRelayRequest')}
+                  </OpsChip>
+                )}
+                <OpsChip tone={getSeverityTone(item.severity)} icon="alert">
+                  {t(`web.broadcasts.severity${item.severity.charAt(0).toUpperCase() + item.severity.slice(1)}`)}
+                </OpsChip>
+              </div>
             </div>
 
             <p className="broadcast-history-item__body">{item.body}</p>

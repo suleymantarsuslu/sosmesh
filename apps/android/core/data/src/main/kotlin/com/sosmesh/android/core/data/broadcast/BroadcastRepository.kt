@@ -81,6 +81,7 @@ class BroadcastRepository(
                 title = obj.getString("title"),
                 body = obj.getString("body"),
                 severity = obj.getString("severity"),
+                kind = obj.optString("kind", "standard"),
                 createdAt = obj.getString("createdAt"),
                 expiresAt = obj.getString("expiresAt"),
                 regionLat = if (obj.isNull("regionLatitude")) null else obj.getDouble("regionLatitude"),

@@ -19,8 +19,9 @@ class BroadcastSignatureVerifier(publicKeyBase64: String) {
             } else {
                 ""
             }
+            val kindPart = if (broadcast.kind == "relay_request") "|relay_request" else ""
             val payload =
-                "BROADCAST|${broadcast.id}|${broadcast.title}|${broadcast.body}|${broadcast.severity}|${broadcast.createdAt}|${broadcast.expiresAt}$regionPart"
+                "BROADCAST|${broadcast.id}|${broadcast.title}|${broadcast.body}|${broadcast.severity}|${broadcast.createdAt}|${broadcast.expiresAt}$regionPart$kindPart"
             val signatureBytes = Base64.decode(broadcast.signature, Base64.NO_WRAP)
             val key = rawPublicKey ?: return false
             Ed25519Verify(key).verify(signatureBytes, payload.toByteArray(Charsets.UTF_8))
@@ -45,6 +46,7 @@ data class ServerBroadcast(
     val title: String,
     val body: String,
     val severity: String,
+    val kind: String = "standard",
     val createdAt: String,
     val expiresAt: String,
     val regionLat: Double?,

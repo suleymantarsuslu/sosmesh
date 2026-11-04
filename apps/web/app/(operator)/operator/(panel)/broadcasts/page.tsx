@@ -38,6 +38,7 @@ export default function BroadcastsPage() {
   const { t, locale } = useOperatorPreferences();
   const brandName = locale === 'tr' ? 'Acil Durum Ağı' : 'SOSMesh';
 
+  const [broadcastKind, setBroadcastKind] = useState<'standard' | 'relay_request'>('standard');
   const [title, setTitle] = useState('');
   const [body, setBody] = useState('');
   const [severity, setSeverity] = useState<'info' | 'warning' | 'critical'>('info');
@@ -246,6 +247,7 @@ export default function BroadcastsPage() {
         title: string;
         body: string;
         severity: string;
+        kind?: string;
         expiryHours: number;
         selectedRegion?: {
           label: string;
@@ -259,6 +261,7 @@ export default function BroadcastsPage() {
         title,
         body,
         severity,
+        kind: broadcastKind,
         expiryHours,
       };
 
@@ -302,6 +305,7 @@ export default function BroadcastsPage() {
         throw new Error('Failed to send broadcast');
       }
 
+      setBroadcastKind('standard');
       setTitle('');
       setBody('');
       setSeverity('info');
@@ -361,6 +365,7 @@ export default function BroadcastsPage() {
       <div className="broadcast-layout">
         <div className="broadcast-layout__main">
           <BroadcastComposer
+            broadcastKind={broadcastKind}
             title={title}
             body={body}
             severity={severity}
@@ -382,6 +387,7 @@ export default function BroadcastsPage() {
             neighborhoodsError={neighborhoodsError}
             streetsError={streetsError}
             error={error}
+            onBroadcastKindChange={setBroadcastKind}
             onTitleChange={setTitle}
             onBodyChange={setBody}
             onSeverityChange={setSeverity}
@@ -413,6 +419,7 @@ export default function BroadcastsPage() {
           />
 
           <BroadcastPreview
+            broadcastKind={broadcastKind}
             title={title}
             body={body}
             severity={severity}
@@ -430,6 +437,7 @@ export default function BroadcastsPage() {
 
       {showConfirm && (
         <ConfirmBroadcastModal
+          broadcastKind={broadcastKind}
           title={title}
           body={body}
           severity={severity}

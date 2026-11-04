@@ -3,6 +3,7 @@ export class BroadcastResponseDto {
   title!: string;
   body!: string;
   severity!: string;
+  kind!: string;
   createdAt!: string;
   expiresAt!: string;
   regionLatitude?: number | null;
@@ -17,6 +18,7 @@ export class BroadcastHistoryDto {
   id!: string;
   title!: string;
   severity!: string;
+  kind!: string;
   createdBy!: string;
   createdAt!: string;
   expiresAt!: string;

@@ -685,6 +685,7 @@ model BroadcastNotification {
   title             String             @db.VarChar(200)
   body              String             @db.Text
   severity          String             @db.VarChar(20)
+  kind              String             @default("standard") @db.VarChar(20)
   createdById       String             @map("created_by_id") @db.Uuid
   createdBy         User               @relation(fields: [createdById], references: [id], onDelete: SetNull)
   createdAt         DateTime           @default(now()) @map("created_at")

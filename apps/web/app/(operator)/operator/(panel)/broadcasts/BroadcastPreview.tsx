@@ -4,12 +4,13 @@ import { useOperatorPreferences } from '../../../../../components/operator/Opera
 import { Icon } from '../../../../../features/cases/detail/icons';
 
 type Props = {
+  broadcastKind: 'standard' | 'relay_request';
   title: string;
   body: string;
   severity: 'info' | 'warning' | 'critical';
 };
 
-export function BroadcastPreview({ title, body, severity }: Props) {
+export function BroadcastPreview({ broadcastKind, title, body, severity }: Props) {
   const { t } = useOperatorPreferences();
 
   const getSeverityIcon = () => {
@@ -54,6 +55,16 @@ export function BroadcastPreview({ title, body, severity }: Props) {
               <div className="broadcast-preview-notification__body">
                 {body || t('web.broadcasts.notificationBody')}
               </div>
+              {broadcastKind === 'relay_request' && (
+                <div className="broadcast-preview-notification__actions">
+                  <button className="broadcast-preview-button broadcast-preview-button--primary">
+                    {t('web.broadcasts.relayRequestButton1')}
+                  </button>
+                  <button className="broadcast-preview-button">
+                    {t('web.broadcasts.relayRequestButton2')}
+                  </button>
+                </div>
+              )}
             </div>
           </div>
         </div>

@@ -14,6 +14,7 @@ describe('OperatorSituationService', () => {
   let scope: IncidentScopeService;
 
   const mockUser = {
+    sub: 'user-1',
     id: 'user-1',
     email: 'operator@test.com',
     displayName: 'Test Operator',

@@ -15,8 +15,8 @@ import { OperatorRequestUser } from './guards/operator-auth.guard';
 type IncidentForClustering = {
   id: string;
   createdAt: Date;
-  latestLatitude: number | null;
-  latestLongitude: number | null;
+  latestLatitude: { toNumber(): number } | number | null;
+  latestLongitude: { toNumber(): number } | number | null;
   latestLocationAt: Date | null;
   lastMessageAt: Date | null;
   mergedMessageCount: number;
@@ -197,10 +197,10 @@ export class OperatorSituationService {
         if (lat2 === null || lon2 === null) continue;
 
         const distance = this.haversineDistance(
-          Number(lat1),
-          Number(lon1),
-          Number(lat2),
-          Number(lon2)
+          this.toNumber(lat1),
+          this.toNumber(lon1),
+          this.toNumber(lat2),
+          this.toNumber(lon2)
         );
 
         if (distance <= this.clusterRadiusMeters) {
@@ -328,8 +328,8 @@ export class OperatorSituationService {
 
     for (const inc of incidents) {
       if (inc.latestLatitude !== null && inc.latestLongitude !== null) {
-        latitudes.push(Number(inc.latestLatitude));
-        longitudes.push(Number(inc.latestLongitude));
+        latitudes.push(this.toNumber(inc.latestLatitude));
+        longitudes.push(this.toNumber(inc.latestLongitude));
       }
     }
 
@@ -341,6 +341,12 @@ export class OperatorSituationService {
     const centerLon = longitudes.reduce((a, b) => a + b, 0) / longitudes.length;
 
     return `REGION_${centerLat.toFixed(2)}_${centerLon.toFixed(2)}`;
+  }
+
+  private toNumber(value: { toNumber(): number } | number | null): number {
+    if (value === null) return 0;
+    if (typeof value === 'number') return value;
+    return value.toNumber();
   }
 
   private computeSeverity(

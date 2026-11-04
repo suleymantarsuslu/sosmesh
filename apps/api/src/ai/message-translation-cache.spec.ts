@@ -100,4 +100,34 @@ describe('MessageTranslationService - same-language verdict is cached and billed
       expect.objectContaining({ reservationId: 'res-1', actualUsd: 0 })
     );
   });
+
+  it('skips the model when the text is confidently already in the operator language', async () => {
+    const { service, prisma, metaClient, budgetGuard } = build(null, {});
+
+    const result = await service.translateMessage('msg-3', 'Yardım edin', 'tr');
+
+    expect(result).toBeNull();
+    expect(metaClient.chatJson).not.toHaveBeenCalled();
+    expect(budgetGuard.reserve).not.toHaveBeenCalled();
+    expect(prisma.aiTranslationCache.upsert).toHaveBeenCalledWith(
+      expect.objectContaining({ create: expect.objectContaining({ sourceLanguage: 'tr', targetLanguage: 'tr' }) })
+    );
+  });
+
+  it('skips the model for plain English text in EN mode, also for transcripts', async () => {
+    const { service, metaClient } = build(null, {});
+
+    expect(await service.translateMessage('msg-4', 'Please help, people are trapped', 'en')).toBeNull();
+    expect(await service.translateTranscript('tr-1', 'We need help, emergency', 'en')).toBeNull();
+    expect(metaClient.chatJson).not.toHaveBeenCalled();
+  });
+
+  it('still calls the model when the heuristic is not confident or the languages differ', async () => {
+    const { service, metaClient } = build(null, { translated_text: 'Help us', detected_language: 'tr' });
+
+    await service.translateMessage('msg-5', 'Yardım edin', 'en');
+    await service.translateMessage('msg-6', 'hello', 'en');
+
+    expect(metaClient.chatJson).toHaveBeenCalledTimes(2);
+  });
 });

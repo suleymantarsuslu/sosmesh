@@ -6,6 +6,7 @@
 
 import { Injectable, Logger } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
+import { detectConfidentLanguage } from './language-heuristic';
 import { MetaModelClient } from './meta-model-client';
 import { BudgetGuardService } from './budget-guard.service';
 import type { OperatorLocale } from './locale-content.service';
@@ -73,6 +74,10 @@ export class MessageTranslationService {
         detectedLanguage: cached.sourceLanguage,
         cached: true,
       };
+    }
+
+    if (await this.cacheIfConfidentlySameLanguage('sos_message', messageId, 'noteText', originalText, targetLocale)) {
+      return null;
     }
 
     if (process.env.AI_ENABLED !== 'true') {
@@ -230,6 +235,12 @@ Provide:
         detectedLanguage: cached.sourceLanguage,
         cached: true,
       };
+    }
+
+    if (
+      await this.cacheIfConfidentlySameLanguage('ai_transcript', transcriptId, 'transcript', originalText, targetLocale)
+    ) {
+      return null;
     }
 
     if (process.env.AI_ENABLED !== 'true') {
@@ -400,6 +411,39 @@ Provide:
     }
     
     return 'unknown';
+  }
+
+  /**
+   * When a conservative heuristic is sure the text is already in the operator's language, store the
+   * same-language marker and report true so the caller skips the paid model call entirely.
+   */
+  private async cacheIfConfidentlySameLanguage(
+    sourceType: string,
+    sourceId: string,
+    sourceField: string,
+    originalText: string,
+    targetLocale: OperatorLocale
+  ): Promise<boolean> {
+    const confident = detectConfidentLanguage(originalText);
+    if (confident !== targetLocale) {
+      return false;
+    }
+    try {
+      await this.cacheTranslation({
+        sourceType,
+        sourceId,
+        sourceField,
+        sourceLanguage: confident,
+        targetLanguage: targetLocale,
+        translatedText: originalText,
+        modelVersion: 'heuristic',
+      });
+    } catch (error) {
+      // Caching is an optimisation; the verdict is still correct for this request.
+      this.logger.warn({ msg: 'Could not cache heuristic same-language verdict', sourceType, sourceId, err: error });
+    }
+    this.logger.log({ msg: 'Same language by heuristic, model call skipped', sourceType, sourceId, language: confident });
+    return true;
   }
 
   private async reconcileResponse(

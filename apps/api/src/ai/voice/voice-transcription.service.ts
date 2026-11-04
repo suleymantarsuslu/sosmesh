@@ -14,6 +14,7 @@
 
 import { Injectable, Logger } from '@nestjs/common';
 import { PrismaService } from '../../prisma/prisma.service';
+import { detectConfidentLanguage } from '../language-heuristic';
 import { MetaModelClient } from '../meta-model-client';
 import { BudgetGuardService } from '../budget-guard.service';
 import { AudioConversionService } from '../../media/audio-conversion.service';
@@ -256,7 +257,9 @@ export class VoiceTranscriptionService {
         totalAudioDurationMs = asrResponse.audioDurationMs;
       }
 
-      const language = detectedLanguage;
+      // The note-text hint only biases the ASR; the stored language must describe the speech itself.
+      const spoken = detectConfidentLanguage(fullTranscript);
+      const language = spoken === 'unknown' ? detectedLanguage : spoken;
 
       const transcript = await this.prisma.aiTranscript.create({
         data: {

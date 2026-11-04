@@ -1,4 +1,6 @@
 import { Injectable, Logger } from '@nestjs/common';
+import staticRegions from './static-data/static-regions.json';
+import neighborhoodsData from './static-data/neighborhoods.json';
 
 export type RegionArea = {
   osmId: string;
@@ -7,6 +9,12 @@ export type RegionArea = {
   lat: number;
   lon: number;
   boundingBox: [number, number, number, number];
+};
+
+type ErrorResponse = {
+  code: string;
+  messageEN: string;
+  messageTR: string;
 };
 
 class SimpleCache<K, V> {
@@ -219,6 +227,28 @@ export class RegionsService {
       return cached;
     }
 
+    // Check if this is a static district ID (not a relation/... format)
+    const isStaticDistrict = !districtOsmId.match(/^relation\/(\d+)$/);
+    
+    if (isStaticDistrict) {
+      // Handle static district - load from bundled data
+      const neighborhoods = neighborhoodsData.neighborhoods
+        .filter((n: any) => n.districtId === districtOsmId)
+        .map((n: any) => ({
+          osmId: n.osmId,
+          name: n.name,
+          displayName: n.name,
+          lat: n.lat,
+          lon: n.lon,
+          boundingBox: n.boundingBox as [number, number, number, number],
+        }))
+        .sort((a, b) => a.name.localeCompare(b.name, 'tr'));
+
+      this.cache.set(cacheKey, neighborhoods);
+      return neighborhoods;
+    }
+
+    // Legacy path: handle OSM relation IDs via Overpass API
     const match = districtOsmId.match(/^relation\/(\d+)$/);
     if (!match) {
       return [];
@@ -285,6 +315,86 @@ export class RegionsService {
       return cached;
     }
 
+    // Check if this is a static neighborhood ID
+    const isStaticNeighborhood = !neighborhoodOsmId.match(/^(relation|node)\/(\d+)$/);
+    
+    if (isStaticNeighborhood) {
+      // Find the neighborhood in static data
+      const neighborhood = neighborhoodsData.neighborhoods.find((n: any) => n.osmId === neighborhoodOsmId);
+      
+      if (!neighborhood) {
+        // Empty list for unknown neighborhoods, not an error
+        return [];
+      }
+
+      // If neighborhood has coordinates, query Overpass for streets around it
+      if (neighborhood.lat && neighborhood.lon) {
+        try {
+          const lat = neighborhood.lat;
+          const lon = neighborhood.lon;
+          const bbox = neighborhood.boundingBox;
+          const radius = 1000; // 1km radius for street search
+
+          const query = `
+            [out:json][timeout:25];
+            (
+              way(around:${radius},${lat},${lon})[highway][name];
+            );
+            out tags center bb;
+          `;
+
+          const data = await this.overpassQuery(query);
+          
+          const streetMap = new Map<string, { ways: OverpassElement[]; minlat: number; maxlat: number; minlon: number; maxlon: number }>();
+          
+          for (const el of data.elements) {
+            if (!el.tags?.name || !el.center || !el.bounds) {
+              continue;
+            }
+            
+            const name = el.tags.name;
+            if (!streetMap.has(name)) {
+              streetMap.set(name, { ways: [], minlat: el.bounds.minlat, maxlat: el.bounds.maxlat, minlon: el.bounds.minlon, maxlon: el.bounds.maxlon });
+            }
+            
+            const entry = streetMap.get(name)!;
+            entry.ways.push(el);
+            entry.minlat = Math.min(entry.minlat, el.bounds.minlat);
+            entry.maxlat = Math.max(entry.maxlat, el.bounds.maxlat);
+            entry.minlon = Math.min(entry.minlon, el.bounds.minlon);
+            entry.maxlon = Math.max(entry.maxlon, el.bounds.maxlon);
+          }
+
+          const streets: RegionArea[] = Array.from(streetMap.entries())
+            .map(([name, { ways, minlat, maxlat, minlon, maxlon }]) => {
+              const centerLat = (minlat + maxlat) / 2;
+              const centerLon = (minlon + maxlon) / 2;
+              
+              return {
+                osmId: `way/${ways[0].id}`,
+                name,
+                displayName: name,
+                lat: centerLat,
+                lon: centerLon,
+                boundingBox: [minlat, maxlat, minlon, maxlon] as [number, number, number, number],
+              };
+            })
+            .sort((a, b) => a.name.localeCompare(b.name, 'tr'));
+
+          this.cache.set(cacheKey, streets);
+          return streets;
+        } catch (err) {
+          this.logger.warn(`Could not fetch streets for ${neighborhoodOsmId} from Overpass, returning empty list`, err);
+          // Return empty list on error, don't throw
+          return [];
+        }
+      } else {
+        // No coordinates available, return empty list (street is optional)
+        return [];
+      }
+    }
+
+    // Legacy path: handle OSM relation/node IDs via Overpass API
     const match = neighborhoodOsmId.match(/^(relation|node)\/(\d+)$/);
     if (!match) {
       return [];

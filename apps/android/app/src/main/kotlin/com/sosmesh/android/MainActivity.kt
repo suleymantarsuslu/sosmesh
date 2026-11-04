@@ -1,6 +1,7 @@
 package com.sosmesh.android
 
 import android.content.Context
+import android.content.Intent
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
@@ -46,20 +47,22 @@ import com.sosmesh.android.ui.settings.SettingsRoute
 import com.sosmesh.android.ui.settings.SettingsViewModel
 import com.sosmesh.android.ui.theme.SosMeshTheme
 import dagger.hilt.android.AndroidEntryPoint
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.asStateFlow
 
 @AndroidEntryPoint
 class MainActivity : ComponentActivity() {
+    private val _openSosFromWidget = MutableStateFlow(false)
+    private val openSosFromWidget = _openSosFromWidget.asStateFlow()
+
     override fun onCreate(savedInstanceState: Bundle?) {
         installSplashScreen()
         super.onCreate(savedInstanceState)
+        handleWidgetIntent(intent)
         setContent {
             val context = LocalContext.current
             var highContrast by remember { mutableStateOf(readHighContrast(context)) }
             var appUnlocked by remember { mutableStateOf(false) }
-            val openSosFromWidget = intent?.getBooleanExtra(
-                com.sosmesh.android.widget.SosWidgetProvider.EXTRA_OPEN_SOS,
-                false,
-            ) == true
             SosMeshTheme(highContrast = highContrast) {
                 Surface(color = MaterialTheme.colorScheme.background) {
                     PermissionGateRoute(
@@ -70,11 +73,24 @@ class MainActivity : ComponentActivity() {
                     if (appUnlocked) {
                         SosMeshNavHost(
                             onHighContrastChanged = { highContrast = readHighContrast(context) },
-                            openSosFromWidget = openSosFromWidget,
+                            openSosFromWidgetFlow = openSosFromWidget,
+                            onSosNavigationConsumed = { _openSosFromWidget.value = false },
                         )
                     }
                 }
             }
+        }
+    }
+
+    override fun onNewIntent(intent: Intent) {
+        super.onNewIntent(intent)
+        setIntent(intent)
+        handleWidgetIntent(intent)
+    }
+
+    private fun handleWidgetIntent(intent: Intent?) {
+        if (intent?.getBooleanExtra(com.sosmesh.android.widget.SosWidgetProvider.EXTRA_OPEN_SOS, false) == true) {
+            _openSosFromWidget.value = true
         }
     }
 }
@@ -100,10 +116,13 @@ private val topLevelTabs =
 @Composable
 private fun SosMeshNavHost(
     onHighContrastChanged: () -> Unit,
-    openSosFromWidget: Boolean = false,
+    openSosFromWidgetFlow: kotlinx.coroutines.flow.StateFlow<Boolean>,
+    onSosNavigationConsumed: () -> Unit,
 ) {
     val navController = rememberNavController()
     val appContext = LocalContext.current.applicationContext
+    val openSosFromWidget by androidx.compose.runtime.collectAsState(openSosFromWidgetFlow)
+    
     androidx.compose.runtime.LaunchedEffect(Unit) {
         // mesh-v2 §7: optional profile once, after the permission gate (notification permission) is passed.
         val done =
@@ -117,8 +136,6 @@ private fun SosMeshNavHost(
             }
         if (!done) {
             navController.navigate("profile")
-        } else if (openSosFromWidget) {
-            navController.navigate("sos")
         }
 
         kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.IO) {
@@ -127,6 +144,15 @@ private fun SosMeshNavHost(
                     .fromApplication(appContext, BroadcastEntryPoint::class.java)
                 entry.broadcastPoller().start()
             }
+        }
+    }
+    
+    androidx.compose.runtime.LaunchedEffect(openSosFromWidget) {
+        if (openSosFromWidget) {
+            navController.navigate("sos") {
+                launchSingleTop = true
+            }
+            onSosNavigationConsumed()
         }
     }
     val backStackEntry by navController.currentBackStackEntryAsState()

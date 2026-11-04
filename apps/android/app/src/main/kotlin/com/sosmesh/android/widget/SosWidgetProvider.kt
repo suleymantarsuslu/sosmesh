@@ -21,14 +21,6 @@ class SosWidgetProvider : AppWidgetProvider() {
         }
     }
 
-    override fun onEnabled(context: Context) {
-        super.onEnabled(context)
-    }
-
-    override fun onDisabled(context: Context) {
-        super.onDisabled(context)
-    }
-
     companion object {
         const val EXTRA_OPEN_SOS = "com.sosmesh.android.widget.OPEN_SOS"
 
@@ -42,7 +34,7 @@ class SosWidgetProvider : AppWidgetProvider() {
             val intent = Intent(context, MainActivity::class.java).apply {
                 action = Intent.ACTION_VIEW
                 putExtra(EXTRA_OPEN_SOS, true)
-                flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP
+                flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_SINGLE_TOP
             }
 
             val pendingIntent = PendingIntent.getActivity(

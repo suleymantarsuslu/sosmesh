@@ -259,4 +259,6 @@ private class LatchBlockingOutboxDao(
     ): Int = delegate.deleteByKey(sosId, digest)
 
     override fun listDueOwnUpload(nowMs: Long): List<OutboxEntity> = delegate.listDueOwnUpload(nowMs)
+
+    override fun listServerAcceptedOwn(nowMs: Long): List<OutboxEntity> = delegate.listServerAcceptedOwn(nowMs)
 }

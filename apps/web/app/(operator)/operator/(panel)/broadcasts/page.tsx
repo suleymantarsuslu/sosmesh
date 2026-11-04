@@ -25,6 +25,7 @@ type BroadcastHistory = {
   title: string;
   body: string;
   severity: string;
+  kind: string;
   createdBy: string;
   createdAt: string;
   expiresAt: string;

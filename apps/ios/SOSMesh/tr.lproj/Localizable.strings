@@ -1,5 +1,5 @@
 "app.name" = "SOSMesh";
-"app.tagline" = "Acil durum mesh ağı";
+"app.tagline" = "Acil durum ağı";
 "nav.home" = "Ana Sayfa";
 "nav.status" = "Durum";
 "nav.relay" = "Relay";

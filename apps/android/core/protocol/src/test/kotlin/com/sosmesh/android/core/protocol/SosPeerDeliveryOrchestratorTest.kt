@@ -58,6 +58,8 @@ class SosPeerDeliveryOrchestratorTest {
                 radio = radio,
                 permissions = testGrantAllPermissionCoordinator(),
                 bleMeshReadiness = testGrantAllBleMeshReadiness(),
+                peerDeliveryTracker = SosPeerDeliveryTracker(adapter, testOutboxIoScope(), PeerDeliveryRecordStore()),
+                peerRecordStore = PeerDeliveryRecordStore(),
                 ioDispatcher = testIoDispatcher(),
             )
     }
@@ -79,6 +81,8 @@ class SosPeerDeliveryOrchestratorTest {
                     radio = radio,
                     permissions = deniedPermissions,
                     bleMeshReadiness = testBleMeshReadiness(deniedPermissions),
+                    peerDeliveryTracker = SosPeerDeliveryTracker(adapter, testOutboxIoScope(), PeerDeliveryRecordStore()),
+                    peerRecordStore = PeerDeliveryRecordStore(),
                     ioDispatcher = testIoDispatcher(),
                 )
             enqueueAndroidPayload("sos-1", byteArrayOf(1, 2, 3), nowMs = 1L)

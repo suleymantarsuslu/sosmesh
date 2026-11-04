@@ -108,7 +108,7 @@ public final class BleTransferEngine {
     private let centralTransport: GattBleTransferTransport
     private let receiver: BleTransferReceiver
     private let sender: BleTransferSender
-    private let peerDeliveryTracker: SosPeerDeliveryTracker
+    public let peerDeliveryTracker: SosPeerDeliveryTracker
 
     public init(
         serverOutbound: GattOutboundWriting,

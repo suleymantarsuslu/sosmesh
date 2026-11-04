@@ -107,6 +107,11 @@
 "sos.sent.action.status" = "Go to status";
 "notification.sos.delivered.title" = "Your message has been delivered";
 "notification.sos.delivered.body" = "Your SOS message has reached the server.";
+"notification.incoming.sos.title" = "SOSMesh Emergency Alert";
+"notification.incoming.sos.body.relay" = "A nearby help request is being relayed through your device.";
+"notification.incoming.sos.body.full" = "An emergency SOS message was received from a nearby device.";
+"notification.test.title" = "TEST: SOSMesh Emergency Alert";
+"notification.test.body" = "This is a test notification. Not a real emergency.";
 "sos.delivered.title" = "Your help request was delivered";
 "sos.delivered.message" = "This does not replace %@. Call %@ for immediate emergency response.";
 "sos.followup.title" = "Your message was sent. Add anything you want to add";
@@ -164,3 +169,6 @@
 "profile.skip" = "Skip for now";
 "profile.delete" = "Delete profile from this phone";
 "profile.privacy_footer" = "Nothing here is shared until you send an SOS. Every field is optional.";
+"settings.notifications.test.section" = "Notification test";
+"settings.notifications.test.button" = "Send test notification (5 s)";
+"settings.notifications.test.footer" = "After tapping, background the app or lock the screen. A TEST notification should appear within 5 seconds.";

@@ -7,6 +7,22 @@ final class SosNotificationManager: NSObject, UNUserNotificationCenterDelegate {
     
     var pendingSosIds: Set<String> = []
     private let notificationCenter = UNUserNotificationCenter.current()
+    private static let notifiedIncomingKey = "sosmesh.notifiedIncomingSosIds"
+    private var notifiedIncomingSosIds: Set<String> = Set(
+        UserDefaults.standard.stringArray(forKey: SosNotificationManager.notifiedIncomingKey) ?? []
+    )
+
+    /// First run after install/update: remember already-stored SOS ids without notifying,
+    /// so old inbox records loaded from disk don't fire a burst of alerts.
+    func seedIncomingIfNeeded(_ sosIds: [String]) {
+        guard UserDefaults.standard.object(forKey: Self.notifiedIncomingKey) == nil else { return }
+        notifiedIncomingSosIds.formUnion(sosIds)
+        persistNotifiedIncoming()
+    }
+
+    private func persistNotifiedIncoming() {
+        UserDefaults.standard.set(Array(notifiedIncomingSosIds.suffix(500)), forKey: Self.notifiedIncomingKey)
+    }
     
     override init() {
         super.init()
@@ -57,6 +73,49 @@ final class SosNotificationManager: NSObject, UNUserNotificationCenterDelegate {
         }
     }
     
+    func notifyIncomingSos(sosId: String, isRelayOnly: Bool) {
+        guard !notifiedIncomingSosIds.contains(sosId) else { return }
+        notifiedIncomingSosIds.insert(sosId)
+        persistNotifiedIncoming()
+        
+        let content = UNMutableNotificationContent()
+        content.title = NSLocalizedString("notification.incoming.sos.title", comment: "")
+        
+        if isRelayOnly {
+            content.body = NSLocalizedString("notification.incoming.sos.body.relay", comment: "")
+        } else {
+            content.body = NSLocalizedString("notification.incoming.sos.body.full", comment: "")
+        }
+        
+        content.sound = .default
+        content.userInfo = ["sosId": sosId, "action": "viewRelay", "incoming": true]
+        
+        let request = UNNotificationRequest(
+            identifier: "incoming-sos-\(sosId)",
+            content: content,
+            trigger: nil
+        )
+        
+        notificationCenter.add(request)
+    }
+    
+    func scheduleTestNotification() {
+        let content = UNMutableNotificationContent()
+        content.title = NSLocalizedString("notification.test.title", comment: "")
+        content.body = NSLocalizedString("notification.test.body", comment: "")
+        content.sound = .default
+        content.userInfo = ["action": "viewRelay", "test": true]
+        
+        let trigger = UNTimeIntervalNotificationTrigger(timeInterval: 5, repeats: false)
+        let request = UNNotificationRequest(
+            identifier: "test-notification-\(UUID().uuidString)",
+            content: content,
+            trigger: trigger
+        )
+        
+        notificationCenter.add(request)
+    }
+    
     nonisolated func userNotificationCenter(
         _ center: UNUserNotificationCenter,
         willPresent notification: UNNotification,
@@ -74,13 +133,19 @@ final class SosNotificationManager: NSObject, UNUserNotificationCenterDelegate {
         didReceive response: UNNotificationResponse,
         withCompletionHandler completionHandler: @escaping () -> Void
     ) {
-        if response.notification.request.content.userInfo["action"] as? String == "viewStatus" {
+        let userInfo = response.notification.request.content.userInfo
+        
+        if userInfo["action"] as? String == "viewStatus" {
             NotificationCenter.default.post(name: .navigateToStatusTab, object: nil)
+        } else if userInfo["action"] as? String == "viewRelay" {
+            NotificationCenter.default.post(name: .navigateToRelayTab, object: nil)
         }
+        
         completionHandler()
     }
 }
 
 extension Notification.Name {
     static let navigateToStatusTab = Notification.Name("navigateToStatusTab")
+    static let navigateToRelayTab = Notification.Name("navigateToRelayTab")
 }

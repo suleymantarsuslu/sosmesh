@@ -107,6 +107,11 @@
 "sos.sent.action.status" = "Durum ekranına git";
 "notification.sos.delivered.title" = "Mesajınız gönderildi";
 "notification.sos.delivered.body" = "SOS mesajınız sunucuya ulaştı.";
+"notification.incoming.sos.title" = "SOSMesh Acil Durum Uyarısı";
+"notification.incoming.sos.body.relay" = "Yakınınızda bir yardım çağrısı var, iletiliyor.";
+"notification.incoming.sos.body.full" = "Yakındaki bir cihazdan acil durum SOS mesajı alındı.";
+"notification.test.title" = "TEST: SOSMesh Acil Durum Uyarısı";
+"notification.test.body" = "Bu bir test bildirimidir. Gerçek acil durum değil.";
 "sos.delivered.title" = "Yardım talebiniz iletildi";
 "sos.delivered.message" = "Bu, %@'nin yerine geçmez. Acil yardım için %@'yi arayın.";
 "sos.followup.title" = "Mesajınız gönderildi. Eklemek istediğiniz bir şey varsa ekleyin";
@@ -164,3 +169,6 @@
 "profile.skip" = "Şimdilik geç";
 "profile.delete" = "Profili bu telefondan sil";
 "profile.privacy_footer" = "SOS gönderene kadar buradaki hiçbir bilgi paylaşılmaz. Tüm alanlar isteğe bağlıdır.";
+"settings.notifications.test.section" = "Bildirim testi";
+"settings.notifications.test.button" = "Test bildirimi gönder (5 sn)";
+"settings.notifications.test.footer" = "Butona bastıktan sonra uygulamayı arka plana al veya ekranı kilitle. 5 saniye içinde TEST bildirimi görünmeli.";

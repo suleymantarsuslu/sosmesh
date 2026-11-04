@@ -24,7 +24,11 @@ final class AppModel: ObservableObject {
     @Published private(set) var permissionGateStatus: PermissionGateStatus =
         .blocked(step: .bluetooth, reason: .notDetermined)
     @Published private(set) var outboxEntries: [OutboxEntryMeta] = []
-    @Published private(set) var receivedInbox: [ReceivedSosRecord] = []
+    @Published private(set) var receivedInbox: [ReceivedSosRecord] = [] {
+        didSet {
+            handleReceivedInboxChange(old: oldValue, new: receivedInbox)
+        }
+    }
     @Published var lastUploadToken: String?
     @Published private(set) var relayDiagnostics = RelayDiagnosticsSnapshot()
     @Published var showDeliveredModal = false
@@ -731,5 +735,30 @@ extension AppModel {
 
     static func preview(snapshot: PermissionGateSnapshot) -> AppModel {
         AppModel(permissionProbe: StubAppPermissionProbe(snapshot: snapshot))
+    }
+    
+    private func handleReceivedInboxChange(old: [ReceivedSosRecord], new: [ReceivedSosRecord]) {
+        if old.isEmpty {
+            let ids = new.map(\.sosId)
+            Task { @MainActor in SosNotificationManager.shared.seedIncomingIfNeeded(ids) }
+        }
+        let oldIds = Set(old.map(\.sosId))
+        let newIds = Set(new.map(\.sosId))
+        let addedIds = newIds.subtracting(oldIds)
+        
+        guard !addedIds.isEmpty else { return }
+        
+        let ownSosIds = Set(outboxEntries.filter { $0.origin != SosOutboxService.relayOrigin }.map(\.sosId))
+        
+        for sosId in addedIds {
+            guard !ownSosIds.contains(sosId) else { continue }
+            
+            Task { @MainActor in
+                await SosNotificationManager.shared.notifyIncomingSos(
+                    sosId: sosId,
+                    isRelayOnly: true
+                )
+            }
+        }
     }
 }

@@ -37,6 +37,9 @@ struct RootTabView: View {
                 .onReceive(NotificationCenter.default.publisher(for: .navigateToStatusTab)) { _ in
                     selectedTab = 1
                 }
+                .onReceive(NotificationCenter.default.publisher(for: .navigateToRelayTab)) { _ in
+                    selectedTab = 2
+                }
             }
         }
         .onAppear {

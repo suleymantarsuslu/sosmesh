@@ -62,6 +62,17 @@ struct SettingsView: View {
                     Text("settings.multihop.footer")
                         .font(.footnote)
                 }
+                Section("settings.notifications.test.section") {
+                    Button {
+                        Task { @MainActor in
+                            await SosNotificationManager.shared.scheduleTestNotification()
+                        }
+                    } label: {
+                        Label("settings.notifications.test.button", systemImage: "bell.badge")
+                    }
+                    Text("settings.notifications.test.footer")
+                        .font(.footnote)
+                }
                 #if DEBUG
                 Section("settings.debug.fault_simulation") {
                     Toggle("settings.debug.use_fault_simulation", isOn: $appModel.useFaultSimulationOverrides)
@@ -71,6 +82,7 @@ struct SettingsView: View {
                     Toggle("settings.debug.simulate_bluetooth_off", isOn: $appModel.simulateBluetoothOff)
                     Toggle("settings.debug.simulate_permissions_denied", isOn: $appModel.simulatePermissionsDenied)
                     Toggle("settings.debug.simulate_location_unavailable", isOn: $appModel.simulateLocationUnavailable)
+
                 }
                 #endif
             }

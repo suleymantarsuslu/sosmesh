@@ -28,6 +28,20 @@ class SosMeshApplication : Application(), Configuration.Provider {
         crashReporter.install()
         meshV2Runtime.install(filesDir)
         meshV2OutboxSync.start()
+        com.sosmesh.android.core.data.broadcast.BroadcastFetchWorker.schedule(this)
+        initializeFirebase()
+    }
+
+    private fun initializeFirebase() {
+        val projectId = null
+        val applicationId = null
+        val apiKey = null
+        com.sosmesh.android.core.data.broadcast.FirebaseInitializer.initialize(
+            this,
+            projectId,
+            applicationId,
+            apiKey,
+        )
     }
 
     override val workManagerConfiguration: Configuration

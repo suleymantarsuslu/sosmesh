@@ -34,6 +34,7 @@ class BroadcastRepository(
             val jsonArray = JSONArray(response.body?.string() ?: "[]")
             val broadcasts = mutableListOf<ServerBroadcast>()
             val now = Instant.now()
+            var maxCreatedAt: String? = null
 
             for (i in 0 until jsonArray.length()) {
                 val obj = jsonArray.getJSONObject(i)
@@ -60,9 +61,16 @@ class BroadcastRepository(
 
                 broadcasts.add(broadcast)
                 store.markSeen(broadcast.id)
+
+                if (maxCreatedAt == null || broadcast.createdAt > maxCreatedAt) {
+                    maxCreatedAt = broadcast.createdAt
+                }
             }
 
-            store.updateLastFetchTime()
+            if (maxCreatedAt != null) {
+                store.updateLastFetchTime(maxCreatedAt)
+            }
+
             broadcasts
         }
 

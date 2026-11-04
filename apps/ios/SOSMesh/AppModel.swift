@@ -75,6 +75,8 @@ final class AppModel: ObservableObject {
     @Published var lastSubmitPlan: SosRateLimiter.Plan = .sendNow
     private var broadcastRepository: BroadcastRepository?
     private var broadcastNotificationManager: BroadcastNotificationManager?
+    private var pushTokenManager: PushTokenManager?
+    private var broadcastPollingTask: Task<Void, Never>?
 
     init(
         permissionProbe: AppPermissionProbing? = nil,
@@ -109,6 +111,8 @@ final class AppModel: ObservableObject {
         permissionProbe.primeBluetoothAuthorizationIfAlreadyAuthorized()
         initializeAttachmentCoordinator()
         initializeBroadcasts()
+        registerForRemoteNotifications()
+        startBroadcastPolling()
         Task {
             await refreshPermissionGate()
             await fetchAndNotifyBroadcasts()
@@ -276,11 +280,13 @@ final class AppModel: ObservableObject {
     func noteEnteredBackground() {
         try? restorationMachine.apply(.didEnterBackground)
         restorationPhase = restorationMachine.phase
+        stopBroadcastPolling()
     }
 
     func noteEnteredForeground() {
         try? restorationMachine.apply(.willEnterForeground)
         restorationPhase = restorationMachine.phase
+        startBroadcastPolling()
         Task {
             await refreshPermissionGate()
             await attachmentCoordinator?.processQueue()
@@ -480,6 +486,45 @@ final class AppModel: ObservableObject {
         }
         self.broadcastRepository = repository
         self.broadcastNotificationManager = BroadcastNotificationManager()
+        self.pushTokenManager = PushTokenManager(apiBaseUrl: config.baseURL)
+    }
+    
+    private func registerForRemoteNotifications() {
+        Task { @MainActor in
+            await UIApplication.shared.registerForRemoteNotifications()
+        }
+    }
+    
+    func didRegisterForRemoteNotifications(token: Data) {
+        guard let pushTokenManager = pushTokenManager else { return }
+        Task {
+            await pushTokenManager.registerToken(token)
+        }
+    }
+    
+    func didReceiveRemoteNotification(userInfo: [AnyHashable: Any]) {
+        if userInfo["broadcastId"] != nil {
+            Task {
+                await fetchAndNotifyBroadcasts()
+            }
+        }
+    }
+    
+    private func startBroadcastPolling() {
+        broadcastPollingTask?.cancel()
+        broadcastPollingTask = Task {
+            while !Task.isCancelled {
+                try? await Task.sleep(nanoseconds: 20_000_000_000)
+                if !Task.isCancelled {
+                    await fetchAndNotifyBroadcasts()
+                }
+            }
+        }
+    }
+    
+    private func stopBroadcastPolling() {
+        broadcastPollingTask?.cancel()
+        broadcastPollingTask = nil
     }
 
     private func fetchAndNotifyBroadcasts() async {

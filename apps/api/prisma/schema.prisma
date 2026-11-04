@@ -701,3 +701,22 @@ model BroadcastNotification {
   @@index([createdAt(sort: Desc)])
   @@map("broadcast_notifications")
 }
+
+enum DevicePlatform {
+  android
+  ios
+}
+
+/// Device push tokens for broadcast notifications
+model DevicePushToken {
+  id         String         @id @default(uuid()) @db.Uuid
+  platform   DevicePlatform
+  token      String         @db.VarChar(500)
+  deviceId   String         @map("device_id") @db.VarChar(200)
+  createdAt  DateTime       @default(now()) @map("created_at")
+  updatedAt  DateTime       @updatedAt @map("updated_at")
+
+  @@unique([platform, deviceId])
+  @@index([platform, token])
+  @@map("device_push_tokens")
+}

@@ -18,8 +18,10 @@ import { RolesGuard } from '../operator/guards/roles.guard';
 import { UserRole } from '@prisma/client';
 import { BroadcastService } from './broadcast.service';
 import { BroadcastSignerService } from './broadcast-signer.service';
+import { PushNotificationService } from './push-notification.service';
 import { CreateBroadcastDto } from './dto/create-broadcast.dto';
 import { BroadcastHistoryDto, BroadcastResponseDto } from './dto/broadcast-response.dto';
+import { RegisterPushTokenDto } from './dto/register-push-token.dto';
 import { StructuredEventLogger } from '../observability/structured-event-logger.service';
 
 @Controller('v1/operator/broadcasts')
@@ -76,6 +78,17 @@ export class DeviceBroadcastController {
   ): Promise<BroadcastResponseDto[]> {
     const sinceCursor = since ? new Date(since) : new Date(Date.now() - 7 * 24 * 60 * 60 * 1000);
     return this.broadcastService.listActive(sinceCursor);
+  }
+}
+
+@Controller('v1/device/push-tokens')
+export class DevicePushTokenController {
+  constructor(private readonly pushService: PushNotificationService) {}
+
+  @Post()
+  @HttpCode(HttpStatus.NO_CONTENT)
+  async register(@Body() dto: RegisterPushTokenDto): Promise<void> {
+    await this.pushService.registerToken(dto.platform as any, dto.token, dto.deviceId);
   }
 }
 

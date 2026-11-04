@@ -113,39 +113,7 @@ private fun SosMeshNavHost(onHighContrastChanged: () -> Unit) {
             runCatching {
                 val entry = dagger.hilt.android.EntryPointAccessors
                     .fromApplication(appContext, BroadcastEntryPoint::class.java)
-                
-                val runtime = com.sosmesh.android.meshv2.v2.MeshV2Runtime.installed
-                val repository = entry.broadcastRepository()
-                val notificationManager = entry.broadcastNotificationManager()
-                val nowMs = System.currentTimeMillis()
-                val location = try {
-                    val locationManager = appContext.getSystemService(Context.LOCATION_SERVICE) as? android.location.LocationManager
-                    locationManager?.getLastKnownLocation(android.location.LocationManager.PASSIVE_PROVIDER)
-                } catch (e: SecurityException) {
-                    null
-                }
-                val broadcasts = repository.fetchAndProcessBroadcasts(location)
-                
-                broadcasts.forEach { broadcast ->
-                    notificationManager.showNotification(broadcast)
-                    
-                    runtime?.node?.broadcasts?.put(
-                        com.sosmesh.android.meshv2.v2.ServerBroadcast(
-                            id = broadcast.id,
-                            title = broadcast.title,
-                            body = broadcast.body,
-                            severity = broadcast.severity,
-                            createdAt = broadcast.createdAt,
-                            expiresAt = broadcast.expiresAt,
-                            regionLat = broadcast.regionLat,
-                            regionLng = broadcast.regionLng,
-                            regionRadiusKm = broadcast.regionRadiusKm,
-                            signature = broadcast.signature,
-                            hopsLeft = 8,
-                        ),
-                        nowMs
-                    )
-                }
+                entry.broadcastPoller().start()
             }
         }
     }
@@ -254,6 +222,5 @@ interface ProfileEntryPoint {
 @dagger.hilt.EntryPoint
 @dagger.hilt.InstallIn(dagger.hilt.components.SingletonComponent::class)
 interface BroadcastEntryPoint {
-    fun broadcastRepository(): com.sosmesh.android.core.data.broadcast.BroadcastRepository
-    fun broadcastNotificationManager(): com.sosmesh.android.core.data.broadcast.BroadcastNotificationManager
+    fun broadcastPoller(): com.sosmesh.android.core.data.broadcast.BroadcastPoller
 }

@@ -2513,22 +2513,6 @@ html[data-theme='dark'] .case-detail-modern__input {
 }
 
 
-.operator-incident-switcher {
-  display: flex;
-  flex-wrap: nowrap;
-  gap: var(--space-1, 0.25rem);
-  align-items: center;
-  font-size: var(--type-fontSize-sm, 0.875rem);
-  white-space: nowrap;
-}
-
-.operator-incident-switcher > span:first-child {
-  position: absolute;
-  width: 1px;
-  height: 1px;
-  overflow: hidden;
-  clip: rect(0, 0, 0, 0);
-}
 
 .operator-topbar__brand-mobile {
   display: none;

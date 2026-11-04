@@ -7,23 +7,41 @@ type Props = {
   originalText: string;
   translatedText: string | null;
   detectedLanguage: string | null;
-  aiAvailable: boolean;
+  /** Operator UI language ('tr' | 'en'); same-language messages never show the badge. */
+  uiLanguage: string;
 };
+
+const LANGUAGE_NAMES: Record<string, string> = {
+  turkish: 'tr',
+  türkçe: 'tr',
+  english: 'en',
+  ingilizce: 'en',
+};
+
+function normalizeLanguage(value: string | null): string | null {
+  if (!value) return null;
+  const lower = value.trim().toLowerCase();
+  if (LANGUAGE_NAMES[lower]) return LANGUAGE_NAMES[lower];
+  return lower.slice(0, 2);
+}
 
 export function TranslatedMessageDisplay({
   originalText,
   translatedText,
   detectedLanguage,
-  aiAvailable,
+  uiLanguage,
 }: Props) {
   const { t } = useOperatorPreferences();
   const [showOriginal, setShowOriginal] = useState(false);
+
+  const detected = normalizeLanguage(detectedLanguage);
+  const showNotTranslated = !translatedText && detected !== null && detected !== normalizeLanguage(uiLanguage);
 
   if (!translatedText) {
     return (
       <div className="translated-message" data-testid="original-message-only">
         <p className="translated-message__text">{originalText}</p>
-        {!aiAvailable && (
+        {showNotTranslated && (
           <p className="translated-message__note" role="note">
             <span className="translated-message__badge">{t('web.translation.notTranslated')}</span>
           </p>

@@ -52,7 +52,7 @@ function feedEventToCase(event: FeedEvent, existing?: OperatorCaseRow): Operator
 }
 
 export function CasesView({ initialCases }: { initialCases: OperatorCaseRow[] }) {
-  const { activeIncidentId, t } = useOperatorPreferences();
+  const { t } = useOperatorPreferences();
   const [cases, setCases] = useState<OperatorCaseRow[]>(initialCases);
   const [filters, setFilters] = useState(defaultCaseFilters());
   const [now, setNow] = useState(Date.now());
@@ -109,13 +109,7 @@ export function CasesView({ initialCases }: { initialCases: OperatorCaseRow[] })
 
   const feed = useLiveFeed(onFeedEvent);
 
-  const filtered = useMemo(() => {
-    const base = applyCaseFilters(cases, filters);
-    if (!activeIncidentId) {
-      return base;
-    }
-    return base.filter((row) => row.incidentId === activeIncidentId);
-  }, [cases, filters, activeIncidentId]);
+  const filtered = useMemo(() => applyCaseFilters(cases, filters), [cases, filters]);
   const plottable = useMemo(
     () => filtered.filter((row) => hasPlottableCoordinates(row)),
     [filtered]

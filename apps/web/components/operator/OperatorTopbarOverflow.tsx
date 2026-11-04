@@ -6,10 +6,9 @@ import { LocaleSwitcher } from '../i18n/LocaleSwitcher';
 import { Button } from '../ui/Button';
 import { FixedPanel } from '../ui/FixedPanel';
 
-import { IncidentSwitcher, type IncidentOption } from './IncidentSwitcher';
 import { useOperatorPreferences } from './OperatorPreferencesProvider';
 
-export function OperatorTopbarOverflow({ incidents }: { incidents: IncidentOption[] }) {
+export function OperatorTopbarOverflow() {
   const { t, theme, setTheme } = useOperatorPreferences();
   const [open, setOpen] = useState(false);
   const triggerRef = useRef<HTMLButtonElement>(null);
@@ -46,7 +45,6 @@ export function OperatorTopbarOverflow({ incidents }: { incidents: IncidentOptio
           >
             {theme === 'light' ? t('web.shell.themeDark') : t('web.shell.themeLight')}
           </button>
-          <IncidentSwitcher incidents={incidents} />
         </FixedPanel>
       ) : null}
     </div>

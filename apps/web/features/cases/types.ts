@@ -1,3 +1,4 @@
+import type { TranscriptView } from '../ai/types';
 import type { OperatorCaseRow } from '../case-list/types';
 
 export type OperatorAiSuggestion = {
@@ -29,6 +30,16 @@ export type OperatorAttachmentSummary = {
   visionStatus: 'pending' | 'processing' | 'completed' | 'failed' | null;
 };
 
+/**
+ * Transcript as returned in the case detail. Translation fields are optional: the API does
+ * not expose a transcript translation yet, so they render only when present.
+ */
+export type OperatorTranscript = TranscriptView & {
+  translatedTranscript?: string | null;
+  translatedText?: string | null;
+  translationLanguage?: string | null;
+};
+
 export type OperatorCaseDetail = OperatorCaseRow & {
   version: number;
   reviewStatus: string;
@@ -45,6 +56,7 @@ export type OperatorCaseDetail = OperatorCaseRow & {
   };
   ai: OperatorAiSuggestion | null;
   attachments?: OperatorAttachmentSummary[];
+  transcripts?: OperatorTranscript[];
   timeline: {
     id: string;
     deliveryState: string;

@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useRef, useState } from 'react';
 
+import { useOperatorPreferences } from '../../components/operator/OperatorPreferencesProvider';
 import type {
   AiTriageView,
   TranscriptView,
@@ -22,85 +23,43 @@ type AiData = {
 };
 
 export function CaseDetailClient({ incidentId }: { incidentId: string }) {
+  const { locale, t } = useOperatorPreferences();
   const [detail, setDetail] = useState<OperatorCaseDetail | null>(null);
   const [aiData, setAiData] = useState<AiData | null>(null);
+  const [aiState, setAiState] = useState<'loading' | 'ready' | 'error'>('loading');
   const [error, setError] = useState<string | null>(null);
-  const [samVision, setSamVision] = useState<SamVisionView | null>(null);
   const seenSent = useRef(false);
 
   const loadDetail = useCallback(async () => {
-    const res = await fetch(`/api/operator/cases/${incidentId}/detail`, { cache: 'no-store' });
+    const res = await fetch(`/api/operator/cases/${incidentId}/detail?locale=${locale}`, {
+      cache: 'no-store',
+    });
     if (!res.ok) {
-      setError('Vaka yüklenemedi');
+      setError('load');
       setDetail(null);
       return;
     }
     const body = (await res.json()) as OperatorCaseDetail;
     setDetail(body);
     setError(null);
-  }, [incidentId]);
+  }, [incidentId, locale]);
 
   const loadAiData = useCallback(async () => {
     try {
-      const res = await fetch(`/api/operator/cases/${incidentId}/ai`, { cache: 'no-store' });
+      const res = await fetch(`/api/operator/cases/${incidentId}/ai?locale=${locale}`, {
+        cache: 'no-store',
+      });
       if (res.ok) {
         const data = (await res.json()) as AiData;
         setAiData(data);
+        setAiState('ready');
+        return;
       }
     } catch {
-      setAiData({
-        triage: null,
-        transcript: null,
-        sparkVision: null,
-        samVision: null,
-        linkSuggestions: [],
-      });
+      // fall through to the error state
     }
-  }, [incidentId]);
-
-  const photoIds = (detail?.attachments ?? [])
-    .filter((a) => a.kind === 'photo' && a.visionStatus === 'completed')
-    .map((a) => a.id)
-    .join(',');
-
-  useEffect(() => {
-    const photoId = photoIds.split(',')[0];
-    if (!photoId) {
-      setSamVision(null);
-      return;
-    }
-    let cancelled = false;
-    void (async () => {
-      try {
-        const res = await fetch(`/api/operator/attachments/${photoId}/masks`, { cache: 'no-store' });
-        if (!res.ok) {
-          if (!cancelled) setSamVision(null);
-          return;
-        }
-        const body = (await res.json()) as {
-          found?: boolean;
-          imageWidth: number;
-          imageHeight: number;
-          segments: SamVisionView['segments'];
-        };
-        if (!cancelled) {
-          setSamVision({
-            attachmentId: photoId,
-            model: 'sam-3.1',
-            imageWidth: body.imageWidth,
-            imageHeight: body.imageHeight,
-            segments: body.segments ?? [],
-            analyzedAt: new Date().toISOString(),
-          });
-        }
-      } catch {
-        if (!cancelled) setSamVision(null);
-      }
-    })();
-    return () => {
-      cancelled = true;
-    };
-  }, [photoIds]);
+    setAiState('error');
+  }, [incidentId, locale]);
 
   const recordSeen = useCallback(async () => {
     const res = await fetch(`/api/operator/cases/${incidentId}/seen`, { method: 'POST' });
@@ -137,15 +96,23 @@ export function CaseDetailClient({ incidentId }: { incidentId: string }) {
   if (error) {
     return (
       <p role="alert" data-testid="case-detail-error">
-        {error}
+        {t('web.cases.loadFailed')}
       </p>
     );
   }
   if (!detail) {
-    return <p>Yükleniyor…</p>;
+    return <p>{t('web.common.loading')}</p>;
   }
-  const mergedAiData: AiData | null = aiData
-    ? { ...aiData, samVision: aiData.samVision ?? samVision, linkSuggestions: aiData.linkSuggestions ?? [] }
-    : aiData;
-  return <CaseDetailView detail={detail} aiData={mergedAiData} onRefresh={refresh} />;
+  const normalizedAiData: AiData | null = aiData
+    ? { ...aiData, linkSuggestions: aiData.linkSuggestions ?? [] }
+    : null;
+  return (
+    <CaseDetailView
+      detail={detail}
+      aiData={normalizedAiData}
+      aiState={aiState}
+      onRefresh={refresh}
+      onRetryAi={loadAiData}
+    />
+  );
 }

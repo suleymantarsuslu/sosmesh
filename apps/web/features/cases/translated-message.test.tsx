@@ -12,7 +12,7 @@ jest.mock('../../components/operator/OperatorPreferencesProvider', () => ({
       const translations: Record<string, string> = {
         'web.translation.machineTranslation': 'Machine translation (AI)',
         'web.translation.original': 'Original',
-        'web.translation.notTranslated': 'Not translated (AI unavailable)',
+        'web.translation.notTranslated': 'Not translated',
         'web.translation.toggle': 'Show original',
         'web.translation.hideOriginal': 'Hide original',
       };
@@ -28,7 +28,7 @@ describe('TranslatedMessageDisplay', () => {
         originalText="Depremde mahsur kaldım"
         translatedText={null}
         detectedLanguage={null}
-        aiAvailable={true}
+        uiLanguage="en"
       />
     );
 
@@ -42,7 +42,7 @@ describe('TranslatedMessageDisplay', () => {
         originalText="Depremde mahsur kaldım"
         translatedText="I am trapped in the earthquake"
         detectedLanguage="Turkish"
-        aiAvailable={true}
+        uiLanguage="en"
       />
     );
 
@@ -57,7 +57,7 @@ describe('TranslatedMessageDisplay', () => {
         originalText="Depremde mahsur kaldım"
         translatedText="I am trapped in the earthquake"
         detectedLanguage="Turkish"
-        aiAvailable={true}
+        uiLanguage="en"
       />
     );
 
@@ -75,16 +75,27 @@ describe('TranslatedMessageDisplay', () => {
     expect(screen.getByText('I am trapped in the earthquake')).toBeInTheDocument();
   });
 
-  it('shows AI unavailable badge when AI disabled', () => {
-    render(
+  it('shows the not-translated badge only when the message language differs from the UI language', () => {
+    const { rerender } = render(
       <TranslatedMessageDisplay
         originalText="Depremde mahsur kaldım"
         translatedText={null}
-        detectedLanguage={null}
-        aiAvailable={false}
+        detectedLanguage="tr"
+        uiLanguage="en"
       />
     );
 
-    expect(screen.getByText('Not translated (AI unavailable)')).toBeInTheDocument();
+    expect(screen.getByText('Not translated')).toBeInTheDocument();
+
+    rerender(
+      <TranslatedMessageDisplay
+        originalText="Depremde mahsur kaldım"
+        translatedText={null}
+        detectedLanguage="tr"
+        uiLanguage="tr"
+      />
+    );
+
+    expect(screen.queryByText('Not translated')).not.toBeInTheDocument();
   });
 });

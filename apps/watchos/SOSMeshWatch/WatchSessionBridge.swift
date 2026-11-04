@@ -331,6 +331,4 @@ final class WatchMeshHandoff: NSObject, CBCentralManagerDelegate, CBPeripheralDe
             peripheral?.writeValue(value, for: c, type: .withResponse)
         }
     }
-
-    }
 }

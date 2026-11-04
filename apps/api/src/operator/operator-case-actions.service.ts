@@ -1,6 +1,7 @@
 import {
   BadRequestException,
   ConflictException,
+  ForbiddenException,
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
@@ -8,6 +9,7 @@ import {
   DeliveryState,
   OperatorReviewStatus,
   Prisma,
+  UserRole,
 } from '@prisma/client';
 
 import { PrismaService } from '../prisma/prisma.service';
@@ -443,5 +445,58 @@ export class OperatorCaseActionsService {
         after: details.after ?? details,
       };
     });
+  }
+
+  async deleteIncident(
+    user: OperatorRequestUser,
+    incidentId: string
+  ): Promise<{ deleted: boolean; deletedAt: string }> {
+    if (user.role !== UserRole.COORDINATOR && user.role !== UserRole.ADMIN) {
+      throw new ForbiddenException({
+        code: 'FORBIDDEN',
+        message: 'Only coordinators can delete incidents',
+      });
+    }
+
+    const allowed = await this.scope.canAccessIncident(user, incidentId, this.prisma);
+    if (!allowed) {
+      throw new NotFoundException({ code: 'NOT_FOUND', message: 'Case not found' });
+    }
+
+    const deletedAt = new Date();
+
+    await this.prisma.$transaction(async (tx) => {
+      const incident = await tx.incident.findUnique({
+        where: { id: incidentId },
+        select: { deletedAt: true },
+      });
+
+      if (!incident) {
+        throw new NotFoundException({ code: 'NOT_FOUND', message: 'Case not found' });
+      }
+
+      if (incident.deletedAt) {
+        throw new BadRequestException({
+          code: 'ALREADY_DELETED',
+          message: 'Case is already deleted',
+        });
+      }
+
+      await tx.incident.update({
+        where: { id: incidentId },
+        data: { deletedAt },
+      });
+
+      await tx.auditLog.create({
+        data: {
+          actorId: user.sub,
+          incidentId,
+          action: 'INCIDENT_DELETED',
+          detailsJson: { deletedAt: deletedAt.toISOString() },
+        },
+      });
+    });
+
+    return { deleted: true, deletedAt: deletedAt.toISOString() };
   }
 }

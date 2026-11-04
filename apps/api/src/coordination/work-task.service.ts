@@ -5,6 +5,7 @@ import {
   NotFoundException,
 } from '@nestjs/common';
 import {
+  OperatorReviewStatus,
   UserRole,
   WorkTaskSource,
   WorkTaskStatus,
@@ -28,6 +29,9 @@ export type WorkTaskDto = {
   resourceId: string | null;
   assigneeId: string | null;
   assigneeDisplayName: string | null;
+  completedById: string | null;
+  completedByDisplayName: string | null;
+  completedAt: string | null;
   title: string;
   description: string | null;
   status: WorkTaskStatus;
@@ -43,6 +47,8 @@ function mapTask(row: {
   teamId: string;
   resourceId: string | null;
   assigneeId: string | null;
+  completedById: string | null;
+  completedAt: Date | null;
   title: string;
   description: string | null;
   status: WorkTaskStatus;
@@ -51,6 +57,7 @@ function mapTask(row: {
   createdAt: Date;
   updatedAt: Date;
   assignee: { displayName: string } | null;
+  completedBy?: { displayName: string } | null;
   team?: { name: string } | null;
 }): WorkTaskDto {
   return {
@@ -61,6 +68,9 @@ function mapTask(row: {
     resourceId: row.resourceId,
     assigneeId: row.assigneeId,
     assigneeDisplayName: row.assignee?.displayName ?? null,
+    completedById: row.completedById,
+    completedByDisplayName: row.completedBy?.displayName ?? null,
+    completedAt: row.completedAt?.toISOString() ?? null,
     title: row.title,
     description: row.description,
     status: row.status,
@@ -73,6 +83,7 @@ function mapTask(row: {
 
 const TASK_INCLUDE = {
   assignee: { select: { displayName: true } },
+  completedBy: { select: { displayName: true } },
   team: { select: { name: true } },
 } as const;
 
@@ -154,6 +165,22 @@ export class WorkTaskService {
         ...scopeWhere,
         ...(query.incidentId ? { incidentId: query.incidentId } : {}),
         ...(query.status ? { status: query.status } : {}),
+      },
+      orderBy: { updatedAt: 'desc' },
+      take: 100,
+      include: TASK_INCLUDE,
+    });
+    return { items: rows.map(mapTask) };
+  }
+
+  async listTaskHistory(
+    user: OperatorRequestUser
+  ): Promise<{ items: WorkTaskDto[] }> {
+    const scopeWhere = this.scope.workTaskWhere(user);
+    const rows = await this.prisma.workTask.findMany({
+      where: {
+        ...scopeWhere,
+        status: { in: [WorkTaskStatus.CLOSED, WorkTaskStatus.WITHDRAWN] },
       },
       orderBy: { updatedAt: 'desc' },
       take: 100,
@@ -381,6 +408,19 @@ export class WorkTaskService {
     });
   }
 
+  async completeTask(
+    user: OperatorRequestUser,
+    taskId: string,
+    input: { expectedVersion: number }
+  ): Promise<WorkTaskDto> {
+    return this.transitionTask(user, taskId, {
+      expectedVersion: input.expectedVersion,
+      nextStatus: WorkTaskStatus.CLOSED,
+      action: 'work_task.complete',
+      markCompleted: true,
+    });
+  }
+
   async acceptTask(
     user: OperatorRequestUser,
     taskId: string,
@@ -402,6 +442,8 @@ export class WorkTaskService {
       assigneeId?: string;
       /** Team-level assignment: ASSIGNED without an individual assignee. */
       teamLevel?: boolean;
+      /** Mark as completed with timestamp and completedBy user. */
+      markCompleted?: boolean;
       action: string;
     }
   ): Promise<WorkTaskDto> {
@@ -461,6 +503,9 @@ export class WorkTaskService {
         data: {
           status: params.nextStatus,
           assigneeId,
+          ...(params.markCompleted
+            ? { completedAt: new Date(), completedById: user.sub }
+            : {}),
         },
         include: TASK_INCLUDE,
       });
@@ -482,6 +527,36 @@ export class WorkTaskService {
           },
         },
       });
+
+      if (params.nextStatus === WorkTaskStatus.ASSIGNED) {
+        const incident = await tx.incident.findUnique({
+          where: { id: existing.incidentId },
+          select: { reviewStatus: true, version: true },
+        });
+
+        if (incident && incident.reviewStatus !== OperatorReviewStatus.COORDINATING) {
+          await tx.incident.update({
+            where: { id: existing.incidentId },
+            data: {
+              reviewStatus: OperatorReviewStatus.COORDINATING,
+              version: { increment: 1 },
+            },
+          });
+
+          await tx.auditLog.create({
+            data: {
+              actorId: user.sub,
+              incidentId: existing.incidentId,
+              action: 'REVIEW_STATUS_CHANGED',
+              detailsJson: {
+                before: incident.reviewStatus,
+                after: OperatorReviewStatus.COORDINATING,
+                reason: 'task_assigned',
+              },
+            },
+          });
+        }
+      }
 
       return updated;
     });

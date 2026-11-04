@@ -97,6 +97,11 @@ export class CoordinationController {
     return this.tasks.listTasks(req.operatorUser, { incidentId, status });
   }
 
+  @Get('tasks/history')
+  listTaskHistory(@Req() req: OperatorRequest) {
+    return this.tasks.listTaskHistory(req.operatorUser);
+  }
+
   @Post('tasks')
   createTask(
     @Req() req: OperatorRequest,
@@ -162,6 +167,15 @@ export class CoordinationController {
     @Body() body: { expectedVersion: number }
   ) {
     return this.tasks.closeTask(req.operatorUser, taskId, body);
+  }
+
+  @Patch('tasks/:taskId/complete')
+  completeTask(
+    @Req() req: OperatorRequest,
+    @Param('taskId') taskId: string,
+    @Body() body: { expectedVersion: number }
+  ) {
+    return this.tasks.completeTask(req.operatorUser, taskId, body);
   }
 
   @Post('location-share')

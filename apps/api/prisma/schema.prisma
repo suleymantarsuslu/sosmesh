@@ -101,6 +101,7 @@ model Incident {
   version       Int                  @default(0)
   createdAt   DateTime       @default(now()) @map("created_at")
   updatedAt   DateTime       @updatedAt @map("updated_at")
+  deletedAt   DateTime?      @map("deleted_at")
   sosMessages SosMessage[]
   assignments Assignment[]
   aiAnalyses  AiAnalysis[]
@@ -122,6 +123,7 @@ model Incident {
   lastMessageAt      DateTime?  @map("last_message_at")
 
   @@index([senderId, updatedAt(sort: Desc)], map: "incidents_sender_id_updated_at_idx")
+  @@index([deletedAt])
   @@map("incidents")
 }
 
@@ -276,6 +278,7 @@ model User {
   assignments     Assignment[]
   auditLogs       AuditLog[]
   workTasksOwned  WorkTask[]             @relation("WorkTaskAssignee")
+  workTasksCompleted WorkTask[]          @relation("WorkTaskCompletedBy")
   locationShares  LocationShareGrant[]
   notifications   OperatorNotification[]
   notifyPrefs              NotificationPreference?
@@ -335,6 +338,8 @@ model WorkTask {
   resource    Resource?      @relation(fields: [resourceId], references: [id])
   assigneeId  String?        @map("assignee_id") @db.Uuid
   assignee    User?          @relation("WorkTaskAssignee", fields: [assigneeId], references: [id])
+  completedById String?      @map("completed_by_id") @db.Uuid
+  completedBy   User?        @relation("WorkTaskCompletedBy", fields: [completedById], references: [id])
   title       String
   description String?        @db.Text
   status      WorkTaskStatus @default(PROPOSED)
@@ -342,11 +347,13 @@ model WorkTask {
   version     Int            @default(0)
   createdAt   DateTime       @default(now()) @map("created_at")
   updatedAt   DateTime       @updatedAt @map("updated_at")
+  completedAt DateTime?      @map("completed_at")
   confirmedRecommendation AssignmentRecommendation?
 
   @@index([incidentId])
   @@index([teamId])
   @@index([status])
+  @@index([completedAt])
   @@map("work_tasks")
 }
 

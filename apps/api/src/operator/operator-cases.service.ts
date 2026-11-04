@@ -93,6 +93,7 @@ export class OperatorCasesService {
     const messageWhere: Prisma.SosMessageWhereInput = {
       incident: {
         ...incidentFilter,
+        deletedAt: null,
         ...(query.incidentState ? { state: query.incidentState } : {}),
       },
       ...(query.category ? { sosType: query.category } : {}),
@@ -380,6 +381,55 @@ export class OperatorCasesService {
           }
         : null,
     }));
+  }
+
+  async listHistory(user: OperatorRequestUser) {
+    const scopeWhere = this.scope.incidentWhere(user);
+    const incidentFilter: Prisma.IncidentWhereInput = scopeWhere ?? {};
+
+    const incidents = await this.prisma.incident.findMany({
+      where: {
+        ...incidentFilter,
+        deletedAt: { not: null },
+      },
+      orderBy: { deletedAt: 'desc' },
+      take: 100,
+      select: {
+        id: true,
+        state: true,
+        deletedAt: true,
+        createdAt: true,
+        updatedAt: true,
+        sosMessages: {
+          orderBy: { receivedAt: 'desc' },
+          take: 1,
+          select: {
+            id: true,
+            messageId: true,
+            priority: true,
+            sosType: true,
+            receivedAt: true,
+          },
+        },
+      },
+    });
+
+    return {
+      items: incidents.map((incident) => {
+        const message = incident.sosMessages[0];
+        return {
+          incidentId: incident.id,
+          incidentState: incident.state,
+          deletedAt: incident.deletedAt?.toISOString() ?? null,
+          createdAt: incident.createdAt.toISOString(),
+          messageId: message?.messageId ?? null,
+          sosMessageId: message?.id ?? null,
+          priority: message?.priority ?? 0,
+          sosType: message?.sosType ?? null,
+          receivedAt: message?.receivedAt?.toISOString() ?? null,
+        };
+      }),
+    };
   }
 
   private toRow(row: {

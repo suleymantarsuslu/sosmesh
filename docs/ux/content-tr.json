@@ -366,6 +366,11 @@
       "assignmentRefreshPlan": "Önerileri yenile",
       "assignmentNoneLeft": "Açık öneri kalmadı. Yeni plan için yenileyin.",
       "assignmentAlreadyFinalized": "Bu öneri zaten sonuçlandırılmış. Yeniden yükleniyor.",
+      "deleteIncident": "Vakayı sil",
+      "deleteConfirm": "Bu vakayı arşivlemek istediğinizden emin misiniz? Vaka aktif görünümlerden kaldırılacak ancak geçmişte kalacaktır.",
+      "deleteSuccess": "Vaka arşivlendi",
+      "deleteFailed": "Vaka silinemedi",
+      "deleteCoordinatorOnly": "Yalnızca koordinatörler vaka silebilir",
       "auditTeam": "Ekip",
       "sender": {
         "profileTitle": "Gönderen profili",
@@ -703,7 +708,17 @@
       "clearFilters": "Filtreleri temizle",
       "columnEmpty": "Burada hiçbir şey yok",
       "sentToTeam": "{team} ekibine gönderildi",
-      "confirmedTaskTitle": "Onaylı atama: {team}"
+      "confirmedTaskTitle": "Onaylı atama: {team}",
+      "complete": "Tamamla",
+      "completeConfirm": "Bu görevi tamamlandı olarak işaretlemek istediğinizden emin misiniz?",
+      "completedBy": "Tamamlayan: {name}",
+      "completedAt": "Tamamlanma: {time}",
+      "completeSuccess": "Görev tamamlandı olarak işaretlendi",
+      "completeFailed": "Görev tamamlanamadı",
+      "historyTitle": "Geçmiş",
+      "historySubtitle": "Tamamlanmış görevler ve kapatılmış vakalar",
+      "historyEmpty": "Henüz tamamlanmış iş yok",
+      "historyIcon": "Geçmişi göster"
     },
     "activity": {
       "title": "Bildirimler ve işlem geçmişi",

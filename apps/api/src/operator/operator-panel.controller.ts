@@ -44,6 +44,11 @@ export class OperatorPanelController {
     return this.dashboard.getStats(req.operatorUser);
   }
 
+  @Get('history')
+  async listHistory(@Req() req: OperatorRequest) {
+    return this.cases.listHistory(req.operatorUser);
+  }
+
   @Get('incidents')
   async listIncidents(
     @Req() req: OperatorRequest,

@@ -8,6 +8,7 @@ struct HomeView: View {
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
     @ObservedObject private var historyStore = NotificationHistoryStore.shared
     @State private var showNotifications = false
+    @State private var showSos = false
     let navigateToStatus: () -> Void
     
     var body: some View {
@@ -66,6 +67,19 @@ struct HomeView: View {
             }
             .sheet(isPresented: $showNotifications) {
                 NotificationsView()
+            }
+            .navigationDestination(isPresented: $showSos) {
+                if appModel.hasOpenCase() {
+                    SosFollowUpView(navigateToStatus: navigateToStatus)
+                } else {
+                    SosSendView(navigateToStatus: navigateToStatus)
+                }
+            }
+            .onReceive(appModel.$shouldOpenSosFromWidget) { shouldOpen in
+                if shouldOpen {
+                    showSos = true
+                    appModel.shouldOpenSosFromWidget = false
+                }
             }
         }
     }

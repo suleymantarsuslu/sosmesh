@@ -56,6 +56,10 @@ class MainActivity : ComponentActivity() {
             val context = LocalContext.current
             var highContrast by remember { mutableStateOf(readHighContrast(context)) }
             var appUnlocked by remember { mutableStateOf(false) }
+            val openSosFromWidget = intent?.getBooleanExtra(
+                com.sosmesh.android.widget.SosWidgetProvider.EXTRA_OPEN_SOS,
+                false,
+            ) == true
             SosMeshTheme(highContrast = highContrast) {
                 Surface(color = MaterialTheme.colorScheme.background) {
                     PermissionGateRoute(
@@ -66,6 +70,7 @@ class MainActivity : ComponentActivity() {
                     if (appUnlocked) {
                         SosMeshNavHost(
                             onHighContrastChanged = { highContrast = readHighContrast(context) },
+                            openSosFromWidget = openSosFromWidget,
                         )
                     }
                 }
@@ -93,7 +98,10 @@ private val topLevelTabs =
     )
 
 @Composable
-private fun SosMeshNavHost(onHighContrastChanged: () -> Unit) {
+private fun SosMeshNavHost(
+    onHighContrastChanged: () -> Unit,
+    openSosFromWidget: Boolean = false,
+) {
     val navController = rememberNavController()
     val appContext = LocalContext.current.applicationContext
     androidx.compose.runtime.LaunchedEffect(Unit) {
@@ -107,7 +115,11 @@ private fun SosMeshNavHost(onHighContrastChanged: () -> Unit) {
                         .isOnboardingDone()
                 }.getOrDefault(true)
             }
-        if (!done) navController.navigate("profile")
+        if (!done) {
+            navController.navigate("profile")
+        } else if (openSosFromWidget) {
+            navController.navigate("sos")
+        }
 
         kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.IO) {
             runCatching {

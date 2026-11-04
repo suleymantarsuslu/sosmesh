@@ -123,4 +123,7 @@
     <string name="notifications_title">Notifications</string>
     <string name="notifications_clear_all">Clear all</string>
     <string name="notifications_empty">No notifications</string>
+    <string name="widget_app_name">Emergency Network</string>
+    <string name="widget_sos_label">SOS</string>
+    <string name="widget_description">Quick access to send SOS</string>
 </resources>

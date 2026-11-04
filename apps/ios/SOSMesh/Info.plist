@@ -47,5 +47,18 @@
 	</array>
 	<key>SOSMeshBroadcastPublicKey</key>
 	<string>MCowBQYDK2VwAyEAJgWsM1ZMJK9D9uPkDS/08DL/sOHrBlcCS/ETcKQ2OEs=</string>
+	<key>CFBundleURLTypes</key>
+	<array>
+		<dict>
+			<key>CFBundleTypeRole</key>
+			<string>Editor</string>
+			<key>CFBundleURLName</key>
+			<string>com.suleymantarsuslu.sosmesh</string>
+			<key>CFBundleURLSchemes</key>
+			<array>
+				<string>sosmesh</string>
+			</array>
+		</dict>
+	</array>
 </dict>
 </plist>

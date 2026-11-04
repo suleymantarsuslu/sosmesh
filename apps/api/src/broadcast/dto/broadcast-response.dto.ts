@@ -21,6 +21,7 @@ export class BroadcastHistoryDto {
   createdAt!: string;
   expiresAt!: string;
   hasRegion!: boolean;
+  regionLabel?: string;
   deliveredCount!: number;
   meshRelayCount!: number;
 }

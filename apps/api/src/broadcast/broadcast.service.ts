@@ -5,6 +5,7 @@ import { BroadcastSignerService } from './broadcast-signer.service';
 import { CreateBroadcastDto } from './dto/create-broadcast.dto';
 import { BroadcastHistoryDto, BroadcastResponseDto } from './dto/broadcast-response.dto';
 import { StructuredEventLogger } from '../observability/structured-event-logger.service';
+import { RegionsService } from './regions.service';
 import { Subject } from 'rxjs';
 
 @Injectable()
@@ -14,7 +15,8 @@ export class BroadcastService {
   constructor(
     private readonly prisma: PrismaService,
     private readonly signer: BroadcastSignerService,
-    private readonly logger: StructuredEventLogger
+    private readonly logger: StructuredEventLogger,
+    private readonly regionsService: RegionsService
   ) {}
 
   getBroadcastStream() {
@@ -22,17 +24,50 @@ export class BroadcastService {
   }
 
   async create(userId: string, dto: CreateBroadcastDto): Promise<BroadcastResponseDto> {
-    const hasRegion = dto.regionLatitude != null && dto.regionLongitude != null && dto.regionRadiusKm != null;
-    if ((dto.regionLatitude != null || dto.regionLongitude != null || dto.regionRadiusKm != null) && !hasRegion) {
+    let regionLatitude: number | undefined = dto.regionLatitude;
+    let regionLongitude: number | undefined = dto.regionLongitude;
+    let regionRadiusKm: number | undefined = dto.regionRadiusKm;
+    let regionLabel: string | undefined = undefined;
+
+    if (dto.selectedRegion) {
+      const selected = dto.selectedRegion;
+      regionLatitude = Number(selected.lat.toFixed(7));
+      regionLongitude = Number(selected.lon.toFixed(7));
+      regionRadiusKm = this.regionsService.computeRadiusKm(selected.boundingBox);
+
+      const parts: string[] = [];
+      if (selected.countryOsmId === 'relation/174737') {
+        parts.push('Türkiye');
+      }
+      if (selected.provinceName) {
+        parts.push(selected.provinceName);
+      }
+      if (selected.districtName) {
+        parts.push(selected.districtName);
+      }
+      if (selected.neighborhoodName) {
+        parts.push(selected.neighborhoodName);
+      }
+      if (selected.streetName) {
+        parts.push(selected.streetName);
+      }
+      regionLabel = parts.join(' / ');
+    }
+
+    const hasRegion = regionLatitude != null && regionLongitude != null && regionRadiusKm != null;
+    if ((regionLatitude != null || regionLongitude != null || regionRadiusKm != null) && !hasRegion) {
       throw new BadRequestException('All region fields (latitude, longitude, radiusKm) must be provided together or omitted');
     }
 
     const now = new Date();
     const expiresAt = new Date(now.getTime() + dto.expiryHours * 60 * 60 * 1000);
 
-    // Round to the DB precision (Decimal(10,7)) so the signed values match what devices receive.
-    const regionLatitude = dto.regionLatitude != null ? Number(dto.regionLatitude.toFixed(7)) : dto.regionLatitude;
-    const regionLongitude = dto.regionLongitude != null ? Number(dto.regionLongitude.toFixed(7)) : dto.regionLongitude;
+    if (regionLatitude != null) {
+      regionLatitude = Number(regionLatitude.toFixed(7));
+    }
+    if (regionLongitude != null) {
+      regionLongitude = Number(regionLongitude.toFixed(7));
+    }
 
     const id = crypto.randomUUID();
     const signature = this.signer.signBroadcast(
@@ -44,7 +79,7 @@ export class BroadcastService {
       expiresAt,
       regionLatitude,
       regionLongitude,
-      dto.regionRadiusKm
+      regionRadiusKm
     );
 
     const broadcast = await this.prisma.broadcastNotification.create({
@@ -58,7 +93,8 @@ export class BroadcastService {
         expiresAt,
         regionLatitude,
         regionLongitude,
-        regionRadiusKm: dto.regionRadiusKm,
+        regionRadiusKm,
+        regionLabel,
         signature,
       },
     });
@@ -112,6 +148,7 @@ export class BroadcastService {
       createdAt: b.createdAt.toISOString(),
       expiresAt: b.expiresAt.toISOString(),
       hasRegion: b.regionLatitude != null && b.regionLongitude != null,
+      regionLabel: b.regionLabel ?? undefined,
       deliveredCount: b.deliveredCount,
       meshRelayCount: b.meshRelayCount,
     }));

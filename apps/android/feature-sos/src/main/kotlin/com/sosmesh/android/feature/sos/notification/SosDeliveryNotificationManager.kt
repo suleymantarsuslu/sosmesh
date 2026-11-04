@@ -21,9 +21,11 @@ class SosDeliveryNotificationManager
     @Inject
     constructor(
         @ApplicationContext private val context: Context,
+        private val openCaseTracker: com.sosmesh.android.feature.sos.OpenCaseTracker,
     ) {
         internal val pendingSosIds = mutableSetOf<String>()
         private val notificationManager = NotificationManagerCompat.from(context)
+        private val _pendingDeliveryDialogs = mutableSetOf<String>()
 
         init {
             createNotificationChannel()
@@ -50,6 +52,12 @@ class SosDeliveryNotificationManager
         fun notifyServerAccepted(sosId: String) {
             if (!pendingSosIds.contains(sosId)) return
             pendingSosIds.remove(sosId)
+
+            if (!openCaseTracker.hasShownDeliveryDialog(sosId)) {
+                synchronized(_pendingDeliveryDialogs) {
+                    _pendingDeliveryDialogs.add(sosId)
+                }
+            }
 
             if (!hasNotificationPermission()) return
 
@@ -80,6 +88,19 @@ class SosDeliveryNotificationManager
                     .build()
 
             notificationManager.notify(sosId.hashCode(), notification)
+        }
+
+        fun getPendingDeliveryDialog(): String? {
+            synchronized(_pendingDeliveryDialogs) {
+                return _pendingDeliveryDialogs.firstOrNull()
+            }
+        }
+
+        fun markDeliveryDialogShown(sosId: String) {
+            synchronized(_pendingDeliveryDialogs) {
+                _pendingDeliveryDialogs.remove(sosId)
+            }
+            openCaseTracker.markDeliveryDialogShown(sosId)
         }
 
         private fun hasNotificationPermission(): Boolean {

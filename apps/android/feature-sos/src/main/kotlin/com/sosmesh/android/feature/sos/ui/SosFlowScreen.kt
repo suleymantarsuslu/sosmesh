@@ -67,6 +67,7 @@ fun SosFlowScreen(
     onConfirm: () -> Unit,
     onNavigateToStatus: () -> Unit = {},
     onDismissConfirmation: () -> Unit = {},
+    onDismissDeliveredDialog: () -> Unit = {},
     modifier: Modifier = Modifier,
 ) {
     val title =
@@ -74,6 +75,7 @@ fun SosFlowScreen(
             SosWizardStep.FORM -> stringResource(R.string.sos_flow_title)
             SosWizardStep.PREVIEW -> stringResource(R.string.sos_preview_title)
             SosWizardStep.DONE -> stringResource(R.string.sos_saved_local)
+            SosWizardStep.FOLLOWUP -> stringResource(R.string.sos_followup_title)
         }
     SosScreenScaffold(
         title = title,
@@ -110,6 +112,17 @@ fun SosFlowScreen(
                     peerDeliveryHint = state.peerDeliveryHint,
                     contentModifier = contentModifier,
                 )
+            SosWizardStep.FOLLOWUP ->
+                SosFollowupScreen(
+                    state = state,
+                    onNoteChange = onNoteChange,
+                    onPhotoSelected = onPhotoSelected,
+                    onVoiceRecorded = onVoiceRecorded,
+                    onStartRecording = onStartRecording,
+                    onStopRecording = onStopRecording,
+                    onSendFollowup = onConfirm,
+                    contentModifier = contentModifier,
+                )
         }
         
         if (state.showConfirmationDialog && state.savedMessageId != null) {
@@ -117,6 +130,12 @@ fun SosFlowScreen(
                 sosId = state.savedMessageId,
                 onDismiss = onDismissConfirmation,
                 onNavigateToStatus = onNavigateToStatus,
+            )
+        }
+        
+        if (state.showDeliveredDialog) {
+            SosDeliveredDialog(
+                onDismiss = onDismissDeliveredDialog,
             )
         }
     }
@@ -299,6 +318,67 @@ private fun SosDoneScreen(
                 }
             Text(text = detail, style = MaterialTheme.typography.bodyMedium)
         }
+    }
+}
+
+@Composable
+private fun SosFollowupScreen(
+    state: SosFormUiState,
+    onNoteChange: (String) -> Unit,
+    onPhotoSelected: (android.net.Uri?) -> Unit,
+    onVoiceRecorded: (java.io.File?) -> Unit,
+    onStartRecording: () -> Unit,
+    onStopRecording: (Boolean) -> Unit,
+    onSendFollowup: () -> Unit,
+    contentModifier: Modifier,
+) {
+    SosScrollableScreenContent(contentModifier) {
+        SosNot112Banner(disclaimerText = stringResource(R.string.sos_not112_disclaimer))
+        
+        SosStatusCard {
+            Text(
+                text = stringResource(R.string.sos_followup_description),
+                style = MaterialTheme.typography.bodyMedium,
+            )
+        }
+        
+        SosCard {
+            OutlinedTextField(
+                value = state.note,
+                onValueChange = onNoteChange,
+                label = { Text(stringResource(R.string.sos_note_label)) },
+                placeholder = { Text(stringResource(R.string.sos_note_hint)) },
+                modifier = Modifier.fillMaxWidth().testTag("sos_note"),
+            )
+        }
+        
+        SosCard {
+            MediaAttachmentSection(
+                hasPhoto = state.photoUri != null,
+                photoUri = state.photoUri,
+                hasVoice = state.voiceFile != null,
+                voiceDuration = state.voiceDuration,
+                isRecording = state.isRecording,
+                onPhotoSelected = onPhotoSelected,
+                onVoiceRecorded = { file ->
+                    onVoiceRecorded(file)
+                    onStopRecording(file != null)
+                },
+                onStartRecording = onStartRecording,
+                onStopRecording = onStopRecording,
+                onRemovePhoto = { onPhotoSelected(null) },
+                onRemoveVoice = { onVoiceRecorded(null) },
+                modifier = Modifier.fillMaxWidth(),
+            )
+        }
+        
+        SosPrimaryButton(
+            text = stringResource(R.string.sos_followup_send),
+            onClick = onSendFollowup,
+            destructive = true,
+            icon = Icons.AutoMirrored.Filled.Send,
+            testTag = "sos_followup_send_button",
+        )
     }
 }
 

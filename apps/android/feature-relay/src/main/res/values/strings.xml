@@ -27,4 +27,5 @@
     <string name="relay_status_active">Relay active</string>
     <string name="relay_status_paused">Relay paused</string>
     <string name="relay_status_off">Relay off</string>
+    <string name="relay_delivered_count">%1$d help messages were delivered through you</string>
 </resources>

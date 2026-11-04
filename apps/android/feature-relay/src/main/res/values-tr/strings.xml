@@ -27,4 +27,5 @@
     <string name="relay_status_active">Relay etkin</string>
     <string name="relay_status_paused">Relay duraklatıldı</string>
     <string name="relay_status_off">Relay kapalı</string>
+    <string name="relay_delivered_count">Sizin aracılığınızla %1$d adet yardım mesajı iletilmiştir</string>
 </resources>

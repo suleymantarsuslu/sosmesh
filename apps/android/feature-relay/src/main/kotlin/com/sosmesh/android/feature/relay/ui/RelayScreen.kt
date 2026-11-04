@@ -5,6 +5,7 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.CheckCircle
 import androidx.compose.material.icons.filled.Info
 import androidx.compose.material.icons.filled.Sensors
 import androidx.compose.material.icons.filled.Warning
@@ -88,6 +89,19 @@ fun RelayScreen(
                     PauseCard(stringResource(R.string.relay_pause_hourly_limit))
                 RelayPauseReason.UserDisabled -> Unit
                 null -> Unit
+            }
+
+            if (state.deliveredCount > 0) {
+                SosIconCard(
+                    icon = Icons.Filled.CheckCircle,
+                    iconTint = MaterialTheme.colorScheme.primary,
+                    highlighted = true,
+                ) {
+                    Text(
+                        text = stringResource(R.string.relay_delivered_count, state.deliveredCount),
+                        style = MaterialTheme.typography.bodyMedium,
+                    )
+                }
             }
 
             SosCard {

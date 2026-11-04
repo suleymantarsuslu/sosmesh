@@ -30,6 +30,7 @@ class RelayViewModel
         private val batteryPolicy: RelayBatteryPolicy,
         private val outboxReader: RelayOutboxReader,
         private val systemConstraints: RelaySystemConstraints,
+        private val deliveryCounter: RelayDeliveryCounter,
     ) : ViewModel() {
         private val _uiState = MutableStateFlow(RelayUiState())
         val uiState: StateFlow<RelayUiState> = _uiState.asStateFlow()
@@ -70,6 +71,7 @@ class RelayViewModel
                                 (settings.hourlyDataLimitBytes() / (1024 * 1024)).toInt().coerceAtLeast(1),
                             systemConstraintSummary = constraints.summary,
                             systemConstraintDetail = constraints.detail,
+                            deliveredCount = deliveryCounter.getDeliveredCount(),
                         )
                 }.onFailure { throwable ->
                     if (throwable is CancellationException) throw throwable

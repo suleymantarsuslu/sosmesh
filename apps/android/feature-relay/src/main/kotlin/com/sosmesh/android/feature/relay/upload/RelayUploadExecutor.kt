@@ -37,6 +37,7 @@ class RelayUploadExecutor
         private val attachmentScheduler: AttachmentUploadScheduler?,
         private val notificationManager: com.sosmesh.android.feature.sos.notification.SosDeliveryNotificationManager?,
         private val visibilityTracker: com.sosmesh.android.feature.sos.notification.AppVisibilityTracker?,
+        private val deliveryCounter: RelayDeliveryCounter,
     ) {
         suspend fun runOwnSosUploadCycle(
             nowMs: Long,
@@ -210,6 +211,10 @@ class RelayUploadExecutor
                         )
                         hourlyBudget.recordSent(payloadBytes, nowMs)
                         uploaded++
+                        
+                        if (entry.origin == "relay") {
+                            deliveryCounter.markMessageDelivered(entry.sosId)
+                        }
                     }
                     is RelayIngestResult.InvalidReceipt -> {
                         retryMs = nowMs + HTTP_ERROR_BACKOFF_MS

@@ -64,7 +64,6 @@ fun HomeRoute(
         onOpenStatus = onOpenStatus,
         onOpenRelay = onOpenRelay,
         onOpenSettings = onOpenSettings,
-        onExpressSos = { viewModel.expressSaveSos() },
     )
 }
 
@@ -78,7 +77,6 @@ internal fun HomeScreen(
     onOpenStatus: () -> Unit,
     onOpenRelay: () -> Unit,
     onOpenSettings: () -> Unit,
-    onExpressSos: () -> Unit,
 ) {
     SosScreenScaffold(
         title = stringResource(R.string.home_title),
@@ -108,7 +106,7 @@ internal fun HomeScreen(
             SosExpressSosButton(
                 label = stringResource(R.string.home_express_sos_cta),
                 contentDescription = stringResource(R.string.home_express_sos_content_description),
-                onClick = onExpressSos,
+                onClick = onOpenSos,
             )
             SosCall112Button(testTag = "home_call_112_button")
             SosSecondaryButton(
@@ -116,15 +114,6 @@ internal fun HomeScreen(
                 onClick = onOpenSos,
                 icon = Icons.Filled.Edit,
             )
-            state.expressSavedMessageId?.let {
-                SosStatusCard(highlighted = true) {
-                    Text(
-                        text = stringResource(R.string.home_express_saved),
-                        style = MaterialTheme.typography.bodyMedium,
-                        modifier = Modifier.testTag("home_express_saved"),
-                    )
-                }
-            }
             MeshStatusCard(state = state, onOpenStatus = onOpenStatus)
             PlatformSelfRepairCard(hint = state.platformHint, onOpenPermissions = onOpenPermissions)
             CrossPlatformFaultCard(hint = state.crossPlatformFault, onOpenPermissions = onOpenPermissions)

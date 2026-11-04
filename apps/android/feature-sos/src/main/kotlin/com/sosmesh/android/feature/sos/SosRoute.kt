@@ -32,6 +32,7 @@ fun SosRoute(
         onConfirm = viewModel::confirmAndSave,
         onNavigateToStatus = onNavigateToStatus,
         onDismissConfirmation = viewModel::dismissConfirmationDialog,
+        onDismissDeliveredDialog = viewModel::dismissDeliveredDialog,
         modifier = modifier,
     )
 }

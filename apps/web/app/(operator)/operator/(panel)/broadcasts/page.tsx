@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import React, { useState } from 'react';
 import { useOperatorPreferences } from '../../../../../components/operator/OperatorPreferencesProvider';
 import { Button } from '../../../../../components/ui/Button';
 
@@ -52,6 +52,33 @@ export default function BroadcastsPage() {
       console.error('Failed to fetch history', err);
     }
   };
+
+  React.useEffect(() => {
+    fetchHistory();
+    
+    const eventSource = new EventSource('/api/operator/broadcasts/stream');
+    eventSource.onmessage = (event) => {
+      const broadcast = JSON.parse(event.data);
+      setHistory((prev) => [
+        {
+          id: broadcast.id,
+          title: broadcast.title,
+          severity: broadcast.severity,
+          createdBy: 'You',
+          createdAt: broadcast.createdAt,
+          expiresAt: broadcast.expiresAt,
+          hasRegion: broadcast.regionLatitude != null,
+          deliveredCount: 0,
+          meshRelayCount: 0,
+        },
+        ...prev,
+      ]);
+    };
+
+    return () => {
+      eventSource.close();
+    };
+  }, []);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();

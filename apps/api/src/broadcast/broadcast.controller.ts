@@ -8,8 +8,11 @@ import {
   Request,
   HttpCode,
   HttpStatus,
+  Sse,
+  MessageEvent,
 } from '@nestjs/common';
 import { Throttle } from '@nestjs/throttler';
+import { Observable, map } from 'rxjs';
 import { OperatorAuthGuard, type OperatorRequest } from '../operator/guards/operator-auth.guard';
 import { Roles } from '../operator/guards/roles.decorator';
 import { RolesGuard } from '../operator/guards/roles.guard';
@@ -52,6 +55,16 @@ export class BroadcastController {
   ): Promise<BroadcastHistoryDto[]> {
     const parsedLimit = limit ? parseInt(limit, 10) : 50;
     return this.broadcastService.listHistory(Math.min(parsedLimit, 100));
+  }
+
+  @Sse('stream')
+  @Roles(UserRole.ADMIN)
+  stream(): Observable<MessageEvent> {
+    return this.broadcastService.getBroadcastStream().pipe(
+      map((broadcast) => ({
+        data: broadcast,
+      })),
+    );
   }
 }
 

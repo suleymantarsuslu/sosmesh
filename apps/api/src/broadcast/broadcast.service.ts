@@ -5,14 +5,21 @@ import { BroadcastSignerService } from './broadcast-signer.service';
 import { CreateBroadcastDto } from './dto/create-broadcast.dto';
 import { BroadcastHistoryDto, BroadcastResponseDto } from './dto/broadcast-response.dto';
 import { StructuredEventLoggerService } from '../observability/structured-event-logger.service';
+import { Subject } from 'rxjs';
 
 @Injectable()
 export class BroadcastService {
+  private readonly broadcastStream = new Subject<BroadcastResponseDto>();
+
   constructor(
     private readonly prisma: PrismaService,
     private readonly signer: BroadcastSignerService,
     private readonly logger: StructuredEventLoggerService
   ) {}
+
+  getBroadcastStream() {
+    return this.broadcastStream.asObservable();
+  }
 
   async create(userId: string, dto: CreateBroadcastDto): Promise<BroadcastResponseDto> {
     const hasRegion = dto.regionLatitude != null && dto.regionLongitude != null && dto.regionRadiusKm != null;
@@ -60,7 +67,9 @@ export class BroadcastService {
       expiryHours: dto.expiryHours,
     });
 
-    return this.toDto(broadcast);
+    const dto_response = this.toDto(broadcast);
+    this.broadcastStream.next(dto_response);
+    return dto_response;
   }
 
   async listActive(sinceCursor: Date): Promise<BroadcastResponseDto[]> {

@@ -94,6 +94,8 @@ public final class MeshV2CentralSession {
                 node.noteSent(messageId: c.messageId, to: peerId, nowMs: nowMs)
             case .tombstones(_, let ids):
                 node.tombstones.markPushed(ids, to: peerId)
+            case .broadcast:
+                break
             }
             return next(nowMs: nowMs)
         }

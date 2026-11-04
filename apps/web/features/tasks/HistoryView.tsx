@@ -63,7 +63,7 @@ export function HistoryView({
         subtitle={t('web.tasks.historySubtitle')}
         actions={
           <Link href="/operator/tasks" className="cd2-btn cd2-btn--sm">
-            <Icon name="arrow-left" size={14} />
+            <Icon name="close" size={14} />
             {t('common.close')}
           </Link>
         }

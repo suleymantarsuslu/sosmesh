@@ -46,7 +46,7 @@
     <string name="sos_sent_online">Your message is being sent to the server.</string>
     <string name="sos_sent_offline">Your message has been saved on your device and will be relayed via nearby devices or sent when internet connection is restored.</string>
     <string name="sos_sent_not112">SOSMesh does not replace %1$s.</string>
-    <string name="sos_sent_action_ok">OK
+    <string name="sos_sent_action_ok">OK</string>
     <string name="notification_sos_delivered_title">Your message has been delivered</string>
     <string name="notification_sos_delivered_body">Your SOS message has reached the server.</string>
     <string name="sos_delivered_modal_title">Your help request was delivered</string>

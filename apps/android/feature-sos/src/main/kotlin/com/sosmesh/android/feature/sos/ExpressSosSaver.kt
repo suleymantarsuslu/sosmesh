@@ -20,8 +20,18 @@ class ExpressSosSaver
         private val peerDelivery: SosPeerDeliveryPort,
         private val bleMeshReadiness: BleMeshReadiness,
         private val permissionFlowCoordinator: PermissionFlowCoordinator,
+        private val openCaseTracker: OpenCaseTracker,
     ) {
+        private var lastExpressId: String? = null
+        private var lastExpressDigest: String? = null
+        private var lastExpressLeftDevice: Boolean = false
+
         suspend fun save(nowMs: Long = System.currentTimeMillis()): String {
+            val hasOpenCase = openCaseTracker.hasOpenCase(nowMs)
+            if (hasOpenCase && lastExpressId != null && lastExpressDigest != null) {
+                submitRepository.deleteIfUnsent(lastExpressId!!, lastExpressDigest!!)
+            }
+
             val location = if (locationProvider is com.sosmesh.android.feature.sos.location.AndroidGpsLocationProvider) {
                 locationProvider.requestLocationAsync(timeoutMs = 2000)
             } else {
@@ -39,9 +49,21 @@ class ExpressSosSaver
                         nowMs = nowMs,
                     ),
                 )
-            if (bleMeshReadiness.canRunBleMeshFeatures()) {
+            
+            val delivery = if (bleMeshReadiness.canRunBleMeshFeatures()) {
                 peerDelivery.kickOffAfterLocalSave(nowMs, foregroundVisible = true)
+            } else {
+                null
             }
+            
+            lastExpressId = composed.message.id
+            lastExpressDigest = composed.digest
+            lastExpressLeftDevice = delivery is com.sosmesh.android.core.data.mesh.SosPeerDeliveryKickResult.TransferStarted
+            
+            if (!hasOpenCase) {
+                openCaseTracker.markCaseOpen(composed.message.id, nowMs)
+            }
+            
             return composed.message.id
         }
     }

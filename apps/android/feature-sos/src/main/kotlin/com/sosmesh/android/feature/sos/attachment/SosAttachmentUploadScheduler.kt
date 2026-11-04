@@ -17,7 +17,7 @@ class SosAttachmentUploadScheduler
     constructor(
         @ApplicationContext private val context: Context,
         private val pendingStore: AttachmentPendingStore,
-    ) : AttachmentUploadScheduler {
+    ) : AttachmentUploadScheduler, com.sosmesh.android.core.data.attachment.PendingAttachmentQuery {
         override fun scheduleUploadsForMessage(
             sosId: String,
             uploadToken: String,
@@ -78,5 +78,10 @@ class SosAttachmentUploadScheduler
                     WorkManager.getInstance(context.applicationContext).enqueue(request)
                 }
             }
+        }
+
+        override fun hasPendingAttachmentsWithoutToken(sosId: String): Boolean {
+            val pending = pendingStore.listBySosId(sosId)
+            return pending.any { it.uploadToken == null }
         }
     }

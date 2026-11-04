@@ -53,7 +53,7 @@ class RelayUploadExecutorTest {
         budget.resetForTests()
         fakeUplink = FakeRelayIngestUplink()
         val policy = RelayBatteryPolicy(settings, budget)
-        executor = RelayUploadExecutor(settings, policy, budget, reader, adapter, fakeUplink, com.sosmesh.android.feature.relay.uplink.RelayIngestConfig("https://example.invalid/v1/ingest", "", "a".repeat(64)), null, null, null, RelayDeliveryCounter(context))
+        executor = RelayUploadExecutor(settings, policy, budget, reader, adapter, fakeUplink, com.sosmesh.android.feature.relay.uplink.RelayIngestConfig("https://example.invalid/v1/ingest", "", "a".repeat(64)), null, null, null, RelayDeliveryCounter(context), null)
     }
 
     @After
@@ -154,7 +154,7 @@ class RelayUploadExecutorTest {
             budget.resetForTests()
             budget.recordSent((limit - 10).toInt(), 4_000L)
             val policy = RelayBatteryPolicy(settings, budget)
-            executor = RelayUploadExecutor(settings, policy, budget, reader, adapter, fakeUplink, com.sosmesh.android.feature.relay.uplink.RelayIngestConfig("https://example.invalid/v1/ingest", "", "a".repeat(64)), null, null, null, RelayDeliveryCounter(context))
+            executor = RelayUploadExecutor(settings, policy, budget, reader, adapter, fakeUplink, com.sosmesh.android.feature.relay.uplink.RelayIngestConfig("https://example.invalid/v1/ingest", "", "a".repeat(64)), null, null, null, RelayDeliveryCounter(context), null)
             fakeUplink.nextResult = RelayIngestResult.Success(null)
             val summary =
                 executor.runUploadCycle(
@@ -234,8 +234,98 @@ class RelayUploadExecutorTest {
         )
     }
 
+    private suspend fun enqueueOwnSosBlobAtTime(
+        sosId: String,
+        origin: String = "android",
+        blobSize: Int = 16,
+        createdAt: Long,
+    ) {
+        val blob = "x".repeat(blobSize)
+        adapter.enqueue(
+            EnqueueInput(
+                sosId = sosId,
+                digest = digestFor(sosId, blobSize),
+                origin = origin,
+                encryptedBlobBase64 = blob,
+            ),
+            nowMs = createdAt,
+        )
+    }
+
+    @Test
+    fun serverAcceptedWithNoPendingAttachments_notUploaded() =
+        runBlocking {
+            enqueueOwnSosBlob("accepted-no-attachments", origin = "android")
+            val entry = adapter.getByKey("accepted-no-attachments", digestFor("accepted-no-attachments"))!!
+            adapter.updateState("accepted-no-attachments", entry.digest, "SERVER_ACCEPTED", 10_000L, null)
+            
+            val fakeAttachmentQuery = FakePendingAttachmentQuery()
+            fakeAttachmentQuery.pendingMap["accepted-no-attachments"] = false
+            val executorWithQuery = RelayUploadExecutor(settings, RelayBatteryPolicy(settings, RelayHourlyDataBudget(context)), RelayHourlyDataBudget(context), reader, adapter, fakeUplink, com.sosmesh.android.feature.relay.uplink.RelayIngestConfig("https://example.invalid/v1/ingest", "", "a".repeat(64)), null, null, null, RelayDeliveryCounter(context), fakeAttachmentQuery)
+            
+            fakeUplink.nextResult = RelayIngestResult.Success("test-token-123")
+            val summary =
+                executorWithQuery.runOwnSosUploadCycle(
+                    nowMs = 11_000L,
+                    networkConnected = true,
+                )
+            assertEquals(0, fakeUplink.uploadCallCount)
+            assertEquals(0, summary.uploaded)
+        }
+
+    @Test
+    fun serverAcceptedWithPendingAttachments_uploadsForToken() =
+        runBlocking {
+            enqueueOwnSosBlob("accepted-with-attachments", origin = "android")
+            val entry = adapter.getByKey("accepted-with-attachments", digestFor("accepted-with-attachments"))!!
+            adapter.updateState("accepted-with-attachments", entry.digest, "SERVER_ACCEPTED", 10_000L, null)
+            
+            val fakeAttachmentQuery = FakePendingAttachmentQuery()
+            fakeAttachmentQuery.pendingMap["accepted-with-attachments"] = true
+            val executorWithQuery = RelayUploadExecutor(settings, RelayBatteryPolicy(settings, RelayHourlyDataBudget(context)), RelayHourlyDataBudget(context), reader, adapter, fakeUplink, com.sosmesh.android.feature.relay.uplink.RelayIngestConfig("https://example.invalid/v1/ingest", "", "a".repeat(64)), null, null, null, RelayDeliveryCounter(context), fakeAttachmentQuery)
+            
+            fakeUplink.nextResult = RelayIngestResult.Success("test-token-123")
+            val summary =
+                executorWithQuery.runOwnSosUploadCycle(
+                    nowMs = 11_000L,
+                    networkConnected = true,
+                )
+            assertEquals(1, fakeUplink.uploadCallCount)
+            assertEquals(1, summary.uploaded)
+            val updated = adapter.getByKey("accepted-with-attachments", digestFor("accepted-with-attachments"))!!
+            assertEquals("SERVER_ACCEPTED", updated.state)
+        }
+
+    @Test
+    fun ownSosUpload_newestFirst() =
+        runBlocking {
+            enqueueOwnSosBlobAtTime("old-1", origin = "android", createdAt = 1_000L)
+            enqueueOwnSosBlobAtTime("old-2", origin = "android", createdAt = 2_000L)
+            enqueueOwnSosBlobAtTime("new-1", origin = "android", createdAt = 9_000L)
+            
+            val uploadOrder = mutableListOf<String>()
+            fakeUplink.onUpload = { sosId, _, _, _ -> uploadOrder.add(sosId) }
+            fakeUplink.nextResult = RelayIngestResult.Success(null)
+            
+            val summary =
+                executor.runOwnSosUploadCycle(
+                    nowMs = 10_000L,
+                    networkConnected = true,
+                )
+            assertEquals(3, summary.uploaded)
+            assertEquals("new-1", uploadOrder[0])
+        }
+
     private fun digestFor(
         sosId: String,
         blobSize: Int = 16,
     ): String = "$sosId-$blobSize"
+
+    private class FakePendingAttachmentQuery : com.sosmesh.android.core.data.attachment.PendingAttachmentQuery {
+        val pendingMap = mutableMapOf<String, Boolean>()
+
+        override fun hasPendingAttachmentsWithoutToken(sosId: String): Boolean {
+            return pendingMap[sosId] ?: false
+        }
+    }
 }

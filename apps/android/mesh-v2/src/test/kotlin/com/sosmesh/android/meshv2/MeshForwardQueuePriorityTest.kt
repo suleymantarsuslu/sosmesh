@@ -14,10 +14,15 @@ class MeshForwardQueuePriorityTest {
             MeshForwardQueueItem(
                 envelope =
                     MeshRelayEnvelopeV2(
+                        protocolVersion = 2,
                         messageId = "broadcast-1",
                         hopCount = 0,
+                        maxHops = 8,
                         ttlHops = 8,
                         copyCount = 1,
+                        maxCopyCount = 10,
+                        originCreatedAt = "2024-01-01T00:00:00Z",
+                        opaqueCiphertextBase64 = "dGVzdA==",
                         hopChainReceipt = HopChainReceiptV2(),
                     ),
                 wireBytes = ByteArray(100),
@@ -29,10 +34,15 @@ class MeshForwardQueuePriorityTest {
             MeshForwardQueueItem(
                 envelope =
                     MeshRelayEnvelopeV2(
+                        protocolVersion = 2,
                         messageId = "sos-1",
                         hopCount = 0,
+                        maxHops = 8,
                         ttlHops = 8,
                         copyCount = 1,
+                        maxCopyCount = 10,
+                        originCreatedAt = "2024-01-01T00:00:00Z",
+                        opaqueCiphertextBase64 = "dGVzdA==",
                         hopChainReceipt = HopChainReceiptV2(),
                     ),
                 wireBytes = ByteArray(100),
@@ -58,10 +68,15 @@ class MeshForwardQueuePriorityTest {
             MeshForwardQueueItem(
                 envelope =
                     MeshRelayEnvelopeV2(
+                        protocolVersion = 2,
                         messageId = "broadcast-1",
                         hopCount = 0,
+                        maxHops = 8,
                         ttlHops = 2,
                         copyCount = 1,
+                        maxCopyCount = 10,
+                        originCreatedAt = "2024-01-01T00:00:00Z",
+                        opaqueCiphertextBase64 = "dGVzdA==",
                         hopChainReceipt = HopChainReceiptV2(),
                     ),
                 wireBytes = ByteArray(100),
@@ -73,10 +88,15 @@ class MeshForwardQueuePriorityTest {
             MeshForwardQueueItem(
                 envelope =
                     MeshRelayEnvelopeV2(
+                        protocolVersion = 2,
                         messageId = "broadcast-2",
                         hopCount = 0,
+                        maxHops = 8,
                         ttlHops = 5,
                         copyCount = 1,
+                        maxCopyCount = 10,
+                        originCreatedAt = "2024-01-01T00:00:00Z",
+                        opaqueCiphertextBase64 = "dGVzdA==",
                         hopChainReceipt = HopChainReceiptV2(),
                     ),
                 wireBytes = ByteArray(100),

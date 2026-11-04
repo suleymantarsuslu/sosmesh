@@ -39,6 +39,7 @@ sealed class BroadcastReceiveOutcome {
     data object Expired : BroadcastReceiveOutcome()
     data object MaxHops : BroadcastReceiveOutcome()
     data object Full : BroadcastReceiveOutcome()
+    data object OutOfRegion : BroadcastReceiveOutcome()
     data class Invalid(val reason: String) : BroadcastReceiveOutcome()
 }
 
@@ -56,6 +57,9 @@ class MeshV2Node(
     private val selfDeviceIdHash: String,
     private val relayIdHex: String,
     private val isWatch: Boolean = false,
+    private val broadcastVerifier: ((ServerBroadcast) -> Boolean)? = null,
+    private val broadcastNotifier: ((ServerBroadcast) -> Unit)? = null,
+    private val locationProvider: (() -> Pair<Double, Double>?)? = null,
 ) {
     private val json = Json { ignoreUnknownKeys = true }
     private val responder = OfferResponder(seen, tombstones)
@@ -116,6 +120,7 @@ class MeshV2Node(
         if (broadcasts.contains(broadcast.id)) {
             return BroadcastReceiveOutcome.AlreadySeen
         }
+        
         val expiresAt = try {
             java.time.Instant.parse(broadcast.expiresAt).toEpochMilli()
         } catch (e: Exception) {
@@ -124,13 +129,43 @@ class MeshV2Node(
         if (expiresAt <= nowMs) {
             return BroadcastReceiveOutcome.Expired
         }
+        
         if (broadcast.hopsLeft <= 0) {
             return BroadcastReceiveOutcome.MaxHops
         }
+        
+        if (broadcastVerifier?.invoke(broadcast) == false) {
+            return BroadcastReceiveOutcome.Invalid("signature verification failed")
+        }
+        
+        if (broadcast.regionLat != null && broadcast.regionLng != null && broadcast.regionRadiusKm != null) {
+            val location = locationProvider?.invoke()
+            if (location != null) {
+                val (deviceLat, deviceLng) = location
+                val distanceKm = calculateDistance(deviceLat, deviceLng, broadcast.regionLat, broadcast.regionLng)
+                if (distanceKm > broadcast.regionRadiusKm) {
+                    return BroadcastReceiveOutcome.OutOfRegion
+                }
+            }
+        }
+        
+        broadcastNotifier?.invoke(broadcast)
+        
         if (!broadcasts.put(broadcast, nowMs)) {
             return BroadcastReceiveOutcome.Full
         }
         return BroadcastReceiveOutcome.Stored
+    }
+    
+    private fun calculateDistance(lat1: Double, lon1: Double, lat2: Double, lon2: Double): Double {
+        val r = 6371.0
+        val dLat = Math.toRadians(lat2 - lat1)
+        val dLon = Math.toRadians(lon2 - lon1)
+        val a = kotlin.math.sin(dLat / 2) * kotlin.math.sin(dLat / 2) +
+                kotlin.math.cos(Math.toRadians(lat1)) * kotlin.math.cos(Math.toRadians(lat2)) *
+                kotlin.math.sin(dLon / 2) * kotlin.math.sin(dLon / 2)
+        val c = 2 * kotlin.math.atan2(kotlin.math.sqrt(a), kotlin.math.sqrt(1 - a))
+        return r * c
     }
 
     fun forwardBroadcast(broadcast: ServerBroadcast): ServerBroadcast? {

@@ -1,5 +1,6 @@
 package com.sosmesh.android.di
 
+import android.content.Context
 import com.sosmesh.android.BuildConfig
 import com.sosmesh.android.crash.LocalCrashReporter
 import com.sosmesh.android.crash.RedactedLocalCrashReporter
@@ -9,6 +10,7 @@ import dagger.Binds
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
+import dagger.hilt.android.qualifiers.ApplicationContext
 import dagger.hilt.components.SingletonComponent
 import javax.inject.Singleton
 
@@ -22,11 +24,60 @@ abstract class AppReleaseModule {
     companion object {
         @Provides
         @Singleton
-        fun provideMeshV2Config(config: RelayIngestConfig): com.sosmesh.android.meshv2.v2.MeshV2Config =
-            com.sosmesh.android.meshv2.v2.MeshV2Config(
+        fun provideMeshV2Config(
+            config: RelayIngestConfig,
+            @ApplicationContext context: Context,
+            @com.sosmesh.android.core.data.di.BroadcastPublicKey publicKeyBase64: String,
+        ): com.sosmesh.android.meshv2.v2.MeshV2Config {
+            val verifier = com.sosmesh.android.core.data.broadcast.BroadcastSignatureVerifier(publicKeyBase64)
+            val notificationManager = com.sosmesh.android.core.data.broadcast.BroadcastNotificationManager(context)
+            
+            return com.sosmesh.android.meshv2.v2.MeshV2Config(
                 relayIdHex = config.relayIdHex,
                 receiptVerifyPublicKeySpkiBase64 = config.receiptVerifyPublicKeySpkiBase64,
+                broadcastVerifier = { broadcast ->
+                    verifier.verify(
+                        com.sosmesh.android.core.data.broadcast.ServerBroadcast(
+                            id = broadcast.id,
+                            title = broadcast.title,
+                            body = broadcast.body,
+                            severity = broadcast.severity,
+                            createdAt = broadcast.createdAt,
+                            expiresAt = broadcast.expiresAt,
+                            regionLat = broadcast.regionLat,
+                            regionLng = broadcast.regionLng,
+                            regionRadiusKm = broadcast.regionRadiusKm,
+                            signature = broadcast.signature,
+                        )
+                    )
+                },
+                broadcastNotifier = { broadcast ->
+                    notificationManager.showNotification(
+                        com.sosmesh.android.core.data.broadcast.ServerBroadcast(
+                            id = broadcast.id,
+                            title = broadcast.title,
+                            body = broadcast.body,
+                            severity = broadcast.severity,
+                            createdAt = broadcast.createdAt,
+                            expiresAt = broadcast.expiresAt,
+                            regionLat = broadcast.regionLat,
+                            regionLng = broadcast.regionLng,
+                            regionRadiusKm = broadcast.regionRadiusKm,
+                            signature = broadcast.signature,
+                        )
+                    )
+                },
+                locationProvider = {
+                    val locationManager = context.getSystemService(Context.LOCATION_SERVICE) as? android.location.LocationManager
+                    val location = locationManager?.getLastKnownLocation(android.location.LocationManager.PASSIVE_PROVIDER)
+                    if (location != null) {
+                        Pair(location.latitude, location.longitude)
+                    } else {
+                        null
+                    }
+                },
             )
+        }
 
         @Provides
         @Singleton

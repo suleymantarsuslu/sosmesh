@@ -17,6 +17,10 @@ import javax.inject.Singleton
 object BroadcastModule {
     @Provides
     @Singleton
+    fun provideOkHttpClient(): OkHttpClient = OkHttpClient.Builder().build()
+
+    @Provides
+    @Singleton
     fun provideBroadcastStore(
         @ApplicationContext context: Context
     ): BroadcastStore = BroadcastStore(context)
@@ -51,9 +55,10 @@ object BroadcastModule {
         val location = locationManager?.getLastKnownLocation(android.location.LocationManager.PASSIVE_PROVIDER)
         val broadcasts = repository.fetchAndProcessBroadcasts(location)
         broadcasts.forEach { broadcast ->
-            notificationManager.show(broadcast)
+            notificationManager.showNotification(broadcast)
         }
     }
+
 }
 
 @javax.inject.Qualifier

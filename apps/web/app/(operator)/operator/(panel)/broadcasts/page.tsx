@@ -55,6 +55,9 @@ export default function BroadcastsPage() {
   const [loadingNeighborhoods, setLoadingNeighborhoods] = useState(false);
   const [loadingStreets, setLoadingStreets] = useState(false);
 
+  const [neighborhoodsError, setNeighborhoodsError] = useState<{ messageEN: string; messageTR: string } | null>(null);
+  const [streetsError, setStreetsError] = useState<{ messageEN: string; messageTR: string } | null>(null);
+
   const [showConfirm, setShowConfirm] = useState(false);
   const [history, setHistory] = useState<BroadcastHistory[]>([]);
   const [loading, setLoading] = useState(false);
@@ -149,14 +152,24 @@ export default function BroadcastsPage() {
 
   const fetchNeighborhoods = async (districtOsmId: string) => {
     setLoadingNeighborhoods(true);
+    setNeighborhoodsError(null);
+    setNeighborhoods([]);
     try {
       const res = await fetch(`/api/operator/broadcasts/regions/neighborhoods?districtOsmId=${encodeURIComponent(districtOsmId)}`);
       if (res.ok) {
         const data = await res.json();
-        setNeighborhoods(data);
+        if (data.error) {
+          setNeighborhoodsError(data.error);
+        } else {
+          setNeighborhoods(data);
+        }
       }
     } catch (err) {
       console.error('Failed to fetch neighborhoods', err);
+      setNeighborhoodsError({
+        messageEN: 'Network error. Please try again.',
+        messageTR: 'Ağ hatası. Lütfen tekrar deneyin.',
+      });
     } finally {
       setLoadingNeighborhoods(false);
     }
@@ -164,14 +177,24 @@ export default function BroadcastsPage() {
 
   const fetchStreets = async (neighborhoodOsmId: string) => {
     setLoadingStreets(true);
+    setStreetsError(null);
+    setStreets([]);
     try {
       const res = await fetch(`/api/operator/broadcasts/regions/streets?neighborhoodOsmId=${encodeURIComponent(neighborhoodOsmId)}`);
       if (res.ok) {
         const data = await res.json();
-        setStreets(data);
+        if (data.error) {
+          setStreetsError(data.error);
+        } else {
+          setStreets(data);
+        }
       }
     } catch (err) {
       console.error('Failed to fetch streets', err);
+      setStreetsError({
+        messageEN: 'Network error. Please try again.',
+        messageTR: 'Ağ hatası. Lütfen tekrar deneyin.',
+      });
     } finally {
       setLoadingStreets(false);
     }
@@ -477,26 +500,41 @@ export default function BroadcastsPage() {
                       {t('web.broadcasts.neighborhood')}
                       {loadingNeighborhoods && <span className="cd2-spinner cd2-spinner--sm" />}
                     </label>
-                    <select
-                      id="region-neighborhood"
-                      className="cd2-select"
-                      value={selectedNeighborhood?.osmId || ''}
-                      onChange={(e) => {
-                        const neighborhood = neighborhoods.find((n) => n.osmId === e.target.value);
-                        setSelectedNeighborhood(neighborhood || null);
-                        setSelectedStreet(null);
-                      }}
-                      disabled={!selectedDistrict || loadingNeighborhoods}
-                    >
-                      <option value="">
-                        {loadingNeighborhoods ? t('web.broadcasts.loadingRegions') : t('web.broadcasts.selectNeighborhood')}
-                      </option>
-                      {neighborhoods.map((n) => (
-                        <option key={n.osmId} value={n.osmId}>
-                          {n.name}
+                    {neighborhoodsError ? (
+                      <div className="cd2-alert cd2-alert--error" style={{ marginTop: '0.5rem' }}>
+                        <p>{locale === 'tr' ? neighborhoodsError.messageTR : neighborhoodsError.messageEN}</p>
+                        <button
+                          type="button"
+                          className="cd2-btn cd2-btn--sm cd2-btn--ghost"
+                          onClick={() => selectedDistrict && fetchNeighborhoods(selectedDistrict.osmId)}
+                          style={{ marginTop: '0.5rem' }}
+                        >
+                          <Icon name="refresh" size={14} />
+                          {locale === 'tr' ? 'Tekrar Dene' : 'Retry'}
+                        </button>
+                      </div>
+                    ) : (
+                      <select
+                        id="region-neighborhood"
+                        className="cd2-select"
+                        value={selectedNeighborhood?.osmId || ''}
+                        onChange={(e) => {
+                          const neighborhood = neighborhoods.find((n) => n.osmId === e.target.value);
+                          setSelectedNeighborhood(neighborhood || null);
+                          setSelectedStreet(null);
+                        }}
+                        disabled={!selectedDistrict || loadingNeighborhoods}
+                      >
+                        <option value="">
+                          {loadingNeighborhoods ? t('web.broadcasts.loadingRegions') : t('web.broadcasts.selectNeighborhood')}
                         </option>
-                      ))}
-                    </select>
+                        {neighborhoods.map((n) => (
+                          <option key={n.osmId} value={n.osmId}>
+                            {n.name}
+                          </option>
+                        ))}
+                      </select>
+                    )}
                   </div>
 
                   <div className="cd2-form__field">
@@ -504,25 +542,40 @@ export default function BroadcastsPage() {
                       {t('web.broadcasts.street')}
                       {loadingStreets && <span className="cd2-spinner cd2-spinner--sm" />}
                     </label>
-                    <select
-                      id="region-street"
-                      className="cd2-select"
-                      value={selectedStreet?.osmId || ''}
-                      onChange={(e) => {
-                        const street = streets.find((s) => s.osmId === e.target.value);
-                        setSelectedStreet(street || null);
-                      }}
-                      disabled={!selectedNeighborhood || loadingStreets}
-                    >
-                      <option value="">
-                        {loadingStreets ? t('web.broadcasts.loadingRegions') : t('web.broadcasts.selectStreet')}
-                      </option>
-                      {streets.map((s) => (
-                        <option key={s.osmId} value={s.osmId}>
-                          {s.name}
+                    {streetsError ? (
+                      <div className="cd2-alert cd2-alert--error" style={{ marginTop: '0.5rem' }}>
+                        <p>{locale === 'tr' ? streetsError.messageTR : streetsError.messageEN}</p>
+                        <button
+                          type="button"
+                          className="cd2-btn cd2-btn--sm cd2-btn--ghost"
+                          onClick={() => selectedNeighborhood && fetchStreets(selectedNeighborhood.osmId)}
+                          style={{ marginTop: '0.5rem' }}
+                        >
+                          <Icon name="refresh" size={14} />
+                          {locale === 'tr' ? 'Tekrar Dene' : 'Retry'}
+                        </button>
+                      </div>
+                    ) : (
+                      <select
+                        id="region-street"
+                        className="cd2-select"
+                        value={selectedStreet?.osmId || ''}
+                        onChange={(e) => {
+                          const street = streets.find((s) => s.osmId === e.target.value);
+                          setSelectedStreet(street || null);
+                        }}
+                        disabled={!selectedNeighborhood || loadingStreets}
+                      >
+                        <option value="">
+                          {loadingStreets ? t('web.broadcasts.loadingRegions') : t('web.broadcasts.selectStreet')}
                         </option>
-                      ))}
-                    </select>
+                        {streets.map((s) => (
+                          <option key={s.osmId} value={s.osmId}>
+                            {s.name}
+                          </option>
+                        ))}
+                      </select>
+                    )}
                   </div>
                 </div>
 

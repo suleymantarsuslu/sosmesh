@@ -42,7 +42,7 @@ class BroadcastNotificationManager(private val context: Context) {
                 ).setAutoCancel(true)
 
         if (broadcast.kind == "relay_request") {
-            val enableIntent = Intent(context, BroadcastActionReceiver::class.java).apply {
+            val enableIntent = Intent().setClassName(context, ACTION_RECEIVER_CLASS).apply {
                 action = ACTION_ENABLE_RELAY
                 putExtra(EXTRA_BROADCAST_ID, broadcast.id)
             }
@@ -53,7 +53,7 @@ class BroadcastNotificationManager(private val context: Context) {
                 PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT,
             )
 
-            val cancelIntent = Intent(context, BroadcastActionReceiver::class.java).apply {
+            val cancelIntent = Intent().setClassName(context, ACTION_RECEIVER_CLASS).apply {
                 action = ACTION_CANCEL
                 putExtra(EXTRA_BROADCAST_ID, broadcast.id)
             }
@@ -80,6 +80,8 @@ class BroadcastNotificationManager(private val context: Context) {
 
     companion object {
         private const val CHANNEL_ID = "broadcast_notifications"
+        // The receiver lives in the app module, so it is addressed by class name.
+        const val ACTION_RECEIVER_CLASS = "com.sosmesh.android.broadcast.BroadcastActionReceiver"
         const val ACTION_ENABLE_RELAY = "com.sosmesh.android.ENABLE_RELAY"
         const val ACTION_CANCEL = "com.sosmesh.android.BROADCAST_CANCEL"
         const val EXTRA_BROADCAST_ID = "broadcast_id"

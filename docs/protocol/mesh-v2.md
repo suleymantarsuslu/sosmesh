@@ -72,7 +72,7 @@ Existing `MeshRelayEnvelopeV2`; `opaqueCiphertextBase64 = base64(L2 bytes)` (≤
 | `hopCount` | 0 | +1 per forward |
 | `maxHops` | **8** | unchanged; drop with `MAX_HOPS` when `hopCount ≥ maxHops` |
 | `ttlHops` | 8 | −1 per forward; drop with `TTL_EXCEEDED` at 0 |
-| `copyCount` / `maxCopyCount` | 1 / 4 | spray limit, existing engine rules |
+| `copyCount` / `maxCopyCount` | 1 / **16** | +1 per forward (existing engine rule). **Spec fix (iOS PR):** the shared engines add 1 to `copyCount` on every forward and drop with `COPY_CAP` when `copyCount ≥ maxCopyCount`, so the earlier value 4 would have ended every path after 3 hops, before the hop limit of 8. Origin value is now 16 (schema max). The spray limit is local instead: a device hands one carried copy to at most **4 distinct peers** (tracked in its seen cache). |
 | `originCreatedAt` | L2 `envelope.timestamp` | unchanged. **Time TTL = originCreatedAt + 24 h** (= server `MAX_ENVELOPE_AGE_SECONDS`); expired copies are purged everywhere (drop reason `TIME_EXPIRED`) |
 | `hopChainReceipt.relayDeviceIdHashes` | `[]` | append own `deviceIdHash`; drop with `LOOP_DETECTED` if already present |
 | `peerAckHint` | `PEER_RECEIVED_ONLY` | unchanged |
@@ -150,7 +150,7 @@ When the device holds anything to send (own or carry):
 
 1. Prefer the connected or seen peer with the **lowest `h`**; ties → strongest RSSI, then least recently attempted.
 2. If `h_self = 0`, upload instead of forwarding (§9).
-3. If no peer has `h < h_self`, the device MAY forward to an offline peer only while `copyCount < maxCopyCount` (spray-and-wait).
+3. If no peer has `h < h_self`, the device MAY forward to an offline peer (spray-and-wait), at most 4 distinct peers per carried copy (§2.3).
 4. Before every transfer: OFFER (§5.2). Never send a message the peer answers `HAVE` or `DELIVERED` to.
 
 ---

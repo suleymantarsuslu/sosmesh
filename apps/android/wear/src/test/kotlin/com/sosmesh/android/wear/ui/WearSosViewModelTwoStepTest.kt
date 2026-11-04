@@ -34,6 +34,16 @@ class WearSosViewModelTwoStepTest {
     }
 
     @Test
+    fun cancelAcknowledged_returnsToIdle() {
+        viewModel.onSosPressStart()
+        viewModel.onSosPressRelease()
+        viewModel.onConfirmCancel()
+        viewModel.onCancelAcknowledged()
+        assertEquals(WearConfirmStep.IDLE, viewModel.confirmStep)
+        assertNull(coordinator.latestEntry())
+    }
+
+    @Test
     fun confirmSend_enqueuesOnce() {
         viewModel.onSosPressStart()
         viewModel.onSosPressRelease()

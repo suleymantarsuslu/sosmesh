@@ -1,10 +1,32 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <string name="app_name">SOSMesh</string>
-    <string name="sos_hold_hint">3 sn basılı tut</string>
+    <string name="sos_label">SOS</string>
+    <string name="sos_hold_hint">SOS için basılı tut</string>
+    <string name="sos_holding">Basılı tutmaya devam et…</string>
+    <string name="sos_button_description">Acil SOS</string>
+    <string name="sos_button_action">Gönderme onayını aç</string>
     <string name="confirm_title">SOS gönder?</string>
+    <string name="confirm_detail">Uyarın telefonuna iletilir.</string>
     <string name="confirm_send">Gönder</string>
     <string name="confirm_cancel">İptal</string>
     <string name="not_sent">SOS gönderilmedi</string>
+    <string name="cancelled_detail">İptal edildi.</string>
+    <string name="action_done">Tamam</string>
     <string name="not112">112 yerine geçmez</string>
+    <string name="status_idle_headline">Hazır</string>
+    <string name="status_idle_detail">Acil durumda iki adımda onaylayın.</string>
+    <string name="status_sending_headline">Hazırlanıyor</string>
+    <string name="status_sending_detail">SOS hazırlanıyor.</string>
+    <string name="status_waiting_ack_headline">Telefona iletiliyor</string>
+    <string name="status_waiting_ack_detail">Telefon onayı bekleniyor.</string>
+    <string name="status_queued_headline">Telefona kaydedildi</string>
+    <string name="status_queued_detail">Telefon kuyruğuna alındı; sunucuya ulaştı denmez.</string>
+    <string name="status_unreachable_headline">Telefona ulaşılamıyor</string>
+    <string name="status_unreachable_detail">SOS saatte bekletiliyor; gönderildi denmez. Tehlikedeyseniz 112\'yi arayın.</string>
+    <string name="status_failed_headline">Telefona iletilemedi</string>
+    <string name="status_failed_detail">Tekrar denenecek. Tehlikedeyseniz 112\'yi arayın.</string>
+    <string name="status_stale_headline">Durum güncel değil</string>
+    <string name="status_stale_detail">Telefon bağlantısını kontrol edin.</string>
+    <string name="status_icon_description">Durum</string>
 </resources>

@@ -28,7 +28,7 @@ class WearRootScreenRoundRobolectricTest {
                 WearRootScreen(viewModel = viewModel)
             }
         }
-        composeRule.onNodeWithTag("wear_sosmesh_logo").assertIsDisplayed()
+        composeRule.onNodeWithTag("wear_status_headline").assertIsDisplayed()
         composeRule.onNodeWithTag("wear_sos_touch_target").assertIsDisplayed()
         composeRule.onNodeWithTag("wear_not112_disclaimer").assertIsDisplayed()
     }

@@ -3,7 +3,9 @@ import { UserRole } from '@prisma/client';
 import { OperatorAuthGuard } from '../operator/guards/operator-auth.guard';
 import { Roles } from '../operator/guards/roles.decorator';
 import { RolesGuard } from '../operator/guards/roles.guard';
-import { RegionsService, type RegionArea } from './regions.service';
+import { RegionsService, type RegionArea, type RegionError } from './regions.service';
+
+type RegionResponse = RegionArea[] | { error: RegionError };
 
 @Controller('v1/operator/broadcasts/regions')
 @UseGuards(OperatorAuthGuard, RolesGuard)
@@ -36,19 +38,27 @@ export class RegionsController {
 
   @Get('neighborhoods')
   @Roles(UserRole.ADMIN)
-  async getNeighborhoods(@Query('districtOsmId') districtOsmId: string): Promise<RegionArea[]> {
+  async getNeighborhoods(@Query('districtOsmId') districtOsmId: string): Promise<RegionResponse> {
     if (!districtOsmId) {
       return [];
     }
-    return this.regionsService.getNeighborhoods(districtOsmId);
+    const result = await this.regionsService.getNeighborhoods(districtOsmId);
+    if (Array.isArray(result)) {
+      return result;
+    }
+    return { error: result };
   }
 
   @Get('streets')
   @Roles(UserRole.ADMIN)
-  async getStreets(@Query('neighborhoodOsmId') neighborhoodOsmId: string): Promise<RegionArea[]> {
+  async getStreets(@Query('neighborhoodOsmId') neighborhoodOsmId: string): Promise<RegionResponse> {
     if (!neighborhoodOsmId) {
       return [];
     }
-    return this.regionsService.getStreets(neighborhoodOsmId);
+    const result = await this.regionsService.getStreets(neighborhoodOsmId);
+    if (Array.isArray(result)) {
+      return result;
+    }
+    return { error: result };
   }
 }

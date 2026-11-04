@@ -1,4 +1,5 @@
 import { Injectable, Logger } from '@nestjs/common';
+import staticRegionsData from './static-regions.json';
 
 export type RegionArea = {
   osmId: string;
@@ -7,6 +8,12 @@ export type RegionArea = {
   lat: number;
   lon: number;
   boundingBox: [number, number, number, number];
+};
+
+export type RegionError = {
+  code: 'OVERPASS_UNAVAILABLE' | 'TIMEOUT' | 'RATE_LIMITED' | 'NETWORK_ERROR';
+  messageEN: string;
+  messageTR: string;
 };
 
 class SimpleCache<K, V> {
@@ -42,19 +49,15 @@ class SimpleCache<K, V> {
   }
 }
 
-type NominatimResult = {
-  place_id: number;
-  osm_type: string;
-  osm_id: number;
-  display_name: string;
-  lat: string;
-  lon: string;
-  boundingbox: [string, string, string, string];
-};
-
-const OVERPASS_API = 'https://overpass-api.de/api/interpreter';
+const OVERPASS_MIRRORS = [
+  'https://overpass-api.de/api/interpreter',
+  'https://overpass.kumi.systems/api/interpreter',
+  'https://overpass.private.coffee/api/interpreter',
+];
 const USER_AGENT = 'SOSMesh/1.0 (+https://sosmesh.antiosoft.com)';
-const OVERPASS_TIMEOUT_MS = 60000;
+const OVERPASS_TIMEOUT_MS = 45000;
+const SUCCESS_CACHE_TTL = 1000 * 60 * 60 * 24;
+const FAILURE_CACHE_TTL = 1000 * 60;
 
 type OverpassElement = {
   type: string;
@@ -71,13 +74,12 @@ type OverpassResponse = {
 @Injectable()
 export class RegionsService {
   private readonly logger = new Logger(RegionsService.name);
-  private readonly cache = new SimpleCache<string, RegionArea[]>({ max: 500, ttl: 1000 * 60 * 60 * 24 });
+  private readonly successCache = new SimpleCache<string, RegionArea[]>({ max: 500, ttl: SUCCESS_CACHE_TTL });
+  private readonly failureCache = new SimpleCache<string, RegionError>({ max: 100, ttl: FAILURE_CACHE_TTL });
   private lastRequestTime = 0;
-  private readonly requestQueue = Promise.resolve();
+  private staticRegions = staticRegionsData;
 
-  private async overpassQuery(query: string): Promise<OverpassResponse> {
-    await this.requestQueue;
-    
+  private async overpassQueryWithFallback(query: string): Promise<OverpassResponse> {
     const now = Date.now();
     const elapsed = now - this.lastRequestTime;
     if (elapsed < 1100) {
@@ -85,28 +87,76 @@ export class RegionsService {
     }
     this.lastRequestTime = Date.now();
 
-    const controller = new AbortController();
-    const timeout = setTimeout(() => controller.abort(), OVERPASS_TIMEOUT_MS);
+    let lastError: Error | null = null;
 
-    try {
-      const res = await fetch(OVERPASS_API, {
-        method: 'POST',
-        headers: { 
-          'User-Agent': USER_AGENT,
-          'Content-Type': 'application/x-www-form-urlencoded',
-        },
-        body: `data=${encodeURIComponent(query)}`,
-        signal: controller.signal,
-      });
+    for (const mirror of OVERPASS_MIRRORS) {
+      const controller = new AbortController();
+      const timeout = setTimeout(() => controller.abort(), OVERPASS_TIMEOUT_MS);
 
-      if (!res.ok) {
-        throw new Error(`Overpass returned ${res.status}`);
+      try {
+        this.logger.log(`Trying Overpass mirror: ${mirror}`);
+        const res = await fetch(mirror, {
+          method: 'POST',
+          headers: {
+            'User-Agent': USER_AGENT,
+            'Content-Type': 'application/x-www-form-urlencoded',
+          },
+          body: `data=${encodeURIComponent(query)}`,
+          signal: controller.signal,
+        });
+
+        clearTimeout(timeout);
+
+        if (res.status === 429) {
+          this.logger.warn(`Mirror ${mirror} rate-limited (429)`);
+          lastError = new Error('RATE_LIMITED');
+          continue;
+        }
+
+        if (res.status >= 500) {
+          this.logger.warn(`Mirror ${mirror} server error (${res.status})`);
+          lastError = new Error('SERVER_ERROR');
+          continue;
+        }
+
+        if (!res.ok) {
+          this.logger.warn(`Mirror ${mirror} returned ${res.status}`);
+          lastError = new Error(`HTTP ${res.status}`);
+          continue;
+        }
+
+        const text = await res.text();
+        let data: OverpassResponse;
+        try {
+          data = JSON.parse(text);
+        } catch {
+          this.logger.warn(`Mirror ${mirror} returned non-JSON`);
+          lastError = new Error('INVALID_JSON');
+          continue;
+        }
+
+        this.logger.log(`Successfully fetched from ${mirror}`);
+        return data;
+      } catch (err: any) {
+        clearTimeout(timeout);
+        if (err.name === 'AbortError') {
+          this.logger.warn(`Mirror ${mirror} timed out`);
+          lastError = new Error('TIMEOUT');
+        } else {
+          this.logger.warn(`Mirror ${mirror} network error: ${err.message}`);
+          lastError = err;
+        }
       }
-
-      return await res.json();
-    } finally {
-      clearTimeout(timeout);
     }
+
+    const errorMessage = lastError?.message || 'UNKNOWN';
+    if (errorMessage.includes('TIMEOUT') || lastError?.name === 'AbortError') {
+      throw Object.assign(new Error('TIMEOUT'), { code: 'TIMEOUT' });
+    }
+    if (errorMessage.includes('RATE_LIMITED')) {
+      throw Object.assign(new Error('RATE_LIMITED'), { code: 'RATE_LIMITED' });
+    }
+    throw Object.assign(new Error('OVERPASS_UNAVAILABLE'), { code: 'OVERPASS_UNAVAILABLE' });
   }
 
   async getCountries(): Promise<RegionArea[]> {
@@ -123,113 +173,77 @@ export class RegionsService {
   }
 
   async getProvinces(countryOsmId: string): Promise<RegionArea[]> {
-    const cacheKey = `provinces:${countryOsmId}`;
-    const cached = this.cache.get(cacheKey);
-    if (cached) {
-      return cached;
-    }
-
     if (countryOsmId !== 'relation/174737') {
       return [];
     }
 
-    try {
-      const query = `
-        [out:json][timeout:50];
-        area["ISO3166-1"="TR"]->.a;
-        rel(area.a)[boundary=administrative][admin_level=4];
-        out tags center bb;
-      `;
-
-      const data = await this.overpassQuery(query);
-      const provinces: RegionArea[] = data.elements
-        .filter((el) => el.tags?.name && el.center && el.bounds)
-        .map((el) => {
-          const bounds = el.bounds!;
-          return {
-            osmId: `relation/${el.id}`,
-            name: el.tags!.name,
-            displayName: el.tags!.name,
-            lat: el.center!.lat,
-            lon: el.center!.lon,
-            boundingBox: [bounds.minlat, bounds.maxlat, bounds.minlon, bounds.maxlon] as [number, number, number, number],
-          };
-        })
-        .sort((a, b) => a.name.localeCompare(b.name, 'tr'));
-
-      this.cache.set(cacheKey, provinces);
-      return provinces;
-    } catch (err) {
-      this.logger.error(`Failed to fetch provinces from Overpass`, err);
-      return [];
-    }
+    return this.staticRegions.provinces.map((p) => ({
+      osmId: p.osmId,
+      name: p.name,
+      displayName: p.name,
+      lat: p.lat,
+      lon: p.lon,
+      boundingBox: p.boundingBox as [number, number, number, number],
+    }));
   }
 
   async getDistricts(provinceOsmId: string): Promise<RegionArea[]> {
-    const cacheKey = `districts:${provinceOsmId}`;
-    const cached = this.cache.get(cacheKey);
-    if (cached) {
-      return cached;
-    }
-
-    const match = provinceOsmId.match(/^relation\/(\d+)$/);
-    if (!match) {
-      return [];
-    }
-
-    const relationId = match[1];
-    const areaId = 3600000000 + parseInt(relationId, 10);
-
-    try {
-      const query = `
-        [out:json][timeout:50];
-        area(${areaId})->.a;
-        rel(area.a)[boundary=administrative][admin_level=6];
-        out tags center bb;
-      `;
-
-      const data = await this.overpassQuery(query);
-      const districts: RegionArea[] = data.elements
-        .filter((el) => el.tags?.name && el.center && el.bounds)
-        .map((el) => {
-          const bounds = el.bounds!;
-          return {
-            osmId: `relation/${el.id}`,
-            name: el.tags!.name,
-            displayName: el.tags!.name,
-            lat: el.center!.lat,
-            lon: el.center!.lon,
-            boundingBox: [bounds.minlat, bounds.maxlat, bounds.minlon, bounds.maxlon] as [number, number, number, number],
-          };
-        })
-        .sort((a, b) => a.name.localeCompare(b.name, 'tr'));
-
-      this.cache.set(cacheKey, districts);
-      return districts;
-    } catch (err) {
-      this.logger.error(`Failed to fetch districts for ${provinceOsmId}`, err);
-      return [];
-    }
+    return this.staticRegions.districts
+      .filter((d) => d.parentId === provinceOsmId)
+      .map((d) => ({
+        osmId: d.osmId,
+        name: d.name,
+        displayName: d.name,
+        lat: d.lat,
+        lon: d.lon,
+        boundingBox: d.boundingBox as [number, number, number, number],
+      }));
   }
 
-  async getNeighborhoods(districtOsmId: string): Promise<RegionArea[]> {
+  async getNeighborhoods(districtOsmId: string): Promise<RegionArea[] | RegionError> {
     const cacheKey = `neighborhoods:${districtOsmId}`;
-    const cached = this.cache.get(cacheKey);
-    if (cached) {
-      return cached;
+    
+    const cachedSuccess = this.successCache.get(cacheKey);
+    if (cachedSuccess) {
+      return cachedSuccess;
     }
 
-    const match = districtOsmId.match(/^relation\/(\d+)$/);
+    const cachedFailure = this.failureCache.get(cacheKey);
+    if (cachedFailure) {
+      return cachedFailure;
+    }
+
+    const match = districtOsmId.match(/^[^/]+\/(\d+)$/);
     if (!match) {
-      return [];
+      const error: RegionError = {
+        code: 'NETWORK_ERROR',
+        messageEN: 'Invalid district ID',
+        messageTR: 'Geçersiz ilçe ID',
+      };
+      this.failureCache.set(cacheKey, error);
+      return error;
     }
 
-    const relationId = match[1];
-    const areaId = 3600000000 + parseInt(relationId, 10);
+    const idStr = match[1];
+    let areaId: number;
+
+    if (districtOsmId.startsWith('relation/')) {
+      areaId = 3600000000 + parseInt(idStr, 10);
+    } else if (districtOsmId.startsWith('adm2-')) {
+      const error: RegionError = {
+        code: 'NETWORK_ERROR',
+        messageEN: 'Cannot query neighborhoods for geoBoundaries district ID',
+        messageTR: 'geoBoundaries ilçe ID\'si için mahalle sorgulanamıyor',
+      };
+      this.failureCache.set(cacheKey, error);
+      return error;
+    } else {
+      areaId = 3600000000 + parseInt(idStr, 10);
+    }
 
     try {
       const query = `
-        [out:json][timeout:50];
+        [out:json][timeout:40];
         area(${areaId})->.a;
         (
           rel(area.a)[boundary=administrative][admin_level=8];
@@ -238,7 +252,7 @@ export class RegionsService {
         out tags center bb;
       `;
 
-      const data = await this.overpassQuery(query);
+      const data = await this.overpassQueryWithFallback(query);
       const neighborhoods: RegionArea[] = data.elements
         .filter((el) => el.tags?.name)
         .map((el) => {
@@ -270,24 +284,50 @@ export class RegionsService {
         .filter((n): n is RegionArea => n !== null)
         .sort((a, b) => a.name.localeCompare(b.name, 'tr'));
 
-      this.cache.set(cacheKey, neighborhoods);
+      this.successCache.set(cacheKey, neighborhoods);
       return neighborhoods;
-    } catch (err) {
+    } catch (err: any) {
       this.logger.error(`Failed to fetch neighborhoods for ${districtOsmId}`, err);
-      return [];
+      
+      const error: RegionError = {
+        code: err.code || 'OVERPASS_UNAVAILABLE',
+        messageEN: 
+          err.code === 'TIMEOUT' ? 'Request timed out. Please try again.' :
+          err.code === 'RATE_LIMITED' ? 'Service temporarily unavailable due to rate limits.' :
+          'OpenStreetMap service temporarily unavailable.',
+        messageTR:
+          err.code === 'TIMEOUT' ? 'İstek zaman aşımına uğradı. Lütfen tekrar deneyin.' :
+          err.code === 'RATE_LIMITED' ? 'Hizmet geçici olarak kullanılamıyor (oran limiti).' :
+          'OpenStreetMap hizmeti geçici olarak kullanılamıyor.',
+      };
+      
+      this.failureCache.set(cacheKey, error);
+      return error;
     }
   }
 
-  async getStreets(neighborhoodOsmId: string): Promise<RegionArea[]> {
+  async getStreets(neighborhoodOsmId: string): Promise<RegionArea[] | RegionError> {
     const cacheKey = `streets:${neighborhoodOsmId}`;
-    const cached = this.cache.get(cacheKey);
-    if (cached) {
-      return cached;
+    
+    const cachedSuccess = this.successCache.get(cacheKey);
+    if (cachedSuccess) {
+      return cachedSuccess;
+    }
+
+    const cachedFailure = this.failureCache.get(cacheKey);
+    if (cachedFailure) {
+      return cachedFailure;
     }
 
     const match = neighborhoodOsmId.match(/^(relation|node)\/(\d+)$/);
     if (!match) {
-      return [];
+      const error: RegionError = {
+        code: 'NETWORK_ERROR',
+        messageEN: 'Invalid neighborhood ID',
+        messageTR: 'Geçersiz mahalle ID',
+      };
+      this.failureCache.set(cacheKey, error);
+      return error;
     }
 
     const [, type, idStr] = match;
@@ -298,18 +338,24 @@ export class RegionsService {
     } else if (type === 'node') {
       areaId = 3400000000 + parseInt(idStr, 10);
     } else {
-      return [];
+      const error: RegionError = {
+        code: 'NETWORK_ERROR',
+        messageEN: 'Invalid neighborhood type',
+        messageTR: 'Geçersiz mahalle tipi',
+      };
+      this.failureCache.set(cacheKey, error);
+      return error;
     }
 
     try {
       const query = `
-        [out:json][timeout:50];
+        [out:json][timeout:40];
         area(${areaId})->.a;
         way(area.a)[highway][name];
         out tags center bb;
       `;
 
-      const data = await this.overpassQuery(query);
+      const data = await this.overpassQueryWithFallback(query);
       
       const streetMap = new Map<string, { ways: OverpassElement[]; minlat: number; maxlat: number; minlon: number; maxlon: number }>();
       
@@ -347,11 +393,25 @@ export class RegionsService {
         })
         .sort((a, b) => a.name.localeCompare(b.name, 'tr'));
 
-      this.cache.set(cacheKey, streets);
+      this.successCache.set(cacheKey, streets);
       return streets;
-    } catch (err) {
+    } catch (err: any) {
       this.logger.error(`Failed to fetch streets for ${neighborhoodOsmId}`, err);
-      return [];
+      
+      const error: RegionError = {
+        code: err.code || 'OVERPASS_UNAVAILABLE',
+        messageEN: 
+          err.code === 'TIMEOUT' ? 'Request timed out. Please try again.' :
+          err.code === 'RATE_LIMITED' ? 'Service temporarily unavailable due to rate limits.' :
+          'OpenStreetMap service temporarily unavailable.',
+        messageTR:
+          err.code === 'TIMEOUT' ? 'İstek zaman aşımına uğradı. Lütfen tekrar deneyin.' :
+          err.code === 'RATE_LIMITED' ? 'Hizmet geçici olarak kullanılamıyor (oran limiti).' :
+          'OpenStreetMap hizmeti geçici olarak kullanılamıyor.',
+      };
+      
+      this.failureCache.set(cacheKey, error);
+      return error;
     }
   }
 

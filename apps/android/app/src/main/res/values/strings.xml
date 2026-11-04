@@ -11,7 +11,6 @@
     <string name="home_radio_debug_cta">Radio / peer discovery (debug)</string>
     <string name="home_express_sos_cta">SOS</string>
     <string name="home_express_sos_content_description">Quick SOS; save on device with defaults</string>
-    <string name="home_guided_sos_cta">Guided SOS wizard</string>
     <string name="home_express_saved">Saved on device — use the guided flow to edit details</string>
     <string name="home_settings_cta">Settings and data control</string>
     <string name="platform_self_repair_title">Connection or permission issue</string>

@@ -143,6 +143,7 @@
 		A3166030000000000000001 /* InfoPlist.strings in Resources */ = {isa = PBXBuildFile; fileRef = A3100480000000000000001 /* InfoPlist.strings */; };
 		A3166040000000000000001 /* InfoPlist.strings in Resources */ = {isa = PBXBuildFile; fileRef = A3100490000000000000001 /* InfoPlist.strings */; };
 		A3166050000000000000001 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = A3100500000000000000001 /* Assets.xcassets */; };
+		A3B90010000000000000001 /* SOSMeshWatch.app in Embed Watch Content */ = {isa = PBXBuildFile; fileRef = A3790010000000000000001 /* SOSMeshWatch.app */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
 		A3169980000000000000001 /* state-transitions.json in CopyFiles */ = {isa = PBXBuildFile; fileRef = A3100570000000000000001 /* state-transitions.json */; };
 		A3766010000000000000001 /* PrivacyInfo.xcprivacy in Resources */ = {isa = PBXBuildFile; fileRef = A3100520000000000000001 /* PrivacyInfo.xcprivacy */; };
 		A3766020000000000000001 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = A3100530000000000000001 /* Assets.xcassets */; };
@@ -160,13 +161,14 @@
 		A3770050000000000000001 /* Frameworks */ = {isa = PBXFrameworksBuildPhase; buildActionMask = 2147483647; files = (A3767220000000000000001 /* WidgetKit in Frameworks */); runOnlyForDeploymentPostprocessing = 0; };
 		A3770020000000000000001 /* Resources */ = {isa = PBXResourcesBuildPhase; buildActionMask = 2147483647; files = (A3766010000000000000001 /* in Resources */, A3766020000000000000001 /* in Resources */, A3766030000000000000001 /* in Resources */, A3766040000000000000001 /* in Resources */); runOnlyForDeploymentPostprocessing = 0; };
 		A3770060000000000000001 /* Resources */ = {isa = PBXResourcesBuildPhase; buildActionMask = 2147483647; files = (A3766500000000000000001 /* in Resources */); runOnlyForDeploymentPostprocessing = 0; };
+		A3B90020000000000000001 /* Embed Watch Content */ = {isa = PBXCopyFilesBuildPhase; buildActionMask = 2147483647; dstPath = "$(CONTENTS_FOLDER_PATH)/Watch"; dstSubfolderSpec = 16; files = (A3B90010000000000000001 /* SOSMeshWatch.app in Embed Watch Content */); name = "Embed Watch Content"; runOnlyForDeploymentPostprocessing = 0; };
 		A3170980000000000000001 /* Bundle transport fixture */ = {isa = PBXCopyFilesBuildPhase; buildActionMask = 2147483647; dstPath = "packages/fixtures/transport"; dstSubfolderSpec = 7; files = (A3169980000000000000001 /* in CopyFiles */); runOnlyForDeploymentPostprocessing = 0; };
 A3130010000000000000001 /* SOSMesh-iOS */ = {
 	isa = PBXNativeTarget;
 	buildConfigurationList = A3140010000000000000001 /* Build configuration list for PBXNativeTarget "SOSMesh-iOS" */;
-	buildPhases = (A3170010000000000000001 /* Sources */, A3170040000000000000001 /* Frameworks */, A3170030000000000000001 /* Resources */, A3170980000000000000001 /* Bundle transport fixture */);
+	buildPhases = (A3170010000000000000001 /* Sources */, A3170040000000000000001 /* Frameworks */, A3170030000000000000001 /* Resources */, A3170980000000000000001 /* Bundle transport fixture */, A3B90020000000000000001 /* Embed Watch Content */);
 	buildRules = ();
-	dependencies = ();
+	dependencies = (A3B90030000000000000001 /* PBXTargetDependency */);
 	name = "SOSMesh-iOS";
 	packageProductDependencies = (A3151010000000000000001 /* SOSMeshCore */, A3151020000000000000001 /* SOSMeshContracts */);
 	productName = SOSMesh;
@@ -223,6 +225,8 @@ A3120010000000000000001 /* Project object */ = {
 	projectRoot = "";
 	targets = (A3130010000000000000001 /* SOSMesh-iOS */, A3130020000000000000001 /* SOSMeshTests */, A3730010000000000000001 /* SOSMesh-Watch */, A3730020000000000000001 /* SOSMeshWatchWidgets */);
 };
+		A3B90030000000000000001 /* PBXTargetDependency */ = {isa = PBXTargetDependency; target = A3730010000000000000001 /* SOSMesh-Watch */; targetProxy = A3B90040000000000000001 /* PBXContainerItemProxy */; };
+		A3B90040000000000000001 /* PBXContainerItemProxy */ = {isa = PBXContainerItemProxy; containerPortal = A3120010000000000000001 /* Project object */; proxyType = 1; remoteGlobalIDString = A3730010000000000000001; remoteInfo = "SOSMesh-Watch"; };
 		A3131010000000000000001 /* PBXTargetDependency */ = {isa = PBXTargetDependency; target = A3130010000000000000001 /* SOSMesh-iOS */; targetProxy = A3131020000000000000001 /* PBXContainerItemProxy */; };
 		A3131020000000000000001 /* PBXContainerItemProxy */ = {isa = PBXContainerItemProxy; containerPortal = A3120010000000000000001 /* Project */; proxyType = 1; remoteGlobalIDString = A3130010000000000000001; remoteInfo = "SOSMesh-iOS"; };
 		A3142000000000000000001 /* Debug */ = {isa = XCBuildConfiguration; buildSettings = {
@@ -260,7 +264,9 @@ A3120010000000000000001 /* Project object */ = {
 				"EXCLUDED_ARCHS[sdk=iphonesimulator*]" = x86_64;
 				ONLY_ACTIVE_ARCH = YES;
 				PRODUCT_NAME = SOSMesh;
-				PRODUCT_BUNDLE_IDENTIFIER = com.sosmesh.ios;
+				PRODUCT_BUNDLE_IDENTIFIER = com.suleymantarsuslu.sosmesh;
+				DEVELOPMENT_TEAM = YB93KNBFT8;
+				CODE_SIGN_STYLE = Automatic;
 				CODE_SIGNING_ALLOWED = NO;
 				CODE_SIGNING_REQUIRED = NO;
 				MARKETING_VERSION = 1.0.0;
@@ -280,7 +286,9 @@ A3120010000000000000001 /* Project object */ = {
 				"EXCLUDED_ARCHS[sdk=iphonesimulator*]" = x86_64;
 				ONLY_ACTIVE_ARCH = YES;
 				PRODUCT_NAME = SOSMesh;
-				PRODUCT_BUNDLE_IDENTIFIER = com.sosmesh.ios;
+				PRODUCT_BUNDLE_IDENTIFIER = com.suleymantarsuslu.sosmesh;
+				DEVELOPMENT_TEAM = YB93KNBFT8;
+				CODE_SIGN_STYLE = Automatic;
 				CODE_SIGNING_ALLOWED = NO;
 				CODE_SIGNING_REQUIRED = NO;
 				MARKETING_VERSION = 1.0.0;
@@ -312,7 +320,7 @@ A3120010000000000000001 /* Project object */ = {
 				"EXCLUDED_ARCHS[sdk=iphonesimulator*]" = x86_64;
 				ONLY_ACTIVE_ARCH = YES;
 				PRODUCT_NAME = SOSMeshTests;
-				PRODUCT_BUNDLE_IDENTIFIER = com.sosmesh.ios.tests;
+				PRODUCT_BUNDLE_IDENTIFIER = com.suleymantarsuslu.sosmesh.tests;
 				CODE_SIGNING_ALLOWED = NO;
 				CODE_SIGNING_REQUIRED = NO;
 				MARKETING_VERSION = 1.0.0;
@@ -331,7 +339,7 @@ A3120010000000000000001 /* Project object */ = {
 				"EXCLUDED_ARCHS[sdk=iphonesimulator*]" = x86_64;
 				ONLY_ACTIVE_ARCH = YES;
 				PRODUCT_NAME = SOSMeshTests;
-				PRODUCT_BUNDLE_IDENTIFIER = com.sosmesh.ios.tests;
+				PRODUCT_BUNDLE_IDENTIFIER = com.suleymantarsuslu.sosmesh.tests;
 				CODE_SIGNING_ALLOWED = NO;
 				CODE_SIGNING_REQUIRED = NO;
 				MARKETING_VERSION = 1.0.0;
@@ -357,7 +365,10 @@ A3120010000000000000001 /* Project object */ = {
 				SUPPORTED_PLATFORMS = "watchos watchsimulator";
 				ONLY_ACTIVE_ARCH = YES;
 				PRODUCT_NAME = SOSMeshWatch;
-				PRODUCT_BUNDLE_IDENTIFIER = com.sosmesh.ios.watch;
+				PRODUCT_BUNDLE_IDENTIFIER = com.suleymantarsuslu.sosmesh.watchkitapp;
+				DEVELOPMENT_TEAM = YB93KNBFT8;
+				CODE_SIGN_STYLE = Automatic;
+				SKIP_INSTALL = YES;
 				CODE_SIGNING_ALLOWED = NO;
 				CODE_SIGNING_REQUIRED = NO;
 				INFOPLIST_FILE = ../watchos/SOSMeshWatch/Info.plist;
@@ -371,7 +382,10 @@ A3120010000000000000001 /* Project object */ = {
 				SUPPORTED_PLATFORMS = "watchos watchsimulator";
 				ONLY_ACTIVE_ARCH = YES;
 				PRODUCT_NAME = SOSMeshWatch;
-				PRODUCT_BUNDLE_IDENTIFIER = com.sosmesh.ios.watch;
+				PRODUCT_BUNDLE_IDENTIFIER = com.suleymantarsuslu.sosmesh.watchkitapp;
+				DEVELOPMENT_TEAM = YB93KNBFT8;
+				CODE_SIGN_STYLE = Automatic;
+				SKIP_INSTALL = YES;
 				CODE_SIGNING_ALLOWED = NO;
 				CODE_SIGNING_REQUIRED = NO;
 				INFOPLIST_FILE = ../watchos/SOSMeshWatch/Info.plist;
@@ -394,7 +408,9 @@ A3120010000000000000001 /* Project object */ = {
 				SUPPORTED_PLATFORMS = "watchos watchsimulator";
 				ONLY_ACTIVE_ARCH = YES;
 				PRODUCT_NAME = SOSMeshWatchWidgets;
-				PRODUCT_BUNDLE_IDENTIFIER = com.sosmesh.ios.watch.widgets;
+				PRODUCT_BUNDLE_IDENTIFIER = com.suleymantarsuslu.sosmesh.watchkitapp.widgets;
+				DEVELOPMENT_TEAM = YB93KNBFT8;
+				CODE_SIGN_STYLE = Automatic;
 				CODE_SIGNING_ALLOWED = NO;
 				CODE_SIGNING_REQUIRED = NO;
 				INFOPLIST_FILE = ../watchos/SOSMeshWatchWidgets/Info.plist;
@@ -410,7 +426,9 @@ A3120010000000000000001 /* Project object */ = {
 				SUPPORTED_PLATFORMS = "watchos watchsimulator";
 				ONLY_ACTIVE_ARCH = YES;
 				PRODUCT_NAME = SOSMeshWatchWidgets;
-				PRODUCT_BUNDLE_IDENTIFIER = com.sosmesh.ios.watch.widgets;
+				PRODUCT_BUNDLE_IDENTIFIER = com.suleymantarsuslu.sosmesh.watchkitapp.widgets;
+				DEVELOPMENT_TEAM = YB93KNBFT8;
+				CODE_SIGN_STYLE = Automatic;
 				CODE_SIGNING_ALLOWED = NO;
 				CODE_SIGNING_REQUIRED = NO;
 				INFOPLIST_FILE = ../watchos/SOSMeshWatchWidgets/Info.plist;

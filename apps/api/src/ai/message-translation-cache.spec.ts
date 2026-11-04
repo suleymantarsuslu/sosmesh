@@ -17,7 +17,7 @@ describe('MessageTranslationService - same-language verdict is cached and billed
     const prisma = {
       aiTranslationCache: {
         findFirst: jest.fn().mockResolvedValue(cachedRow),
-        create: jest.fn().mockResolvedValue({}),
+        upsert: jest.fn().mockResolvedValue({}),
       },
     };
     const metaClient = {
@@ -55,14 +55,19 @@ describe('MessageTranslationService - same-language verdict is cached and billed
     expect(budgetGuard.reconcile).toHaveBeenCalledWith(
       expect.objectContaining({ reservationId: 'res-1', actualUsd: 0.0007, inputTokens: 100, outputTokens: 20 })
     );
-    expect(prisma.aiTranslationCache.create).toHaveBeenCalledWith({
-      data: expect.objectContaining({
-        sourceType: 'sos_message',
-        sourceId: 'msg-1',
-        sourceLanguage: 'en',
-        targetLanguage: 'en',
-      }),
-    });
+    expect(prisma.aiTranslationCache.upsert).toHaveBeenCalledWith(
+      expect.objectContaining({
+        where: {
+          sourceType_sourceId_sourceField_targetLanguage: {
+            sourceType: 'sos_message',
+            sourceId: 'msg-1',
+            sourceField: 'noteText',
+            targetLanguage: 'en',
+          },
+        },
+        create: expect.objectContaining({ sourceLanguage: 'en', targetLanguage: 'en' }),
+      })
+    );
   });
 
   it('does not call the model again when a same-language verdict is cached', async () => {

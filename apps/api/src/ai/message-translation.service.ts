@@ -469,15 +469,31 @@ Provide:
     translatedText: string;
     modelVersion: string;
   }): Promise<void> {
-    await this.prisma.aiTranslationCache.create({
-      data: {
+    const modelVersion = `${CACHE_VERSION}:${data.modelVersion}`;
+    // Upsert: a stale row from an older cache version holds the same unique key and would
+    // otherwise make every create fail, forcing a model call on each request.
+    await this.prisma.aiTranslationCache.upsert({
+      where: {
+        sourceType_sourceId_sourceField_targetLanguage: {
+          sourceType: data.sourceType,
+          sourceId: data.sourceId,
+          sourceField: data.sourceField,
+          targetLanguage: data.targetLanguage,
+        },
+      },
+      create: {
         sourceType: data.sourceType,
         sourceId: data.sourceId,
         sourceField: data.sourceField,
         sourceLanguage: data.sourceLanguage,
         targetLanguage: data.targetLanguage,
         translatedText: data.translatedText,
-        modelVersion: `${CACHE_VERSION}:${data.modelVersion}`,
+        modelVersion,
+      },
+      update: {
+        sourceLanguage: data.sourceLanguage,
+        translatedText: data.translatedText,
+        modelVersion,
       },
     });
   }

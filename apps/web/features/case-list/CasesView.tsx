@@ -33,6 +33,9 @@ function formatTimeAgo(ms: number): string {
 }
 
 function feedEventToCase(event: FeedEvent, existing?: OperatorCaseRow): OperatorCaseRow {
+  const hasNewLocation = event.latitude !== null && event.longitude !== null;
+  const hasPreviousLocation = existing?.latitude !== null && existing?.longitude !== null;
+
   return {
     incidentId: event.incidentId,
     incidentState: existing?.incidentState ?? 'PENDING',
@@ -42,10 +45,10 @@ function feedEventToCase(event: FeedEvent, existing?: OperatorCaseRow): Operator
     sosType: existing?.sosType ?? 'GENERAL',
     deliveryState: existing?.deliveryState ?? 'SERVER_ACCEPTED',
     locationStatus: event.locationStatus,
-    latitude: event.latitude,
-    longitude: event.longitude,
-    accuracyMeters: existing?.accuracyMeters ?? null,
-    locationApproximate: existing?.locationApproximate ?? false,
+    latitude: hasNewLocation ? event.latitude : (hasPreviousLocation ? existing.latitude : null),
+    longitude: hasNewLocation ? event.longitude : (hasPreviousLocation ? existing.longitude : null),
+    accuracyMeters: hasNewLocation ? (existing?.accuracyMeters ?? null) : (hasPreviousLocation ? existing!.accuracyMeters : null),
+    locationApproximate: hasNewLocation ? (existing?.locationApproximate ?? false) : (hasPreviousLocation ? existing!.locationApproximate : false),
     receivedAt: event.occurredAt,
     source: existing?.source ?? 'feed',
   };

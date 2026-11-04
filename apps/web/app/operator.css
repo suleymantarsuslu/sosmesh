@@ -1247,6 +1247,24 @@ html[data-theme='dark'] .operator-map-wrap--empty {
   line-height: 1.5;
 }
 
+.operator-map__empty-overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgb(255 255 255 / 85%);
+  z-index: 5;
+  pointer-events: none;
+}
+
+html[data-theme='dark'] .operator-map__empty-overlay {
+  background: rgb(0 0 0 / 65%);
+}
+
 .operator-map__attribution {
   position: absolute;
   bottom: 0;

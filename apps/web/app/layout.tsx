@@ -1,4 +1,5 @@
 import type { Metadata } from 'next';
+import { Inter } from 'next/font/google';
 
 import { OperatorPreferencesProvider } from '../components/operator/OperatorPreferencesProvider';
 import { ToastProvider } from '../components/ui/ToastProvider';
@@ -12,6 +13,13 @@ import './ai.css';
 import './cases-modern.css';
 import './case-detail-v2.css';
 import './ops-pages.css';
+
+const inter = Inter({
+  subsets: ['latin'],
+  weight: ['400', '500', '600', '700'],
+  display: 'swap',
+  variable: '--font-inter',
+});
 
 const siteUrl =
   process.env.NEXT_PUBLIC_SITE_URL ??
@@ -34,17 +42,11 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-    <html lang={DEFAULT_LOCALE} suppressHydrationWarning>
+    <html lang={DEFAULT_LOCALE} suppressHydrationWarning className={inter.variable}>
       <head>
-        <link rel="preconnect" href="https://fonts.googleapis.com" />
-        <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
-        <link
-          href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap"
-          rel="stylesheet"
-        />
         <link rel="stylesheet" href="/tokens.css" />
       </head>
-      <body>
+      <body className={inter.className}>
         <OperatorPreferencesProvider>
           <ToastProvider>{children}</ToastProvider>
         </OperatorPreferencesProvider>

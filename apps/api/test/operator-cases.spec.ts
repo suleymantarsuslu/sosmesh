@@ -142,4 +142,152 @@ describe('Operator cases map/list API', () => {
       .set('Authorization', `Bearer ${token}`);
     expect(response.status).toBe(404);
   });
+
+  describe('aggregation by incident', () => {
+    const incidentManyMessages = '00000000-0000-4000-8000-000000000510';
+    const incidentWithLocation = '00000000-0000-4000-8000-000000000511';
+
+    beforeAll(async () => {
+      const prisma = app.get(PrismaService);
+      await prisma.incident.createMany({
+        data: [
+          { id: incidentManyMessages, state: 'PENDING', latitude: 40.0, longitude: 33.0, accuracyMeters: 100 },
+          { id: incidentWithLocation, state: 'PENDING' },
+        ],
+        skipDuplicates: true,
+      });
+      await prisma.assignment.createMany({
+        data: [
+          { incidentId: incidentManyMessages, teamId: teamA, status: 'OPEN' },
+          { incidentId: incidentWithLocation, teamId: teamA, status: 'OPEN' },
+        ],
+        skipDuplicates: true,
+      });
+
+      for (let i = 0; i < 120; i++) {
+        await prisma.sosMessage.create({
+          data: {
+            messageId: `flood-msg-${i}`,
+            incidentId: incidentManyMessages,
+            locationStatus: 'UNKNOWN',
+            latitude: null,
+            longitude: null,
+            priority: 2,
+            sosType: 'GENERAL',
+            deliveryState: 'SERVER_ACCEPTED',
+          },
+        });
+      }
+
+      await prisma.sosMessage.create({
+        data: {
+          messageId: 'located-msg',
+          incidentId: incidentWithLocation,
+          locationStatus: 'GPS',
+          latitude: 39.5,
+          longitude: 32.5,
+          accuracyMeters: 15,
+          priority: 1,
+          sosType: 'FIRE',
+          deliveryState: 'SERVER_ACCEPTED',
+        },
+      });
+    });
+
+    it('returns one row per incident, not one per message', async () => {
+      const token = await loginToken();
+      const response = await request(app.getHttpServer())
+        .get('/v1/operator/cases?limit=100')
+        .set('Authorization', `Bearer ${token}`);
+      expect(response.status).toBe(200);
+
+      const incidentIds = (response.body.items as { incidentId: string }[]).map(
+        (row) => row.incidentId
+      );
+      const uniqueIncidentIds = [...new Set(incidentIds)];
+      expect(incidentIds.length).toBe(uniqueIncidentIds.length);
+    });
+
+    it('includes incident with GPS even when another has 120 locationless messages', async () => {
+      const token = await loginToken();
+      const response = await request(app.getHttpServer())
+        .get('/v1/operator/cases?limit=100')
+        .set('Authorization', `Bearer ${token}`);
+      expect(response.status).toBe(200);
+
+      const incidentIds = (response.body.items as { incidentId: string }[]).map(
+        (row) => row.incidentId
+      );
+      expect(incidentIds).toContain(incidentWithLocation);
+    });
+
+    it('uses most recent message with location for coordinates', async () => {
+      const token = await loginToken();
+      const prisma = app.get(PrismaService);
+
+      const testIncident = '00000000-0000-4000-8000-000000000512';
+      await prisma.incident.create({
+        data: { id: testIncident, state: 'PENDING' },
+      });
+      await prisma.assignment.create({
+        data: { incidentId: testIncident, teamId: teamA, status: 'OPEN' },
+      });
+
+      await prisma.sosMessage.create({
+        data: {
+          messageId: 'location-msg-1',
+          incidentId: testIncident,
+          locationStatus: 'GPS',
+          latitude: 40.1,
+          longitude: 33.1,
+          accuracyMeters: 20,
+          priority: 2,
+          sosType: 'GENERAL',
+          deliveryState: 'SERVER_ACCEPTED',
+          receivedAt: new Date('2024-01-01T10:00:00Z'),
+        },
+      });
+
+      await prisma.sosMessage.create({
+        data: {
+          messageId: 'location-msg-2',
+          incidentId: testIncident,
+          locationStatus: 'GPS',
+          latitude: 40.2,
+          longitude: 33.2,
+          accuracyMeters: 10,
+          priority: 1,
+          sosType: 'GENERAL',
+          deliveryState: 'SERVER_ACCEPTED',
+          receivedAt: new Date('2024-01-01T11:00:00Z'),
+        },
+      });
+
+      await prisma.sosMessage.create({
+        data: {
+          messageId: 'no-location-msg',
+          incidentId: testIncident,
+          locationStatus: 'UNKNOWN',
+          latitude: null,
+          longitude: null,
+          priority: 1,
+          sosType: 'GENERAL',
+          deliveryState: 'SERVER_ACCEPTED',
+          receivedAt: new Date('2024-01-01T12:00:00Z'),
+        },
+      });
+
+      const response = await request(app.getHttpServer())
+        .get('/v1/operator/cases')
+        .set('Authorization', `Bearer ${token}`);
+      expect(response.status).toBe(200);
+
+      const row = (response.body.items as { incidentId: string; latitude: number; longitude: number }[]).find(
+        (r) => r.incidentId === testIncident
+      );
+      expect(row).toBeDefined();
+      expect(row!.latitude).toBeCloseTo(40.2, 1);
+      expect(row!.longitude).toBeCloseTo(33.2, 1);
+    });
+  });
 });

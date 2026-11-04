@@ -291,6 +291,10 @@ resources_phase = uid(7003)
 frameworks_phase = uid(7004)
 test_frameworks_phase = uid(7005)
 fixture_copy_phase = uid(7098)
+WATCH_EMBED_BUILD_FILE = "A3B90010000000000000001"
+WATCH_EMBED_PHASE = "A3B90020000000000000001"
+WATCH_DEPENDENCY = "A3B90030000000000000001"
+WATCH_DEPENDENCY_PROXY = "A3B90040000000000000001"
 watch_sources_phase = uid37(7001)
 watch_resources_phase = uid37(7002)
 watch_frameworks_phase = uid37(7003)
@@ -458,9 +462,9 @@ lines.append(
 \t\t{app_target} /* SOSMesh-iOS */ = {{
 \t\t\tisa = PBXNativeTarget;
 \t\t\tbuildConfigurationList = {uid(4001)} /* Build configuration list for PBXNativeTarget "SOSMesh-iOS" */;
-\t\t\tbuildPhases = ({app_sources_phase} /* Sources */, {frameworks_phase} /* Frameworks */, {resources_phase} /* Resources */, {fixture_copy_phase} /* Bundle transport fixture */);
+\t\t\tbuildPhases = ({app_sources_phase} /* Sources */, {frameworks_phase} /* Frameworks */, {resources_phase} /* Resources */, {fixture_copy_phase} /* Bundle transport fixture */, {WATCH_EMBED_PHASE} /* Embed Watch Content */);
 \t\t\tbuildRules = ();
-\t\t\tdependencies = ();
+\t\t\tdependencies = ({WATCH_DEPENDENCY} /* PBXTargetDependency */);
 \t\t\tname = "SOSMesh-iOS";
 \t\t\tpackageProductDependencies = ({prod_dep_core} /* SOSMeshCore */, {prod_dep_contracts} /* SOSMeshContracts */);
 \t\t\tproductName = SOSMesh;
@@ -650,7 +654,7 @@ app_debug = uid(4210)
 app_release = uid(4211)
 for cfg_id, cfg_name, rel in [(app_debug, "Debug", False), (app_release, "Release", True)]:
     lines.append(
-        f"\t\t{cfg_id} /* {cfg_name} */ = {{isa = XCBuildConfiguration; buildSettings = {{{build_settings('SOSMesh-iOS', 'com.sosmesh.ios', 'SOSMesh/Info.plist', release=rel)}\n\t\t\t}}; name = {cfg_name}; }};"
+        f"\t\t{cfg_id} /* {cfg_name} */ = {{isa = XCBuildConfiguration; buildSettings = {{{build_settings('SOSMesh-iOS', 'com.suleymantarsuslu.sosmesh', 'SOSMesh/Info.plist', release=rel)}\n\t\t\t}}; name = {cfg_name}; }};"
     )
 config_list(uid(4001), 'PBXNativeTarget "SOSMesh-iOS"', app_debug, app_release)
 
@@ -658,7 +662,7 @@ test_debug = uid(4220)
 test_release = uid(4221)
 for cfg_id, cfg_name in [(test_debug, "Debug"), (test_release, "Release")]:
     lines.append(
-        f"\t\t{cfg_id} /* {cfg_name} */ = {{isa = XCBuildConfiguration; buildSettings = {{{build_settings('SOSMeshTests', 'com.sosmesh.ios.tests', test=True)}\n\t\t\t}}; name = {cfg_name}; }};"
+        f"\t\t{cfg_id} /* {cfg_name} */ = {{isa = XCBuildConfiguration; buildSettings = {{{build_settings('SOSMeshTests', 'com.suleymantarsuslu.sosmesh.tests', test=True)}\n\t\t\t}}; name = {cfg_name}; }};"
     )
 config_list(uid(4002), 'PBXNativeTarget "SOSMeshTests"', test_debug, test_release)
 
@@ -666,7 +670,7 @@ watch_debug = uid37(4210)
 watch_release = uid37(4211)
 for cfg_id, cfg_name in [(watch_debug, "Debug"), (watch_release, "Release")]:
     lines.append(
-        f"\t\t{cfg_id} /* {cfg_name} */ = {{isa = XCBuildConfiguration; buildSettings = {{{watch_build_settings('com.sosmesh.ios.watch', '../watchos/SOSMeshWatch/Info.plist', 'SOSMeshWatch')}\n\t\t\t}}; name = {cfg_name}; }};"
+        f"\t\t{cfg_id} /* {cfg_name} */ = {{isa = XCBuildConfiguration; buildSettings = {{{watch_build_settings('com.suleymantarsuslu.sosmesh.watchkitapp', '../watchos/SOSMeshWatch/Info.plist', 'SOSMeshWatch')}\n\t\t\t}}; name = {cfg_name}; }};"
     )
 config_list(uid37(4001), 'PBXNativeTarget "SOSMesh-Watch"', watch_debug, watch_release)
 
@@ -674,7 +678,7 @@ watch_widget_debug = uid37(4220)
 watch_widget_release = uid37(4221)
 for cfg_id, cfg_name in [(watch_widget_debug, "Debug"), (watch_widget_release, "Release")]:
     lines.append(
-        f"\t\t{cfg_id} /* {cfg_name} */ = {{isa = XCBuildConfiguration; buildSettings = {{{watch_build_settings('com.sosmesh.ios.watch.widgets', '../watchos/SOSMeshWatchWidgets/Info.plist', 'SOSMeshWatchWidgets', extension=True)}\n\t\t\t}}; name = {cfg_name}; }};"
+        f"\t\t{cfg_id} /* {cfg_name} */ = {{isa = XCBuildConfiguration; buildSettings = {{{watch_build_settings('com.suleymantarsuslu.sosmesh.watchkitapp.widgets', '../watchos/SOSMeshWatchWidgets/Info.plist', 'SOSMeshWatchWidgets', extension=True)}\n\t\t\t}}; name = {cfg_name}; }};"
     )
 config_list(uid37(4002), 'PBXNativeTarget "SOSMeshWatchWidgets"', watch_widget_debug, watch_widget_release)
 
@@ -682,5 +686,31 @@ lines.append("\t};")
 lines.append(f"\trootObject = {proj_uid} /* Project object */;")
 lines.append("}")
 
-PROJ.write_text("\n".join(lines) + "\n")
+# --- Watch embedding + automatic signing (team YB93KNBFT8) -------------------
+SIGNING = "\n\t\t\t\tDEVELOPMENT_TEAM = YB93KNBFT8;\n\t\t\t\tCODE_SIGN_STYLE = Automatic;"
+
+
+def _sub(text, old, new, count=None):
+    assert old in text, f"anchor not found: {old[:60]}"
+    return text.replace(old, new) if count is None else text.replace(old, new, count)
+
+
+def apply_watch_embedding(text):
+    """Embed SOSMeshWatch.app in SOSMesh-iOS (Watch/) and set signing settings."""
+    text = _sub(text, "PRODUCT_BUNDLE_IDENTIFIER = com.suleymantarsuslu.sosmesh.watchkitapp.widgets;",
+                "PRODUCT_BUNDLE_IDENTIFIER = com.suleymantarsuslu.sosmesh.watchkitapp.widgets;" + SIGNING)
+    text = _sub(text, "PRODUCT_BUNDLE_IDENTIFIER = com.suleymantarsuslu.sosmesh.watchkitapp;",
+                "PRODUCT_BUNDLE_IDENTIFIER = com.suleymantarsuslu.sosmesh.watchkitapp;" + SIGNING + "\n\t\t\t\tSKIP_INSTALL = YES;")
+    text = _sub(text, "PRODUCT_BUNDLE_IDENTIFIER = com.suleymantarsuslu.sosmesh;",
+                "PRODUCT_BUNDLE_IDENTIFIER = com.suleymantarsuslu.sosmesh;" + SIGNING)
+    text = _sub(text, f"\t\t{fixture_copy_build_files[0]} /* ",
+                f"\t\t{WATCH_EMBED_BUILD_FILE} /* SOSMeshWatch.app in Embed Watch Content */ = {{isa = PBXBuildFile; fileRef = {watch_prod_ref} /* SOSMeshWatch.app */; settings = {{ATTRIBUTES = (RemoveHeadersOnCopy, ); }}; }};\n\t\t{fixture_copy_build_files[0]} /* ", 1)
+    text = _sub(text, f"\t\t{fixture_copy_phase} /* Bundle transport fixture */ = {{",
+                f"\t\t{WATCH_EMBED_PHASE} /* Embed Watch Content */ = {{isa = PBXCopyFilesBuildPhase; buildActionMask = 2147483647; dstPath = \"$(CONTENTS_FOLDER_PATH)/Watch\"; dstSubfolderSpec = 16; files = ({WATCH_EMBED_BUILD_FILE} /* SOSMeshWatch.app in Embed Watch Content */); name = \"Embed Watch Content\"; runOnlyForDeploymentPostprocessing = 0; }};\n\t\t{fixture_copy_phase} /* Bundle transport fixture */ = {{", 1)
+    text = _sub(text, f"\t\t{dep_uid} /* PBXTargetDependency */ = {{",
+                f"\t\t{WATCH_DEPENDENCY} /* PBXTargetDependency */ = {{isa = PBXTargetDependency; target = {watch_target} /* SOSMesh-Watch */; targetProxy = {WATCH_DEPENDENCY_PROXY} /* PBXContainerItemProxy */; }};\n\t\t{WATCH_DEPENDENCY_PROXY} /* PBXContainerItemProxy */ = {{isa = PBXContainerItemProxy; containerPortal = {proj_uid} /* Project object */; proxyType = 1; remoteGlobalIDString = {watch_target}; remoteInfo = \"SOSMesh-Watch\"; }};\n\t\t{dep_uid} /* PBXTargetDependency */ = {{", 1)
+    return text
+
+
+PROJ.write_text(apply_watch_embedding("\n".join(lines) + "\n"))
 print(f"Wrote {PROJ}")

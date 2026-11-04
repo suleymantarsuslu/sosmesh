@@ -24,6 +24,7 @@ export type WorkTaskDto = {
   id: string;
   incidentId: string;
   teamId: string;
+  teamName: string | null;
   resourceId: string | null;
   assigneeId: string | null;
   assigneeDisplayName: string | null;
@@ -50,11 +51,13 @@ function mapTask(row: {
   createdAt: Date;
   updatedAt: Date;
   assignee: { displayName: string } | null;
+  team?: { name: string } | null;
 }): WorkTaskDto {
   return {
     id: row.id,
     incidentId: row.incidentId,
     teamId: row.teamId,
+    teamName: row.team?.name ?? null,
     resourceId: row.resourceId,
     assigneeId: row.assigneeId,
     assigneeDisplayName: row.assignee?.displayName ?? null,
@@ -67,6 +70,11 @@ function mapTask(row: {
     updatedAt: row.updatedAt.toISOString(),
   };
 }
+
+const TASK_INCLUDE = {
+  assignee: { select: { displayName: true } },
+  team: { select: { name: true } },
+} as const;
 
 @Injectable()
 export class WorkTaskService {
@@ -149,7 +157,7 @@ export class WorkTaskService {
       },
       orderBy: { updatedAt: 'desc' },
       take: 100,
-      include: { assignee: { select: { displayName: true } } },
+      include: TASK_INCLUDE,
     });
     return { items: rows.map(mapTask) };
   }
@@ -223,7 +231,7 @@ export class WorkTaskService {
           status,
           source: WorkTaskSource.MANUAL,
         },
-        include: { assignee: { select: { displayName: true } } },
+        include: TASK_INCLUDE,
       });
 
       await tx.auditLog.create({
@@ -295,7 +303,7 @@ export class WorkTaskService {
           status: WorkTaskStatus.PROPOSED,
           source: WorkTaskSource.AI,
         },
-        include: { assignee: { select: { displayName: true } } },
+        include: TASK_INCLUDE,
       });
 
       await tx.auditLog.create({
@@ -328,6 +336,24 @@ export class WorkTaskService {
       nextStatus: WorkTaskStatus.ASSIGNED,
       assigneeId: input.assigneeId,
       action: 'work_task.assign',
+    });
+  }
+
+  /**
+   * Sends a task to a whole team (status ASSIGNED, no individual assignee). Used when a coordinator
+   * confirms an assignment recommendation for a team; the team lead can then accept or delegate.
+   */
+  async assignTaskToTeam(
+    user: OperatorRequestUser,
+    taskId: string,
+    input: { expectedVersion: number }
+  ): Promise<WorkTaskDto> {
+    this.assertCoordinator(user);
+    return this.transitionTask(user, taskId, {
+      expectedVersion: input.expectedVersion,
+      nextStatus: WorkTaskStatus.ASSIGNED,
+      teamLevel: true,
+      action: 'work_task.assign_team',
     });
   }
 
@@ -374,13 +400,15 @@ export class WorkTaskService {
       expectedVersion: number;
       nextStatus: WorkTaskStatus;
       assigneeId?: string;
+      /** Team-level assignment: ASSIGNED without an individual assignee. */
+      teamLevel?: boolean;
       action: string;
     }
   ): Promise<WorkTaskDto> {
     const scopeWhere = this.scope.workTaskWhere(user);
     const existing = await this.prisma.workTask.findFirst({
       where: { id: taskId, ...scopeWhere },
-      include: { assignee: { select: { displayName: true } } },
+      include: TASK_INCLUDE,
     });
     if (!existing) {
       throw new NotFoundException({ code: 'NOT_FOUND', message: 'Task not found' });
@@ -392,7 +420,11 @@ export class WorkTaskService {
       await this.assertAssigneeForTeam(user, existing.teamId, params.assigneeId, this.prisma);
     }
 
-    if (existing.source === WorkTaskSource.AI && params.nextStatus === WorkTaskStatus.ASSIGNED) {
+    if (
+      existing.source === WorkTaskSource.AI &&
+      params.nextStatus === WorkTaskStatus.ASSIGNED &&
+      !params.teamLevel
+    ) {
       if (!params.assigneeId) {
         throw new BadRequestException({
           code: 'ASSIGNEE_REQUIRED',
@@ -417,7 +449,7 @@ export class WorkTaskService {
           ? params.assigneeId ?? existing.assigneeId
           : existing.assigneeId;
 
-      if (params.nextStatus === WorkTaskStatus.ASSIGNED && !assigneeId) {
+      if (params.nextStatus === WorkTaskStatus.ASSIGNED && !assigneeId && !params.teamLevel) {
         throw new BadRequestException({
           code: 'ASSIGNEE_REQUIRED',
           message: 'Assigned tasks require a responsible assignee',
@@ -430,7 +462,7 @@ export class WorkTaskService {
           status: params.nextStatus,
           assigneeId,
         },
-        include: { assignee: { select: { displayName: true } } },
+        include: TASK_INCLUDE,
       });
 
       await tx.auditLog.create({
@@ -441,7 +473,12 @@ export class WorkTaskService {
           detailsJson: {
             taskId,
             before,
-            after: { status: updated.status, assigneeId: updated.assigneeId },
+            after: {
+              status: updated.status,
+              assigneeId: updated.assigneeId,
+              teamId: updated.teamId,
+              teamName: updated.team.name,
+            },
           },
         },
       });

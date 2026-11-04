@@ -7,6 +7,12 @@ import { TimelineFeed, formatRelativeTime } from '../../components/timeline/Time
 import { useOperatorPreferences } from '../../components/operator/OperatorPreferencesProvider';
 import { Icon, type IconName } from '../cases/detail/icons';
 import {
+  AUDIT_ACTION_ICON,
+  auditActionLabel,
+  auditCategoryOf,
+  type AuditCategory as Category,
+} from '../../lib/audit-actions';
+import {
   OpsChip,
   OpsEmpty,
   OpsFilterChip,
@@ -32,8 +38,6 @@ export type ActivityRow = {
   summary: string;
 };
 
-type Category = 'case' | 'ai' | 'task' | 'privacy' | 'other';
-
 const CATEGORIES: Category[] = ['case', 'ai', 'task', 'privacy', 'other'];
 
 const CATEGORY_COLOR: Record<Category, string> = {
@@ -42,26 +46,6 @@ const CATEGORY_COLOR: Record<Category, string> = {
   task: '#10b981',
   privacy: '#f59e0b',
   other: '#64748b',
-};
-
-const ACTION_KEY: Record<string, string> = {
-  OPERATOR_SEEN: 'web.activity.actionOperatorSeen',
-  REVIEW_STATUS_CHANGED: 'web.activity.actionReviewStatusChanged',
-  METADATA_CORRECTION: 'web.activity.actionMetadataCorrection',
-  AI_OVERRIDE: 'web.activity.actionAiOverride',
-  PRIVACY_EXPORT: 'web.activity.actionPrivacyExport',
-  PRIVACY_ERASE_REQUEST: 'web.activity.actionPrivacyEraseRequest',
-  RETENTION_PURGE: 'web.activity.actionRetentionPurge',
-};
-
-const ACTION_ICON: Record<string, IconName> = {
-  OPERATOR_SEEN: 'eye',
-  REVIEW_STATUS_CHANGED: 'check',
-  METADATA_CORRECTION: 'edit',
-  AI_OVERRIDE: 'sparkles',
-  PRIVACY_EXPORT: 'archive',
-  PRIVACY_ERASE_REQUEST: 'shield',
-  RETENTION_PURGE: 'archive',
 };
 
 const CATEGORY_ICON: Record<Category, IconName> = {
@@ -79,34 +63,6 @@ const CATEGORY_KEY: Record<Category, string> = {
   privacy: 'web.activity.categoryPrivacy',
   other: 'web.activity.categoryOther',
 };
-
-export function categoryOf(action: string): Category {
-  if (action.startsWith('AI_')) {
-    return 'ai';
-  }
-  if (action.startsWith('PRIVACY_') || action.startsWith('RETENTION_')) {
-    return 'privacy';
-  }
-  if (action.startsWith('TASK_') || action.startsWith('TEAM_') || action.startsWith('RESOURCE_')) {
-    return 'task';
-  }
-  if (
-    action === 'OPERATOR_SEEN' ||
-    action === 'REVIEW_STATUS_CHANGED' ||
-    action === 'METADATA_CORRECTION' ||
-    action.startsWith('CASE_') ||
-    action.startsWith('INCIDENT_')
-  ) {
-    return 'case';
-  }
-  return 'other';
-}
-
-/** Unknown audit codes still read well: "SOME_ACTION_CODE" -> "Some action code". */
-function humanizeAction(action: string): string {
-  const spaced = action.toLowerCase().replace(/_/g, ' ').trim();
-  return spaced.charAt(0).toUpperCase() + spaced.slice(1);
-}
 
 export function ActivityView({
   notifications,
@@ -127,13 +83,12 @@ export function ActivityView({
   const hasData = notifications.length > 0 || activity.length > 0;
   const screenState = loading ? 'loading' : error ? 'error' : !hasData ? 'empty' : 'idle';
 
-  const actionLabel = (action: string) =>
-    ACTION_KEY[action] ? t(ACTION_KEY[action]) : humanizeAction(action);
+  const actionLabel = (action: string) => auditActionLabel(t, action);
 
   const categoryCounts = useMemo(() => {
     const counts: Record<string, number> = {};
     for (const row of activity) {
-      const c = categoryOf(row.action);
+      const c = auditCategoryOf(row.action);
       counts[c] = (counts[c] ?? 0) + 1;
     }
     return counts;
@@ -142,7 +97,7 @@ export function ActivityView({
   const filteredActivity = useMemo(() => {
     const needle = query.trim().toLowerCase();
     return activity.filter((row) => {
-      if (category !== 'all' && categoryOf(row.action) !== category) {
+      if (category !== 'all' && auditCategoryOf(row.action) !== category) {
         return false;
       }
       if (!needle) {
@@ -151,7 +106,7 @@ export function ActivityView({
       return (
         row.action.toLowerCase().includes(needle) ||
         (row.actorDisplayName ?? '').toLowerCase().includes(needle) ||
-        (ACTION_KEY[row.action] ? t(ACTION_KEY[row.action]) : '').toLowerCase().includes(needle)
+        auditActionLabel(t, row.action).toLowerCase().includes(needle)
       );
     });
   }, [activity, category, query, t]);
@@ -162,7 +117,7 @@ export function ActivityView({
     : notifications;
 
   const feedItems = filteredActivity.map((row) => {
-    const cat = categoryOf(row.action);
+    const cat = auditCategoryOf(row.action);
     return {
       id: row.id,
       title: actionLabel(row.action),
@@ -176,7 +131,7 @@ export function ActivityView({
       ) : undefined,
       createdAt: row.createdAt,
       color: CATEGORY_COLOR[cat],
-      icon: <Icon name={ACTION_ICON[row.action] ?? CATEGORY_ICON[cat]} size={12} />,
+      icon: <Icon name={AUDIT_ACTION_ICON[row.action] ?? CATEGORY_ICON[cat]} size={12} />,
     };
   });
 

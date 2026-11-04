@@ -51,7 +51,7 @@ export class RecommendationController {
   confirm(
     @Req() req: OperatorRequest,
     @Param('recommendationId') recommendationId: string,
-    @Body() body: { assigneeId: string }
+    @Body() body: { teamId?: string; assigneeId?: string }
   ) {
     return this.recommendations.confirmRecommendation(req.operatorUser, recommendationId, body);
   }

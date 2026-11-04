@@ -43,8 +43,31 @@ export type RecommendationDto = {
   dataFreshness: RankedResourceMatch['diagnostics']['dataFreshness'];
   previewAnchor: { latitude: number; longitude: number; synthetic: boolean };
   workTaskId: string | null;
+  /** Set once a coordinator confirmed the recommendation; the team is the one actually tasked. */
+  workTask: {
+    id: string;
+    status: WorkTaskStatus;
+    teamId: string;
+    teamName: string | null;
+    assigneeDisplayName: string | null;
+  } | null;
+  confirmedAt: string | null;
   disclaimer: string;
 };
+
+const REC_INCLUDE = {
+  team: { select: { name: true, zoneCode: true } },
+  resource: { select: { name: true, zoneCode: true } },
+  workTask: {
+    select: {
+      id: true,
+      status: true,
+      teamId: true,
+      team: { select: { name: true } },
+      assignee: { select: { displayName: true } },
+    },
+  },
+} as const;
 
 function mapRecommendation(row: {
   id: string;
@@ -60,8 +83,16 @@ function mapRecommendation(row: {
   missingInfoJson: unknown;
   dataFreshnessJson: unknown;
   workTaskId: string | null;
+  updatedAt: Date;
   team: { name: string; zoneCode: string | null };
   resource: { name: string; zoneCode: string | null } | null;
+  workTask: {
+    id: string;
+    status: WorkTaskStatus;
+    teamId: string;
+    team: { name: string };
+    assignee: { displayName: string } | null;
+  } | null;
 }): RecommendationDto {
   const missingInfo = Array.isArray(row.missingInfoJson)
     ? (row.missingInfoJson as string[])
@@ -86,6 +117,17 @@ function mapRecommendation(row: {
     dataFreshness,
     previewAnchor,
     workTaskId: row.workTaskId,
+    workTask: row.workTask
+      ? {
+          id: row.workTask.id,
+          status: row.workTask.status,
+          teamId: row.workTask.teamId,
+          teamName: row.workTask.team.name,
+          assigneeDisplayName: row.workTask.assignee?.displayName ?? null,
+        }
+      : null,
+    confirmedAt:
+      row.status === AssignmentRecommendationStatus.CONFIRMED ? row.updatedAt.toISOString() : null,
     disclaimer:
       'Bu bir öneridir; nihai karar koordinatördedir. Otomatik fiziksel sevk yapılmaz.',
   };
@@ -232,10 +274,7 @@ export class RecommendationService {
     const rows = await this.prisma.assignmentRecommendation.findMany({
       where: { incidentId },
       orderBy: [{ status: 'asc' }, { rank: 'asc' }],
-      include: {
-        team: { select: { name: true, zoneCode: true } },
-        resource: { select: { name: true, zoneCode: true } },
-      },
+      include: REC_INCLUDE,
     });
     return { items: rows.map(mapRecommendation) };
   }
@@ -246,10 +285,7 @@ export class RecommendationService {
   ): Promise<RecommendationDto> {
     const row = await this.prisma.assignmentRecommendation.findUnique({
       where: { id: recommendationId },
-      include: {
-        team: { select: { name: true, zoneCode: true } },
-        resource: { select: { name: true, zoneCode: true } },
-      },
+      include: REC_INCLUDE,
     });
     if (!row) {
       throw new NotFoundException({ code: 'NOT_FOUND', message: 'Recommendation not found' });
@@ -268,10 +304,7 @@ export class RecommendationService {
     const updated = await this.prisma.assignmentRecommendation.update({
       where: { id: recommendationId },
       data: { status: AssignmentRecommendationStatus.REJECTED },
-      include: {
-        team: { select: { name: true, zoneCode: true } },
-        resource: { select: { name: true, zoneCode: true } },
-      },
+      include: REC_INCLUDE,
     });
 
     await this.prisma.auditLog.create({
@@ -289,22 +322,13 @@ export class RecommendationService {
   async confirmRecommendation(
     user: OperatorRequestUser,
     recommendationId: string,
-    body: { assigneeId: string }
+    body: { teamId?: string; assigneeId?: string }
   ): Promise<{ recommendation: RecommendationDto; taskId: string }> {
     this.assertCoordinator(user);
-    if (!body.assigneeId) {
-      throw new BadRequestException({
-        code: 'ASSIGNEE_REQUIRED',
-        message: 'Coordinator must select an assignee before commit',
-      });
-    }
 
     const row = await this.prisma.assignmentRecommendation.findUnique({
       where: { id: recommendationId },
-      include: {
-        team: { select: { name: true, zoneCode: true } },
-        resource: { select: { name: true, zoneCode: true } },
-      },
+      include: REC_INCLUDE,
     });
     if (!row) {
       throw new NotFoundException({ code: 'NOT_FOUND', message: 'Recommendation not found' });
@@ -326,18 +350,38 @@ export class RecommendationService {
       });
     }
 
+    // The coordinator may keep the recommended team or explicitly pick another one.
+    const targetTeamId = body.teamId?.trim() || row.teamId;
+    const overrideTeam = targetTeamId !== row.teamId;
+    const teamOk = await this.scope.canAccessTeam(user, targetTeamId, this.prisma);
+    if (!teamOk) {
+      throw new NotFoundException({ code: 'NOT_FOUND', message: 'Team not found' });
+    }
+    const targetTeam = overrideTeam
+      ? await this.prisma.team.findUniqueOrThrow({
+          where: { id: targetTeamId },
+          select: { name: true },
+        })
+      : row.team;
+
     const draft = await this.tasks.createAiDraft(user, {
       incidentId: row.incidentId,
-      teamId: row.teamId,
-      resourceId: row.resourceId ?? undefined,
-      title: `Koordinatör onaylı görev: ${row.team.name}`,
+      teamId: targetTeamId,
+      // The recommended resource belongs to the recommended team only.
+      resourceId: overrideTeam ? undefined : (row.resourceId ?? undefined),
+      title: `Koordinatör onaylı görev: ${targetTeam.name}`,
       description: row.deterministicNote,
     });
 
-    const assigned = await this.tasks.assignTask(user, draft.id, {
-      assigneeId: body.assigneeId,
-      expectedVersion: draft.version,
-    });
+    const assigneeId = body.assigneeId?.trim();
+    const assigned = assigneeId
+      ? await this.tasks.assignTask(user, draft.id, {
+          assigneeId,
+          expectedVersion: draft.version,
+        })
+      : await this.tasks.assignTaskToTeam(user, draft.id, {
+          expectedVersion: draft.version,
+        });
 
     const finalized = await this.prisma.assignmentRecommendation.updateMany({
       where: {
@@ -360,10 +404,7 @@ export class RecommendationService {
 
     const updated = await this.prisma.assignmentRecommendation.findUniqueOrThrow({
       where: { id: recommendationId },
-      include: {
-        team: { select: { name: true, zoneCode: true } },
-        resource: { select: { name: true, zoneCode: true } },
-      },
+      include: REC_INCLUDE,
     });
 
     await this.prisma.auditLog.create({
@@ -375,6 +416,15 @@ export class RecommendationService {
           recommendationId,
           workTaskId: assigned.id,
           source: WorkTaskSource.AI,
+          before: { status: AssignmentRecommendationStatus.PROPOSED },
+          after: {
+            status: AssignmentRecommendationStatus.CONFIRMED,
+            teamId: targetTeamId,
+            teamName: targetTeam.name,
+            recommendedTeamId: row.teamId,
+            teamOverridden: overrideTeam,
+            assigneeId: assigneeId ?? null,
+          },
         },
       },
     });

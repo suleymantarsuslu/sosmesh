@@ -20,8 +20,19 @@ export type AssignmentRecommendationRow = {
   };
   previewAnchor: { latitude: number; longitude: number; synthetic: boolean };
   workTaskId: string | null;
+  /** Present once a coordinator confirmed: the team that was actually tasked. */
+  workTask?: {
+    id: string;
+    status: string;
+    teamId: string;
+    teamName: string | null;
+    assigneeDisplayName: string | null;
+  } | null;
+  confirmedAt?: string | null;
   disclaimer: string;
 };
+
+export type AssignableTeam = { id: string; name: string };
 
 export type AssignmentPreviewRoute = {
   teamLabel: string;

@@ -5,6 +5,7 @@ import androidx.hilt.work.HiltWorker
 import androidx.work.CoroutineWorker
 import androidx.work.WorkerParameters
 import com.sosmesh.android.feature.relay.battery.RelayBatterySnapshotReader
+import com.sosmesh.android.feature.relay.delivery.RelayDeliveryStatusSync
 import com.sosmesh.android.feature.relay.network.RelayNetworkStatus
 import dagger.assisted.Assisted
 import dagger.assisted.AssistedInject
@@ -19,6 +20,7 @@ class RelayUploadWorker
         private val networkStatus: RelayNetworkStatus,
         private val batteryReader: RelayBatterySnapshotReader,
         private val scheduler: RelayUploadScheduler,
+        private val deliveryStatusSync: RelayDeliveryStatusSync,
     ) : CoroutineWorker(context, params) {
         override suspend fun doWork(): Result {
             val nowMs = System.currentTimeMillis()
@@ -34,6 +36,11 @@ class RelayUploadWorker
                     networkConnected = networkConnected,
                     battery = batteryReader.read(),
                 )
+            
+            if (networkConnected && (ownSummary.uploaded > 0 || relaySummary.uploaded > 0)) {
+                deliveryStatusSync.syncPendingCarriedMessages()
+            }
+            
             val ownRetry = ownSummary.scheduledRetryMs
             val relayRetry = relaySummary.scheduledRetryMs
             val earliestRetry =

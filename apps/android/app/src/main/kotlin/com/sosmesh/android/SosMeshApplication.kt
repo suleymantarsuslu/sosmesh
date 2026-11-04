@@ -25,12 +25,16 @@ class SosMeshApplication : Application(), Configuration.Provider {
     @Inject
     lateinit var broadcastDialogCoordinator: com.sosmesh.android.broadcast.BroadcastDialogCoordinator
 
+    @Inject
+    lateinit var relayDeliveryTracker: com.sosmesh.android.feature.relay.mesh.RelayDeliveryTracker
+
     override fun onCreate() {
         super.onCreate()
         AppLocaleController.applyStoredLocale(this)
         crashReporter.install()
         meshV2Runtime.install(filesDir)
         meshV2OutboxSync.start()
+        relayDeliveryTracker.start()
         com.sosmesh.android.core.data.broadcast.BroadcastPoller.foregroundDialogHandler = { broadcast ->
             broadcastDialogCoordinator.showRelayRequestDialog(
                 id = broadcast.id,

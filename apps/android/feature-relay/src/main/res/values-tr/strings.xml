@@ -27,5 +27,8 @@
     <string name="relay_status_active">Relay etkin</string>
     <string name="relay_status_paused">Relay duraklatıldı</string>
     <string name="relay_status_off">Relay kapalı</string>
-    <string name="relay_delivered_count">Sizin aracılığınızla %1$d adet yardım mesajı iletilmiştir</string>
+    <plurals name="relay_delivered_count">
+        <item quantity="one">Sizin aracılığınızla 1 kişinin yardım mesajı iletildi</item>
+        <item quantity="other">Sizin aracılığınızla %1$d kişinin yardım mesajı iletildi</item>
+    </plurals>
 </resources>

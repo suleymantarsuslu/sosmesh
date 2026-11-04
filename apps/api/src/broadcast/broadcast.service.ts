@@ -53,6 +53,11 @@ export class BroadcastService {
     if (regionLongitude != null) {
       regionLongitude = Number(regionLongitude.toFixed(7));
     }
+    // Postgres float8 output drops the last digits of a full-precision double, so the
+    // radius read back by devices would differ from the signed value. Round before signing.
+    if (regionRadiusKm != null) {
+      regionRadiusKm = Number(regionRadiusKm.toFixed(3));
+    }
 
     const kind = dto.kind || 'standard';
     const id = crypto.randomUUID();

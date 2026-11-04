@@ -116,7 +116,8 @@
 "sos.delivered.message" = "Bu, %@'nin yerine geçmez. Acil yardım için %@'yi arayın.";
 "sos.followup.title" = "Mesajınız gönderildi. Eklemek istediğiniz bir şey varsa ekleyin";
 "sos.followup.send" = "Ek mesaj gönder";
-"relay.delivered.count" = "Sizin aracılığınızla %d adet yardım mesajı iletilmiştir";
+"relay.delivered.count.one" = "Sizin aracılığınızla 1 kişinin yardım mesajı iletildi";
+"relay.delivered.count.other" = "Sizin aracılığınızla %d kişinin yardım mesajı iletildi";
 
 /* Relay diagnostics (counters only) */
 "relay.diag.title" = "Relay tanılama";

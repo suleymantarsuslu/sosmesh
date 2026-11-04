@@ -22,10 +22,12 @@ public final class SosPeerDeliveryTracker {
     public struct ActiveTransfer: Equatable {
         public let sosId: String
         public let digest: String
+        public let peerId: String?
 
-        public init(sosId: String, digest: String) {
+        public init(sosId: String, digest: String, peerId: String? = nil) {
             self.sosId = sosId
             self.digest = digest
+            self.peerId = peerId
         }
     }
 
@@ -35,6 +37,8 @@ public final class SosPeerDeliveryTracker {
     public var onTransferFailed: ((BleTransferErrorCode) -> Void)?
     /// Mesh v2 session hook: the active transfer ended (true = peer VERIFIED it).
     public var onActiveFinished: ((ActiveTransfer, Bool) -> Void)?
+    /// Fan-out callback: invoked after each peer transfer completes (success or failure).
+    public var onTransferComplete: ((String, String, String?, Bool) -> Void)?
     private let outbox: OutboxQueueUpdating
     private let nowMs: () -> Int64
     private var senderListenerRetention: TrackerListener?
@@ -59,13 +63,7 @@ public final class SosPeerDeliveryTracker {
 
         func onCompleted() {
             guard let tracker, let ctx = tracker.active else { return }
-            _ = try? tracker.outbox.updateState(
-                sosId: ctx.sosId,
-                digest: ctx.digest,
-                state: "PEER_RECEIVED",
-                nowMs: tracker.nowMs(),
-                lastError: nil
-            )
+            tracker.onTransferComplete?(ctx.sosId, ctx.digest, ctx.peerId, true)
             tracker.active = nil
             tracker.onPeerAckCompleted?()
             tracker.onActiveFinished?(ctx, true)
@@ -73,15 +71,34 @@ public final class SosPeerDeliveryTracker {
 
         func onFailed(code: BleTransferErrorCode, message: String) {
             guard let tracker, let ctx = tracker.active else { return }
+            tracker.onTransferComplete?(ctx.sosId, ctx.digest, ctx.peerId, false)
             try? tracker.outbox.setRetryAt(
                 sosId: ctx.sosId,
                 digest: ctx.digest,
-                retryAtMs: tracker.nowMs() + 5_000,
+                retryAtMs: tracker.nowMs() + 2_000,
                 lastError: message
             )
             tracker.active = nil
             tracker.onTransferFailed?(code)
             tracker.onActiveFinished?(ctx, false)
+        }
+    }
+    
+    public func markPeerReceivedIfAllDelivered(
+        sosId: String,
+        digest: String,
+        allDiscoveredPeerIds: Set<String>,
+        peerRecordStore: PeerDeliveryRecordStore
+    ) async {
+        if await peerRecordStore.hasDeliveredToAll(sosId: sosId, allDiscoveredPeerIds: allDiscoveredPeerIds) {
+            _ = try? outbox.updateState(
+                sosId: sosId,
+                digest: digest,
+                state: "PEER_RECEIVED",
+                nowMs: nowMs(),
+                lastError: nil
+            )
+            await peerRecordStore.clearMessageRecords(sosId: sosId)
         }
     }
 }
@@ -91,7 +108,7 @@ public final class BleTransferEngine {
     private let centralTransport: GattBleTransferTransport
     private let receiver: BleTransferReceiver
     private let sender: BleTransferSender
-    private let peerDeliveryTracker: SosPeerDeliveryTracker
+    public let peerDeliveryTracker: SosPeerDeliveryTracker
 
     public init(
         serverOutbound: GattOutboundWriting,
@@ -116,8 +133,8 @@ public final class BleTransferEngine {
         receiver.setListener(listener)
     }
 
-    public func sendOutbound(sosId: String, digest: String, payload: Data) {
-        peerDeliveryTracker.active = SosPeerDeliveryTracker.ActiveTransfer(sosId: sosId, digest: digest)
+    public func sendOutbound(sosId: String, digest: String, payload: Data, peerId: String? = nil) {
+        peerDeliveryTracker.active = SosPeerDeliveryTracker.ActiveTransfer(sosId: sosId, digest: digest, peerId: peerId)
         sender.startTransfer(payload)
     }
 

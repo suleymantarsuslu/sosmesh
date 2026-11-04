@@ -80,7 +80,7 @@ interface OutboxDao {
     @Query(
         """
         SELECT * FROM outbox
-        WHERE retry_at <= :nowMs AND state = 'LOCAL_SAVED' AND origin = 'android'
+        WHERE retry_at <= :nowMs AND state IN ('LOCAL_SAVED', 'PEER_RECEIVED') AND origin = 'android'
         ORDER BY created_at ASC
         """,
     )

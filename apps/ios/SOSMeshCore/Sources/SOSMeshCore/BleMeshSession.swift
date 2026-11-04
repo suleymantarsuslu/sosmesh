@@ -33,13 +33,13 @@ public final class BleMeshSession {
         engine.setRelayListener(incomingRouter)
     }
 
-    public func sendDueOutboxEntryIfReady(gattReady: Bool) throws -> Bool {
+    public func sendDueOutboxEntryIfReady(gattReady: Bool, peerId: String? = nil) throws -> Bool {
         guard gattReady else { return false }
         // A finished (completed/failed) transfer is reset first; never start while one is in flight.
         guard engine.prepareSenderForNextTransfer() else { return false }
         guard let due = try nextDueOwnEntry() else { return false }
         guard let payload = Data(base64Encoded: due.encryptedBlobBase64) else { return false }
-        engine.sendOutbound(sosId: due.sosId, digest: due.digest, payload: payload)
+        engine.sendOutbound(sosId: due.sosId, digest: due.digest, payload: payload, peerId: peerId)
         return true
     }
 
@@ -52,7 +52,9 @@ public final class BleMeshSession {
     private func nextDueOwnEntry() throws -> OutboxEntryMeta? {
         let now = nowMs()
         return try outbox.listEntries().first {
-            $0.state == "LOCAL_SAVED" && $0.origin != SosOutboxService.relayOrigin && $0.retryAtMs <= now
+            ($0.state == "LOCAL_SAVED" || $0.state == "PEER_RECEIVED") && 
+            $0.origin != SosOutboxService.relayOrigin && 
+            $0.retryAtMs <= now
         }
     }
 

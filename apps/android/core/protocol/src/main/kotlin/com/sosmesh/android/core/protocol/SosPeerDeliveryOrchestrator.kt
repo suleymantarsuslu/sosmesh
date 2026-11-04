@@ -11,6 +11,8 @@ import com.sosmesh.ble.BleProtocol
 import com.sosmesh.contracts.transport.OutboxEntryMeta
 import com.sosmesh.contracts.transport.OutboxQueueAdapter
 import kotlinx.coroutines.CoroutineDispatcher
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import kotlinx.coroutines.withContext
@@ -49,6 +51,8 @@ class SosPeerDeliveryOrchestrator
         private val radio: BleMeshRadio,
         private val permissions: PermissionFlowCoordinator,
         private val bleMeshReadiness: BleMeshReadiness,
+        private val peerDeliveryTracker: SosPeerDeliveryTracker,
+        private val peerRecordStore: PeerDeliveryRecordStore,
         @IoDispatcher private val ioDispatcher: CoroutineDispatcher,
     ) {
         @Volatile
@@ -56,6 +60,37 @@ class SosPeerDeliveryOrchestrator
 
         private val cycleMutex = Mutex()
         private val attemptedPeers = mutableMapOf<String, MutableSet<String>>()
+
+        init {
+            peerDeliveryTracker.setCompletionCallback { sosId, digest, peerId, success ->
+                if (success && peerId != null) {
+                    CoroutineScope(ioDispatcher).launch {
+                        val allPeers = getAllDiscoveredPeerIds()
+                        val delivered = peerRecordStore.getDeliveredPeers(sosId)
+                        val remaining = allPeers - delivered
+                        
+                        if (delivered.size == 1) {
+                            outbox.updateState(sosId, digest, "PEER_RECEIVED", System.currentTimeMillis(), null)
+                        }
+                        
+                        if (remaining.isEmpty() && allPeers.isNotEmpty()) {
+                            peerRecordStore.clearMessageRecords(sosId)
+                            outbox.setRetryAt(sosId, digest, Long.MAX_VALUE, null)
+                        } else if (remaining.isNotEmpty()) {
+                            val entry = outbox.getByKey(sosId, digest)
+                            if (entry != null) {
+                                outbox.setRetryAt(sosId, digest, System.currentTimeMillis() + 500L, "continue_fanout")
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
+        private fun getAllDiscoveredPeerIds(): Set<String> {
+            val peerHops = radio.peerHops()
+            return peerHops.keys.toSet()
+        }
 
         suspend fun runCycle(
             nowMs: Long,
@@ -92,6 +127,8 @@ class SosPeerDeliveryOrchestrator
             radio.tickGattReconnect()
             var status = radio.refreshStatus()
             val triedForThisMessage = attemptedPeers.getOrPut(due.sosId) { mutableSetOf() }
+            val deliveredPeers = peerRecordStore.getDeliveredPeers(due.sosId)
+            val excludePeers = triedForThisMessage + deliveredPeers
             if (status.gattState != GattUiConnectionState.READY) {
                 if (status.peerCount == 0 && radio.peerHops().isEmpty()) {
                     scheduleRetry(due, nowMs + 5_000L, "no_peer")
@@ -100,7 +137,7 @@ class SosPeerDeliveryOrchestrator
                 if (status.gattState == GattUiConnectionState.NONE ||
                     status.gattState == GattUiConnectionState.BACKOFF
                 ) {
-                    radio.connectBestPeer(triedForThisMessage).onFailure { error ->
+                    radio.connectBestPeer(excludePeers).onFailure { error ->
                         scheduleRetry(due, nowMs + 5_000L, error.message ?: "connect_failed")
                         return mapRadioFailure(error, due, nowMs)
                     }
@@ -129,13 +166,19 @@ class SosPeerDeliveryOrchestrator
                 MeshV2Preflight.TombstoneBatchSent -> return SosPeerDeliveryCycleResult.TransferStarted
                 is MeshV2Preflight.Statuses ->
                     if (!pre.wants(due.sosId)) {
-                        if (peerId != null) triedForThisMessage.add(peerId)
+                        if (peerId != null) {
+                            triedForThisMessage.add(peerId)
+                            peerRecordStore.recordDelivery(due.sosId, peerId)
+                        }
                         radio.disconnectPeerSession()
-                        scheduleRetry(due, nowMs + 2_000L, "peer_has_copy")
+                        val allPeers = getAllDiscoveredPeerIds()
+                        peerDeliveryTracker.markPeerReceivedIfAllDelivered(due.sosId, due.digest, allPeers, nowMs)
+                        scheduleRetry(due, nowMs + 500L, "peer_has_copy")
                         return SosPeerDeliveryCycleResult.Idle
                     }
             }
             if (peerId != null) triedForThisMessage.add(peerId)
+            peerDeliveryTracker.active = SosPeerDeliveryTracker.ActiveTransfer(due.sosId, due.digest, peerId)
             engine.sendOutbound(due.sosId, due.digest, payload)
             return SosPeerDeliveryCycleResult.TransferStarted
         }

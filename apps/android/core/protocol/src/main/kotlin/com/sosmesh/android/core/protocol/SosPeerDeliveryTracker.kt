@@ -6,7 +6,8 @@ import javax.inject.Inject
 import javax.inject.Singleton
 
 /**
- * Marks LOCAL_SAVED → PEER_RECEIVED only after sender-side chunk ACKs complete (verified mesh ack).
+ * Tracks peer delivery for fan-out: marks LOCAL_SAVED → PEER_RECEIVED only after all
+ * currently discovered peers have received the message (or the message reaches the server).
  */
 @Singleton
 class SosPeerDeliveryTracker
@@ -14,14 +15,22 @@ class SosPeerDeliveryTracker
     constructor(
         private val outbox: OutboxQueueAdapter,
         private val outboxIoScope: OutboxIoScope,
+        private val peerRecordStore: PeerDeliveryRecordStore,
     ) {
         data class ActiveTransfer(
             val sosId: String,
             val digest: String,
+            val peerId: String?,
         )
 
         @Volatile
         var active: ActiveTransfer? = null
+
+        private var completionCallback: ((String, String, String?, Boolean) -> Unit)? = null
+
+        fun setCompletionCallback(callback: (sosId: String, digest: String, peerId: String?, success: Boolean) -> Unit) {
+            completionCallback = callback
+        }
 
         fun attachSenderListener(sender: BleTransferSender) {
             sender.setListener(
@@ -29,7 +38,10 @@ class SosPeerDeliveryTracker
                     override fun onCompleted() {
                         val ctx = active ?: return
                         outboxIoScope.launchOutboxWork {
-                            outbox.updateState(ctx.sosId, ctx.digest, "PEER_RECEIVED", System.currentTimeMillis(), null)
+                            if (ctx.peerId != null) {
+                                peerRecordStore.recordDelivery(ctx.sosId, ctx.peerId)
+                            }
+                            completionCallback?.invoke(ctx.sosId, ctx.digest, ctx.peerId, true)
                         }
                         active = null
                     }
@@ -40,10 +52,11 @@ class SosPeerDeliveryTracker
                     ) {
                         val ctx = active ?: return
                         outboxIoScope.launchOutboxWork {
+                            completionCallback?.invoke(ctx.sosId, ctx.digest, ctx.peerId, false)
                             outbox.setRetryAt(
                                 ctx.sosId,
                                 ctx.digest,
-                                System.currentTimeMillis() + 5_000L,
+                                System.currentTimeMillis() + 2_000L,
                                 message,
                             )
                         }
@@ -51,5 +64,17 @@ class SosPeerDeliveryTracker
                     }
                 },
             )
+        }
+
+        suspend fun markPeerReceivedIfAllDelivered(
+            sosId: String,
+            digest: String,
+            allDiscoveredPeerIds: Set<String>,
+            nowMs: Long,
+        ) {
+            if (peerRecordStore.hasDeliveredToAll(sosId, allDiscoveredPeerIds)) {
+                outbox.updateState(sosId, digest, "PEER_RECEIVED", nowMs, null)
+                peerRecordStore.clearMessageRecords(sosId)
+            }
         }
     }

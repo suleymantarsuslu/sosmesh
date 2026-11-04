@@ -38,6 +38,8 @@ public final class LiveBleMeshRadio: NSObject, BleMeshRadioPort, CBCentralManage
     private var clientCallback: ClientCallback?
     private let queueKey = DispatchSpecificKey<Void>()
     private var peers: [UUID: PeerEntry] = [:]
+    /// Fan-out bookkeeping (queue only): peers that already received each own SOS.
+    private var deliveredPeersBySos: [String: Set<String>] = [:]
     private var scanning = false
     private var advertising = false
     private var advertisingRequested = false
@@ -143,6 +145,36 @@ public final class LiveBleMeshRadio: NSObject, BleMeshRadioPort, CBCentralManage
                 self?.diagnostics.recordError(code: "send_\(code.rawValue)")
             }
         )
+        session.engine.peerDeliveryTracker.onTransferComplete = { [weak self] sosId, digest, peerId, success in
+            guard let self, success, let peerId else { return }
+            let work: () -> Void = { [weak self] in
+                self?.recordFanoutDelivery(sosId: sosId, digest: digest, peerId: peerId)
+            }
+            if DispatchQueue.getSpecific(key: self.queueKey) != nil {
+                work()
+            } else {
+                self.queue.async(execute: work)
+            }
+        }
+    }
+
+    /// Queue only. The first successful peer marks PEER_RECEIVED (UI shows it); the entry stays due
+    /// for the remaining discovered peers.
+    private func recordFanoutDelivery(sosId: String, digest: String, peerId: String) {
+        var delivered = deliveredPeersBySos[sosId] ?? []
+        delivered.insert(peerId)
+        deliveredPeersBySos[sosId] = delivered
+        let now = Int64(Date().timeIntervalSince1970 * 1000)
+        if delivered.count == 1 {
+            _ = try? outbox.updateState(sosId: sosId, digest: digest, state: "PEER_RECEIVED", nowMs: now, lastError: nil)
+        }
+        let allPeers = Set(peers.keys.map { $0.uuidString })
+        let remaining = allPeers.subtracting(delivered)
+        // Never park retryAt far in the future: the own server upload also gates on retryAtMs.
+        // Delivered peers are excluded in connectIfNeeded, so a finished fan-out stops reconnecting.
+        if !remaining.isEmpty {
+            try? outbox.setRetryAt(sosId: sosId, digest: digest, retryAtMs: now + 500, lastError: "continue_fanout")
+        }
     }
 
     // MARK: BleMeshRadioPort
@@ -289,7 +321,8 @@ public final class LiveBleMeshRadio: NSObject, BleMeshRadioPort, CBCentralManage
             }
         } else if gattReady {
             do {
-                _ = try session.sendDueOutboxEntryIfReady(gattReady: true)
+                let peerId = connectedPeripheral?.identifier.uuidString
+                _ = try session.sendDueOutboxEntryIfReady(gattReady: true, peerId: peerId)
             } catch {
                 diagnostics.recordError(code: "outbox_read_failed")
             }
@@ -318,9 +351,15 @@ public final class LiveBleMeshRadio: NSObject, BleMeshRadioPort, CBCentralManage
             candidate = best
         } else {
             guard session.hasDueOwnOutbound() else { return .success(()) }
-            // Try the least recently attempted peer first so one unreachable phone cannot block the rest.
-            guard let best = peers.values.min(by: { $0.lastAttemptMs < $1.lastAttemptMs }) else {
-                return .failure(NSError(domain: "LiveBleMeshRadio", code: 2, userInfo: nil))
+            
+            let deliveredPeerIds = getDeliveredPeerIdsForPendingSos()
+            let eligible = peers.values.filter { peer in
+                !deliveredPeerIds.contains(peer.peripheral.identifier.uuidString) &&
+                nowMs - peer.lastAttemptMs >= LiveBleMeshRadio.peerRetryMs
+            }
+            
+            guard let best = eligible.min(by: { $0.lastAttemptMs < $1.lastAttemptMs }) else {
+                return .success(())
             }
             candidate = best
         }
@@ -335,6 +374,16 @@ public final class LiveBleMeshRadio: NSObject, BleMeshRadioPort, CBCentralManage
     private func connectingPeripheral() -> CBPeripheral? {
         guard let id = connectingPeerId else { return nil }
         return peers[id]?.peripheral
+    }
+    
+    private func getDeliveredPeerIdsForPendingSos() -> Set<String> {
+        guard let entries = try? outbox.listEntries() else { return [] }
+        guard let pending = entries.first(where: {
+            ($0.state == "LOCAL_SAVED" || $0.state == "PEER_RECEIVED") && $0.origin != SosOutboxService.relayOrigin
+        }) else {
+            return []
+        }
+        return deliveredPeersBySos[pending.sosId] ?? []
     }
 
     private func publishDiagnostics() {

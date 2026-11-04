@@ -169,7 +169,6 @@ class BleTransferEngine
             digest: String,
             payload: ByteArray,
         ) {
-            peerDeliveryTracker.active = SosPeerDeliveryTracker.ActiveTransfer(sosId, digest)
             clientPort.enableAckNotifications()
             sender.startTransfer(payload)
         }

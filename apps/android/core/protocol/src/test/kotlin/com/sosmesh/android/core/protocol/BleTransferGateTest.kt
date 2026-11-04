@@ -52,8 +52,8 @@ class BleTransferGateTest {
             )
         val receiver = BleTransferReceiver(receiverT, TransferConfig(maxRetries = 3, chunkTimeoutMs = 400L), clock)
         val outbox = TrackingOutbox()
-        val tracker = SosPeerDeliveryTracker(outbox, testOutboxIoScope())
-        tracker.active = SosPeerDeliveryTracker.ActiveTransfer("sos-gate", "digest-gate")
+        val tracker = SosPeerDeliveryTracker(outbox, testOutboxIoScope(), PeerDeliveryRecordStore())
+        tracker.active = SosPeerDeliveryTracker.ActiveTransfer("sos-gate", "digest-gate", null)
         tracker.attachSenderListener(sender)
         var senderCompleted = false
         receiver.setListener(
@@ -130,8 +130,8 @@ class BleTransferGateTest {
             )
         val sender = BleTransferSender(senderT, config, clock, rng)
         val outbox = TrackingOutbox()
-        val tracker = SosPeerDeliveryTracker(outbox, testOutboxIoScope())
-        tracker.active = SosPeerDeliveryTracker.ActiveTransfer("sos-wait", "d")
+        val tracker = SosPeerDeliveryTracker(outbox, testOutboxIoScope(), PeerDeliveryRecordStore())
+        tracker.active = SosPeerDeliveryTracker.ActiveTransfer("sos-wait", "d", null)
         tracker.attachSenderListener(sender)
         wireNoOpListeners(sender, receiver)
         var senderCompleted = false

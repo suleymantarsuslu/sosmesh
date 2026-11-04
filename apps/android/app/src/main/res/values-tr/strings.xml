@@ -76,4 +76,26 @@
     <string name="help_limitations_body">Apple arka plan kısıtları; fiziksel cihaz testleri NOT_TESTED; mağaza dağıtımı BLOCKED_APPROVAL.</string>
     <string name="help_support_title">Destek</string>
     <string name="help_support_body">Destek iletişimi: DESTEK_ILETISIM_TBD (BLOCKED_APPROVAL).</string>
+    <string name="profile_title">Profiliniz (isteğe bağlı)</string>
+    <string name="profile_open_sos">Hemen SOS gönder</string>
+    <string name="profile_intro">Tüm alanlar isteğe bağlıdır. Bilgiler telefonunuzda şifreli saklanır ve yalnızca SOS mesajının içinde gönderilir.</string>
+    <string name="profile_full_name">Ad soyad</string>
+    <string name="profile_age">Yaş</string>
+    <string name="profile_address_line">Açık adres</string>
+    <string name="profile_district">İlçe</string>
+    <string name="profile_city">İl</string>
+    <string name="profile_postal_code">Posta kodu</string>
+    <string name="profile_country">Ülke kodu (ör. TR)</string>
+    <string name="profile_floor">Kat</string>
+    <string name="profile_phone">Telefon (+90…)</string>
+    <string name="profile_email">E-posta</string>
+    <string name="profile_household_size">Evde yaşayan kişi sayısı</string>
+    <string name="profile_location_set">Ev konumu adresten bulundu.</string>
+    <string name="profile_location_hint">Ev konumu adresten bu cihazda bulunur.</string>
+    <string name="profile_geocode_failed">Adresin konumu bulunamadı; adres yine de kaydedildi.</string>
+    <string name="profile_privacy_note">SOS gönderene kadar kimseyle paylaşılmaz. Ayarlar menüsünden düzenleyebilir veya silebilirsiniz.</string>
+    <string name="profile_save">Kaydet</string>
+    <string name="profile_skip">Atla</string>
+    <string name="profile_delete">Profili sil</string>
+    <string name="settings_profile">Profili düzenle</string>
 </resources>

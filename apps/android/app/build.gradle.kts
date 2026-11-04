@@ -141,6 +141,9 @@ dependencies {
     implementation(project(":core:platform"))
     implementation(project(":core:protocol"))
     implementation(project(":feature-relay"))
+    implementation(project(":mesh-v2"))
+    // Tink (security-crypto) references errorprone annotations; needed on the classpath for R8 (no -dontwarn).
+    implementation("com.google.errorprone:error_prone_annotations:2.23.0")
     implementation(project(":feature-sos"))
     implementation(project(":feature-status"))
     implementation(project(":core:wear-companion"))

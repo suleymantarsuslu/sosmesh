@@ -61,7 +61,27 @@ private fun readHighContrast(context: Context): Boolean =
 @Composable
 private fun SosMeshNavHost(onHighContrastChanged: () -> Unit) {
     val navController = rememberNavController()
+    val appContext = LocalContext.current.applicationContext
+    androidx.compose.runtime.LaunchedEffect(Unit) {
+        // mesh-v2 §7: optional profile once, after the permission gate (notification permission) is passed.
+        val done =
+            kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.IO) {
+                runCatching {
+                    dagger.hilt.android.EntryPointAccessors
+                        .fromApplication(appContext, ProfileEntryPoint::class.java)
+                        .profileStore()
+                        .isOnboardingDone()
+                }.getOrDefault(true)
+            }
+        if (!done) navController.navigate("profile")
+    }
     NavHost(navController = navController, startDestination = "home") {
+        composable("profile") {
+            com.sosmesh.android.ui.profile.ProfileRoute(
+                onDone = { navController.popBackStack() },
+                onOpenSos = { navController.navigate("sos") },
+            )
+        }
         composable("home") {
             HomeRoute(
                 onOpenPermissions = { navController.navigate("permissions") },
@@ -91,6 +111,7 @@ private fun SosMeshNavHost(onHighContrastChanged: () -> Unit) {
         }
         composable("settings") {
             SettingsRoute(
+                onOpenProfile = { navController.navigate("profile") },
                 onBack = {
                     onHighContrastChanged()
                     navController.popBackStack()
@@ -98,4 +119,10 @@ private fun SosMeshNavHost(onHighContrastChanged: () -> Unit) {
             )
         }
     }
+}
+
+@dagger.hilt.EntryPoint
+@dagger.hilt.InstallIn(dagger.hilt.components.SingletonComponent::class)
+interface ProfileEntryPoint {
+    fun profileStore(): com.sosmesh.android.core.data.profile.SosProfileStore
 }

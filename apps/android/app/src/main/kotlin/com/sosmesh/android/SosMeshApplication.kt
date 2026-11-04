@@ -16,10 +16,14 @@ class SosMeshApplication : Application(), Configuration.Provider {
     @Inject
     lateinit var crashReporter: LocalCrashReporter
 
+    @Inject
+    lateinit var meshV2Runtime: com.sosmesh.android.meshv2.v2.MeshV2Runtime
+
     override fun onCreate() {
         super.onCreate()
         AppLocaleController.applyStoredLocale(this)
         crashReporter.install()
+        meshV2Runtime.install()
     }
 
     override val workManagerConfiguration: Configuration

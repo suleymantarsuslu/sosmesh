@@ -48,6 +48,9 @@ class AndroidBleAdvertiserPort
                     .setIncludeDeviceName(request.includeDeviceName)
                     .setIncludeTxPowerLevel(false)
 
+            if (request.serviceData.isNotEmpty()) {
+                dataBuilder.addServiceData(serviceUuid, request.serviceData)
+            }
             if (request.manufacturerPayload.isNotEmpty()) {
                 dataBuilder.addManufacturerData(
                     request.manufacturerCompanyId,

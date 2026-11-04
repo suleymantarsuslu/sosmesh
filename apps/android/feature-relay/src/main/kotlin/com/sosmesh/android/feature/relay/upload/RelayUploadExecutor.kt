@@ -56,7 +56,7 @@ class RelayUploadExecutor
             var uploaded = 0
             var attempted = 0
             var retryMs: Long? = null
-            for (entry in due) {
+            for (entry in UploadPriority.ownFirst(due)) {
                 attempted++
                 when (
                     val result =
@@ -64,6 +64,7 @@ class RelayUploadExecutor
                             entry.sosId,
                             entry.digest,
                             entry.encryptedBlobBase64,
+                            OWN_UPLOAD_HOP_COUNT,
                         )
                 ) {
                     is RelayIngestResult.Success -> {
@@ -180,7 +181,7 @@ class RelayUploadExecutor
             var attempted = 0
             var retryMs: Long? = null
             var deferred: RelayPauseReason? = null
-            for (entry in due) {
+            for (entry in UploadPriority.ownFirst(due)) {
                 val payloadBytes = entry.encryptedBlobBase64.length
                 if (!hourlyBudget.canSend(payloadBytes, settings.hourlyDataLimitBytes(), nowMs)) {
                     deferred = RelayPauseReason.HourlyDataLimit
@@ -195,6 +196,7 @@ class RelayUploadExecutor
                             entry.sosId,
                             entry.digest,
                             entry.encryptedBlobBase64,
+                            RELAYED_UPLOAD_MIN_HOP_COUNT,
                         )
                 ) {
                     is RelayIngestResult.Success -> {
@@ -260,3 +262,13 @@ class RelayUploadExecutor
             const val UPLOAD_PERMANENT_ERROR_RETRY_AT_MS = 9_223_372_036_854_775L
         }
     }
+
+/** mesh-v2 §9 / req. 1: own pending messages first (oldest first), then relayed copies (oldest first). */
+object UploadPriority {
+    fun <T : com.sosmesh.contracts.transport.OutboxEntryMeta> ownFirst(entries: List<T>): List<T> =
+        entries.sortedWith(compareBy<T> { if (it.origin == "relay") 1 else 0 }.thenBy { it.createdAtMs })
+}
+
+/** Own SOS: hopCount 0. Relayed outbox rows do not keep the L1 hop count, so they report the minimum relayed value 1. */
+private const val OWN_UPLOAD_HOP_COUNT = 0
+private const val RELAYED_UPLOAD_MIN_HOP_COUNT = 1

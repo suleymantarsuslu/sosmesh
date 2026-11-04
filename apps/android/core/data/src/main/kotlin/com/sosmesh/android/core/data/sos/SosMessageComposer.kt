@@ -23,6 +23,8 @@ data class SosComposeRequest(
     val languageTag: String,
     val nowMs: Long,
     val messageIdOverride: String? = null,
+    /** mesh-v2: when set, the encrypted inner payload is SosInnerPayloadV2 (senderKey, seq, optional profile). */
+    val sender: com.sosmesh.android.core.data.profile.SosSenderContext? = null,
 )
 
 data class ComposedSosMessage(
@@ -64,7 +66,9 @@ class SosMessageComposer(
                 location = innerLocation,
                 language = normalizeLanguage(request.languageTag),
             )
-        val innerBytes = json.encodeToString(inner).toByteArray(Charsets.UTF_8)
+        val innerBytes =
+            request.sender?.let { sender -> innerV2Bytes(request, sender, isoTimestamp, innerLocation) }
+                ?: json.encodeToString(inner).toByteArray(Charsets.UTF_8)
 
         val envelopeMap =
             buildEnvelopeMap(
@@ -122,6 +126,37 @@ class SosMessageComposer(
         )
     }
 
+    private fun innerV2Bytes(
+        request: SosComposeRequest,
+        sender: com.sosmesh.android.core.data.profile.SosSenderContext,
+        isoTimestamp: String,
+        innerLocation: SosInnerLocation?,
+    ): ByteArray {
+        var note = SosInnerV2Mapping.clampNote(request.note)
+        while (true) {
+            val v2 =
+                SosInnerPayloadV2(
+                    senderKey = sender.senderKey,
+                    seq = sender.seq,
+                    createdAt = isoTimestamp,
+                    sosType = SosInnerV2Mapping.sosType(request.sosType),
+                    note = note,
+                    language = normalizeLanguage(request.languageTag),
+                    location =
+                        innerLocation?.let {
+                            SosInnerLocationV2(it.latitude, it.longitude, it.accuracy_meters, it.timestamp)
+                        },
+                    personCount = request.personCount?.takeIf { it in 1..50 },
+                    profile = sender.profile,
+                    profileChanged = if (sender.profileChanged) true else null,
+                )
+            val bytes = innerV2Json.encodeToString(SosInnerPayloadV2.serializer(), v2).toByteArray(Charsets.UTF_8)
+            if (bytes.size <= SosInnerV2Mapping.MAX_INNER_BYTES || note.isNullOrEmpty()) return bytes
+            // §14 inner-oversize: never refuse, drop the note tail.
+            note = note.dropLast(maxOf(1, bytes.size - SosInnerV2Mapping.MAX_INNER_BYTES)).ifEmpty { null }
+        }
+    }
+
     private fun locationStatusWire(location: LocationSnapshot): String =
         when (location.source) {
             LocationSource.UNKNOWN -> LocationStatus.UNKNOWN
@@ -171,6 +206,12 @@ class SosMessageComposer(
         }
 
     companion object {
+        private val innerV2Json =
+            Json {
+                encodeDefaults = true
+                explicitNulls = false
+            }
+
         private val canonicalJson =
             Json {
                 prettyPrint = false

@@ -58,6 +58,8 @@ data class SosFormUiState(
     val isRecording: Boolean = false,
     val uploadToken: String? = null,
     val showConfirmationDialog: Boolean = false,
+    /** mesh-v2 §8.1: SOS accepted but held until the rate window opens ("Queued, will be sent"). */
+    val queuedUntilMs: Long? = null,
 )
 
 @HiltViewModel
@@ -152,10 +154,24 @@ class SosFormViewModel
             _uiState.update { it.copy(step = SosWizardStep.FORM) }
         }
 
+        private val rateLimiter = com.sosmesh.android.meshv2.v2.SosRateLimiter()
+        private var lastOwnMessageId: String? = null
+        private var lastOwnLeftDevice: Boolean = false
+
         fun confirmAndSave(nowMs: Long = System.currentTimeMillis()) {
             if (!revalidate()) return
+            // mesh-v2 §8.1: never refuse. Replace an unsent previous SOS (new messageId) or queue until the window opens.
+            val decision = rateLimiter.decide(nowMs, lastOwnMessageId, lastOwnLeftDevice)
             viewModelScope.launch {
-                runCatching { performSaveAfterPreview(nowMs) }
+                var saveAt = nowMs
+                if (decision is com.sosmesh.android.meshv2.v2.SosRateLimiter.Decision.Queue) {
+                    _uiState.update { it.copy(queuedUntilMs = decision.releaseAtMs) }
+                    kotlinx.coroutines.delay((decision.releaseAtMs - nowMs).coerceAtLeast(0L))
+                    saveAt = System.currentTimeMillis()
+                    rateLimiter.recordRelease(saveAt)
+                    _uiState.update { it.copy(queuedUntilMs = null) }
+                }
+                runCatching { performSaveAfterPreview(saveAt) }
                     .onFailure { throwable ->
                         if (throwable is CancellationException) throw throwable
                         Log.e("SosFormViewModel", "sos_save_failed", throwable)
@@ -218,6 +234,8 @@ class SosFormViewModel
                     SosPeerDeliveryKickResult.Blocked(error.message ?: "peer_kickoff_failed")
                 }
             notificationManager.trackPendingSos(composed.message.id)
+            lastOwnMessageId = composed.message.id
+            lastOwnLeftDevice = delivery is SosPeerDeliveryKickResult.TransferStarted
             
             _uiState.update {
                 it.copy(

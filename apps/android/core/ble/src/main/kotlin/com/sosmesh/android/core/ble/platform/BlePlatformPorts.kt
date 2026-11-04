@@ -35,6 +35,8 @@ data class AdvertiseRequest(
     val manufacturerCompanyId: Int,
     val manufacturerPayload: ByteArray,
     val includeDeviceName: Boolean,
+    /** mesh-v2 §4.2: 3-byte service data for 0xFFF0 (empty = none). */
+    val serviceData: ByteArray = ByteArray(0),
 )
 
 interface BleAdvertiserPort {

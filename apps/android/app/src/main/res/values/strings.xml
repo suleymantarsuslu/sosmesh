@@ -76,4 +76,26 @@
     <string name="help_limitations_body">Apple background limits; physical device tests NOT_TESTED; store rollout BLOCKED_APPROVAL.</string>
     <string name="help_support_title">Support</string>
     <string name="help_support_body">Support contact: DESTEK_ILETISIM_TBD (BLOCKED_APPROVAL).</string>
+    <string name="profile_title">Your profile (optional)</string>
+    <string name="profile_open_sos">Send SOS now</string>
+    <string name="profile_intro">All fields are optional. This stays encrypted on your phone and is sent only inside an SOS.</string>
+    <string name="profile_full_name">Full name</string>
+    <string name="profile_age">Age</string>
+    <string name="profile_address_line">Full address</string>
+    <string name="profile_district">District</string>
+    <string name="profile_city">City</string>
+    <string name="profile_postal_code">Postal code</string>
+    <string name="profile_country">Country code (e.g. TR)</string>
+    <string name="profile_floor">Floor</string>
+    <string name="profile_phone">Phone (+90…)</string>
+    <string name="profile_email">Email</string>
+    <string name="profile_household_size">People living in the home</string>
+    <string name="profile_location_set">Home location found from the address.</string>
+    <string name="profile_location_hint">Home location is looked up from the address on this device.</string>
+    <string name="profile_geocode_failed">Address location could not be found; the address is still saved.</string>
+    <string name="profile_privacy_note">Not shared with anyone until you send an SOS. You can edit or delete it in Settings.</string>
+    <string name="profile_save">Save</string>
+    <string name="profile_skip">Skip</string>
+    <string name="profile_delete">Delete profile</string>
+    <string name="settings_profile">Edit profile</string>
 </resources>

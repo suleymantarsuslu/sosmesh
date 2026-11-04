@@ -33,4 +33,12 @@ interface RelayIngestUplink {
         digest: String,
         encryptedBlobBase64: String,
     ): RelayIngestResult
+
+    /** mesh-v2 §9: relayInfo.hopCount = 0 for the device's own SOS, L1 hopCount + 1 for relayed copies. */
+    fun uploadOutboxEntry(
+        sosId: String,
+        digest: String,
+        encryptedBlobBase64: String,
+        hopCount: Int,
+    ): RelayIngestResult = uploadOutboxEntry(sosId, digest, encryptedBlobBase64)
 }

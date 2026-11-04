@@ -58,6 +58,7 @@ class SosSubmitFlowTest {
                 adapter,
                 NoOpUploadScheduler,
                 Dispatchers.IO,
+                { null },
             )
         pendingStore = com.sosmesh.android.feature.sos.attachment.AttachmentPendingStore(context)
         notificationManager = com.sosmesh.android.feature.sos.notification.SosDeliveryNotificationManager(context)

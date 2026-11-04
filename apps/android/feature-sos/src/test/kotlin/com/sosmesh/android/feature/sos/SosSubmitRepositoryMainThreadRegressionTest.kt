@@ -46,6 +46,7 @@ class SosSubmitRepositoryMainThreadRegressionTest {
                 outbox = adapter,
                 uploadScheduler = NoOpUploadScheduler,
                 ioDispatcher = Dispatchers.IO,
+                senderContext = { null },
             )
     }
 

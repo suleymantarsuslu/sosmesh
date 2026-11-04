@@ -15,6 +15,7 @@ class GattServer(
                 BleMeshConstants.ACK_CHAR_UUID,
                 setOf(GattProperty.READ, GattProperty.WRITE, GattProperty.NOTIFY),
             ),
+            GattCharacteristicSpec(MeshV2Hooks.MESH_INFO_CHAR_UUID, setOf(GattProperty.READ)),
         )
 
     fun start(): Result<Unit> = serverPort.start(BleMeshConstants.SERVICE_UUID, characteristics)

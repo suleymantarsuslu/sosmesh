@@ -23,6 +23,12 @@ import javax.inject.Singleton
 object DataModule {
     @Provides
     @Singleton
+    fun provideSosSenderContextSource(
+        store: com.sosmesh.android.core.data.profile.SosProfileStore,
+    ): com.sosmesh.android.core.data.profile.SosSenderContextSource = store
+
+    @Provides
+    @Singleton
     fun provideOutboxDatabase(
         @ApplicationContext context: Context,
     ): OutboxDatabase =

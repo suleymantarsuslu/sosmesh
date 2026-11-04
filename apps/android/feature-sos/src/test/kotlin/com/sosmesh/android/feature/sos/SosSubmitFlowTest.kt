@@ -61,7 +61,7 @@ class SosSubmitFlowTest {
                 { null },
             )
         pendingStore = com.sosmesh.android.feature.sos.attachment.AttachmentPendingStore(context)
-        notificationManager = com.sosmesh.android.feature.sos.notification.SosDeliveryNotificationManager(context)
+        notificationManager = com.sosmesh.android.feature.sos.notification.SosDeliveryNotificationManager(context, com.sosmesh.android.feature.sos.OpenCaseTracker(context))
     }
 
     @After
@@ -89,6 +89,9 @@ class SosSubmitFlowTest {
             testGrantAllPermissionCoordinator(),
             pendingStore,
             notificationManager,
+            com.sosmesh.android.feature.sos.OpenCaseTracker(
+                ApplicationProvider.getApplicationContext<android.content.Context>(),
+            ),
         )
 
     @Test
@@ -136,6 +139,9 @@ class SosSubmitFlowTest {
                     testGrantAllPermissionCoordinator(),
                     pendingStore,
                     notificationManager,
+                    com.sosmesh.android.feature.sos.OpenCaseTracker(
+                        ApplicationProvider.getApplicationContext<android.content.Context>(),
+                    ),
                 )
             vm.setPersonCountText("1")
             vm.goToPreview()

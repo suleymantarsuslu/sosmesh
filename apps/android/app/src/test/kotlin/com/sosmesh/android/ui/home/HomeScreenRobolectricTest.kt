@@ -27,7 +27,6 @@ class HomeScreenRobolectricTest {
                 onOpenStatus = {},
                 onOpenRelay = {},
                 onOpenSettings = {},
-                onExpressSos = {},
             )
         }
         composeRule.onNodeWithTag("home_call_112_button").assertIsDisplayed()

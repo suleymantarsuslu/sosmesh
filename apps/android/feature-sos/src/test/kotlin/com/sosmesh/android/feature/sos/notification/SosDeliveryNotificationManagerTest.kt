@@ -17,7 +17,7 @@ class SosDeliveryNotificationManagerTest {
     @Before
     fun setup() {
         context = ApplicationProvider.getApplicationContext()
-        manager = SosDeliveryNotificationManager(context)
+        manager = SosDeliveryNotificationManager(context, com.sosmesh.android.feature.sos.OpenCaseTracker(context))
     }
 
     @Test

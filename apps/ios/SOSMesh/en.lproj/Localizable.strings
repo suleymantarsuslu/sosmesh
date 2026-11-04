@@ -107,6 +107,11 @@
 "sos.sent.action.status" = "Go to status";
 "notification.sos.delivered.title" = "Your message has been delivered";
 "notification.sos.delivered.body" = "Your SOS message has reached the server.";
+"notification.incoming.sos.title" = "SOSMesh Emergency Alert";
+"notification.incoming.sos.body.relay" = "A nearby help request is being relayed through your device.";
+"notification.incoming.sos.body.full" = "An emergency SOS message was received from a nearby device.";
+"notification.test.title" = "TEST: SOSMesh Emergency Alert";
+"notification.test.body" = "This is a test notification. Not a real emergency.";
 "sos.delivered.title" = "Your help request was delivered";
 "sos.delivered.message" = "This does not replace %@. Call %@ for immediate emergency response.";
 "sos.followup.title" = "Your message was sent. Add anything you want to add";

@@ -71,6 +71,14 @@ struct SettingsView: View {
                     Toggle("settings.debug.simulate_bluetooth_off", isOn: $appModel.simulateBluetoothOff)
                     Toggle("settings.debug.simulate_permissions_denied", isOn: $appModel.simulatePermissionsDenied)
                     Toggle("settings.debug.simulate_location_unavailable", isOn: $appModel.simulateLocationUnavailable)
+                    
+                    Button {
+                        Task { @MainActor in
+                            await SosNotificationManager.shared.scheduleTestNotification()
+                        }
+                    } label: {
+                        Label("Test Notification (5s delay)", systemImage: "bell.badge")
+                    }
                 }
                 #endif
             }

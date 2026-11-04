@@ -5,7 +5,14 @@ import SOSMeshContracts
 
 @MainActor
 final class AppModel: ObservableObject {
-    @Published var relayEnabled = false
+    /// Persisted: relay mode survives restarts and takes effect immediately on the radio.
+    @Published var relayEnabled: Bool {
+        didSet {
+            guard relayEnabled != oldValue else { return }
+            defaults.set(relayEnabled, forKey: AppModel.relayEnabledDefaultsKey)
+            restartDiscoveryForCurrentMode()
+        }
+    }
     @Published var preferredRole: BlePeerRole = .sender
     @Published var acceptedDisclaimer = false
     @Published var highPowerRadioConsent = false
@@ -17,6 +24,7 @@ final class AppModel: ObservableObject {
     @Published private(set) var outboxEntries: [OutboxEntryMeta] = []
     @Published private(set) var receivedInbox: [ReceivedSosRecord] = []
     @Published var lastUploadToken: String?
+    @Published private(set) var relayDiagnostics = RelayDiagnosticsSnapshot()
 
     /// Debug-only fault injection (not the default data path).
     #if DEBUG
@@ -28,6 +36,11 @@ final class AppModel: ObservableObject {
     @Published var useFaultSimulationOverrides = false
     #endif
 
+    static let relayEnabledDefaultsKey = "sosmesh.relay.enabled"
+
+    private let defaults: UserDefaults
+    private let diagnostics = RelayDiagnostics()
+    private var relayForwarder: RelayForwarder?
     private var restorationMachine = BleRestorationStateMachine()
     private let roleSelector = BleRoleSelector()
     private let permissionProbe: AppPermissionProbing
@@ -48,8 +61,11 @@ final class AppModel: ObservableObject {
     init(
         permissionProbe: AppPermissionProbing? = nil,
         outboxStorePath: String? = nil,
-        meshRadioFactory: ((SosOutboxService, ReceivedSosInbox) -> BleMeshRadioPort)? = nil
+        meshRadioFactory: ((SosOutboxService, ReceivedSosInbox) -> BleMeshRadioPort)? = nil,
+        defaults: UserDefaults = .standard
     ) {
+        self.defaults = defaults
+        self.relayEnabled = defaults.bool(forKey: AppModel.relayEnabledDefaultsKey)
         let probe = permissionProbe ?? LiveAppPermissionProbe()
         self.permissionProbe = probe
         self.outboxStorePathOverride = outboxStorePath
@@ -160,7 +176,8 @@ final class AppModel: ObservableObject {
 
     func reloadOutbox() async {
         guard let service = try? requireOutbox() else { return }
-        let entries = (try? service.listEntries()) ?? []
+        // Envelopes held for other phones (origin `relay`) are not the user's own SOS history.
+        let entries = ((try? service.listEntries()) ?? []).filter { $0.origin != SosOutboxService.relayOrigin }
         outboxEntries = entries
         outboxCount = entries.count
     }
@@ -171,7 +188,9 @@ final class AppModel: ObservableObject {
             relayToggleOn: relayEnabled,
             hasPendingLocalSos: pendingSos
         )
-        return (decision.role, decision.scan, decision.advertise)
+        // Relay mode keeps the GATT server + advertising on even while an own SOS is pending,
+        // otherwise a relay phone with its own SOS would stop being reachable by nearby senders.
+        return (decision.role, decision.scan, decision.advertise || relayEnabled)
     }
 
     func noteEnteredBackground() {
@@ -242,7 +261,9 @@ final class AppModel: ObservableObject {
     private func retryPendingServerUploads() async {
         guard let service = try? requireOutbox(),
               let entries = try? service.listEntries() else { return }
-        for entry in entries where entry.state == "LOCAL_SAVED" && entry.origin == "ios" {
+        // PEER_RECEIVED is only a nearby-phone ACK: once online the own upload still runs
+        // (the server de-duplicates a packet a relay already forwarded).
+        for entry in entries where (entry.state == "LOCAL_SAVED" || entry.state == "PEER_RECEIVED") && entry.origin == "ios" {
             guard !uploadsInFlight.contains(entry.sosId),
                   let data = Data(base64Encoded: entry.encryptedBlobBase64),
                   let object = try? JSONSerialization.jsonObject(with: data) as? [String: Any] else { continue }
@@ -373,15 +394,16 @@ final class AppModel: ObservableObject {
         if let meshRadioFactory {
             meshRadio = meshRadioFactory(outbox, receivedInboxStore)
         } else {
-            meshRadio = LiveBleMeshRadio(outbox: outbox, inbox: receivedInboxStore)
+            meshRadio = LiveBleMeshRadio(outbox: outbox, inbox: receivedInboxStore, diagnostics: diagnostics)
         }
-        let pending = outboxEntries.contains { $0.state == "LOCAL_SAVED" }
-        let roleDecision = currentBleRoleDecision(pendingSos: pending)
-        _ = meshRadio?.startDiscovery(
-            role: roleDecision.0,
-            relayEnabled: relayEnabled,
-            pendingSos: pending
+        relayForwarder = RelayForwarder(
+            outbox: outbox,
+            inbox: receivedInboxStore,
+            uploader: relayUploader(),
+            diagnostics: diagnostics
         )
+        relayForwarder?.restoreInbox()
+        restartDiscoveryForCurrentMode()
         receivedInbox = receivedInboxStore.list()
         meshTickTimer?.invalidate()
         meshTickTimer = Timer.scheduledTimer(withTimeInterval: 2.0, repeats: true) { [weak self] _ in
@@ -391,12 +413,46 @@ final class AppModel: ObservableObject {
                 self.meshRadio?.tick(nowMs: nowMs)
                 await self.reloadOutbox()
                 self.receivedInbox = self.receivedInboxStore.list()
+                await self.forwardReceivedEnvelopes()
+                self.refreshRelayDiagnostics()
             }
         }
     }
 }
 
 extension AppModel {
+    /// (Re)plans scan/advertise for the current relay switch and pending own SOS.
+    func restartDiscoveryForCurrentMode() {
+        guard let meshRadio else { return }
+        let pending = outboxEntries.contains {
+            $0.state == "LOCAL_SAVED" && $0.origin != SosOutboxService.relayOrigin
+        }
+        let decision = currentBleRoleDecision(pendingSos: pending)
+        _ = meshRadio.startDiscovery(role: decision.0, relayEnabled: relayEnabled, pendingSos: pending)
+    }
+
+    /// Uploads envelopes received over BLE (still encrypted) with the regular ingest contract.
+    /// Runs only while relay mode is on; failures keep the entry queued for the next retry.
+    func forwardReceivedEnvelopes() async {
+        guard relayEnabled, let relayForwarder else { return }
+        await relayForwarder.forwardDue()
+        receivedInbox = receivedInboxStore.list()
+    }
+
+    func refreshRelayDiagnostics() {
+        var snapshot = diagnostics.snapshot()
+        snapshot.pendingForward = relayForwarder?.pendingCount() ?? 0
+        relayDiagnostics = snapshot
+    }
+
+    fileprivate func relayUploader() -> RelayIngestUploading {
+        if ingestUploader == nil {
+            let deviceId = UIDevice.current.identifierForVendor?.uuidString ?? UUID().uuidString
+            ingestUploader = IngestUploader(config: IngestConfig.production(deviceId: deviceId))
+        }
+        return ingestUploader!
+    }
+
     static func preview(snapshot: PermissionGateSnapshot) -> AppModel {
         AppModel(permissionProbe: StubAppPermissionProbe(snapshot: snapshot))
     }

@@ -7,7 +7,7 @@ public final class BleTransferSender {
     }
 
     private let transport: BleTransferTransport
-    private let config: BleTransferConfig
+    private var config: BleTransferConfig
     private let clock: BleTransferClock
     private let rng: BleTransferRng
 
@@ -44,6 +44,47 @@ public final class BleTransferSender {
     }
 
     public func getState() -> BleTransferState { state }
+
+    /// A transfer is in flight (not idle and not finished).
+    public var isBusy: Bool {
+        switch state {
+        case .idle, .completed, .failed: return false
+        default: return true
+        }
+    }
+
+    /// Applies the ATT MTU derived from the real link (`maximumWriteValueLength + 3`).
+    /// Ignored while a transfer is running because HELLO already advertised the old value.
+    public func setMtu(_ mtu: Int) {
+        guard !isBusy else { return }
+        config.mtu = mtu
+    }
+
+    /// Fails an in-flight transfer (listener sees `onFailed`), e.g. when the link drops.
+    public func abort(_ message: String) {
+        guard isBusy else { return }
+        fail(.genericTimeout, message)
+    }
+
+    /// Returns a finished (completed/failed) sender to `.idle` so the next transfer can start.
+    public func resetToIdle() {
+        guard !isBusy else { return }
+        clock.cancel(chunkTimer)
+        chunkTimer = nil
+        clock.cancel(verifyTimer)
+        verifyTimer = nil
+        chunks = []
+        currentSeq = 0
+        inFlight.removeAll()
+        retryCount.removeAll()
+        ackReceived.removeAll()
+        nonce = nil
+        originalPayload = nil
+        expectedDigest = nil
+        negotiatedMtu = 0
+        peerVerifyAttempts = 0
+        state = .idle
+    }
 
     public func startTransfer(_ payload: Data) {
         precondition(state == .idle, "Cannot start transfer in state \(state)")

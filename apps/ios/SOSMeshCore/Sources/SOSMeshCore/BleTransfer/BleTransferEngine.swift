@@ -30,6 +30,9 @@ public final class SosPeerDeliveryTracker {
     }
 
     public var active: ActiveTransfer?
+    /// Diagnostics hooks (no payload data): peer ACK completed / transfer failed.
+    public var onPeerAckCompleted: (() -> Void)?
+    public var onTransferFailed: ((BleTransferErrorCode) -> Void)?
     private let outbox: OutboxQueueUpdating
     private let nowMs: () -> Int64
     private var senderListenerRetention: TrackerListener?
@@ -62,6 +65,7 @@ public final class SosPeerDeliveryTracker {
                 lastError: nil
             )
             tracker.active = nil
+            tracker.onPeerAckCompleted?()
         }
 
         func onFailed(code: BleTransferErrorCode, message: String) {
@@ -73,6 +77,7 @@ public final class SosPeerDeliveryTracker {
                 lastError: message
             )
             tracker.active = nil
+            tracker.onTransferFailed?(code)
         }
     }
 }
@@ -94,7 +99,10 @@ public final class BleTransferEngine {
     ) {
         peripheralTransport = GattBleTransferTransport(outbound: serverOutbound)
         centralTransport = GattBleTransferTransport(outbound: clientOutbound)
-        receiver = BleTransferReceiver(transport: peripheralTransport, config: config, clock: clock)
+        // The receiving side must not cap the MTU the sender negotiates below its real link limit.
+        var receiverConfig = config
+        receiverConfig.mtu = max(config.mtu, BleTransferProtocolConstants.maxMtu)
+        receiver = BleTransferReceiver(transport: peripheralTransport, config: receiverConfig, clock: clock)
         sender = BleTransferSender(transport: centralTransport, config: config, clock: clock, rng: rng)
         self.peerDeliveryTracker = peerDeliveryTracker
         peerDeliveryTracker.attachSenderListener(sender)
@@ -121,4 +129,27 @@ public final class BleTransferEngine {
     }
 
     public func onGattReady() {}
+
+    /// Sets the sender MTU from the real GATT link (`maximumWriteValueLength(for:) + 3`).
+    public func setSenderMtu(_ mtu: Int) {
+        sender.setMtu(min(max(mtu, BleTransferProtocolConstants.minMtu), BleTransferProtocolConstants.maxMtu))
+    }
+
+    /// True when a new outbound transfer may start (a finished transfer is reset first).
+    @discardableResult
+    public func prepareSenderForNextTransfer() -> Bool {
+        sender.resetToIdle()
+        return sender.getState() == .idle
+    }
+
+    /// Central link dropped: fail the in-flight send (outbox retry is scheduled by the tracker).
+    public func senderLinkLost() {
+        sender.abort("Transport disconnected")
+        sender.resetToIdle()
+    }
+
+    /// Remote central went away: drop partial receive state so the next HELLO starts clean.
+    public func receiverLinkLost() {
+        receiver.resetToIdle()
+    }
 }

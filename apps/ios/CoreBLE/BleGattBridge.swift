@@ -2,13 +2,20 @@ import CoreBluetooth
 import Foundation
 import SOSMeshCore
 
-public final class BleGattServerBridge: NSObject, GattServerPort, CBPeripheralManagerDelegate {
+public final class BleGattServerBridge: NSObject, GattServerPort {
     private var peripheralManager: CBPeripheralManager?
     private var writeListener: GattServerWriteListener?
     private var characteristics: [String: CBMutableCharacteristic] = [:]
-    private let queue = DispatchQueue(label: "com.sosmesh.ble.gatt-server")
-    private var pendingAdvertisement: [String: Any]?
-    private var serviceAdded = false
+    private var pendingNotifications: [(CBMutableCharacteristic, Data)] = []
+    private var subscribedCentrals = Set<UUID>()
+    private var advertisingRequested = false
+
+    /// Reports whether the service is actually being advertised (after `didStartAdvertising`).
+    public var onAdvertisingChanged: ((Bool) -> Void)?
+    /// Reports the number of centrals subscribed to ACK notifications.
+    public var onSubscriberCountChanged: ((Int) -> Void)?
+    /// A central unsubscribed (link dropped): the receiver should forget partial transfer state.
+    public var onCentralLeft: (() -> Void)?
 
     public override init() {
         super.init()
@@ -18,6 +25,7 @@ public final class BleGattServerBridge: NSObject, GattServerPort, CBPeripheralMa
         peripheralManager = manager
     }
 
+    /// Adds the transfer service and starts advertising once the service was added.
     public func start() -> Result<Void, Error> {
         guard let peripheralManager else {
             return .failure(NSError(domain: "BleGattServer", code: 1, userInfo: [NSLocalizedDescriptionKey: "No peripheral manager"]))
@@ -25,23 +33,28 @@ public final class BleGattServerBridge: NSObject, GattServerPort, CBPeripheralMa
         if peripheralManager.state != .poweredOn {
             return .failure(NSError(domain: "BleGattServer", code: 2, userInfo: [NSLocalizedDescriptionKey: "Bluetooth not powered on"]))
         }
+        peripheralManager.stopAdvertising()
+        peripheralManager.removeAllServices()
+        pendingNotifications.removeAll()
+        subscribedCentrals.removeAll()
         let coordinator = BlePeripheralCoordinator()
         let createdCharacteristics = coordinator.startTransferService(on: peripheralManager)
         characteristics.removeAll()
         for characteristic in createdCharacteristics {
-            characteristics[characteristic.uuid.uuidString.uppercased()] = characteristic
+            characteristics[BleMeshConstants.canonicalUuid(characteristic.uuid.uuidString)] = characteristic
         }
-        serviceAdded = true
-        var advertisement: [String: Any] = [
-            CBAdvertisementDataServiceUUIDsKey: [CBUUID(string: BleMeshConstants.serviceUUID)],
-        ]
-        peripheralManager.startAdvertising(advertisement)
+        advertisingRequested = true
         return .success(())
     }
 
     public func stop() {
+        advertisingRequested = false
         peripheralManager?.stopAdvertising()
-        writeListener = nil
+        peripheralManager?.removeAllServices()
+        pendingNotifications.removeAll()
+        subscribedCentrals.removeAll()
+        onAdvertisingChanged?(false)
+        onSubscriberCountChanged?(0)
     }
 
     public func setWriteListener(_ listener: GattServerWriteListener?) {
@@ -49,29 +62,66 @@ public final class BleGattServerBridge: NSObject, GattServerPort, CBPeripheralMa
     }
 
     public func notifyCharacteristic(uuid: String, value: Data, deviceAddress: String?) -> Result<Void, Error> {
-        guard let peripheralManager, let characteristic = characteristics[uuid.uppercased()] else {
+        guard let peripheralManager, let characteristic = characteristics[BleMeshConstants.canonicalUuid(uuid)] else {
             return .failure(NSError(domain: "BleGattServer", code: 3, userInfo: nil))
         }
-        let ok = peripheralManager.updateValue(value, for: characteristic, onSubscribedCentrals: nil)
-        return ok ? .success(()) : .failure(NSError(domain: "BleGattServer", code: 4, userInfo: nil))
+        if pendingNotifications.isEmpty,
+           peripheralManager.updateValue(value, for: characteristic, onSubscribedCentrals: nil) {
+            return .success(())
+        }
+        // Transmit queue is full: keep order and flush from `peripheralManagerIsReady`.
+        pendingNotifications.append((characteristic, value))
+        return .success(())
     }
 
-    public func peripheralManagerDidUpdateState(_ peripheral: CBPeripheralManager) {
-        guard peripheral.state == .poweredOn, let pendingAdvertisement, serviceAdded else {
+    // MARK: Delegate forwarding (the radio owns the CBPeripheralManager delegate)
+
+    public func peripheralManager(_ peripheral: CBPeripheralManager, didAdd service: CBService, error: Error?) {
+        guard advertisingRequested else { return }
+        if error != nil {
+            onAdvertisingChanged?(false)
             return
         }
-        peripheral.startAdvertising(pendingAdvertisement)
-        self.pendingAdvertisement = nil
+        let advertisement: [String: Any] = [
+            CBAdvertisementDataServiceUUIDsKey: [CBUUID(string: BleMeshConstants.serviceUUID)],
+        ]
+        peripheral.startAdvertising(advertisement)
+    }
+
+    public func peripheralManagerDidStartAdvertising(_ peripheral: CBPeripheralManager, error: Error?) {
+        onAdvertisingChanged?(error == nil && advertisingRequested)
+    }
+
+    public func peripheralManagerIsReady(toUpdateSubscribers peripheral: CBPeripheralManager) {
+        while let next = pendingNotifications.first {
+            if peripheral.updateValue(next.1, for: next.0, onSubscribedCentrals: nil) {
+                pendingNotifications.removeFirst()
+            } else {
+                break
+            }
+        }
+    }
+
+    public func peripheralManager(_ peripheral: CBPeripheralManager, central: CBCentral, didSubscribeTo characteristic: CBCharacteristic) {
+        subscribedCentrals.insert(central.identifier)
+        onSubscriberCountChanged?(subscribedCentrals.count)
+    }
+
+    public func peripheralManager(_ peripheral: CBPeripheralManager, central: CBCentral, didUnsubscribeFrom characteristic: CBCharacteristic) {
+        subscribedCentrals.remove(central.identifier)
+        onSubscriberCountChanged?(subscribedCentrals.count)
+        onCentralLeft?()
     }
 
     public func peripheralManager(_ peripheral: CBPeripheralManager, didReceiveWrite requests: [CBATTRequest]) {
         for request in requests {
-            let uuid = request.characteristic.uuid.uuidString
+            let uuid = BleMeshConstants.canonicalUuid(request.characteristic.uuid.uuidString)
             let value = request.value ?? Data()
             writeListener?.onCharacteristicWrite(uuid: uuid, value: value, deviceAddress: "central")
-            if request.characteristic.properties.contains(.write) {
-                peripheral.respond(to: request, withResult: .success)
-            }
+        }
+        // CoreBluetooth expects exactly one response, to the first request of the batch.
+        if let first = requests.first {
+            peripheral.respond(to: first, withResult: .success)
         }
     }
 }
@@ -82,7 +132,9 @@ public final class BleGattClientBridge: NSObject, GattClientPort, CBPeripheralDe
     private var ackCharacteristic: CBCharacteristic?
     private var dataCharacteristic: CBCharacteristic?
     private var controlCharacteristic: CBCharacteristic?
-    private var pendingWrites: [(CBCharacteristic, Data)] = []
+
+    /// A GATT write failed (link or permission problem). Counter only, no payload.
+    public var onWriteError: (() -> Void)?
 
     public func connect(peerAddress: String, serviceUuid: String, callback: GattClientCallbackPort) -> Result<Void, Error> {
         self.callback = callback
@@ -90,18 +142,24 @@ public final class BleGattClientBridge: NSObject, GattClientPort, CBPeripheralDe
         return .failure(NSError(domain: "BleGattClient", code: 10, userInfo: [NSLocalizedDescriptionKey: "Use connect(peripheral:)"]))
     }
 
+    /// Call from `centralManager(_:didConnect:)`: starts service discovery on the connected peripheral.
     public func connect(peripheral: CBPeripheral, callback: GattClientCallbackPort) {
         self.callback = callback
         self.peripheral = peripheral
+        ackCharacteristic = nil
+        dataCharacteristic = nil
+        controlCharacteristic = nil
         peripheral.delegate = self
-        callback.onConnectionStateChanged(.connecting)
+        callback.onConnectionStateChanged(.connected)
         peripheral.discoverServices([CBUUID(string: BleMeshConstants.serviceUUID)])
     }
 
     public func disconnect() {
-        guard let peripheral else { return }
-        peripheral.delegate = nil
-        self.peripheral = nil
+        peripheral?.delegate = nil
+        peripheral = nil
+        ackCharacteristic = nil
+        dataCharacteristic = nil
+        controlCharacteristic = nil
         callback?.onConnectionStateChanged(.disconnected)
     }
 
@@ -109,26 +167,33 @@ public final class BleGattClientBridge: NSObject, GattClientPort, CBPeripheralDe
         peripheral?.discoverServices([CBUUID(string: BleMeshConstants.serviceUUID)])
     }
 
+    /// Derives the ATT MTU from the real link: `maximumWriteValueLength(for: .withResponse) + 3`.
     public func requestMtu(_ preferred: Int) -> Result<Void, Error> {
-        callback?.onMtuChanged(mtu: min(preferred, 247))
-        callback?.onConnectionStateChanged(.ready)
+        guard let peripheral else {
+            return .failure(NSError(domain: "BleGattClient", code: 11, userInfo: nil))
+        }
+        let writable = peripheral.maximumWriteValueLength(for: .withResponse)
+        callback?.onMtuChanged(mtu: min(preferred, writable + BleTransferProtocolConstants.attOverhead))
         return .success(())
     }
 
     public func writeCharacteristic(uuid: String, value: Data) {
         guard let peripheral else { return }
         let target: CBCharacteristic?
-        switch uuid.uppercased() {
-        case BleMeshConstants.controlCharacteristicUUID.uppercased():
+        switch BleMeshConstants.canonicalUuid(uuid) {
+        case BleMeshConstants.controlCharacteristicUUID:
             target = controlCharacteristic
-        case BleMeshConstants.dataCharacteristicUUID.uppercased():
+        case BleMeshConstants.dataCharacteristicUUID:
             target = dataCharacteristic
-        case BleMeshConstants.ackCharacteristicUUID.uppercased():
+        case BleMeshConstants.ackCharacteristicUUID:
             target = ackCharacteristic
         default:
             target = nil
         }
-        guard let characteristic = target else { return }
+        guard let characteristic = target else {
+            onWriteError?()
+            return
+        }
         peripheral.writeValue(value, for: characteristic, type: .withResponse)
     }
 
@@ -143,7 +208,9 @@ public final class BleGattClientBridge: NSObject, GattClientPort, CBPeripheralDe
 
     public func peripheral(_ peripheral: CBPeripheral, didDiscoverServices error: Error?) {
         callback?.onConnectionStateChanged(.discovering)
-        guard let service = peripheral.services?.first(where: { $0.uuid.uuidString.caseInsensitiveCompare(BleMeshConstants.serviceUUID) == .orderedSame }) else {
+        guard error == nil,
+              let service = peripheral.services?.first(where: { BleMeshConstants.canonicalUuid($0.uuid.uuidString) == BleMeshConstants.serviceUUID }) else {
+            callback?.onConnectionStateChanged(.disconnected)
             return
         }
         peripheral.discoverCharacteristics(nil, for: service)
@@ -151,21 +218,45 @@ public final class BleGattClientBridge: NSObject, GattClientPort, CBPeripheralDe
 
     public func peripheral(_ peripheral: CBPeripheral, didDiscoverCharacteristicsFor service: CBService, error: Error?) {
         for characteristic in service.characteristics ?? [] {
-            let id = characteristic.uuid.uuidString.uppercased()
-            if id == BleMeshConstants.ackCharacteristicUUID.uppercased() {
+            let id = BleMeshConstants.canonicalUuid(characteristic.uuid.uuidString)
+            if id == BleMeshConstants.ackCharacteristicUUID {
                 ackCharacteristic = characteristic
-            } else if id == BleMeshConstants.dataCharacteristicUUID.uppercased() {
+            } else if id == BleMeshConstants.dataCharacteristicUUID {
                 dataCharacteristic = characteristic
-            } else if id == BleMeshConstants.controlCharacteristicUUID.uppercased() {
+            } else if id == BleMeshConstants.controlCharacteristicUUID {
                 controlCharacteristic = characteristic
             }
         }
+        guard error == nil, ackCharacteristic != nil, dataCharacteristic != nil, controlCharacteristic != nil else {
+            callback?.onConnectionStateChanged(.disconnected)
+            return
+        }
         callback?.onServicesDiscovered()
-        _ = requestMtu(247)
+        _ = requestMtu(BleTransferProtocolConstants.maxMtu)
+        // The link is ready only once the peer ACK notifications are subscribed
+        // (see `didUpdateNotificationStateFor`); otherwise the first HELLO_ACK could be lost.
+        enableAckNotifications()
+    }
+
+    public func peripheral(_ peripheral: CBPeripheral, didUpdateNotificationStateFor characteristic: CBCharacteristic, error: Error?) {
+        guard BleMeshConstants.canonicalUuid(characteristic.uuid.uuidString) == BleMeshConstants.ackCharacteristicUUID else {
+            return
+        }
+        if error == nil, characteristic.isNotifying {
+            callback?.onConnectionStateChanged(.ready)
+        } else {
+            callback?.onConnectionStateChanged(.disconnected)
+        }
+    }
+
+    public func peripheral(_ peripheral: CBPeripheral, didWriteValueFor characteristic: CBCharacteristic, error: Error?) {
+        if error != nil {
+            onWriteError?()
+        }
     }
 
     public func peripheral(_ peripheral: CBPeripheral, didUpdateValueFor characteristic: CBCharacteristic, error: Error?) {
-        guard let data = characteristic.value else { return }
-        callback?.onCharacteristicChanged(uuid: characteristic.uuid.uuidString, value: data)
+        guard error == nil, let data = characteristic.value else { return }
+        callback?.onCharacteristicChanged(uuid: BleMeshConstants.canonicalUuid(characteristic.uuid.uuidString), value: data)
     }
 }

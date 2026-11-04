@@ -1,4 +1,5 @@
 import SwiftUI
+import SOSMeshCore
 
 struct RelayView: View {
     @EnvironmentObject private var appModel: AppModel
@@ -48,12 +49,15 @@ struct RelayView: View {
                         }
                     }
                     
+                    diagnosticsSection
+
                     infoSection
                 }
                 .padding(DesignSystem.Spacing.md)
             }
             .background(DesignSystem.Colors.cardBackgroundSecondary.ignoresSafeArea())
             .navigationTitle("relay.title")
+            .onAppear { appModel.refreshRelayDiagnostics() }
         }
     }
     
@@ -70,6 +74,65 @@ struct RelayView: View {
         .padding(.top, DesignSystem.Spacing.md)
     }
     
+    private var diagnosticsSection: some View {
+        let diag = appModel.relayDiagnostics
+        return SOSCard {
+            VStack(alignment: .leading, spacing: DesignSystem.Spacing.xs) {
+                Text("relay.diag.title")
+                    .font(DesignSystem.Typography.headline)
+                    .foregroundStyle(DesignSystem.Colors.textPrimary)
+                diagnosticRow("relay.diag.bluetooth", Text(bluetoothKey(diag.bluetooth)))
+                diagnosticRow("relay.diag.scanning", Text(yesNoKey(diag.scanning)))
+                diagnosticRow("relay.diag.advertising", Text(yesNoKey(diag.advertising)))
+                diagnosticRow("relay.diag.peers", Text("\(diag.peersSeen)"))
+                diagnosticRow("relay.diag.connected", Text("\(diag.connectedPeers)"))
+                diagnosticRow("relay.diag.last_sent", timeText(diag.lastSentAtMs))
+                diagnosticRow("relay.diag.last_received", timeText(diag.lastReceivedAtMs))
+                diagnosticRow("relay.diag.pending", Text("\(diag.pendingForward)"))
+                diagnosticRow("relay.diag.forwarded", Text("\(diag.forwardedCount)"))
+                if let code = diag.lastErrorCode {
+                    diagnosticRow("relay.diag.last_error", Text(verbatim: code))
+                }
+                Text("relay.diag.footer")
+                    .font(DesignSystem.Typography.footnote)
+                    .foregroundStyle(DesignSystem.Colors.textSecondary)
+                    .fixedSize(horizontal: false, vertical: true)
+            }
+        }
+        .accessibilityIdentifier("relay.diagnostics")
+    }
+
+    private func diagnosticRow(_ label: LocalizedStringKey, _ value: Text) -> some View {
+        HStack(alignment: .firstTextBaseline) {
+            Text(label)
+                .font(DesignSystem.Typography.callout)
+                .foregroundStyle(DesignSystem.Colors.textSecondary)
+            Spacer()
+            value
+                .font(DesignSystem.Typography.callout)
+                .foregroundStyle(DesignSystem.Colors.textPrimary)
+        }
+    }
+
+    private func yesNoKey(_ value: Bool) -> LocalizedStringKey {
+        value ? "relay.diag.yes" : "relay.diag.no"
+    }
+
+    private func bluetoothKey(_ state: BleAuthorizationSnapshot) -> LocalizedStringKey {
+        switch state {
+        case .poweredOn: return "relay.diag.bt.on"
+        case .poweredOff: return "relay.diag.bt.off"
+        case .unauthorized: return "relay.diag.bt.unauthorized"
+        case .unsupported: return "relay.diag.bt.unsupported"
+        case .unknown: return "relay.diag.bt.unknown"
+        }
+    }
+
+    private func timeText(_ ms: Int64?) -> Text {
+        guard let ms else { return Text("relay.diag.none") }
+        return Text(Date(timeIntervalSince1970: TimeInterval(ms) / 1000), style: .relative)
+    }
+
     private var infoSection: some View {
         SOSCard {
             VStack(alignment: .leading, spacing: DesignSystem.Spacing.xs) {

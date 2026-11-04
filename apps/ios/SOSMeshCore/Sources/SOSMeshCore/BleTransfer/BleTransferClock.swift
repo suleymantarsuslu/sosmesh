@@ -17,10 +17,16 @@ public final class SystemBleTransferClock: BleTransferClock {
         init(_ source: DispatchSourceTimer) { self.source = source }
     }
 
-    public init() {}
+    private let queue: DispatchQueue
+
+    /// Timers fire on `queue`. The live BLE radio passes its serial radio queue so protocol
+    /// state is only ever touched from one queue.
+    public init(queue: DispatchQueue = DispatchQueue.global(qos: .utility)) {
+        self.queue = queue
+    }
 
     public func schedule(afterMs: Int64, block: @escaping () -> Void) -> BleTransferTimer {
-        let timer = DispatchSource.makeTimerSource(queue: DispatchQueue.global(qos: .utility))
+        let timer = DispatchSource.makeTimerSource(queue: queue)
         timer.schedule(deadline: .now() + .milliseconds(Int(afterMs)))
         timer.setEventHandler(handler: block)
         timer.resume()

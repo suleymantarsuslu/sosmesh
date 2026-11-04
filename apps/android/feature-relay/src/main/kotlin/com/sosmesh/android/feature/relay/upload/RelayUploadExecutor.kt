@@ -39,12 +39,20 @@ class RelayUploadExecutor
         private val notificationManager: com.sosmesh.android.feature.sos.notification.SosDeliveryNotificationManager?,
         private val visibilityTracker: com.sosmesh.android.feature.sos.notification.AppVisibilityTracker?,
         private val deliveryCounter: RelayDeliveryCounter,
+        private val pendingAttachmentQuery: com.sosmesh.android.core.data.attachment.PendingAttachmentQuery?,
     ) {
         suspend fun runOwnSosUploadCycle(
             nowMs: Long,
             networkConnected: Boolean,
         ): RelayUploadRunSummary {
-            val due = outboxReader.listDueOwnUpload(nowMs)
+            val due = outboxReader.listDueOwnUpload(nowMs).toMutableList()
+            
+            val serverAccepted = outboxReader.listServerAcceptedOwn(nowMs)
+            val serverAcceptedWithPendingAttachments = serverAccepted.filter { entry ->
+                pendingAttachmentQuery?.hasPendingAttachmentsWithoutToken(entry.sosId) == true
+            }
+            due.addAll(serverAcceptedWithPendingAttachments)
+            
             if (due.isEmpty()) {
                 return RelayUploadRunSummary(0, 0, null, null, 0)
             }

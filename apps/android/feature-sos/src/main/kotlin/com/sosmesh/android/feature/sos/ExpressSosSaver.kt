@@ -28,7 +28,7 @@ class ExpressSosSaver
 
         suspend fun save(nowMs: Long = System.currentTimeMillis()): String {
             val hasOpenCase = openCaseTracker.hasOpenCase(nowMs)
-            if (hasOpenCase && lastExpressId != null && lastExpressDigest != null && !lastExpressLeftDevice) {
+            if (hasOpenCase && lastExpressId != null && lastExpressDigest != null) {
                 submitRepository.deleteIfUnsent(lastExpressId!!, lastExpressDigest!!)
             }
 

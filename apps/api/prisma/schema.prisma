@@ -679,18 +679,12 @@ model RegionalClusterSummary {
   @@map("regional_cluster_summaries")
 }
 
-enum BroadcastSeverity {
-  info
-  warning
-  critical
-}
-
 /// Operator-sent broadcast notifications for mesh relay
 model BroadcastNotification {
   id                String             @id @default(uuid()) @db.Uuid
   title             String             @db.VarChar(200)
   body              String             @db.Text
-  severity          BroadcastSeverity
+  severity          String             @db.VarChar(20)
   createdById       String             @map("created_by_id") @db.Uuid
   createdBy         User               @relation(fields: [createdById], references: [id], onDelete: SetNull)
   createdAt         DateTime           @default(now()) @map("created_at")

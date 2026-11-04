@@ -27,6 +27,7 @@ enum class SosWizardStep {
     FORM,
     PREVIEW,
     DONE,
+    FOLLOWUP,
 }
 
 enum class SosPeerDeliveryHint {
@@ -58,6 +59,9 @@ data class SosFormUiState(
     val isRecording: Boolean = false,
     val uploadToken: String? = null,
     val showConfirmationDialog: Boolean = false,
+    val showDeliveredDialog: Boolean = false,
+    val hasOpenCase: Boolean = false,
+    val openCaseSosId: String? = null,
     /** mesh-v2 §8.1: SOS accepted but held until the rate window opens ("Queued, will be sent"). */
     val queuedUntilMs: Long? = null,
 )
@@ -73,12 +77,15 @@ class SosFormViewModel
         private val permissionFlowCoordinator: com.sosmesh.android.core.permissions.PermissionFlowCoordinator,
         private val pendingStore: com.sosmesh.android.feature.sos.attachment.AttachmentPendingStore,
         private val notificationManager: com.sosmesh.android.feature.sos.notification.SosDeliveryNotificationManager,
+        private val openCaseTracker: OpenCaseTracker,
     ) : ViewModel() {
         private val _uiState = MutableStateFlow(SosFormUiState())
         val uiState: StateFlow<SosFormUiState> = _uiState.asStateFlow()
 
         init {
             refreshLocation()
+            checkOpenCase()
+            pollForDeliveryDialog()
         }
 
         fun refreshLocation() {
@@ -246,12 +253,16 @@ class SosFormViewModel
             lastOwnDigest = composed.digest
             lastOwnLeftDevice = delivery is SosPeerDeliveryKickResult.TransferStarted
             
+            openCaseTracker.markCaseOpen(composed.message.id, nowMs)
+            
             _uiState.update {
                 it.copy(
                     step = SosWizardStep.DONE,
                     savedMessageId = composed.message.id,
                     peerDeliveryHint = delivery.toHint(),
                     showConfirmationDialog = true,
+                    hasOpenCase = true,
+                    openCaseSosId = composed.message.id,
                 )
             }
         }
@@ -260,10 +271,45 @@ class SosFormViewModel
             _uiState.update { it.copy(showConfirmationDialog = false) }
         }
 
+        fun dismissDeliveredDialog() {
+            val sosId = _uiState.value.savedMessageId
+            if (sosId != null) {
+                notificationManager.markDeliveryDialogShown(sosId)
+            }
+            _uiState.update { it.copy(showDeliveredDialog = false) }
+        }
+
+        fun checkOpenCase() {
+            val nowMs = System.currentTimeMillis()
+            val hasOpen = openCaseTracker.hasOpenCase(nowMs)
+            val openSosId = openCaseTracker.getOpenCaseSosId()
+            _uiState.update {
+                it.copy(
+                    hasOpenCase = hasOpen,
+                    openCaseSosId = openSosId,
+                    step = if (hasOpen) SosWizardStep.FOLLOWUP else SosWizardStep.FORM,
+                )
+            }
+        }
+
+        private fun pollForDeliveryDialog() {
+            viewModelScope.launch {
+                while (true) {
+                    kotlinx.coroutines.delay(1000L)
+                    val pendingDialog = notificationManager.getPendingDeliveryDialog()
+                    if (pendingDialog != null) {
+                        _uiState.update { it.copy(showDeliveredDialog = true, savedMessageId = pendingDialog) }
+                        break
+                    }
+                }
+            }
+        }
+
         fun resetFlow() {
             _uiState.update { it.copy(showConfirmationDialog = false) }
             _uiState.value = SosFormUiState()
             refreshLocation()
+            checkOpenCase()
         }
 
         fun effectiveLocation(state: SosFormUiState = _uiState.value): LocationSnapshot = resolvedLocation(state)

@@ -14,4 +14,5 @@ data class RelayUiState(
     val hourlyDataLimitMb: Int = 5,
     val systemConstraintSummary: String = "",
     val systemConstraintDetail: String = "",
+    val deliveredCount: Int = 0,
 )

@@ -48,4 +48,11 @@
     <string name="sos_sent_action_ok">OK</string>
     <string name="notification_sos_delivered_title">Your message has been delivered</string>
     <string name="notification_sos_delivered_body">Your SOS message has reached the server.</string>
+    <string name="sos_delivered_modal_title">Your help request was delivered</string>
+    <string name="sos_delivered_modal_body">Your SOS has reached the server. This does not replace 112. In an emergency, call 112 immediately.</string>
+    <string name="sos_delivered_modal_action_ok">OK</string>
+    <string name="sos_delivered_modal_action_call112">Call 112</string>
+    <string name="sos_followup_title">Add to your message</string>
+    <string name="sos_followup_description">Your message was sent. Add anything you want to add</string>
+    <string name="sos_followup_send">Send follow-up</string>
 </resources>

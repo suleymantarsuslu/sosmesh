@@ -5,7 +5,6 @@ import androidx.activity.compose.setContent
 import androidx.core.splashscreen.SplashScreen.Companion.installSplashScreen
 import androidx.fragment.app.FragmentActivity
 import androidx.wear.ambient.AmbientModeSupport
-import com.sosmesh.android.core.design.theme.SosMeshTheme
 import com.sosmesh.android.wear.companion.WearAppCoordinatorHolder
 import com.sosmesh.android.wear.ui.WearRootScreen
 import com.sosmesh.android.wear.ui.WearSosViewModel
@@ -26,9 +25,7 @@ class WearMainActivity :
             )
         ambientController = AmbientModeSupport.attach(this)
         setContent {
-            SosMeshTheme {
-                WearRootScreen(viewModel = viewModel)
-            }
+            WearRootScreen(viewModel = viewModel)
         }
     }
 

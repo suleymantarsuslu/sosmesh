@@ -57,6 +57,14 @@ class WearSosViewModel(
         statusDetail = "İptal edildi."
     }
 
+    /** Leaves the "not sent" screen and returns to the home state. */
+    fun onCancelAcknowledged() {
+        if (confirmStep == WearConfirmStep.CANCELLED) {
+            confirmStep = WearConfirmStep.IDLE
+            refreshStatus()
+        }
+    }
+
     fun onConfirmSend(nowMs: Long = System.currentTimeMillis()) {
         val wire = coordinator.buildCreateWire(nowMs)
         coordinator.submitConfirmed(wire, nowMs)

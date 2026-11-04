@@ -6,6 +6,6 @@
         <item name="postSplashScreenTheme">@style/Theme.SOSMesh.Wear.Main</item>
     </style>
     <style name="Theme.SOSMesh.Wear.Main" parent="android:Theme.DeviceDefault">
-        <item name="android:windowBackground">@color/ic_launcher_background</item>
+        <item name="android:windowBackground">@color/wear_background</item>
     </style>
 </resources>

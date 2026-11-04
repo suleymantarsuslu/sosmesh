@@ -1,10 +1,32 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <string name="app_name">SOSMesh</string>
-    <string name="sos_hold_hint">Hold for 3 sec</string>
+    <string name="sos_label">SOS</string>
+    <string name="sos_hold_hint">Hold to start SOS</string>
+    <string name="sos_holding">Keep holding…</string>
+    <string name="sos_button_description">Emergency SOS</string>
+    <string name="sos_button_action">Open send confirmation</string>
     <string name="confirm_title">Send SOS?</string>
+    <string name="confirm_detail">Your alert goes to your phone.</string>
     <string name="confirm_send">Send</string>
     <string name="confirm_cancel">Cancel</string>
     <string name="not_sent">SOS was not sent</string>
+    <string name="cancelled_detail">Cancelled.</string>
+    <string name="action_done">Done</string>
     <string name="not112">Not a substitute for 112</string>
+    <string name="status_idle_headline">Ready</string>
+    <string name="status_idle_detail">Confirm in two steps for emergency.</string>
+    <string name="status_sending_headline">Preparing</string>
+    <string name="status_sending_detail">Preparing your SOS.</string>
+    <string name="status_waiting_ack_headline">Sending to phone</string>
+    <string name="status_waiting_ack_detail">Waiting for phone confirmation.</string>
+    <string name="status_queued_headline">Saved on phone</string>
+    <string name="status_queued_detail">Queued on your phone; not yet delivered to the server.</string>
+    <string name="status_unreachable_headline">Phone not reachable</string>
+    <string name="status_unreachable_detail">SOS is held on the watch; not sent yet. Call 112 if in danger.</string>
+    <string name="status_failed_headline">Could not reach phone</string>
+    <string name="status_failed_detail">Will retry. Call 112 if in danger.</string>
+    <string name="status_stale_headline">Status out of date</string>
+    <string name="status_stale_detail">Check the phone connection.</string>
+    <string name="status_icon_description">Status</string>
 </resources>

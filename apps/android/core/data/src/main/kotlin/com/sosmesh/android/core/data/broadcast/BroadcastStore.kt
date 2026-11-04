@@ -38,7 +38,7 @@ class BroadcastStore(private val context: Context) {
         }.first()
     }
 
-    suspend fun updateLastFetchTime(time: String = Instant.now().toString()) {
+    suspend fun updateLastFetchTime(time: String) {
         context.broadcastDataStore.edit { prefs ->
             prefs[lastFetchKey] = time
         }

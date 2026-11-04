@@ -46,18 +46,30 @@ object BroadcastModule {
     ): BroadcastNotificationManager = BroadcastNotificationManager(context)
 
     @Provides
-    fun provideFetchAndNotifyBroadcasts(
+    @Singleton
+    fun providePushTokenManager(
+        @ApplicationContext context: Context,
+        httpClient: OkHttpClient,
+        @ApiBaseUrl apiBaseUrl: String,
+    ): com.sosmesh.android.core.data.broadcast.PushTokenManager =
+        com.sosmesh.android.core.data.broadcast.PushTokenManager(
+            context = context,
+            httpClient = httpClient,
+            apiBaseUrl = apiBaseUrl,
+        )
+
+    @Provides
+    @Singleton
+    fun provideBroadcastPoller(
+        @ApplicationContext context: Context,
         repository: BroadcastRepository,
         notificationManager: BroadcastNotificationManager,
-        @ApplicationContext context: Context,
-    ): suspend () -> Unit = {
-        val locationManager = context.getSystemService(Context.LOCATION_SERVICE) as? android.location.LocationManager
-        val location = locationManager?.getLastKnownLocation(android.location.LocationManager.PASSIVE_PROVIDER)
-        val broadcasts = repository.fetchAndProcessBroadcasts(location)
-        broadcasts.forEach { broadcast ->
-            notificationManager.showNotification(broadcast)
-        }
-    }
+    ): com.sosmesh.android.core.data.broadcast.BroadcastPoller =
+        com.sosmesh.android.core.data.broadcast.BroadcastPoller(
+            context = context,
+            repository = repository,
+            notificationManager = notificationManager,
+        )
 
 }
 

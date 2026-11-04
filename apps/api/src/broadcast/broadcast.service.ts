@@ -2,6 +2,7 @@ import { BadRequestException, Injectable, NotFoundException } from '@nestjs/comm
 import { Prisma } from '@prisma/client';
 import { PrismaService } from '../prisma/prisma.service';
 import { BroadcastSignerService } from './broadcast-signer.service';
+import { PushNotificationService } from './push-notification.service';
 import { CreateBroadcastDto } from './dto/create-broadcast.dto';
 import { BroadcastHistoryDto, BroadcastResponseDto } from './dto/broadcast-response.dto';
 import { StructuredEventLogger } from '../observability/structured-event-logger.service';
@@ -16,7 +17,8 @@ export class BroadcastService {
     private readonly prisma: PrismaService,
     private readonly signer: BroadcastSignerService,
     private readonly logger: StructuredEventLogger,
-    private readonly regionsService: RegionsService
+    private readonly regionsService: RegionsService,
+    private readonly pushService: PushNotificationService
   ) {}
 
   getBroadcastStream() {
@@ -92,6 +94,16 @@ export class BroadcastService {
 
     const dto_response = this.toDto(broadcast);
     this.broadcastStream.next(dto_response);
+
+    setImmediate(() => {
+      this.pushService.sendBroadcastNotifications({
+        broadcastId: id,
+        title: dto.title,
+        body: dto.body,
+        severity: dto.severity,
+      }).catch(() => {});
+    });
+
     return dto_response;
   }
 

@@ -29,6 +29,7 @@ public actor BroadcastRepository {
 
         var broadcasts: [ServerBroadcast] = []
         let now = Date()
+        var maxCreatedAt: Date?
 
         for obj in json {
             guard let broadcast = parseBroadcast(obj) else { continue }
@@ -52,9 +53,18 @@ public actor BroadcastRepository {
 
             broadcasts.append(broadcast)
             await store.markSeen(broadcast.id)
+
+            if let createdAt = formatter.date(from: broadcast.createdAt) {
+                if maxCreatedAt == nil || createdAt > maxCreatedAt! {
+                    maxCreatedAt = createdAt
+                }
+            }
         }
 
-        await store.updateLastFetchTime()
+        if let maxCreatedAt = maxCreatedAt {
+            await store.updateLastFetchTime(maxCreatedAt)
+        }
+
         return broadcasts
     }
 

@@ -8,12 +8,7 @@ import dagger.Provides
 import dagger.hilt.InstallIn
 import dagger.hilt.android.qualifiers.ApplicationContext
 import dagger.hilt.components.SingletonComponent
-import javax.inject.Qualifier
 import javax.inject.Singleton
-
-@Qualifier
-@Retention(AnnotationRetention.BINARY)
-annotation class BroadcastPublicKey
 
 @Module
 @InstallIn(SingletonComponent::class)
@@ -24,7 +19,7 @@ object WearMeshModule {
     @Singleton
     fun provideMeshV2Config(
         @WearRelayIdHex relayIdHex: String,
-        @BroadcastPublicKey publicKeyBase64: String,
+        @com.sosmesh.android.core.data.di.BroadcastPublicKey publicKeyBase64: String,
         @ApplicationContext context: Context,
     ): MeshV2Config {
         val verifier = com.sosmesh.android.core.data.broadcast.BroadcastSignatureVerifier(publicKeyBase64)
@@ -67,6 +62,10 @@ object WearMeshModule {
     }
 
     @Provides
-    @BroadcastPublicKey
+    @com.sosmesh.android.core.data.di.ApiBaseUrl
+    fun provideApiBaseUrl(): String = BuildConfig.INGEST_BASE_URL.trimEnd('/')
+
+    @Provides
+    @com.sosmesh.android.core.data.di.BroadcastPublicKey
     fun provideBroadcastPublicKey(): String = BuildConfig.BROADCAST_PUBLIC_KEY
 }

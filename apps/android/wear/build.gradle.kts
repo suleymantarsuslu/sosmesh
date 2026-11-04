@@ -82,6 +82,13 @@ android {
 dependencies {
     implementation(project(":core:design"))
     implementation(project(":core:wear-companion"))
+    implementation(project(":core:ble"))
+    implementation(project(":core:protocol"))
+    implementation(project(":core:permissions"))
+    implementation(project(":core:data"))
+    implementation(project(":core:model"))
+    implementation(project(":mesh-v2"))
+    implementation(project(":contracts-kotlin"))
 
     implementation("androidx.core:core-splashscreen:1.0.1")
 

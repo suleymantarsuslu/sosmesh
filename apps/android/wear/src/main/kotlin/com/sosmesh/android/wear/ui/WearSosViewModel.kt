@@ -78,8 +78,5 @@ class WearSosViewModel(
         showsFalseSuccess = display.showsFalseSuccess
         statusHeadline = display.headlineTr
         statusDetail = display.detailTr
-        if (display.phase == WearUserFacingPhase.PHONE_UNREACHABLE) {
-            confirmStep = WearConfirmStep.IDLE
-        }
     }
 }

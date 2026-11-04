@@ -6,6 +6,8 @@ import androidx.core.splashscreen.SplashScreen.Companion.installSplashScreen
 import androidx.fragment.app.FragmentActivity
 import androidx.wear.ambient.AmbientModeSupport
 import com.sosmesh.android.wear.companion.WearAppCoordinatorHolder
+import com.sosmesh.android.wear.mesh.WearMeshCoordinatorHolder
+import com.sosmesh.android.wear.ui.WearRelayViewModel
 import com.sosmesh.android.wear.ui.WearRootScreen
 import com.sosmesh.android.wear.ui.WearSosViewModel
 
@@ -14,18 +16,31 @@ class WearMainActivity :
     AmbientModeSupport.AmbientCallbackProvider {
     private lateinit var ambientController: AmbientModeSupport.AmbientController
     private lateinit var viewModel: WearSosViewModel
+    private lateinit var relayViewModel: WearRelayViewModel
 
     override fun onCreate(savedInstanceState: Bundle?) {
         installSplashScreen()
         super.onCreate(savedInstanceState)
         val coordinator = WearAppCoordinatorHolder.get(this)
+        val meshCoordinator = WearMeshCoordinatorHolder.get(this)
+        val relaySettings = WearMeshCoordinatorHolder.getSettings(this)
+        
         viewModel =
             WearSosViewModel(
                 coordinator = coordinator,
             )
+        relayViewModel =
+            WearRelayViewModel(
+                coordinator = meshCoordinator,
+                settings = relaySettings,
+            )
+        
         ambientController = AmbientModeSupport.attach(this)
         setContent {
-            WearRootScreen(viewModel = viewModel)
+            WearRootScreen(
+                viewModel = viewModel,
+                relayViewModel = relayViewModel,
+            )
         }
     }
 

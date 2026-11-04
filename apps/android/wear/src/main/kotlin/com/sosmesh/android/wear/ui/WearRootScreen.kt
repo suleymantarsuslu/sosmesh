@@ -15,8 +15,36 @@ import androidx.compose.ui.platform.LocalHapticFeedback
 import com.sosmesh.android.core.wear.companion.sync.WearUserFacingPhase
 import kotlinx.coroutines.delay
 
+enum class WearScreen {
+    HOME,
+    RELAY,
+}
+
 @Composable
-fun WearRootScreen(viewModel: WearSosViewModel) {
+fun WearRootScreen(
+    viewModel: WearSosViewModel,
+    relayViewModel: WearRelayViewModel,
+) {
+    var currentScreen by remember { mutableStateOf(WearScreen.HOME) }
+    
+    when (currentScreen) {
+        WearScreen.HOME -> WearHomeRoot(
+            viewModel = viewModel,
+            onNavigateToRelay = { currentScreen = WearScreen.RELAY },
+        )
+        WearScreen.RELAY -> WearRelayScreen(
+            isRelayActive = relayViewModel.isRelayActive,
+            onToggleRelay = relayViewModel::toggleRelay,
+            onBack = { currentScreen = WearScreen.HOME },
+        )
+    }
+}
+
+@Composable
+private fun WearHomeRoot(
+    viewModel: WearSosViewModel,
+    onNavigateToRelay: () -> Unit,
+) {
     LaunchedEffect(Unit) {
         while (true) {
             viewModel.refreshStatus()
@@ -51,6 +79,7 @@ fun WearRootScreen(viewModel: WearSosViewModel) {
                             viewModel.onSosPressStart()
                             viewModel.onSosPressRelease()
                         },
+                        onNavigateToRelay = onNavigateToRelay,
                     )
             }
         }

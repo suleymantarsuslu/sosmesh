@@ -493,8 +493,27 @@ final class AppModel: ObservableObject {
         guard let broadcasts = try? await repository.fetchAndProcessBroadcasts(currentLocation: clLocation) else {
             return
         }
+        
+        let nowMs = Int64(Date().timeIntervalSince1970 * 1000)
         for broadcast in broadcasts {
             await notificationManager.show(broadcast: broadcast)
+            
+            if let meshNode = meshNode {
+                let meshBroadcast = ServerBroadcast(
+                    id: broadcast.id,
+                    title: broadcast.title,
+                    body: broadcast.body,
+                    severity: broadcast.severity,
+                    createdAt: broadcast.createdAt,
+                    expiresAt: broadcast.expiresAt,
+                    regionLat: broadcast.regionLatitude,
+                    regionLng: broadcast.regionLongitude,
+                    regionRadiusKm: broadcast.regionRadiusKm,
+                    signature: broadcast.signature,
+                    hopsLeft: 8
+                )
+                _ = meshNode.broadcasts.put(meshBroadcast, receivedAtMs: nowMs)
+            }
         }
     }
     
@@ -545,6 +564,30 @@ final class AppModel: ObservableObject {
             nowMs: nowMs
         )
         node.relayEnabled = relayEnabled
+        
+        if let publicKey = Bundle.main.object(forInfoDictionaryKey: "SOSMeshBroadcastPublicKey") as? String,
+           let verifier = try? BroadcastSignatureVerifier(publicKeyBase64: publicKey) {
+            node.broadcastVerifier = { broadcast in
+                verifier.verify(broadcast: broadcast)
+            }
+        }
+        
+        if let notificationManager = broadcastNotificationManager {
+            node.broadcastNotifier = { broadcast in
+                Task {
+                    await notificationManager.show(broadcast: broadcast)
+                }
+            }
+        }
+        
+        node.locationProvider = { [weak self] in
+            guard let self else { return nil }
+            let snapshot = Task { await self.locationManager.requestLocationAsync(timeoutMs: 1000) }
+            let location = try? await snapshot.value
+            guard let lat = location?.latitude, let lng = location?.longitude else { return nil }
+            return (lat, lng)
+        }
+        
         meshNode = node
         gatewayProbe = GatewayProbe(baseURL: config.baseURL)
         if let meshRadioFactory {

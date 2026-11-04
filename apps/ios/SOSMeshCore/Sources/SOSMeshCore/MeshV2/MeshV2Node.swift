@@ -101,7 +101,7 @@ public final class MeshV2Node: @unchecked Sendable {
             return
         }
         
-        if let verifier = broadcastVerifier, !verifier(broadcast) {
+        guard let verifier = broadcastVerifier, verifier(broadcast) else {
             return
         }
         

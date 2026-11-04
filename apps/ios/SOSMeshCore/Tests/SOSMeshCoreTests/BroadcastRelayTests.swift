@@ -5,6 +5,7 @@ final class BroadcastRelayTests: XCTestCase {
     func testBroadcastRelayedToPeerAndStored() {
         let nowMs = Int64(Date().timeIntervalSince1970 * 1000)
         var notifiedBroadcast: ServerBroadcast?
+        var verifyCallCount = 0
         
         let nodeA = MeshV2Node(
             outbox: NullSosOutboxService(),
@@ -13,7 +14,10 @@ final class BroadcastRelayTests: XCTestCase {
             directory: nil,
             nowMs: nowMs
         )
-        nodeA.broadcastVerifier = { _ in true }
+        nodeA.broadcastVerifier = { _ in
+            verifyCallCount += 1
+            return true
+        }
         nodeA.broadcastNotifier = { _ in }
         nodeA.locationProvider = { (40.0, -74.0) }
         
@@ -59,6 +63,37 @@ final class BroadcastRelayTests: XCTestCase {
         
         XCTAssertNotNil(notifiedBroadcast, "Notifier should be called")
         XCTAssertEqual(nodeB.broadcasts.ordered().count, 1, "Broadcast should be stored in node B")
+        XCTAssertEqual(verifyCallCount, 1, "Verifier should be called once")
+    }
+    
+    func testBroadcastRejectedWhenVerifierMissing() {
+        let nowMs = Int64(Date().timeIntervalSince1970 * 1000)
+        
+        let node = MeshV2Node(
+            outbox: NullSosOutboxService(),
+            relayIdHex: "aaa",
+            receiptKeySpkiBase64: "test",
+            directory: nil,
+            nowMs: nowMs
+        )
+        
+        let broadcast = ServerBroadcast(
+            id: "test-unverified",
+            title: "Test",
+            body: "Body",
+            severity: "info",
+            createdAt: MeshV2.iso8601(ms: nowMs),
+            expiresAt: MeshV2.iso8601(ms: nowMs + 3600_000),
+            regionLat: nil,
+            regionLng: nil,
+            regionRadiusKm: nil,
+            signature: "sig",
+            hopsLeft: 8
+        )
+        
+        node.onBroadcastFrame(broadcast, nowMs: nowMs)
+        
+        XCTAssertEqual(node.broadcasts.ordered().count, 0, "Broadcast should be rejected when verifier is nil")
     }
     
     func testBroadcastWithZeroHopsNotOffered() {

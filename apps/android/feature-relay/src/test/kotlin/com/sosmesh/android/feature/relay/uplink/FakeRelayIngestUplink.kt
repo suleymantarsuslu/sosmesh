@@ -17,6 +17,12 @@ class FakeRelayIngestUplink : RelayIngestUplink {
         sosId: String,
         digest: String,
         encryptedBlobBase64: String,
+    ): RelayIngestResult = uploadOutboxEntry(sosId, digest, encryptedBlobBase64, 0)
+
+    override fun uploadOutboxEntry(
+        sosId: String,
+        digest: String,
+        encryptedBlobBase64: String,
         hopCount: Int,
     ): RelayIngestResult {
         uploadCallCount++

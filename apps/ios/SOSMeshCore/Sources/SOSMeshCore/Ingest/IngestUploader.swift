@@ -86,6 +86,17 @@ public final class IngestUploader {
         encryptedBlobBase64: String,
         sosMessageJson: [String: Any]
     ) async -> IngestUploadResult {
+        await upload(sosId: sosId, digest: digest, encryptedBlobBase64: encryptedBlobBase64, sosMessageJson: sosMessageJson, hopCount: config.hopCount)
+    }
+
+    /// `hopCount` = L1 hopCount + 1 for carried copies, 0 for the device's own SOS (mesh v2 §9).
+    public func upload(
+        sosId: String,
+        digest: String,
+        encryptedBlobBase64: String,
+        sosMessageJson: [String: Any],
+        hopCount: Int
+    ) async -> IngestUploadResult {
         let decoder = JSONDecoder()
         guard let decodedBlob = Data(base64Encoded: encryptedBlobBase64) else {
             return .error("Invalid base64 blob")
@@ -100,7 +111,7 @@ public final class IngestUploader {
             sosMessage: sosMessageCodable,
             relayInfo: IngestRelayInfo(
                 relayId: config.relayIdHex,
-                hopCount: config.hopCount,
+                hopCount: max(0, min(32, hopCount)),
                 relayTimestamp: now
             ),
             transport: IngestTransport(

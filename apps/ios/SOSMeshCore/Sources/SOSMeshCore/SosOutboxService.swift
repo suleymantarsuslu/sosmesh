@@ -41,6 +41,11 @@ public final class SosOutboxService: OutboxQueueUpdating, @unchecked Sendable {
         )
     }
 
+    @discardableResult
+    public func removeEntry(sosId: String, digest: String) throws -> Bool {
+        try queue.remove(sosId: sosId, digest: digest)
+    }
+
     public func listEntries() throws -> [OutboxEntryMeta] {
         try queue.listAll()
     }

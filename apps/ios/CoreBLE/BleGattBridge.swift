@@ -16,6 +16,10 @@ public final class BleGattServerBridge: NSObject, GattServerPort {
     public var onSubscriberCountChanged: ((Int) -> Void)?
     /// A central unsubscribed (link dropped): the receiver should forget partial transfer state.
     public var onCentralLeft: (() -> Void)?
+    /// Mesh v2: FFF4 MESH_INFO value for read requests.
+    public var meshInfoProvider: (() -> Data)?
+    /// Mesh v2 `h` advertised as service UUID 0xFFE0 + h (nil / 0xFF = offline, not advertised).
+    private var advertisedHops: UInt8 = MeshV2.offline
 
     public override init() {
         super.init()
@@ -82,10 +86,37 @@ public final class BleGattServerBridge: NSObject, GattServerPort {
             onAdvertisingChanged?(false)
             return
         }
-        let advertisement: [String: Any] = [
-            CBAdvertisementDataServiceUUIDsKey: [CBUUID(string: BleMeshConstants.serviceUUID)],
-        ]
-        peripheral.startAdvertising(advertisement)
+        peripheral.startAdvertising(advertisementData())
+    }
+
+    private func advertisementData() -> [String: Any] {
+        var uuids = [CBUUID(string: BleMeshConstants.serviceUUID)]
+        if let hops = MeshV2.hopsServiceUUID(advertisedHops) { uuids.append(CBUUID(string: hops)) }
+        return [CBAdvertisementDataServiceUUIDsKey: uuids]
+    }
+
+    /// Re-advertises when `h` changed (iOS cannot advertise service data, §4.2).
+    public func updateAdvertisedHops(_ hops: UInt8) {
+        let normalized = hops <= UInt8(MeshV2.maxHops) ? hops : MeshV2.offline
+        guard normalized != advertisedHops else { return }
+        advertisedHops = normalized
+        guard advertisingRequested, let peripheralManager, peripheralManager.isAdvertising else { return }
+        peripheralManager.stopAdvertising()
+        peripheralManager.startAdvertising(advertisementData())
+    }
+
+    public func peripheralManager(_ peripheral: CBPeripheralManager, didReceiveRead request: CBATTRequest) {
+        guard BleMeshConstants.canonicalUuid(request.characteristic.uuid.uuidString) == MeshV2.meshInfoCharacteristicUUID,
+              let value = meshInfoProvider?() else {
+            peripheral.respond(to: request, withResult: .requestNotSupported)
+            return
+        }
+        guard request.offset <= value.count else {
+            peripheral.respond(to: request, withResult: .invalidOffset)
+            return
+        }
+        request.value = value.subdata(in: request.offset ..< value.count)
+        peripheral.respond(to: request, withResult: .success)
     }
 
     public func peripheralManagerDidStartAdvertising(_ peripheral: CBPeripheralManager, error: Error?) {
@@ -132,6 +163,11 @@ public final class BleGattClientBridge: NSObject, GattClientPort, CBPeripheralDe
     private var ackCharacteristic: CBCharacteristic?
     private var dataCharacteristic: CBCharacteristic?
     private var controlCharacteristic: CBCharacteristic?
+    private var meshInfoCharacteristic: CBCharacteristic?
+
+    /// Mesh v2: FFF4 read result (nil = peer has no FFF4, i.e. a v1 peer).
+    public var onMeshInfo: ((Data?) -> Void)?
+    public var peerHasMeshInfo: Bool { meshInfoCharacteristic != nil }
 
     /// A GATT write failed (link or permission problem). Counter only, no payload.
     public var onWriteError: (() -> Void)?
@@ -149,6 +185,7 @@ public final class BleGattClientBridge: NSObject, GattClientPort, CBPeripheralDe
         ackCharacteristic = nil
         dataCharacteristic = nil
         controlCharacteristic = nil
+        meshInfoCharacteristic = nil
         peripheral.delegate = self
         callback.onConnectionStateChanged(.connected)
         peripheral.discoverServices([CBUUID(string: BleMeshConstants.serviceUUID)])
@@ -160,6 +197,7 @@ public final class BleGattClientBridge: NSObject, GattClientPort, CBPeripheralDe
         ackCharacteristic = nil
         dataCharacteristic = nil
         controlCharacteristic = nil
+        meshInfoCharacteristic = nil
         callback?.onConnectionStateChanged(.disconnected)
     }
 
@@ -225,11 +263,18 @@ public final class BleGattClientBridge: NSObject, GattClientPort, CBPeripheralDe
                 dataCharacteristic = characteristic
             } else if id == BleMeshConstants.controlCharacteristicUUID {
                 controlCharacteristic = characteristic
+            } else if id == MeshV2.meshInfoCharacteristicUUID {
+                meshInfoCharacteristic = characteristic
             }
         }
         guard error == nil, ackCharacteristic != nil, dataCharacteristic != nil, controlCharacteristic != nil else {
             callback?.onConnectionStateChanged(.disconnected)
             return
+        }
+        if let meshInfoCharacteristic {
+            peripheral.readValue(for: meshInfoCharacteristic)
+        } else {
+            onMeshInfo?(nil)
         }
         callback?.onServicesDiscovered()
         _ = requestMtu(BleTransferProtocolConstants.maxMtu)
@@ -256,6 +301,10 @@ public final class BleGattClientBridge: NSObject, GattClientPort, CBPeripheralDe
     }
 
     public func peripheral(_ peripheral: CBPeripheral, didUpdateValueFor characteristic: CBCharacteristic, error: Error?) {
+        if BleMeshConstants.canonicalUuid(characteristic.uuid.uuidString) == MeshV2.meshInfoCharacteristicUUID {
+            onMeshInfo?(error == nil ? characteristic.value : nil)
+            return
+        }
         guard error == nil, let data = characteristic.value else { return }
         callback?.onCharacteristicChanged(uuid: BleMeshConstants.canonicalUuid(characteristic.uuid.uuidString), value: data)
     }

@@ -14,6 +14,8 @@ public final class LiveBleMeshRadio: NSObject, BleMeshRadioPort, CBCentralManage
         let peripheral: CBPeripheral
         var lastSeenMs: Int64
         var lastAttemptMs: Int64
+        /// Mesh v2 `h` from the advertisement (0xFF = offline / unknown).
+        var hops: UInt8 = MeshV2.offline
     }
 
     private static let connectTimeoutMs: Int64 = 10_000
@@ -48,14 +50,21 @@ public final class LiveBleMeshRadio: NSObject, BleMeshRadioPort, CBCentralManage
     private var connectedPeripheral: CBPeripheral?
     private var lastScanStartMs: Int64 = 0
     private var authorization: BleAuthorizationSnapshot = .unknown
+    /// Mesh v2 (docs/protocol/mesh-v2.md). nil keeps the v1-only behaviour.
+    private let node: MeshV2Node?
+    private var centralSession: MeshV2CentralSession?
+    private var peerInfoResult: MeshInfo??
+    private static let peerRetryMs: Int64 = 15_000
 
     public var transferEngine: BleTransferEngine { session.engine }
 
     public init(
         outbox: SosOutboxService,
         inbox: ReceivedSosInbox,
-        diagnostics: RelayDiagnostics = RelayDiagnostics()
+        diagnostics: RelayDiagnostics = RelayDiagnostics(),
+        node: MeshV2Node? = nil
     ) {
+        self.node = node
         self.outbox = outbox
         self.inbox = inbox
         self.diagnostics = diagnostics
@@ -64,7 +73,8 @@ public final class LiveBleMeshRadio: NSObject, BleMeshRadioPort, CBCentralManage
         let router = BleIncomingPayloadRouter(
             inbox: inbox,
             store: RelayOutboxEnvelopeStore(outbox: outbox),
-            diagnostics: diagnostics
+            diagnostics: diagnostics,
+            node: node
         )
         self.router = router
         let serverOut = ServerOutboundWriter()
@@ -86,8 +96,30 @@ public final class LiveBleMeshRadio: NSObject, BleMeshRadioPort, CBCentralManage
             self?.clientBridge.writeCharacteristic(uuid: uuid, value: value)
         }
         serverBridge.setWriteListener(GattWriteTap { [weak self] uuid, value, _ in
-            self?.session.engine.deliverPeripheralWrite(uuid: uuid, value: value)
+            guard let self else { return }
+            if let node = self.node, uuid == BleMeshConstants.controlCharacteristicUUID, MeshV2Frame.isMeshV2(value) {
+                let now = Int64(Date().timeIntervalSince1970 * 1000)
+                for frame in node.respond(toControl: value, nowMs: now) {
+                    _ = self.serverBridge.notifyCharacteristic(uuid: BleMeshConstants.ackCharacteristicUUID, value: frame, deviceAddress: nil)
+                }
+                return
+            }
+            self.session.engine.deliverPeripheralWrite(uuid: uuid, value: value)
         })
+        if let node {
+            serverBridge.meshInfoProvider = {
+                node.meshInfo(nowMs: Int64(Date().timeIntervalSince1970 * 1000)).encode()
+            }
+            clientBridge.onMeshInfo = { [weak self] data in
+                guard let self else { return }
+                self.peerInfoResult = .some(data.flatMap { MeshInfo.decode($0) })
+                self.startCentralSessionIfReady()
+            }
+            session.observeTransferFinished { [weak self] _, success in
+                guard let self, let central = self.centralSession else { return }
+                self.perform(central.transferFinished(success: success, nowMs: Int64(Date().timeIntervalSince1970 * 1000)))
+            }
+        }
         serverBridge.onAdvertisingChanged = { [weak self] isAdvertising in
             self?.advertising = isAdvertising
             self?.publishDiagnostics()
@@ -248,7 +280,14 @@ public final class LiveBleMeshRadio: NSObject, BleMeshRadioPort, CBCentralManage
             centralManager?.cancelPeripheralConnection(peripheral)
             connectingPeerId = nil
         }
-        if gattReady {
+        if let node {
+            serverBridge.updateAdvertisedHops(node.hops.compute(nowMs: nowMs))
+            if gattReady {
+                if let central = centralSession { perform(central.tick(nowMs: nowMs)) }
+            } else {
+                _ = connectIfNeeded(nowMs: nowMs)
+            }
+        } else if gattReady {
             do {
                 _ = try session.sendDueOutboxEntryIfReady(gattReady: true)
             } catch {
@@ -266,10 +305,24 @@ public final class LiveBleMeshRadio: NSObject, BleMeshRadioPort, CBCentralManage
               let centralManager, centralManager.state == .poweredOn else {
             return .success(())
         }
-        guard session.hasDueOwnOutbound() else { return .success(()) }
-        // Try the least recently attempted peer first so one unreachable phone cannot block the rest.
-        guard let candidate = peers.values.min(by: { $0.lastAttemptMs < $1.lastAttemptMs }) else {
-            return .failure(NSError(domain: "LiveBleMeshRadio", code: 2, userInfo: nil))
+        let candidate: PeerEntry
+        if let node {
+            // Route toward the lowest `h`; only peers we still have something for (§4.3).
+            let eligible = peers.values.filter { peer in
+                nowMs - peer.lastAttemptMs >= LiveBleMeshRadio.peerRetryMs
+                    && !node.candidates(forPeer: peer.peripheral.identifier.uuidString, peerHops: peer.hops, nowMs: nowMs).isEmpty
+            }
+            guard let best = eligible.min(by: { ($0.hops, $0.lastAttemptMs) < ($1.hops, $1.lastAttemptMs) }) else {
+                return .success(())
+            }
+            candidate = best
+        } else {
+            guard session.hasDueOwnOutbound() else { return .success(()) }
+            // Try the least recently attempted peer first so one unreachable phone cannot block the rest.
+            guard let best = peers.values.min(by: { $0.lastAttemptMs < $1.lastAttemptMs }) else {
+                return .failure(NSError(domain: "LiveBleMeshRadio", code: 2, userInfo: nil))
+            }
+            candidate = best
         }
         let id = candidate.peripheral.identifier
         peers[id]?.lastAttemptMs = nowMs
@@ -290,6 +343,9 @@ public final class LiveBleMeshRadio: NSObject, BleMeshRadioPort, CBCentralManage
         let isAdvertising = advertising
         let peerCount = peers.count
         let connected = (gattReady ? 1 : 0) + inboundSubscribers
+        if let node {
+            diagnostics.recordMesh(node.stats(nowMs: Int64(Date().timeIntervalSince1970 * 1000)))
+        }
         diagnostics.update {
             $0.bluetooth = bluetooth
             $0.scanning = isScanning
@@ -324,6 +380,13 @@ public final class LiveBleMeshRadio: NSObject, BleMeshRadioPort, CBCentralManage
         } else {
             peers[peripheral.identifier] = PeerEntry(peripheral: peripheral, lastSeenMs: nowMs, lastAttemptMs: 0)
         }
+        if let node {
+            let hops = LiveBleMeshRadio.advertisedHops(advertisementData)
+            peers[peripheral.identifier]?.hops = hops ?? MeshV2.offline
+            if let hops {
+                node.hops.observe(peerId: peripheral.identifier.uuidString, hops: hops, nowMs: nowMs)
+            }
+        }
         publishDiagnostics()
         // Hand over a waiting SOS as soon as a peer shows up instead of waiting for the next tick.
         _ = connectIfNeeded(nowMs: nowMs)
@@ -331,6 +394,8 @@ public final class LiveBleMeshRadio: NSObject, BleMeshRadioPort, CBCentralManage
 
     public func centralManager(_ central: CBCentralManager, didConnect peripheral: CBPeripheral) {
         connectedPeripheral = peripheral
+        centralSession = nil
+        peerInfoResult = nil
         if clientCallback == nil { clientCallback = ClientCallback(radio: self) }
         if let clientCallback {
             clientBridge.connect(peripheral: peripheral, callback: clientCallback)
@@ -346,6 +411,7 @@ public final class LiveBleMeshRadio: NSObject, BleMeshRadioPort, CBCentralManage
     }
 
     public func centralManager(_ central: CBCentralManager, didDisconnectPeripheral peripheral: CBPeripheral, error: Error?) {
+        endCentralSession(peerId: peripheral.identifier.uuidString)
         connectingPeerId = nil
         connectedPeripheral = nil
         gattReady = false
@@ -393,6 +459,59 @@ public final class LiveBleMeshRadio: NSObject, BleMeshRadioPort, CBCentralManage
         serverBridge.peripheralManager(peripheral, didReceiveWrite: requests)
     }
 
+    public func peripheralManager(_ peripheral: CBPeripheralManager, didReceiveRead request: CBATTRequest) {
+        serverBridge.peripheralManager(peripheral, didReceiveRead: request)
+    }
+
+    // MARK: Mesh v2 central session (queue only)
+
+    /// `h` from an advertisement: Android service data on FFF0, or the iOS hops UUID
+    /// (also in the overflow area while the advertiser is in the background).
+    static func advertisedHops(_ advertisementData: [String: Any]) -> UInt8? {
+        if let serviceData = advertisementData[CBAdvertisementDataServiceDataKey] as? [CBUUID: Data],
+           let data = serviceData[CBUUID(string: BleMeshConstants.serviceUUID)],
+           let hops = MeshV2.hops(fromServiceData: data) {
+            return hops <= UInt8(MeshV2.maxHops) ? hops : nil
+        }
+        var uuids = (advertisementData[CBAdvertisementDataServiceUUIDsKey] as? [CBUUID]) ?? []
+        uuids += (advertisementData[CBAdvertisementDataOverflowServiceUUIDsKey] as? [CBUUID]) ?? []
+        return MeshV2.hops(fromServiceUUIDs: uuids.map(\.uuidString))
+    }
+
+    private func startCentralSessionIfReady() {
+        guard let node, gattReady, centralSession == nil, let peripheral = connectedPeripheral,
+              let info = peerInfoResult else { return }
+        let nowMs = Int64(Date().timeIntervalSince1970 * 1000)
+        let central = MeshV2CentralSession(node: node, peerId: peripheral.identifier.uuidString, peerInfo: info)
+        centralSession = central
+        perform(central.start(nowMs: nowMs))
+    }
+
+    private func perform(_ actions: [MeshV2CentralSession.Action]) {
+        for action in actions {
+            switch action {
+            case .writeControl(let frame):
+                clientBridge.writeCharacteristic(uuid: BleMeshConstants.controlCharacteristicUUID, value: frame)
+            case .transfer(let sosId, let digest, let payload):
+                if !session.sendPayload(sosId: sosId, digest: digest, payload: payload) {
+                    diagnostics.recordError(code: "send_busy")
+                }
+            case .finished:
+                // Visit done: free the link so other centrals can reach this peer.
+                centralSession = nil
+                if let peripheral = connectedPeripheral {
+                    centralManager?.cancelPeripheralConnection(peripheral)
+                }
+            }
+        }
+    }
+
+    private func endCentralSession(peerId: String) {
+        centralSession = nil
+        peerInfoResult = nil
+        node?.hops.linkLost(peerId: peerId)
+    }
+
     // MARK: Helpers
 
     private func refreshAuthorizationFromManagers() {
@@ -415,6 +534,10 @@ public final class LiveBleMeshRadio: NSObject, BleMeshRadioPort, CBCentralManage
         connectingPeerId = nil
         gattReady = true
         session.engine.onGattReady()
+        if node != nil, !clientBridge.peerHasMeshInfo, peerInfoResult == nil {
+            peerInfoResult = .some(nil)
+        }
+        startCentralSessionIfReady()
         publishDiagnostics()
     }
 
@@ -425,6 +548,7 @@ public final class LiveBleMeshRadio: NSObject, BleMeshRadioPort, CBCentralManage
         }
         gattReady = false
         connectingPeerId = nil
+        if let peerId = connectedPeripheral?.identifier.uuidString { endCentralSession(peerId: peerId) }
         session.engine.senderLinkLost()
         publishDiagnostics()
     }
@@ -449,7 +573,14 @@ public final class LiveBleMeshRadio: NSObject, BleMeshRadioPort, CBCentralManage
         func onServicesDiscovered() {}
         func onMtuChanged(mtu: Int) { radio?.applyMtu(mtu) }
         func onCharacteristicChanged(uuid: String, value: Data) {
-            radio?.session.engine.deliverCentralNotification(uuid: uuid, value: value)
+            guard let radio else { return }
+            if uuid == BleMeshConstants.ackCharacteristicUUID, MeshV2Frame.isMeshV2(value) {
+                if let central = radio.centralSession {
+                    radio.perform(central.handleNotification(value, nowMs: Int64(Date().timeIntervalSince1970 * 1000)))
+                }
+                return
+            }
+            radio.session.engine.deliverCentralNotification(uuid: uuid, value: value)
         }
     }
 

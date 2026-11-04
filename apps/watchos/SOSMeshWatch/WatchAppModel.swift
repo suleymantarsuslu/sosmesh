@@ -15,6 +15,9 @@ final class WatchAppModel: ObservableObject {
     private lazy var coordinator = WatchSosCoordinator(store: store, transport: sessionBridge)
 
     private var activeMessageId: String?
+    private let meshHandoff = WatchMeshHandoff()
+    private let identity = SosIdentityStore()
+    @Published var meshHandoffStatus = ""
     private var lastAck: WatchPhoneAckWire?
 
     func onAppear() {
@@ -49,6 +52,36 @@ final class WatchAppModel: ObservableObject {
         activeMessageId = wire.messageId
         refreshStatus(nowMs: nowMs)
         confirmStep = .idle
+        if !sessionBridge.isPhoneReachable() {
+            startMeshHandoff(nowMs: nowMs)
+        }
+    }
+
+    /// iPhone unreachable + app in foreground: hand the watch's own SOS to the nearby phone with
+    /// the lowest `h` over BLE (central only). Shows "peer received" at most, never delivered.
+    private func startMeshHandoff(nowMs: Int64) {
+        let composer = IosSosMessageComposer(cryptoConfig: CryptoConfigProvider.makeConfig())
+        let context = SosInnerV2Context(senderKey: identity.senderKey(), seq: identity.nextSeq(), profile: nil, profileChanged: false)
+        guard let composed = try? composer.compose(IosSosComposeRequest(note: "", languageTag: Locale.current.language.languageCode?.identifier ?? "en", nowMs: nowMs, innerV2: context)),
+              let l1 = MeshCarry.encode(MeshCarry.wrap(l2: composed.wirePayload, messageId: composed.message.id, nowMs: nowMs)) else {
+            return
+        }
+        meshHandoffStatus = String(localized: "watch.mesh.searching")
+        meshHandoff.start(messageId: composed.message.id, l1Payload: l1) { [weak self] outcome in
+            Task { @MainActor in
+                guard let self else { return }
+                switch outcome {
+                case .peerReceived: self.meshHandoffStatus = String(localized: "watch.mesh.peer_received")
+                case .noPeer: self.meshHandoffStatus = String(localized: "watch.mesh.no_peer")
+                case .failed: self.meshHandoffStatus = String(localized: "watch.mesh.failed")
+                }
+            }
+        }
+    }
+
+    func onDisappear() {
+        // Foreground only: no background BLE promises on watchOS.
+        meshHandoff.cancel()
     }
 
     func refreshStatus(nowMs: Int64 = Int64(Date().timeIntervalSince1970 * 1000)) {

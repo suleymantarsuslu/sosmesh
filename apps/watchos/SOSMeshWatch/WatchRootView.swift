@@ -25,6 +25,12 @@ struct WatchRootView: View {
                         .font(.caption2)
                         .multilineTextAlignment(.center)
                         .foregroundStyle(.secondary)
+
+                    if !model.meshHandoffStatus.isEmpty {
+                        Text(model.meshHandoffStatus)
+                            .font(.caption2)
+                            .multilineTextAlignment(.center)
+                    }
                     
                     if !model.connectivityHeadline.isEmpty {
                         HStack(spacing: 4) {
@@ -58,6 +64,7 @@ struct WatchRootView: View {
             }
         }
         .onAppear { model.onAppear() }
+        .onDisappear { model.onDisappear() }
     }
 
     private var sosButton: some View {

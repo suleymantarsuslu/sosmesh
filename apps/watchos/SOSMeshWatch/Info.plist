@@ -3,7 +3,6 @@
 <plist version="1.0">
 <dict>
 	<key>CFBundleDevelopmentRegion</key>
-	<parameter name="new_string">	<key>CFBundleDevelopmentRegion</key>
 	<string>en</string>
 	<key>CFBundleDisplayName</key>
 	<string>SOSMesh</string>
@@ -21,6 +20,8 @@
 	<string>1.0</string>
 	<key>CFBundleVersion</key>
 	<string>1</string>
+	<key>NSBluetoothAlwaysUsageDescription</key>
+	<string>When your iPhone is out of reach, SOSMesh can hand your SOS to a nearby phone over Bluetooth.</string>
 	<key>WKCompanionAppBundleIdentifier</key>
 	<string>com.sosmesh.ios</string>
 	<key>WKRunsIndependentlyOfCompanionApp</key>

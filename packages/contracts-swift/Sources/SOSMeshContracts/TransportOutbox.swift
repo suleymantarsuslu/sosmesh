@@ -196,6 +196,20 @@ public final class DiskOutboxQueue {
         return before - store.entries.count
     }
 
+    /// Removes one entry (mesh v2: purge of a carried copy after a verified delivery tombstone,
+    /// or replacement of an own SOS that never left the device).
+    @discardableResult
+    public func remove(sosId: String, digest: String) throws -> Bool {
+        lock.lock()
+        defer { lock.unlock() }
+        var store = try readStoreUnlocked()
+        let before = store.entries.count
+        store.entries.removeAll { $0.sosId == sosId && $0.digest == digest }
+        guard store.entries.count != before else { return false }
+        try writeStoreUnlocked(store)
+        return true
+    }
+
     public func getByKey(sosId: String, digest: String) throws -> OutboxEntryMeta? {
         lock.lock()
         defer { lock.unlock() }

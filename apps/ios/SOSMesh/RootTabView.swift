@@ -3,6 +3,7 @@ import SwiftUI
 struct RootTabView: View {
     @EnvironmentObject private var appModel: AppModel
     @AppStorage("sosmesh.disclaimer.accepted") private var storedDisclaimer = false
+    @AppStorage("sosmesh.profile.onboarding.done") private var profileOnboardingDone = false
     @State private var selectedTab = 0
 
     var body: some View {
@@ -15,6 +16,9 @@ struct RootTabView: View {
                 })
             } else if !appModel.permissionGateCleared {
                 PermissionGateView()
+            } else if !profileOnboardingDone {
+                // After notification permission: optional profile, skippable, 112 visible.
+                ProfileOnboardingView(onFinish: { profileOnboardingDone = true })
             } else {
                 TabView(selection: $selectedTab) {
                     HomeView(navigateToStatus: { selectedTab = 1 })

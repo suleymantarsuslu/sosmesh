@@ -12,3 +12,7 @@
 "watch.complication.description" = "Quick SOS shortcut; two-step confirmation in app.";
 "watch.cancel.headline" = "SOS not sent";
 "watch.cancel.detail" = "Cancelled.";
+"watch.mesh.searching" = "Phone not reachable. Looking for a nearby SOSMesh phone…";
+"watch.mesh.peer_received" = "Reached a nearby phone (not yet delivered). Call 112 if in danger.";
+"watch.mesh.no_peer" = "No nearby SOSMesh phone found. Call 112 if in danger.";
+"watch.mesh.failed" = "Could not hand over. Call 112 if in danger.";

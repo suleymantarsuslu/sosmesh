@@ -7,8 +7,11 @@ public struct IosSosComposeRequest: Sendable {
     public var nowMs: Int64
     public var messageIdOverride: String?
     public var location: SosLocationSnapshot
+    /// Mesh v2 inner payload context. nil keeps the v1 inner payload.
+    public var innerV2: SosInnerV2Context?
 
-    public init(note: String, languageTag: String, nowMs: Int64, messageIdOverride: String? = nil, location: SosLocationSnapshot = .unknown) {
+    public init(note: String, languageTag: String, nowMs: Int64, messageIdOverride: String? = nil, location: SosLocationSnapshot = .unknown, innerV2: SosInnerV2Context? = nil) {
+        self.innerV2 = innerV2
         self.note = note
         self.languageTag = languageTag
         self.nowMs = nowMs
@@ -77,7 +80,18 @@ public struct IosSosMessageComposer: Sendable {
         )
         let innerEncoder = JSONEncoder()
         innerEncoder.outputFormatting = [.sortedKeys, .withoutEscapingSlashes]
-        let innerBytes = try innerEncoder.encode(inner)
+        let innerBytes: Data
+        if let context = request.innerV2 {
+            innerBytes = try SosInnerPayloadV2Builder.encode(
+                context: context,
+                note: noteField,
+                location: innerLocation.map { SosInnerPayloadV2.Location(latitude: $0.latitude, longitude: $0.longitude, accuracyMeters: $0.accuracy_meters, timestamp: $0.timestamp) },
+                language: normalizeLanguage(request.languageTag),
+                createdAt: isoTimestamp
+            )
+        } else {
+            innerBytes = try innerEncoder.encode(inner)
+        }
 
         let locationStatus = mapLocationStatus(request.location)
         let envelopeLocation: Location?

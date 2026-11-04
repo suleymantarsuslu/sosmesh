@@ -12,3 +12,7 @@
 "watch.complication.description" = "Hızlı SOS kısayolu; iki adımlı onay uygulamada.";
 "watch.cancel.headline" = "SOS gönderilmedi";
 "watch.cancel.detail" = "İptal edildi.";
+"watch.mesh.searching" = "Telefona ulaşılamıyor. Yakındaki bir SOSMesh telefonu aranıyor…";
+"watch.mesh.peer_received" = "Yakındaki bir telefona ulaştı (henüz teslim edilmedi). Tehlikedeyseniz 112'yi arayın.";
+"watch.mesh.no_peer" = "Yakında SOSMesh telefonu bulunamadı. Tehlikedeyseniz 112'yi arayın.";
+"watch.mesh.failed" = "Aktarılamadı. Tehlikedeyseniz 112'yi arayın.";

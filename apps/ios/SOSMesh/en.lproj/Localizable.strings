@@ -129,3 +129,33 @@
 "relay.diag.no" = "No";
 "relay.diag.none" = "—";
 "relay.diag.footer" = "Counters only: no message text, location or full IDs. A nearby-phone ACK is not a server receipt.";
+
+/* Mesh v2 */
+"relay.diag.hops" = "Hops to internet (h)";
+"relay.diag.hops.offline" = "Offline";
+"relay.diag.mesh_peers" = "Mesh neighbours";
+"relay.diag.carried" = "Carried copies";
+"relay.diag.tombstones" = "Delivery proofs";
+"profile.title" = "My profile";
+"profile.edit" = "Edit profile";
+"profile.intro" = "Optional. Stored only on this phone (Keychain) and sent only inside an encrypted SOS. You can send an SOS without filling anything. In a life-threatening emergency call 112.";
+"profile.section.person" = "Person";
+"profile.section.address" = "Address";
+"profile.section.contact" = "Contact";
+"profile.full_name" = "Full name";
+"profile.age" = "Age";
+"profile.household_size" = "People living at home";
+"profile.address_line" = "Full address";
+"profile.district" = "District";
+"profile.city" = "City";
+"profile.postal_code" = "Postal code";
+"profile.floor" = "Floor";
+"profile.location.use_current" = "Use my current location as home";
+"profile.location.saved" = "Home location saved";
+"profile.location.footer" = "On save, the address is converted to coordinates on this phone. Rescuers see a possible match only as an assumption.";
+"profile.phone" = "Phone (+90…)";
+"profile.email" = "E-mail";
+"profile.save" = "Save";
+"profile.skip" = "Skip for now";
+"profile.delete" = "Delete profile from this phone";
+"profile.privacy_footer" = "Nothing here is shared until you send an SOS. Every field is optional.";

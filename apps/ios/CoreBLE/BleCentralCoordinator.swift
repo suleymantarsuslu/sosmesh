@@ -26,7 +26,9 @@ public final class BleCentralCoordinator: NSObject, BleCentralCoordinating, CBCe
     }
 
     public func scanForMeshPeers(_ central: CBCentralManager) {
-        let services = [CBUUID(string: BleMeshConstants.serviceUUID)]
+        // FFF0 plus the iOS hops UUIDs FFE0..FFE8: in the background an iOS advertiser keeps its
+        // UUIDs in the overflow area, which only matches scanners that ask for them explicitly.
+        let services = ([BleMeshConstants.serviceUUID] + MeshV2.allHopsServiceUUIDs).map { CBUUID(string: $0) }
         central.scanForPeripherals(withServices: services, options: [
             CBCentralManagerScanOptionAllowDuplicatesKey: false,
         ])

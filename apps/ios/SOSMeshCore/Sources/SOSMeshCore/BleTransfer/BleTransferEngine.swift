@@ -33,6 +33,8 @@ public final class SosPeerDeliveryTracker {
     /// Diagnostics hooks (no payload data): peer ACK completed / transfer failed.
     public var onPeerAckCompleted: (() -> Void)?
     public var onTransferFailed: ((BleTransferErrorCode) -> Void)?
+    /// Mesh v2 session hook: the active transfer ended (true = peer VERIFIED it).
+    public var onActiveFinished: ((ActiveTransfer, Bool) -> Void)?
     private let outbox: OutboxQueueUpdating
     private let nowMs: () -> Int64
     private var senderListenerRetention: TrackerListener?
@@ -66,6 +68,7 @@ public final class SosPeerDeliveryTracker {
             )
             tracker.active = nil
             tracker.onPeerAckCompleted?()
+            tracker.onActiveFinished?(ctx, true)
         }
 
         func onFailed(code: BleTransferErrorCode, message: String) {
@@ -78,6 +81,7 @@ public final class SosPeerDeliveryTracker {
             )
             tracker.active = nil
             tracker.onTransferFailed?(code)
+            tracker.onActiveFinished?(ctx, false)
         }
     }
 }

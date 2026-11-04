@@ -18,7 +18,7 @@ public actor BroadcastRepository {
         formatter.formatOptions = [.withInternetDateTime, .withFractionalSeconds]
         let sinceParam = formatter.string(from: lastFetch)
 
-        guard let url = URL(string: "\(apiBaseUrl)/device/broadcasts/active?since=\(sinceParam)") else {
+        guard let url = URL(string: "\(apiBaseUrl)/v1/device/broadcasts/active?since=\(sinceParam)") else {
             return []
         }
 

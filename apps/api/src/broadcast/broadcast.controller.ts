@@ -22,7 +22,7 @@ import { CreateBroadcastDto } from './dto/create-broadcast.dto';
 import { BroadcastHistoryDto, BroadcastResponseDto } from './dto/broadcast-response.dto';
 import { StructuredEventLogger } from '../observability/structured-event-logger.service';
 
-@Controller('operator/broadcasts')
+@Controller('v1/operator/broadcasts')
 @UseGuards(OperatorAuthGuard, RolesGuard)
 export class BroadcastController {
   constructor(
@@ -66,7 +66,7 @@ export class BroadcastController {
   }
 }
 
-@Controller('device/broadcasts')
+@Controller('v1/device/broadcasts')
 export class DeviceBroadcastController {
   constructor(private readonly broadcastService: BroadcastService) {}
 
@@ -79,7 +79,7 @@ export class DeviceBroadcastController {
   }
 }
 
-@Controller('device/broadcasts/public-key')
+@Controller('v1/device/broadcasts/public-key')
 export class DeviceBroadcastPublicKeyController {
   constructor(private readonly signer: BroadcastSignerService) {}
 

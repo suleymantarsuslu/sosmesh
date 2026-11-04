@@ -76,10 +76,6 @@
             </intent-filter>
         </service>
 
-        <meta-data
-            android:name="com.google.android.gms.wearable.capability"
-            android:value="sosmesh_phone_v1" />
-
         <provider
             android:name="androidx.startup.InitializationProvider"
             android:authorities="${applicationId}.androidx-startup"

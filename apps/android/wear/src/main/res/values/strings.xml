@@ -22,8 +22,12 @@
     <string name="status_waiting_ack_detail">Waiting for phone confirmation.</string>
     <string name="status_queued_headline">Saved on phone</string>
     <string name="status_queued_detail">Queued on your phone; not yet delivered to the server.</string>
-    <string name="status_unreachable_headline">Phone not reachable</string>
-    <string name="status_unreachable_detail">SOS is held on the watch; not sent yet. Call %1$s if in danger.</string>
+    <string name="relay_title">Relay</string>
+    <string name="relay_detail">Help forward emergency messages from nearby devices.</string>
+    <string name="relay_running">Relay active</string>
+    <string name="relay_stopped">Relay off</string>
+    <string name="relay_toggle_on">Turn on relay</string>
+    <string name="relay_toggle_off">Turn off relay</string>
     <string name="status_failed_headline">Could not reach phone</string>
     <string name="status_failed_detail">Will retry. Call %1$s if in danger.</string>
     <string name="status_stale_headline">Status out of date</string>

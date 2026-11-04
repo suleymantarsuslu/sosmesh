@@ -2,30 +2,34 @@ package com.sosmesh.android.wear
 
 import android.os.Bundle
 import androidx.activity.compose.setContent
+import androidx.activity.viewModels
 import androidx.core.splashscreen.SplashScreen.Companion.installSplashScreen
 import androidx.fragment.app.FragmentActivity
 import androidx.wear.ambient.AmbientModeSupport
-import com.sosmesh.android.wear.companion.WearAppCoordinatorHolder
+import com.sosmesh.android.wear.ui.WearRelayViewModel
 import com.sosmesh.android.wear.ui.WearRootScreen
 import com.sosmesh.android.wear.ui.WearSosViewModel
+import dagger.hilt.android.AndroidEntryPoint
 
+@AndroidEntryPoint
 class WearMainActivity :
     FragmentActivity(),
     AmbientModeSupport.AmbientCallbackProvider {
     private lateinit var ambientController: AmbientModeSupport.AmbientController
-    private lateinit var viewModel: WearSosViewModel
+    
+    private val viewModel: WearSosViewModel by viewModels()
+    private val relayViewModel: WearRelayViewModel by viewModels()
 
     override fun onCreate(savedInstanceState: Bundle?) {
         installSplashScreen()
         super.onCreate(savedInstanceState)
-        val coordinator = WearAppCoordinatorHolder.get(this)
-        viewModel =
-            WearSosViewModel(
-                coordinator = coordinator,
-            )
+        
         ambientController = AmbientModeSupport.attach(this)
         setContent {
-            WearRootScreen(viewModel = viewModel)
+            WearRootScreen(
+                viewModel = viewModel,
+                relayViewModel = relayViewModel,
+            )
         }
     }
 

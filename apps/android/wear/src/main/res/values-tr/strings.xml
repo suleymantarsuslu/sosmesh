@@ -22,8 +22,12 @@
     <string name="status_waiting_ack_detail">Telefon onayı bekleniyor.</string>
     <string name="status_queued_headline">Telefona kaydedildi</string>
     <string name="status_queued_detail">Telefon kuyruğuna alındı; sunucuya ulaştı denmez.</string>
-    <string name="status_unreachable_headline">Telefona ulaşılamıyor</string>
-    <string name="status_unreachable_detail">SOS saatte bekletiliyor; gönderildi denmez. Tehlikedeyseniz %1$s\'yi arayın.</string>
+    <string name="relay_title">Röle</string>
+    <string name="relay_detail">Yakındaki cihazlardan acil mesajları iletmeye yardım edin.</string>
+    <string name="relay_running">Röle aktif</string>
+    <string name="relay_stopped">Röle kapalı</string>
+    <string name="relay_toggle_on">Röleyi aç</string>
+    <string name="relay_toggle_off">Röleyi kapat</string>
     <string name="status_failed_headline">Telefona iletilemedi</string>
     <string name="status_failed_detail">Tekrar denenecek. Tehlikedeyseniz %1$s\'yi arayın.</string>
     <string name="status_stale_headline">Durum güncel değil</string>

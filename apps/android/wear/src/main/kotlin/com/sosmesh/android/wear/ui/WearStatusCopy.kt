@@ -47,11 +47,7 @@ internal fun WearUserFacingPhase.toStatusCopy(): WearStatusCopy =
         WearUserFacingPhase.PHONE_QUEUED ->
             WearStatusCopy(R.string.status_queued_headline, R.string.status_queued_detail, WearStatusTone.SAVED)
         WearUserFacingPhase.PHONE_UNREACHABLE ->
-            WearStatusCopy(
-                R.string.status_unreachable_headline,
-                R.string.status_unreachable_detail,
-                WearStatusTone.WARNING,
-            )
+            WearStatusCopy(R.string.status_sending_headline, R.string.status_sending_detail, WearStatusTone.PROGRESS)
         WearUserFacingPhase.FAILED ->
             WearStatusCopy(R.string.status_failed_headline, R.string.status_failed_detail, WearStatusTone.ERROR)
         WearUserFacingPhase.STALE ->

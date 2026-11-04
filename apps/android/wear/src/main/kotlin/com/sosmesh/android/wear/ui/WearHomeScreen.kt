@@ -52,6 +52,7 @@ internal fun WearHomeScreen(
     phase: WearUserFacingPhase,
     isAmbient: Boolean,
     onHoldComplete: () -> Unit,
+    onNavigateToRelay: (() -> Unit)? = null,
 ) {
     val context = LocalContext.current
     val emergencyNumber = EmergencyNumberProvider.getEmergencyNumber(context)

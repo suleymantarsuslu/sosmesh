@@ -51,18 +51,21 @@ object WearStateSyncEngine {
                     messageId = entry.messageId,
                 )
             WearOutboundWireStatus.AWAITING_PHONE ->
-                if (watchConnectedToPhone) {
-                    WearDisplayState(
-                        phase = WearUserFacingPhase.WAITING_PHONE_ACK,
-                        headlineTr = "Telefona iletiliyor",
-                        detailTr = "Telefon onayı bekleniyor.",
-                        showsFalseSuccess = false,
-                        messageId = entry.messageId,
-                    )
-                } else {
-                    unreachable(entry.messageId)
-                }
-            WearOutboundWireStatus.PHONE_UNREACHABLE -> unreachable(entry.messageId)
+                WearDisplayState(
+                    phase = WearUserFacingPhase.WAITING_PHONE_ACK,
+                    headlineTr = "Gönderiliyor",
+                    detailTr = "Mesh üzerinden iletiliyor.",
+                    showsFalseSuccess = false,
+                    messageId = entry.messageId,
+                )
+            WearOutboundWireStatus.PHONE_UNREACHABLE ->
+                WearDisplayState(
+                    phase = WearUserFacingPhase.SENDING,
+                    headlineTr = "Gönderiliyor",
+                    detailTr = "Mesh üzerinden iletiliyor.",
+                    showsFalseSuccess = false,
+                    messageId = entry.messageId,
+                )
             WearOutboundWireStatus.FAILED ->
                 WearDisplayState(
                     phase = WearUserFacingPhase.FAILED,

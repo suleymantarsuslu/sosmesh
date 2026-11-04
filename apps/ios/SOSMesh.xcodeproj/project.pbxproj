@@ -497,18 +497,58 @@ A3120010000000000000001 /* Project object */ = {
 				A3742200000000000000001 /* Debug */,
 				A3742210000000000000001 /* Release */,
 			);
-			defaultConfigurationIsVisible = 0;
-			defaultConfigurationName = Release;
-		};
+		defaultConfigurationIsVisible = 0;
+		defaultConfigurationName = Release;
 	};
-		W636892DA21EB43FBB53B216 /* Build configuration list for PBXNativeTarget "SOSWidget" */ = {
-			isa = XCConfigurationList;
-			buildConfigurations = (W00B97E5578C049089A2993A /* Debug */, W361789A77033442C9ED6908 /* Release */);
-			defaultConfigurationIsVisible = 0;
-			defaultConfigurationName = Release;
-		};
-		W00B97E5578C049089A2993A /* Debug */ = {isa = XCBuildConfiguration; buildSettings = {CODE_SIGN_STYLE = Automatic; CURRENT_PROJECT_VERSION = 1; DEVELOPMENT_TEAM = YB93KNBFT8; GENERATE_INFOPLIST_FILE = NO; INFOPLIST_FILE = SOSWidget/Info.plist; INFOPLIST_KEY_CFBundleDisplayName = SOSWidget; INFOPLIST_KEY_NSHumanReadableCopyright = ""; IPHONEOS_DEPLOYMENT_TARGET = 17.0; LD_RUNPATH_SEARCH_PATHS = ("$(inherited)", "@executable_path/Frameworks", "@executable_path/../../Frameworks"); MARKETING_VERSION = 1.0; PRODUCT_BUNDLE_IDENTIFIER = com.suleymantarsuslu.sosmesh.SOSWidget; PRODUCT_NAME = "$(TARGET_NAME)"; SKIP_INSTALL = YES; SWIFT_EMIT_LOC_STRINGS = YES; SWIFT_VERSION = 5.0; TARGETED_DEVICE_FAMILY = 1; }; name = Debug; };
-		W361789A77033442C9ED6908 /* Release */ = {isa = XCBuildConfiguration; buildSettings = {CODE_SIGN_STYLE = Automatic; CURRENT_PROJECT_VERSION = 1; DEVELOPMENT_TEAM = YB93KNBFT8; GENERATE_INFOPLIST_FILE = NO; INFOPLIST_FILE = SOSWidget/Info.plist; INFOPLIST_KEY_CFBundleDisplayName = SOSWidget; INFOPLIST_KEY_NSHumanReadableCopyright = ""; IPHONEOS_DEPLOYMENT_TARGET = 17.0; LD_RUNPATH_SEARCH_PATHS = ("$(inherited)", "@executable_path/Frameworks", "@executable_path/../../Frameworks"); MARKETING_VERSION = 1.0; PRODUCT_BUNDLE_IDENTIFIER = com.suleymantarsuslu.sosmesh.SOSWidget; PRODUCT_NAME = "$(TARGET_NAME)"; SKIP_INSTALL = YES; SWIFT_EMIT_LOC_STRINGS = YES; SWIFT_VERSION = 5.0; TARGETED_DEVICE_FAMILY = 1; }; name = Release; };
+	W636892DA21EB43FBB53B216 /* Build configuration list for PBXNativeTarget "SOSWidget" */ = {
+		isa = XCConfigurationList;
+		buildConfigurations = (W00B97E5578C049089A2993A /* Debug */, W361789A77033442C9ED6908 /* Release */);
+		defaultConfigurationIsVisible = 0;
+		defaultConfigurationName = Release;
+	};
+	W00B97E5578C049089A2993A /* Debug */ = {isa = XCBuildConfiguration; buildSettings = {
+			SDKROOT = iphoneos;
+			SWIFT_VERSION = 5.0;
+			IPHONEOS_DEPLOYMENT_TARGET = 17.0;
+			TARGETED_DEVICE_FAMILY = "1,2";
+			SUPPORTED_PLATFORMS = "iphoneos iphonesimulator";
+			ONLY_ACTIVE_ARCH = YES;
+			PRODUCT_NAME = "$(TARGET_NAME)";
+			PRODUCT_BUNDLE_IDENTIFIER = com.suleymantarsuslu.sosmesh.SOSWidget;
+			DEVELOPMENT_TEAM = YB93KNBFT8;
+			CODE_SIGN_STYLE = Automatic;
+			CURRENT_PROJECT_VERSION = 1;
+			MARKETING_VERSION = 1.0;
+			INFOPLIST_FILE = SOSWidget/Info.plist;
+			GENERATE_INFOPLIST_FILE = NO;
+			LD_RUNPATH_SEARCH_PATHS = ("$(inherited)", "@executable_path/Frameworks", "@executable_path/../../Frameworks");
+			SKIP_INSTALL = YES;
+			INFOPLIST_KEY_CFBundleDisplayName = SOSWidget;
+			INFOPLIST_KEY_NSHumanReadableCopyright = "";
+			SWIFT_EMIT_LOC_STRINGS = YES;
+		}; name = Debug; };
+	W361789A77033442C9ED6908 /* Release */ = {isa = XCBuildConfiguration; buildSettings = {
+			SDKROOT = iphoneos;
+			SWIFT_VERSION = 5.0;
+			IPHONEOS_DEPLOYMENT_TARGET = 17.0;
+			TARGETED_DEVICE_FAMILY = "1,2";
+			SUPPORTED_PLATFORMS = "iphoneos iphonesimulator";
+			ONLY_ACTIVE_ARCH = YES;
+			PRODUCT_NAME = "$(TARGET_NAME)";
+			PRODUCT_BUNDLE_IDENTIFIER = com.suleymantarsuslu.sosmesh.SOSWidget;
+			DEVELOPMENT_TEAM = YB93KNBFT8;
+			CODE_SIGN_STYLE = Automatic;
+			CURRENT_PROJECT_VERSION = 1;
+			MARKETING_VERSION = 1.0;
+			INFOPLIST_FILE = SOSWidget/Info.plist;
+			GENERATE_INFOPLIST_FILE = NO;
+			LD_RUNPATH_SEARCH_PATHS = ("$(inherited)", "@executable_path/Frameworks", "@executable_path/../../Frameworks");
+			SKIP_INSTALL = YES;
+			INFOPLIST_KEY_CFBundleDisplayName = SOSWidget;
+			INFOPLIST_KEY_NSHumanReadableCopyright = "";
+			SWIFT_EMIT_LOC_STRINGS = YES;
+		}; name = Release; };
+};
 
 	rootObject = A3120010000000000000001 /* Project object */;
 }

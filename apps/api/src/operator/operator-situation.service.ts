@@ -75,18 +75,18 @@ export class OperatorSituationService {
 
   constructor(
     private readonly prisma: PrismaService,
-    private readonly scope: IncidentScopeService,
     private readonly metaClient: MetaModelClient,
     private readonly budget: BudgetGuardService
   ) {}
 
   async getRegionalSituation(
     user: OperatorRequestUser,
+    scopeService: IncidentScopeService,
     windowHours: number = 24,
     minUrgency?: string
   ): Promise<RegionalSituationResponse> {
     const cutoff = new Date(Date.now() - windowHours * 60 * 60 * 1000);
-    const scopeWhere = this.scope.incidentWhere(user);
+    const scopeWhere = scopeService.incidentWhere(user);
 
     const incidents = await this.prisma.incident.findMany({
       where: {
@@ -124,8 +124,7 @@ export class OperatorSituationService {
     });
 
     const clusters = this.clusterIncidents(
-      incidents as IncidentForClustering[],
-      windowHours
+      incidents as IncidentForClustering[]
     );
 
     const filtered = minUrgency
@@ -148,8 +147,7 @@ export class OperatorSituationService {
   }
 
   private clusterIncidents(
-    incidents: IncidentForClustering[],
-    windowHours: number
+    incidents: IncidentForClustering[]
   ): RegionalCluster[] {
     const spatialClusters = this.spatialCluster(incidents);
 
@@ -161,7 +159,7 @@ export class OperatorSituationService {
       for (const [hazardType, hazardIncidents] of Object.entries(hazardGroups)) {
         if (hazardIncidents.length === 0) continue;
 
-        const cluster = this.buildCluster(hazardType, hazardIncidents, windowHours);
+        const cluster = this.buildCluster(hazardType, hazardIncidents);
         clusters.push(cluster);
       }
     }
@@ -252,8 +250,7 @@ export class OperatorSituationService {
 
   private buildCluster(
     hazardType: string,
-    incidents: IncidentForClustering[],
-    windowHours: number
+    incidents: IncidentForClustering[]
   ): RegionalCluster {
     const region = this.determineRegion(incidents);
 
@@ -302,9 +299,7 @@ export class OperatorSituationService {
     const urgency = this.computeUrgency(
       incidents,
       topHazards,
-      earliestReport,
-      latestReport,
-      windowHours
+      latestReport
     );
 
     return {
@@ -380,9 +375,7 @@ export class OperatorSituationService {
   private computeUrgency(
     incidents: IncidentForClustering[],
     topHazards: string[],
-    earliestReport: Date | null,
-    latestReport: Date | null,
-    windowHours: number
+    latestReport: Date | null
   ): 'CRITICAL' | 'HIGH' | 'MEDIUM' | 'LOW' {
     let score = 0;
 

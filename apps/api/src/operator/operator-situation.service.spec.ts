@@ -9,8 +9,6 @@ import { UserRole } from '@prisma/client';
 describe('OperatorSituationService', () => {
   let service: OperatorSituationService;
   let prisma: PrismaService;
-  let metaClient: MetaModelClient;
-  let budget: BudgetGuardService;
   let scope: IncidentScopeService;
 
   const mockUser = {
@@ -68,8 +66,6 @@ describe('OperatorSituationService', () => {
 
     service = module.get<OperatorSituationService>(OperatorSituationService);
     prisma = module.get<PrismaService>(PrismaService);
-    metaClient = module.get<MetaModelClient>(MetaModelClient);
-    budget = module.get<BudgetGuardService>(BudgetGuardService);
     scope = module.get<IncidentScopeService>(IncidentScopeService);
   });
 
@@ -132,7 +128,7 @@ describe('OperatorSituationService', () => {
 
       jest.spyOn(prisma.incident, 'findMany').mockResolvedValue(mockIncidents as any);
 
-      const result = await service.getRegionalSituation(mockUser, 24);
+      const result = await service.getRegionalSituation(mockUser, scope, 24);
 
       expect(result.clusters).toHaveLength(1);
       expect(result.clusters[0].hazardType).toBe('MEDICAL');
@@ -199,7 +195,7 @@ describe('OperatorSituationService', () => {
 
       jest.spyOn(prisma.incident, 'findMany').mockResolvedValue(mockIncidents as any);
 
-      const result = await service.getRegionalSituation(mockUser, 24);
+      const result = await service.getRegionalSituation(mockUser, scope, 24);
 
       expect(result.clusters.length).toBeGreaterThanOrEqual(1);
       expect(result.clusters.every((c) => c.hazardType === 'FIRE')).toBe(true);
@@ -235,7 +231,7 @@ describe('OperatorSituationService', () => {
 
       jest.spyOn(prisma.incident, 'findMany').mockResolvedValue(mockIncidents as any);
 
-      const result = await service.getRegionalSituation(mockUser, 24);
+      const result = await service.getRegionalSituation(mockUser, scope, 24);
 
       expect(result.clusters).toHaveLength(1);
       expect(result.clusters[0].severity).toBe('CRITICAL');
@@ -300,7 +296,7 @@ describe('OperatorSituationService', () => {
 
       jest.spyOn(prisma.incident, 'findMany').mockResolvedValue(mockIncidents as any);
 
-      const result = await service.getRegionalSituation(mockUser, 24, 'HIGH');
+      const result = await service.getRegionalSituation(mockUser, scope, 24, 'HIGH');
 
       expect(result.clusters.every((c) => ['CRITICAL', 'HIGH'].includes(c.urgency))).toBe(true);
     });

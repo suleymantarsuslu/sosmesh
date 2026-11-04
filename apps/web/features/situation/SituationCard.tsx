@@ -55,27 +55,22 @@ export function SituationCard({ cluster }: Props) {
           <div className="situation-card__stat">
             <span className="situation-card__stat-value">{cluster.incidentCount}</span>
             <span className="situation-card__stat-label">
-              {t('web.dashboard.regionalSituation.card.sosCount', {
-                count: cluster.incidentCount,
-              })}
+              {t('web.dashboard.regionalSituation.card.sosCount').replace('{{count}}', String(cluster.incidentCount))}
             </span>
           </div>
           <div className="situation-card__stat">
             <span className="situation-card__stat-value">{cluster.estimatedPeopleAffected}</span>
             <span className="situation-card__stat-label">
-              {t('web.dashboard.regionalSituation.card.peopleAffected', {
-                count: cluster.estimatedPeopleAffected,
-              })}
+              {t('web.dashboard.regionalSituation.card.peopleAffected').replace('{{count}}', String(cluster.estimatedPeopleAffected))}
             </span>
           </div>
         </div>
 
         <div className="situation-card__time">
           <p>
-            {t('web.dashboard.regionalSituation.card.timeSpan', {
-              first: firstReport,
-              last: lastReport,
-            })}
+            {t('web.dashboard.regionalSituation.card.timeSpan')
+              .replace('{{first}}', firstReport)
+              .replace('{{last}}', lastReport)}
           </p>
         </div>
 

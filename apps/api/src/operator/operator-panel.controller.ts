@@ -53,7 +53,7 @@ export class OperatorPanelController {
     @Query('minUrgency') minUrgency?: string
   ) {
     const hours = windowHours ? Number(windowHours) : 24;
-    return this.situation.getRegionalSituation(req.operatorUser, hours, minUrgency);
+    return this.situation.getRegionalSituation(req.operatorUser, this.scope, hours, minUrgency);
   }
 
   @Get('history')

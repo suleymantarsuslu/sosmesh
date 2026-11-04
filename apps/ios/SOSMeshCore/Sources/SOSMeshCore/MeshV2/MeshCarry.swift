@@ -145,11 +145,15 @@ public enum MeshCarry {
     }
 }
 
-/// Gateway upload order (§9): own pending SOS first (oldest first), then carried copies by
-/// public priority ascending, then origin time ascending.
+/// Gateway upload order (§9): own pending SOS first (newest and highest priority first),
+/// then carried copies by public priority ascending, then origin time ascending.
 public enum MeshUploadOrdering {
     public static func ordered(_ entries: [OutboxEntryMeta]) -> [OutboxEntryMeta] {
-        let own = entries.filter { $0.origin != SosOutboxService.relayOrigin }.sorted { $0.createdAtMs < $1.createdAtMs }
+        let own = entries.filter { $0.origin != SosOutboxService.relayOrigin }.map { entry -> (OutboxEntryMeta, Int, Int64) in
+            let blob = Data(base64Encoded: entry.encryptedBlobBase64)
+            let priority = blob.flatMap { MeshCarry.publicMeta(ofL2: $0).priority } ?? 5
+            return (entry, priority, entry.createdAtMs)
+        }.sorted { ($0.1, $1.2) < ($1.1, $0.2) }.map(\.0)
         let carried = entries.filter { $0.origin == SosOutboxService.relayOrigin }.map { entry -> (OutboxEntryMeta, Int, Int64) in
             guard let blob = Data(base64Encoded: entry.encryptedBlobBase64),
                   let decoded = MeshCarry.decodeStored(blob, nowMs: entry.createdAtMs) else { return (entry, 5, entry.createdAtMs) }

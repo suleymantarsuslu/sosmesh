@@ -59,7 +59,7 @@ public struct IngestResponse: Codable {
 public enum IngestResult {
     case success(ServerAcceptedReceipt)
     case noNetwork
-    case httpError(Int, String)
+    case httpError(Int, String, retryAfterSeconds: Int?)
     case invalidReceipt
     case decodingError(Error)
 }
@@ -101,7 +101,8 @@ public final class IngestClient: IngestClientPort {
             
             guard (200...299).contains(httpResponse.statusCode) else {
                 let message = String(data: data, encoding: .utf8) ?? "Unknown error"
-                return .httpError(httpResponse.statusCode, message)
+                let retryAfter = parseRetryAfter(from: httpResponse, statusCode: httpResponse.statusCode)
+                return .httpError(httpResponse.statusCode, message, retryAfterSeconds: retryAfter)
             }
             
             let decoder = JSONDecoder()
@@ -113,11 +114,30 @@ public final class IngestClient: IngestClientPort {
                 case .notConnectedToInternet, .networkConnectionLost, .cannotConnectToHost:
                     return .noNetwork
                 default:
-                    return .httpError(0, urlError.localizedDescription)
+                    return .httpError(0, urlError.localizedDescription, retryAfterSeconds: nil)
                 }
             }
             return .decodingError(error)
         }
+    }
+    
+    private func parseRetryAfter(from response: HTTPURLResponse, statusCode: Int) -> Int? {
+        guard statusCode == 429 || statusCode == 503 else { return nil }
+        guard let retryAfterValue = response.value(forHTTPHeaderField: "Retry-After") else { return nil }
+        
+        if let seconds = Int(retryAfterValue) {
+            return seconds
+        }
+        
+        let formatter = DateFormatter()
+        formatter.dateFormat = "EEE, dd MMM yyyy HH:mm:ss zzz"
+        formatter.locale = Locale(identifier: "en_US_POSIX")
+        if let date = formatter.date(from: retryAfterValue) {
+            let interval = date.timeIntervalSinceNow
+            return max(0, Int(interval))
+        }
+        
+        return nil
     }
 }
 

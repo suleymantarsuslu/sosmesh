@@ -18,7 +18,7 @@ public enum AttachmentKind: String {
 public enum AttachmentUploadResult {
     case success(attachmentId: String)
     case noNetwork
-    case httpError(Int, String)
+    case httpError(Int, String, retryAfterSeconds: Int?)
     case error(String)
 }
 
@@ -75,7 +75,8 @@ public final class AttachmentUploader {
                 return .success(attachmentId: "unknown")
             } else {
                 let message = String(data: responseData, encoding: .utf8) ?? "Unknown error"
-                return .httpError(httpResponse.statusCode, message)
+                let retryAfter = parseRetryAfter(from: httpResponse, statusCode: httpResponse.statusCode)
+                return .httpError(httpResponse.statusCode, message, retryAfterSeconds: retryAfter)
             }
         } catch let error as URLError {
             if error.code == .notConnectedToInternet || error.code == .networkConnectionLost {
@@ -85,5 +86,24 @@ public final class AttachmentUploader {
         } catch {
             return .error(error.localizedDescription)
         }
+    }
+    
+    private func parseRetryAfter(from response: HTTPURLResponse, statusCode: Int) -> Int? {
+        guard statusCode == 429 || statusCode == 503 else { return nil }
+        guard let retryAfterValue = response.value(forHTTPHeaderField: "Retry-After") else { return nil }
+        
+        if let seconds = Int(retryAfterValue) {
+            return seconds
+        }
+        
+        let formatter = DateFormatter()
+        formatter.dateFormat = "EEE, dd MMM yyyy HH:mm:ss zzz"
+        formatter.locale = Locale(identifier: "en_US_POSIX")
+        if let date = formatter.date(from: retryAfterValue) {
+            let interval = date.timeIntervalSinceNow
+            return max(0, Int(interval))
+        }
+        
+        return nil
     }
 }

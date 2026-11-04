@@ -298,7 +298,7 @@ final class BleRelayForwardTests: XCTestCase {
         let digest = BleProtocol.calculateSHA256(wire).base64EncodedString()
         try outbox.enqueueRelayEnvelope(sosId: "sos-409", digest: digest, envelope: wire, nowMs: 1)
         let uploader = FakeUploader()
-        uploader.results = [.httpError(409, "MESSAGE_ID_CONFLICT")]
+        uploader.results = [.httpError(409, "MESSAGE_ID_CONFLICT", retryAfterSeconds: nil)]
         let forwarder = RelayForwarder(outbox: outbox, inbox: inbox, uploader: uploader, nowMs: { 1_000 })
 
         _ = await forwarder.forwardDue()
@@ -318,7 +318,7 @@ final class BleRelayForwardTests: XCTestCase {
         let digest = BleProtocol.calculateSHA256(wire).base64EncodedString()
         try outbox.enqueueRelayEnvelope(sosId: "sos-5xx", digest: digest, envelope: wire, nowMs: 1)
         let uploader = FakeUploader()
-        uploader.results = [.httpError(503, "unavailable")]
+        uploader.results = [.httpError(503, "unavailable", retryAfterSeconds: nil)]
         let forwarder = RelayForwarder(outbox: outbox, inbox: inbox, uploader: uploader, nowMs: { 1_000 })
 
         _ = await forwarder.forwardDue()

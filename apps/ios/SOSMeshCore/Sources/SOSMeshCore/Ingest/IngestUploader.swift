@@ -62,7 +62,7 @@ public enum IngestUploadResult {
     case success(ServerAcceptedReceipt)
     case noNetwork
     case invalidReceipt
-    case httpError(Int, String)
+    case httpError(Int, String, retryAfterSeconds: Int?)
     case error(String)
 }
 
@@ -137,8 +137,8 @@ public final class IngestUploader {
         case .invalidReceipt:
             return .invalidReceipt
             
-        case .httpError(let code, let message):
-            return .httpError(code, message)
+        case .httpError(let code, let message, let retryAfterSeconds):
+            return .httpError(code, message, retryAfterSeconds: retryAfterSeconds)
             
         case .decodingError(let error):
             return .error(error.localizedDescription)

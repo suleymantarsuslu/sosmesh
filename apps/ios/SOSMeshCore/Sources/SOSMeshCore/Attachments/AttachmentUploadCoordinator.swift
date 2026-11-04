@@ -124,11 +124,17 @@ public final class AttachmentUploadCoordinator {
             notifyStatus(attachment.id, .waiting)
             scheduleRetry()
             
-        case .httpError(let code, let message):
+        case .httpError(let code, let message, let retryAfterSeconds):
             let error = NSError(domain: "AttachmentUpload", code: code, userInfo: [NSLocalizedDescriptionKey: message])
             notifyStatus(attachment.id, .failed(error))
             if code >= 400 && code < 500 {
-                try? queue.dequeue(id: attachment.id)
+                if code == 429, let retryAfter = retryAfterSeconds {
+                    scheduleRetry(after: TimeInterval(retryAfter))
+                } else {
+                    try? queue.dequeue(id: attachment.id)
+                }
+            } else if code == 503, let retryAfter = retryAfterSeconds {
+                scheduleRetry(after: TimeInterval(retryAfter))
             } else {
                 scheduleRetry()
             }
@@ -150,7 +156,7 @@ public final class AttachmentUploadCoordinator {
         }
     }
     
-    private func scheduleRetry() {
+    private func scheduleRetry(after delay: TimeInterval = 30) {
         retryWorkItem?.cancel()
         let workItem = DispatchWorkItem { [weak self] in
             Task {
@@ -158,7 +164,7 @@ public final class AttachmentUploadCoordinator {
             }
         }
         retryWorkItem = workItem
-        DispatchQueue.global(qos: .utility).asyncAfter(deadline: .now() + 30, execute: workItem)
+        DispatchQueue.global(qos: .utility).asyncAfter(deadline: .now() + delay, execute: workItem)
     }
     
     private func notifyStatus(_ id: String, _ status: AttachmentUploadStatus) {

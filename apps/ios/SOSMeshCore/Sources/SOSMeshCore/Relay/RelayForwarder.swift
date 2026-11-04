@@ -176,14 +176,15 @@ public final class RelayForwarder: @unchecked Sendable {
             case .invalidReceipt:
                 retry(entry, after: RelayForwarder.errorBackoffMs, reason: "invalid_receipt")
                 return summary
-            case .httpError(let code, _):
+            case .httpError(let code, _, let retryAfterSeconds):
                 node?.hops.noteInternetSuccess(nowMs: nowMs())
                 if code == 409 {
                     park(entry, reason: "needs_review")
                 } else if (400 ..< 500).contains(code) && code != 429 {
                     park(entry, reason: "http_\(code)")
                 } else {
-                    retry(entry, after: RelayForwarder.errorBackoffMs, reason: "http_\(code)")
+                    let backoffMs = retryAfterSeconds.map { Int64($0 * 1000) } ?? RelayForwarder.errorBackoffMs
+                    retry(entry, after: backoffMs, reason: "http_\(code)")
                     return summary
                 }
             case .error:

@@ -49,7 +49,6 @@ class SosMeshApplication : Application(), Configuration.Provider {
                     title = broadcast.title,
                     body = broadcast.body,
                     severity = broadcast.severity,
-                    kind = "standard",
                     createdAt = broadcast.createdAt,
                     expiresAt = broadcast.expiresAt,
                     regionLat = broadcast.regionLat,

@@ -91,14 +91,14 @@ class MainActivity : ComponentActivity() {
                                     relayController.setRelayEnabled(true)
                                     broadcastDialogCoordinator.dismissRelayRequestDialog()
                                 }) {
-                                    Text(stringResource(R.string.broadcast_relay_request_enable))
+                                    Text(stringResource(R.string.broadcast_relay_request_action_enable))
                                 }
                             },
                             dismissButton = {
                                 TextButton(onClick = {
                                     broadcastDialogCoordinator.dismissRelayRequestDialog()
                                 }) {
-                                    Text(stringResource(R.string.broadcast_relay_request_cancel))
+                                    Text(stringResource(R.string.broadcast_relay_request_action_cancel))
                                 }
                             },
                         )

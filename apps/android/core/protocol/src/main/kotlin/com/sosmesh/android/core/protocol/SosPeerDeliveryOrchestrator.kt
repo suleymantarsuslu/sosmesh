@@ -11,6 +11,8 @@ import com.sosmesh.ble.BleProtocol
 import com.sosmesh.contracts.transport.OutboxEntryMeta
 import com.sosmesh.contracts.transport.OutboxQueueAdapter
 import kotlinx.coroutines.CoroutineDispatcher
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import kotlinx.coroutines.withContext
@@ -49,6 +51,8 @@ class SosPeerDeliveryOrchestrator
         private val radio: BleMeshRadio,
         private val permissions: PermissionFlowCoordinator,
         private val bleMeshReadiness: BleMeshReadiness,
+        private val peerDeliveryTracker: SosPeerDeliveryTracker,
+        private val peerRecordStore: PeerDeliveryRecordStore,
         @IoDispatcher private val ioDispatcher: CoroutineDispatcher,
     ) {
         @Volatile
@@ -56,6 +60,39 @@ class SosPeerDeliveryOrchestrator
 
         private val cycleMutex = Mutex()
         private val attemptedPeers = mutableMapOf<String, MutableSet<String>>()
+
+        init {
+            peerDeliveryTracker.setCompletionCallback { sosId, peerId, success ->
+                if (success && peerId != null) {
+                    CoroutineScope(ioDispatcher).launch {
+                        val allPeers = getAllDiscoveredPeerIds()
+                        val delivered = peerRecordStore.getDeliveredPeers(sosId)
+                        val remaining = allPeers - delivered
+                        if (remaining.isEmpty() && allPeers.isNotEmpty()) {
+                            val entry = outbox.getByKey(sosId, peerDeliveryTracker.active?.digest ?: "")
+                            if (entry != null) {
+                                peerDeliveryTracker.markPeerReceivedIfAllDelivered(
+                                    sosId,
+                                    entry.digest,
+                                    allPeers,
+                                    System.currentTimeMillis(),
+                                )
+                            }
+                        } else if (remaining.isNotEmpty()) {
+                            val entry = outbox.getByKey(sosId, peerDeliveryTracker.active?.digest ?: "")
+                            if (entry != null && entry.state == "LOCAL_SAVED") {
+                                outbox.setRetryAt(sosId, entry.digest, System.currentTimeMillis() + 500L, "continue_fanout")
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
+        private fun getAllDiscoveredPeerIds(): Set<String> {
+            val peerHops = radio.peerHops()
+            return peerHops.keys.toSet()
+        }
 
         suspend fun runCycle(
             nowMs: Long,
@@ -129,13 +166,19 @@ class SosPeerDeliveryOrchestrator
                 MeshV2Preflight.TombstoneBatchSent -> return SosPeerDeliveryCycleResult.TransferStarted
                 is MeshV2Preflight.Statuses ->
                     if (!pre.wants(due.sosId)) {
-                        if (peerId != null) triedForThisMessage.add(peerId)
+                        if (peerId != null) {
+                            triedForThisMessage.add(peerId)
+                            peerRecordStore.recordDelivery(due.sosId, peerId)
+                        }
                         radio.disconnectPeerSession()
-                        scheduleRetry(due, nowMs + 2_000L, "peer_has_copy")
+                        val allPeers = getAllDiscoveredPeerIds()
+                        peerDeliveryTracker.markPeerReceivedIfAllDelivered(due.sosId, due.digest, allPeers, nowMs)
+                        scheduleRetry(due, nowMs + 500L, "peer_has_copy")
                         return SosPeerDeliveryCycleResult.Idle
                     }
             }
             if (peerId != null) triedForThisMessage.add(peerId)
+            peerDeliveryTracker.active = SosPeerDeliveryTracker.ActiveTransfer(due.sosId, due.digest, peerId)
             engine.sendOutbound(due.sosId, due.digest, payload)
             return SosPeerDeliveryCycleResult.TransferStarted
         }

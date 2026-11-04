@@ -1,0 +1,37 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://sosmesh.dev/schemas/receipt-lookup-v2.schema.json",
+  "title": "ReceiptLookupV2",
+  "description": "POST /v1/receipts/lookup request/response. A caller must present messageId AND packetHash (no enumeration). Response contains receipts only for already-accepted packets whose stored hash matches.",
+  "definitions": {
+    "request": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["items"],
+      "properties": {
+        "items": {
+          "type": "array",
+          "minItems": 1,
+          "maxItems": 64,
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["messageId", "packetHash"],
+            "properties": {
+              "messageId": { "type": "string", "minLength": 8, "maxLength": 64 },
+              "packetHash": { "type": "string", "pattern": "^[a-f0-9]{64}$" }
+            }
+          }
+        }
+      }
+    },
+    "response": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["receipts"],
+      "properties": {
+        "receipts": { "type": "array", "maxItems": 64, "items": { "$ref": "delivery-tombstone-v2.schema.json" } }
+      }
+    }
+  }
+}

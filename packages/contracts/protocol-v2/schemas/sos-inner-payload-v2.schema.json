@@ -1,0 +1,84 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://sosmesh.dev/schemas/sos-inner-payload-v2.schema.json",
+  "title": "SosInnerPayloadV2",
+  "description": "Plaintext INSIDE encryptedPayload (mesh v2). Only the device and the server key holder ever see it. Relays and the public envelope never do. Every field except innerVersion, senderKey, seq and createdAt is optional: an empty SOS is valid. Serialized size MUST be <= 4096 bytes UTF-8 before encryption.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["innerVersion", "senderKey", "seq", "createdAt"],
+  "properties": {
+    "innerVersion": { "const": 2 },
+    "senderKey": {
+      "type": "string",
+      "pattern": "^[a-f0-9]{64}$",
+      "description": "Stable per-install sender key (32 random bytes, hex). Kept in Keychain / EncryptedSharedPreferences. Server stores only SHA-256(senderKey)."
+    },
+    "seq": { "type": "integer", "minimum": 1, "maximum": 4294967295, "description": "Per-senderKey monotonic counter." },
+    "createdAt": { "type": "string", "format": "date-time" },
+    "sosType": { "type": "string", "enum": ["GENERAL", "MEDICAL", "TRAPPED", "FIRE", "OTHER"], "default": "GENERAL" },
+    "note": { "type": "string", "maxLength": 1000, "description": "Optional free text; <= 2000 bytes UTF-8." },
+    "language": { "type": "string", "pattern": "^[a-z]{2}$" },
+    "location": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["latitude", "longitude", "timestamp"],
+      "properties": {
+        "latitude": { "type": "number", "minimum": -90, "maximum": 90 },
+        "longitude": { "type": "number", "minimum": -180, "maximum": 180 },
+        "accuracyMeters": { "type": "number", "minimum": 0, "maximum": 100000 },
+        "timestamp": { "type": "string", "format": "date-time" }
+      }
+    },
+    "personCount": { "type": "integer", "minimum": 1, "maximum": 50 },
+    "attachments": {
+      "type": "array",
+      "maxItems": 4,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["kind", "localRef"],
+        "properties": {
+          "kind": { "type": "string", "enum": ["IMAGE", "AUDIO"] },
+          "localRef": { "type": "string", "pattern": "^[a-f0-9]{32}$", "description": "Opaque ref; bytes upload separately with the receipt uploadToken, never over BLE." }
+        }
+      }
+    },
+    "profile": { "$ref": "#/definitions/profile" },
+    "profileChanged": { "type": "boolean", "description": "True when profile differs from the last delivered SOS (piggyback update)." }
+  },
+  "definitions": {
+    "profile": {
+      "type": "object",
+      "additionalProperties": false,
+      "description": "Onboarding profile. All fields optional. Never sent outside an SOS.",
+      "properties": {
+        "fullName": { "type": "string", "maxLength": 100 },
+        "age": { "type": "integer", "minimum": 0, "maximum": 130 },
+        "address": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "line": { "type": "string", "maxLength": 300 },
+            "district": { "type": "string", "maxLength": 80 },
+            "city": { "type": "string", "maxLength": 80 },
+            "postalCode": { "type": "string", "maxLength": 16 },
+            "country": { "type": "string", "pattern": "^[A-Z]{2}$" }
+          }
+        },
+        "floor": { "type": "integer", "minimum": -10, "maximum": 200 },
+        "homeLocation": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["latitude", "longitude"],
+          "properties": {
+            "latitude": { "type": "number", "minimum": -90, "maximum": 90 },
+            "longitude": { "type": "number", "minimum": -180, "maximum": 180 }
+          }
+        },
+        "phone": { "type": "string", "pattern": "^\\+[1-9][0-9]{6,14}$" },
+        "email": { "type": "string", "maxLength": 254, "format": "email" },
+        "householdSize": { "type": "integer", "minimum": 1, "maximum": 50 }
+      }
+    }
+  }
+}

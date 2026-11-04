@@ -5,6 +5,7 @@ import { createPrivateKey, sign, verify, type KeyObject } from 'node:crypto';
 @Injectable()
 export class BroadcastSignerService implements OnModuleInit {
   private privateKey!: KeyObject;
+  private publicKeyBase64!: string;
 
   constructor(private readonly config: ConfigService) {}
 
@@ -15,6 +16,12 @@ export class BroadcastSignerService implements OnModuleInit {
     }
     const der = Buffer.from(encoded, 'base64');
     this.privateKey = createPrivateKey({ key: der, format: 'der', type: 'pkcs8' });
+    const publicKeyDer = this.privateKey.export({ type: 'spki', format: 'der' });
+    this.publicKeyBase64 = Buffer.from(publicKeyDer as Buffer).toString('base64');
+  }
+
+  getPublicKeyBase64(): string {
+    return this.publicKeyBase64;
   }
 
   signBroadcast(

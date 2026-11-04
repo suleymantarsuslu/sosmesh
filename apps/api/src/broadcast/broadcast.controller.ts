@@ -15,6 +15,7 @@ import { Roles } from '../operator/guards/roles.decorator';
 import { RolesGuard } from '../operator/guards/roles.guard';
 import { UserRole } from '@prisma/client';
 import { BroadcastService } from './broadcast.service';
+import { BroadcastSignerService } from './broadcast-signer.service';
 import { CreateBroadcastDto } from './dto/create-broadcast.dto';
 import { BroadcastHistoryDto, BroadcastResponseDto } from './dto/broadcast-response.dto';
 import { StructuredEventLoggerService } from '../observability/structured-event-logger.service';
@@ -59,10 +60,22 @@ export class DeviceBroadcastController {
   constructor(private readonly broadcastService: BroadcastService) {}
 
   @Get('active')
+  @Throttle({ default: { limit: 30, ttl: 60000 } })
   async listActive(
     @Query('since') since?: string
   ): Promise<BroadcastResponseDto[]> {
     const sinceCursor = since ? new Date(since) : new Date(Date.now() - 7 * 24 * 60 * 60 * 1000);
     return this.broadcastService.listActive(sinceCursor);
+  }
+}
+
+@Controller('device/broadcasts/public-key')
+export class DeviceBroadcastPublicKeyController {
+  constructor(private readonly signer: BroadcastSignerService) {}
+
+  @Get()
+  @Throttle({ default: { limit: 10, ttl: 60000 } })
+  getPublicKey(): { publicKey: string } {
+    return { publicKey: this.signer.getPublicKeyBase64() };
   }
 }

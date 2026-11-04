@@ -1,5 +1,6 @@
 import { Injectable, Logger } from '@nestjs/common';
 import staticRegionsData from './static-regions.json';
+import neighborhoodsData from './neighborhoods.json';
 
 export type RegionArea = {
   osmId: string;
@@ -213,7 +214,27 @@ export class RegionsService {
       return cachedFailure;
     }
 
-    const match = districtOsmId.match(/^[^/]+\/(\d+)$/);
+    // Check if this is a static geoBoundaries district ID
+    const isStaticDistrict = !districtOsmId.match(/^relation\/\d+$/);
+    
+    if (isStaticDistrict) {
+      // Load from static neighborhoods data
+      const neighborhoods = (neighborhoodsData.neighborhoods as any)[districtOsmId] || [];
+      const result: RegionArea[] = neighborhoods.map((n: any) => ({
+        osmId: n.osmId,
+        name: n.name,
+        displayName: n.name,
+        lat: n.lat,
+        lon: n.lon,
+        boundingBox: n.boundingBox as [number, number, number, number],
+      }));
+      
+      this.successCache.set(cacheKey, result);
+      return result;
+    }
+
+    // Legacy path: OSM relation IDs via Overpass
+    const match = districtOsmId.match(/^relation\/(\d+)$/);
     if (!match) {
       const error: RegionError = {
         code: 'NETWORK_ERROR',
@@ -225,21 +246,7 @@ export class RegionsService {
     }
 
     const idStr = match[1];
-    let areaId: number;
-
-    if (districtOsmId.startsWith('relation/')) {
-      areaId = 3600000000 + parseInt(idStr, 10);
-    } else if (districtOsmId.startsWith('adm2-')) {
-      const error: RegionError = {
-        code: 'NETWORK_ERROR',
-        messageEN: 'Cannot query neighborhoods for geoBoundaries district ID',
-        messageTR: 'geoBoundaries ilçe ID\'si için mahalle sorgulanamıyor',
-      };
-      this.failureCache.set(cacheKey, error);
-      return error;
-    } else {
-      areaId = 3600000000 + parseInt(idStr, 10);
-    }
+    const areaId = 3600000000 + parseInt(idStr, 10);
 
     try {
       const query = `
@@ -319,15 +326,14 @@ export class RegionsService {
       return cachedFailure;
     }
 
+    // Check if this is a relation/node ID
     const match = neighborhoodOsmId.match(/^(relation|node)\/(\d+)$/);
+    
     if (!match) {
-      const error: RegionError = {
-        code: 'NETWORK_ERROR',
-        messageEN: 'Invalid neighborhood ID',
-        messageTR: 'Geçersiz mahalle ID',
-      };
-      this.failureCache.set(cacheKey, error);
-      return error;
+      // Not a standard OSM ID - return empty array (street is optional)
+      const emptyResult: RegionArea[] = [];
+      this.successCache.set(cacheKey, emptyResult);
+      return emptyResult;
     }
 
     const [, type, idStr] = match;

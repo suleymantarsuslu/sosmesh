@@ -1,5 +1,7 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { RegionsService, RegionArea } from './regions.service';
+import staticRegions from './static-regions.json';
+import neighborhoods from './neighborhoods.json';
 
 describe('RegionsService', () => {
   let service: RegionsService;
@@ -16,17 +18,29 @@ describe('RegionsService', () => {
     expect(service).toBeDefined();
   });
 
-  describe('getNeighborhoods', () => {
-    it('should return neighborhoods for a static district (Adana/Karaisalı)', async () => {
-      const districtId = 'ADN-001'; // Karaisalı district ID from static data
-      const neighborhoods = await service.getNeighborhoods(districtId);
+  describe('getNeighborhoods with static district IDs', () => {
+    it('should return neighborhoods for a geoBoundaries district ID', async () => {
+      // Find Adana province
+      const adanaProvince = staticRegions.provinces.find(p => p.name === 'Adana');
+      expect(adanaProvince).toBeDefined();
 
-      expect(neighborhoods).toBeDefined();
-      expect(Array.isArray(neighborhoods)).toBe(true);
-      expect(neighborhoods.length).toBeGreaterThan(0);
+      // Find Karaisalı district
+      const karaisaliDistrict = staticRegions.districts.find(
+        d => d.parentId === adanaProvince!.osmId && d.name === 'Karaisalı'
+      );
+      expect(karaisaliDistrict).toBeDefined();
 
-      // Verify structure of returned neighborhoods
-      const firstNeighborhood = neighborhoods[0];
+      // Get neighborhoods for this district
+      const result = await service.getNeighborhoods(karaisaliDistrict!.osmId);
+      
+      // Should return an array (not an error)
+      expect(Array.isArray(result)).toBe(true);
+      
+      const neighborhoodsArray = result as RegionArea[];
+      expect(neighborhoodsArray.length).toBeGreaterThan(0);
+
+      // Verify structure
+      const firstNeighborhood = neighborhoodsArray[0];
       expect(firstNeighborhood).toHaveProperty('osmId');
       expect(firstNeighborhood).toHaveProperty('name');
       expect(firstNeighborhood).toHaveProperty('displayName');
@@ -36,85 +50,62 @@ describe('RegionsService', () => {
       expect(Array.isArray(firstNeighborhood.boundingBox)).toBe(true);
       expect(firstNeighborhood.boundingBox.length).toBe(4);
 
-      // Verify Turkish locale sorting
-      expect(neighborhoods[0].name).toBeTruthy();
+      // Should have real OSM IDs (relation/... or node/...)
+      expect(firstNeighborhood.osmId).toMatch(/^(relation|node)\/\d+$/);
     });
 
-    it('should return neighborhoods for another static district (Adana/Seyhan)', async () => {
-      const districtId = 'ADN-002'; // Seyhan district ID from static data
-      const neighborhoods = await service.getNeighborhoods(districtId);
-
-      expect(neighborhoods).toBeDefined();
-      expect(Array.isArray(neighborhoods)).toBe(true);
-      expect(neighborhoods.length).toBeGreaterThan(0);
-    });
-
-    it('should return empty array for unknown static district', async () => {
-      const districtId = 'UNKNOWN-999';
-      const neighborhoods = await service.getNeighborhoods(districtId);
-
-      expect(neighborhoods).toBeDefined();
-      expect(Array.isArray(neighborhoods)).toBe(true);
-      expect(neighborhoods.length).toBe(0);
+    it('should return empty array for district with no neighborhoods', async () => {
+      // Create a fake district ID that doesn't exist
+      const result = await service.getNeighborhoods('NONEXISTENT-DISTRICT-ID');
+      
+      expect(Array.isArray(result)).toBe(true);
+      const neighborhoodsArray = result as RegionArea[];
+      expect(neighborhoodsArray.length).toBe(0);
     });
 
     it('should cache results for static districts', async () => {
-      const districtId = 'ADN-001';
+      const adanaProvince = staticRegions.provinces.find(p => p.name === 'Adana');
+      const karaisaliDistrict = staticRegions.districts.find(
+        d => d.parentId === adanaProvince!.osmId && d.name === 'Karaisalı'
+      );
       
-      // First call
-      const neighborhoods1 = await service.getNeighborhoods(districtId);
-      
-      // Second call should return cached result
-      const neighborhoods2 = await service.getNeighborhoods(districtId);
+      const result1 = await service.getNeighborhoods(karaisaliDistrict!.osmId);
+      const result2 = await service.getNeighborhoods(karaisaliDistrict!.osmId);
 
-      expect(neighborhoods1).toEqual(neighborhoods2);
-      expect(neighborhoods1.length).toBe(neighborhoods2.length);
+      expect(result1).toEqual(result2);
     });
 
-    it('should handle legacy OSM relation IDs (returns empty for invalid)', async () => {
-      const relationId = 'relation/999999999';
-      const neighborhoods = await service.getNeighborhoods(relationId);
-
-      expect(neighborhoods).toBeDefined();
-      expect(Array.isArray(neighborhoods)).toBe(true);
-    });
-
-    it('should return empty array for invalid district ID format', async () => {
-      const invalidId = 'invalid-format';
-      const neighborhoods = await service.getNeighborhoods(invalidId);
-
-      expect(neighborhoods).toBeDefined();
-      expect(Array.isArray(neighborhoods)).toBe(true);
+    it('should return neighborhoods with consistent names', async () => {
+      const adanaProvince = staticRegions.provinces.find(p => p.name === 'Adana');
+      const karaisaliDistrict = staticRegions.districts.find(
+        d => d.parentId === adanaProvince!.osmId && d.name === 'Karaisalı'
+      );
+      
+      const result = await service.getNeighborhoods(karaisaliDistrict!.osmId) as RegionArea[];
+      
+      // Verify all neighborhoods have names
+      for (const neighborhood of result) {
+        expect(neighborhood.name).toBeTruthy();
+        expect(typeof neighborhood.name).toBe('string');
+      }
     });
   });
 
   describe('getStreets', () => {
-    it('should not throw for static neighborhood ID', async () => {
-      const neighborhoodId = 'NH-ADN-001-001'; // Akdam Mahallesi
+    it('should return empty array for non-OSM neighborhood IDs', async () => {
+      // Static neighborhood IDs are not in relation/node format
+      const result = await service.getStreets('SOME-STATIC-ID');
       
-      // Should return empty array or streets, but not throw
-      await expect(service.getStreets(neighborhoodId)).resolves.toBeDefined();
-      
-      const streets = await service.getStreets(neighborhoodId);
-      expect(Array.isArray(streets)).toBe(true);
+      expect(Array.isArray(result)).toBe(true);
+      const streetsArray = result as RegionArea[];
+      expect(streetsArray.length).toBe(0);
     });
 
-    it('should return empty array for unknown static neighborhood', async () => {
-      const neighborhoodId = 'NH-UNKNOWN-999';
-      const streets = await service.getStreets(neighborhoodId);
+    it('should cache empty results', async () => {
+      const result1 = await service.getStreets('STATIC-ID-1');
+      const result2 = await service.getStreets('STATIC-ID-1');
 
-      expect(streets).toBeDefined();
-      expect(Array.isArray(streets)).toBe(true);
-      expect(streets.length).toBe(0);
-    });
-
-    it('should cache results', async () => {
-      const neighborhoodId = 'NH-ADN-001-001';
-      
-      const streets1 = await service.getStreets(neighborhoodId);
-      const streets2 = await service.getStreets(neighborhoodId);
-
-      expect(streets1).toEqual(streets2);
+      expect(result1).toEqual(result2);
     });
   });
 
@@ -129,6 +120,33 @@ describe('RegionsService', () => {
     });
   });
 
+  describe('getProvinces', () => {
+    it('should return all provinces from static data', async () => {
+      const provinces = await service.getProvinces('relation/174737');
+
+      expect(provinces).toBeDefined();
+      expect(Array.isArray(provinces)).toBe(true);
+      expect(provinces.length).toBe(81);
+    });
+  });
+
+  describe('getDistricts', () => {
+    it('should return districts for a province', async () => {
+      const adanaProvince = staticRegions.provinces.find(p => p.name === 'Adana');
+      expect(adanaProvince).toBeDefined();
+
+      const districts = await service.getDistricts(adanaProvince!.osmId);
+
+      expect(districts).toBeDefined();
+      expect(Array.isArray(districts)).toBe(true);
+      expect(districts.length).toBeGreaterThan(0);
+      
+      // Verify Karaisalı is in the list
+      const karaisali = districts.find(d => d.name === 'Karaisalı');
+      expect(karaisali).toBeDefined();
+    });
+  });
+
   describe('computeRadiusKm', () => {
     it('should compute radius from bounding box', () => {
       const boundingBox: [number, number, number, number] = [36.5, 38.5, 34.5, 36.5];
@@ -140,15 +158,13 @@ describe('RegionsService', () => {
     });
 
     it('should clamp radius between min and max', () => {
-      // Very small box
       const smallBox: [number, number, number, number] = [37.0, 37.001, 35.0, 35.001];
       const smallRadius = service.computeRadiusKm(smallBox);
-      expect(smallRadius).toBe(0.3); // Should be clamped to minimum
+      expect(smallRadius).toBe(0.3);
 
-      // Very large box
       const largeBox: [number, number, number, number] = [30.0, 42.0, 26.0, 45.0];
       const largeRadius = service.computeRadiusKm(largeBox);
-      expect(largeRadius).toBe(500); // Should be clamped to maximum
+      expect(largeRadius).toBe(500);
     });
   });
 });

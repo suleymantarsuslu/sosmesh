@@ -9,18 +9,24 @@ class FakeRelayIngestUplink : RelayIngestUplink {
 
     @Volatile
     var uploadCallCount: Int = 0
+    
+    @Volatile
+    var onUpload: ((sosId: String, digest: String, blob: String, hopCount: Int) -> Unit)? = null
 
     override fun uploadOutboxEntry(
         sosId: String,
         digest: String,
         encryptedBlobBase64: String,
+        hopCount: Int,
     ): RelayIngestResult {
         uploadCallCount++
+        onUpload?.invoke(sosId, digest, encryptedBlobBase64, hopCount)
         return nextResult
     }
 
     fun reset() {
         nextResult = RelayIngestResult.HttpError(503, "ingest_not_wired")
         uploadCallCount = 0
+        onUpload = null
     }
 }

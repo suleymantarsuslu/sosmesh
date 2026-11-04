@@ -158,7 +158,7 @@ export class IngestService {
 
     // Mesh v2 (§8.2): decrypt L3 in memory; v1 / undecryptable payloads skip all of this.
     const inner = await this.meshV2.decryptInner(encryptedPayload, clientAad);
-    const v2: MeshV2Context | null = inner ? await this.meshV2.prepare(inner, receiptAt) : null;
+    const v2: MeshV2Context | null = inner ? await this.meshV2.prepare(inner, receiptAt, priority) : null;
 
     return this.prisma.$transaction(async (tx) => {
       const mergeTarget = v2 ? await this.meshV2.findMergeTarget(tx, v2.senderId, receiptAt) : null;

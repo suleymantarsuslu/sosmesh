@@ -234,6 +234,63 @@ class RelayUploadExecutorTest {
         )
     }
 
+    private suspend fun enqueueOwnSosBlobAtTime(
+        sosId: String,
+        origin: String = "android",
+        blobSize: Int = 16,
+        createdAt: Long,
+    ) {
+        val blob = "x".repeat(blobSize)
+        adapter.enqueue(
+            EnqueueInput(
+                sosId = sosId,
+                digest = digestFor(sosId, blobSize),
+                origin = origin,
+                encryptedBlobBase64 = blob,
+            ),
+            nowMs = createdAt,
+        )
+    }
+
+    @Test
+    fun tombstoneServerAcceptedWithPendingAttachments_stillUploadsForToken() =
+        runBlocking {
+            enqueueOwnSosBlob("tombstone-1", origin = "android")
+            val entry = adapter.getByKey("tombstone-1", digestFor("tombstone-1"))!!
+            adapter.updateState("tombstone-1", entry.digest, "SERVER_ACCEPTED", 10_000L, null)
+            
+            fakeUplink.nextResult = RelayIngestResult.Success("test-token-123")
+            val summary =
+                executor.runOwnSosUploadCycle(
+                    nowMs = 11_000L,
+                    networkConnected = true,
+                )
+            assertEquals(1, fakeUplink.uploadCallCount)
+            assertEquals(1, summary.uploaded)
+            val updated = adapter.getByKey("tombstone-1", digestFor("tombstone-1"))!!
+            assertEquals("SERVER_ACCEPTED", updated.state)
+        }
+
+    @Test
+    fun ownSosUpload_newestFirst() =
+        runBlocking {
+            enqueueOwnSosBlobAtTime("old-1", origin = "android", createdAt = 1_000L)
+            enqueueOwnSosBlobAtTime("old-2", origin = "android", createdAt = 2_000L)
+            enqueueOwnSosBlobAtTime("new-1", origin = "android", createdAt = 9_000L)
+            
+            val uploadOrder = mutableListOf<String>()
+            fakeUplink.onUpload = { sosId, _, _, _ -> uploadOrder.add(sosId) }
+            fakeUplink.nextResult = RelayIngestResult.Success(null)
+            
+            val summary =
+                executor.runOwnSosUploadCycle(
+                    nowMs = 10_000L,
+                    networkConnected = true,
+                )
+            assertEquals(3, summary.uploaded)
+            assertEquals("new-1", uploadOrder[0])
+        }
+
     private fun digestFor(
         sosId: String,
         blobSize: Int = 16,

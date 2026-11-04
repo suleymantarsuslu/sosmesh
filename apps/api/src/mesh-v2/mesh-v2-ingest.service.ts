@@ -65,8 +65,9 @@ export class MeshV2IngestService {
   /**
    * Upserts the sender and applies the per-sender limit. Throws SenderRateLimitedException above 60/h.
    * Never stores the senderKey; only SHA-256 of its bytes.
+   * @param priority envelope priority (0-9, lower is more urgent)
    */
-  async prepare(inner: InnerPayloadV2, now: Date = new Date()): Promise<MeshV2Context> {
+  async prepare(inner: InnerPayloadV2, now: Date = new Date(), priority = 5): Promise<MeshV2Context> {
     const hash = senderKeyHash(inner.senderKey);
     const sender = await this.prisma.sosSender.upsert({
       where: { senderKeyHash: hash },
@@ -83,7 +84,8 @@ export class MeshV2IngestService {
         select: { receivedAt: true },
       }),
     ]);
-    const decision = decideSenderRate(count, oldest?.receivedAt ?? null, now);
+    const hasRealContent = !!(inner.note || inner.location || priority <= 2);
+    const decision = decideSenderRate(count, oldest?.receivedAt ?? null, now, hasRealContent);
     const senderTag = senderLogTag(hash, now);
     if (decision.action === 'reject') {
       this.logger.warn({ code: 'SENDER_RATE_LIMITED', senderTag, retryAfterSeconds: decision.retryAfterSeconds });

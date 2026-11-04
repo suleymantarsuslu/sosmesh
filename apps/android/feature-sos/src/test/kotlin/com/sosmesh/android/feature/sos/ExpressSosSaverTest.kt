@@ -94,4 +94,27 @@ class ExpressSosSaverTest {
             assertEquals("LOCAL_SAVED", adapter.listAll().single().state)
             assertEquals(id, adapter.listAll().single().sosId)
         }
+
+    @Test
+    fun expressSave_withinOpenCase_replacesUnsentPrevious() =
+        runBlocking {
+            val id1 = saver.save(nowMs = 1_700_000_000_000L)
+            assertEquals(1, adapter.listAll().size)
+            
+            val id2 = saver.save(nowMs = 1_700_000_001_000L)
+            val all = adapter.listAll()
+            assertEquals(1, all.size)
+            assertEquals(id2, all.single().sosId)
+        }
+
+    @Test
+    fun expressSave_afterCaseExpired_createsNewEntry() =
+        runBlocking {
+            val id1 = saver.save(nowMs = 1_700_000_000_000L)
+            assertEquals(1, adapter.listAll().size)
+            
+            val id2 = saver.save(nowMs = 1_700_000_000_000L + 25L * 3600_000L)
+            val all = adapter.listAll()
+            assertEquals(2, all.size)
+        }
 }

@@ -77,8 +77,6 @@ class RelayUploadExecutor
                             nowMs,
                             null,
                         )
-                        outbox.clearUploadRetry(entry.sosId, entry.digest)
-                        uploaded++
                         
                         if (visibilityTracker?.isAppInForeground() == false) {
                             notificationManager?.notifyServerAccepted(entry.sosId)
@@ -91,6 +89,14 @@ class RelayUploadExecutor
                                 baseUrl = deriveBaseUrl(ingestConfig.ingestUrl),
                             )
                         }
+                        
+                        outbox.setUploadRetryAt(
+                            entry.sosId,
+                            entry.digest,
+                            UPLOAD_PERMANENT_ERROR_RETRY_AT_MS,
+                            null,
+                        )
+                        uploaded++
                     }
                     is RelayIngestResult.InvalidReceipt -> {
                         outbox.setUploadRetryAt(
@@ -270,10 +276,14 @@ class RelayUploadExecutor
         }
     }
 
-/** mesh-v2 §9 / req. 1: own pending messages first (oldest first), then relayed copies (oldest first). */
+/** mesh-v2 §9 / req. 1: own pending messages first (newest first), then relayed copies (oldest first). */
 object UploadPriority {
     fun <T : com.sosmesh.contracts.transport.OutboxEntryMeta> ownFirst(entries: List<T>): List<T> =
-        entries.sortedWith(compareBy<T> { if (it.origin == "relay") 1 else 0 }.thenBy { it.createdAtMs })
+        entries.sortedWith(
+            compareBy<T> { if (it.origin == "relay") 1 else 0 }
+                .thenByDescending { if (it.origin == "relay") 0L else it.createdAtMs }
+                .thenBy { if (it.origin == "relay") it.createdAtMs else 0L }
+        )
 }
 
 /** Own SOS: hopCount 0. Relayed outbox rows do not keep the L1 hop count, so they report the minimum relayed value 1. */

@@ -90,10 +90,10 @@ interface OutboxDao {
         """
         SELECT * FROM outbox
         WHERE (upload_retry_at IS NULL OR upload_retry_at <= :nowMs)
-        AND state IN ('LOCAL_SAVED', 'PEER_RECEIVED')
+        AND state IN ('LOCAL_SAVED', 'PEER_RECEIVED', 'SERVER_ACCEPTED')
         AND (origin = 'android' OR origin = 'wear_os')
         AND (upload_last_error IS NULL OR upload_last_error != 'needs_review')
-        ORDER BY created_at ASC
+        ORDER BY created_at DESC
         """,
     )
     fun listDueOwnUpload(nowMs: Long): List<OutboxEntity>

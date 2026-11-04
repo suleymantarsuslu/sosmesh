@@ -357,6 +357,12 @@ public final class LiveBleMeshRadio: NSObject, BleMeshRadioPort, CBCentralManage
 
     // MARK: CBCentralManagerDelegate
 
+    /// Required: the manager is created with a restore identifier and this object becomes its
+    /// delegate, so CoreBluetooth throws if it cannot deliver restored state here.
+    public func centralManager(_ central: CBCentralManager, willRestoreState dict: [String: Any]) {
+        centralCoordinator.centralManager(central, willRestoreState: dict)
+    }
+
     public func centralManagerDidUpdateState(_ central: CBCentralManager) {
         refreshAuthorizationFromManagers()
         if central.state == .poweredOn {
@@ -421,6 +427,11 @@ public final class LiveBleMeshRadio: NSObject, BleMeshRadioPort, CBCentralManage
     }
 
     // MARK: CBPeripheralManagerDelegate
+
+    /// Required for the restore identifier set by `BlePeripheralCoordinator`.
+    public func peripheralManager(_ peripheral: CBPeripheralManager, willRestoreState dict: [String: Any]) {
+        peripheralCoordinator.peripheralManager(peripheral, willRestoreState: dict)
+    }
 
     public func peripheralManagerDidUpdateState(_ peripheral: CBPeripheralManager) {
         refreshAuthorizationFromManagers()

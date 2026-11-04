@@ -22,6 +22,7 @@ import com.sosmesh.android.core.ble.platform.GattClientCallbackPort
 import com.sosmesh.android.core.ble.platform.GattClientPort
 import com.sosmesh.android.core.ble.platform.GattConnectionState
 import com.sosmesh.android.core.ble.platform.GattProperty
+import com.sosmesh.android.core.ble.platform.GattServerConnectionListener
 import com.sosmesh.android.core.ble.platform.GattServerPort
 import com.sosmesh.android.core.ble.platform.GattServerWriteListener
 import dagger.hilt.android.qualifiers.ApplicationContext
@@ -37,6 +38,7 @@ class AndroidGattServerPort
     ) : GattServerPort {
         private var gattServer: BluetoothGattServer? = null
         private var writeListener: GattServerWriteListener? = null
+        private var connectionListener: GattServerConnectionListener? = null
         private val characteristics = mutableMapOf<String, BluetoothGattCharacteristic>()
         private var connectedAddress: String? = null
 
@@ -61,12 +63,12 @@ class AndroidGattServerPort
                                 status: Int,
                                 newState: Int,
                             ) {
-                                connectedAddress =
-                                    if (newState == BluetoothProfile.STATE_CONNECTED) {
-                                        device?.address
-                                    } else {
-                                        null
-                                    }
+                                val address = device?.address
+                                val connected = newState == BluetoothProfile.STATE_CONNECTED
+                                connectedAddress = if (connected) address else null
+                                if (address != null) {
+                                    connectionListener?.onConnectionStateChanged(address, connected)
+                                }
                             }
 
                             override fun onCharacteristicReadRequest(
@@ -164,6 +166,10 @@ class AndroidGattServerPort
 
         override fun setWriteListener(listener: GattServerWriteListener?) {
             writeListener = listener
+        }
+
+        override fun setConnectionListener(listener: GattServerConnectionListener?) {
+            connectionListener = listener
         }
 
         override fun notifyCharacteristic(

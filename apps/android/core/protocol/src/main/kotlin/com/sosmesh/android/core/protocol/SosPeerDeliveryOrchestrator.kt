@@ -55,6 +55,7 @@ class SosPeerDeliveryOrchestrator
         private var discoveryActive: Boolean = false
 
         private val cycleMutex = Mutex()
+        private val attemptedPeers = mutableMapOf<String, MutableSet<String>>()
 
         suspend fun runCycle(
             nowMs: Long,
@@ -75,7 +76,10 @@ class SosPeerDeliveryOrchestrator
             }
             val due =
                 outboxReader.listDueAndroidPeerSend(nowMs).firstOrNull()
-                    ?: return SosPeerDeliveryCycleResult.Idle
+                    ?: run {
+                        attemptedPeers.clear()
+                        return SosPeerDeliveryCycleResult.Idle
+                    }
             if (engine.senderState() != TransferState.IDLE) {
                 return SosPeerDeliveryCycleResult.SenderBusy
             }
@@ -87,6 +91,7 @@ class SosPeerDeliveryOrchestrator
             }
             radio.tickGattReconnect()
             var status = radio.refreshStatus()
+            val triedForThisMessage = attemptedPeers.getOrPut(due.sosId) { mutableSetOf() }
             if (status.gattState != GattUiConnectionState.READY) {
                 if (status.peerCount == 0 && radio.peerHops().isEmpty()) {
                     scheduleRetry(due, nowMs + 5_000L, "no_peer")
@@ -95,7 +100,7 @@ class SosPeerDeliveryOrchestrator
                 if (status.gattState == GattUiConnectionState.NONE ||
                     status.gattState == GattUiConnectionState.BACKOFF
                 ) {
-                    radio.connectBestPeer().onFailure { error ->
+                    radio.connectBestPeer(triedForThisMessage).onFailure { error ->
                         scheduleRetry(due, nowMs + 5_000L, error.message ?: "connect_failed")
                         return mapRadioFailure(error, due, nowMs)
                     }
@@ -118,17 +123,19 @@ class SosPeerDeliveryOrchestrator
                 return SosPeerDeliveryCycleResult.Blocked("digest_mismatch")
             }
             engine.onGattReady()
-            when (val pre = MeshV2CentralSession.preflight(engine, radio.connectedPeerId(), listOf(due.sosId), nowMs)) {
+            val peerId = radio.connectedPeerId()
+            when (val pre = MeshV2CentralSession.preflight(engine, peerId, listOf(due.sosId), nowMs)) {
                 MeshV2Preflight.V1Peer -> Unit
                 MeshV2Preflight.TombstoneBatchSent -> return SosPeerDeliveryCycleResult.TransferStarted
                 is MeshV2Preflight.Statuses ->
                     if (!pre.wants(due.sosId)) {
-                        // Peer already has it (HAVE) or it reached the server (DELIVERED): never resend; try another peer later.
+                        if (peerId != null) triedForThisMessage.add(peerId)
                         radio.disconnectPeerSession()
-                        scheduleRetry(due, nowMs + PEER_HAS_RETRY_MS, "peer_has_copy")
+                        scheduleRetry(due, nowMs + 2_000L, "peer_has_copy")
                         return SosPeerDeliveryCycleResult.Idle
                     }
             }
+            if (peerId != null) triedForThisMessage.add(peerId)
             engine.sendOutbound(due.sosId, due.digest, payload)
             return SosPeerDeliveryCycleResult.TransferStarted
         }

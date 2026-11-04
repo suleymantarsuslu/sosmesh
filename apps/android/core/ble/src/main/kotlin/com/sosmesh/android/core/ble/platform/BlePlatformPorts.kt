@@ -76,6 +76,13 @@ interface GattServerWriteListener {
     )
 }
 
+interface GattServerConnectionListener {
+    fun onConnectionStateChanged(
+        deviceAddress: String,
+        connected: Boolean,
+    )
+}
+
 interface GattServerPort {
     fun start(
         serviceUuid: String,
@@ -85,6 +92,8 @@ interface GattServerPort {
     fun stop()
 
     fun setWriteListener(listener: GattServerWriteListener?)
+
+    fun setConnectionListener(listener: GattServerConnectionListener?)
 
     fun notifyCharacteristic(
         uuid: String,

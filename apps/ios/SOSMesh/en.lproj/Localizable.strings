@@ -116,7 +116,8 @@
 "sos.delivered.message" = "This does not replace %@. Call %@ for immediate emergency response.";
 "sos.followup.title" = "Your message was sent. Add anything you want to add";
 "sos.followup.send" = "Send follow-up";
-"relay.delivered.count" = "%d help messages were delivered through you";
+"relay.delivered.count.one" = "You helped deliver 1 person's help message";
+"relay.delivered.count.other" = "You helped deliver %d people's help messages";
 
 /* Relay diagnostics (counters only) */
 "relay.diag.title" = "Relay diagnostics";
@@ -177,3 +178,5 @@
 "notifications.clear.confirm" = "Clear all notifications?";
 "notifications.clear.yes" = "Clear all";
 "notifications.clear.cancel" = "Cancel";
+"broadcast.relay_request.action.enable" = "Turn on relay";
+"broadcast.relay_request.action.cancel" = "Cancel";

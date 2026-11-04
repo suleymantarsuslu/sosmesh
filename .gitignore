@@ -89,3 +89,6 @@ playwright-report/
 actionlint
 test-artifacts/
 **/.build/
+
+# Firebase client config (not committed)
+apps/android/app/google-services.json

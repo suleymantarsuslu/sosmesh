@@ -4,6 +4,7 @@ import { useOperatorPreferences } from '../../../../../components/operator/Opera
 import { Icon } from '../../../../../features/cases/detail/icons';
 
 type Props = {
+  broadcastKind: 'standard' | 'relay_request';
   title: string;
   body: string;
   severity: 'info' | 'warning' | 'critical';
@@ -17,6 +18,7 @@ type Props = {
 };
 
 export function ConfirmBroadcastModal({
+  broadcastKind,
   title,
   body,
   severity,
@@ -96,6 +98,15 @@ export function ConfirmBroadcastModal({
           </div>
 
           <div className="broadcast-modal-summary">
+            <div className="broadcast-modal-summary__row">
+              <span className="broadcast-modal-summary__label">
+                {t('web.broadcasts.notificationType')}:
+              </span>
+              <span className={`broadcast-modal-summary__value ${broadcastKind === 'relay_request' ? 'broadcast-modal-summary__kind--relay' : ''}`}>
+                {broadcastKind === 'relay_request' ? t('web.broadcasts.typeRelayRequest') : t('web.broadcasts.typeStandard')}
+              </span>
+            </div>
+
             <div className="broadcast-modal-summary__row">
               <span className="broadcast-modal-summary__label">
                 {t('web.broadcasts.notificationTitle')}:

@@ -29,6 +29,7 @@ final class AppModel: ObservableObject {
             handleReceivedInboxChange(old: oldValue, new: receivedInbox)
         }
     }
+    @Published var pendingRelayRequestBroadcast: ServerBroadcast? = nil
     @Published var lastUploadToken: String?
     @Published private(set) var relayDiagnostics = RelayDiagnosticsSnapshot()
     @Published var showDeliveredModal = false
@@ -38,6 +39,7 @@ final class AppModel: ObservableObject {
     let deliveredModalTracker = DeliveredModalTracker()
     let openCaseTracker = OpenCaseTracker()
     let relayCounter = RelayDeliveryCounter()
+    private var relayDeliveryStatusClient: RelayDeliveryStatusClient?
 
     /// Debug-only fault injection (not the default data path).
     #if DEBUG
@@ -96,6 +98,7 @@ final class AppModel: ObservableObject {
         self.outboxStorePathOverride = outboxStorePath
         self.meshRadioFactory = meshRadioFactory
         self.composer = try? IosSosMessageComposer(cryptoConfig: SosCryptoConfiguration.loadComposerConfig())
+        BroadcastNotificationManager.registerCategories()
         probe.onGateRefreshRequested = { [weak self] in
             Task { @MainActor in
                 await self?.refreshPermissionGate()
@@ -122,6 +125,10 @@ final class AppModel: ObservableObject {
             await refreshPermissionGate()
             await fetchAndNotifyBroadcasts()
         }
+    }
+
+    func enableRelay() async {
+        relayEnabled = true
     }
 
     func onPermissionGateBecameVisible() {
@@ -296,6 +303,7 @@ final class AppModel: ObservableObject {
             await refreshPermissionGate()
             await attachmentCoordinator?.processQueue()
             await fetchAndNotifyBroadcasts()
+            await syncRelayDeliveryStatus()
         }
     }
 
@@ -523,8 +531,20 @@ final class AppModel: ObservableObject {
                 try? await Task.sleep(nanoseconds: 20_000_000_000)
                 if !Task.isCancelled {
                     await fetchAndNotifyBroadcasts()
+                    await syncRelayDeliveryStatus()
                 }
             }
+        }
+    }
+    
+    private func syncRelayDeliveryStatus() async {
+        guard let client = relayDeliveryStatusClient else { return }
+        let pending = relayCounter.getPendingCarriedIds()
+        guard !pending.isEmpty else { return }
+        
+        let delivered = await client.checkDeliveryStatus(messageIds: pending)
+        if !delivered.isEmpty {
+            relayCounter.markCarriedMessagesDelivered(delivered)
         }
     }
     
@@ -547,8 +567,14 @@ final class AppModel: ObservableObject {
         }
         
         let nowMs = Int64(Date().timeIntervalSince1970 * 1000)
+        let isActive = await UIApplication.shared.applicationState == .active
+        
         for broadcast in broadcasts {
-            await notificationManager.showNotification(broadcast: broadcast)
+            if isActive && broadcast.kind == "relay_request" {
+                pendingRelayRequestBroadcast = broadcast
+            } else {
+                await notificationManager.showNotification(broadcast: broadcast)
+            }
             
             let historyItem = NotificationHistoryItem(
                 id: broadcast.id,
@@ -569,6 +595,7 @@ final class AppModel: ObservableObject {
                     title: broadcast.title,
                     body: broadcast.body,
                     severity: broadcast.severity,
+                    kind: "standard",
                     createdAt: broadcast.createdAt,
                     expiresAt: broadcast.expiresAt,
                     regionLat: broadcast.regionLat,
@@ -626,7 +653,8 @@ final class AppModel: ObservableObject {
             relayIdHex: config.relayIdHex,
             receiptKeySpkiBase64: config.receiptVerifyPublicKeySpkiBase64,
             directory: meshDirectory,
-            nowMs: nowMs
+            nowMs: nowMs,
+            relayDeliveryCounter: relayCounter
         )
         node.relayEnabled = relayEnabled
         
@@ -653,6 +681,7 @@ final class AppModel: ObservableObject {
         
         meshNode = node
         gatewayProbe = GatewayProbe(baseURL: config.baseURL)
+        relayDeliveryStatusClient = RelayDeliveryStatusClient(baseURL: config.baseURL)
         if let meshRadioFactory {
             meshRadio = meshRadioFactory(outbox, receivedInboxStore)
         } else {
@@ -702,7 +731,10 @@ extension AppModel {
     /// Runs only while relay mode is on; failures keep the entry queued for the next retry.
     func forwardReceivedEnvelopes() async {
         guard relayEnabled, let relayForwarder else { return }
-        await relayForwarder.forwardDue()
+        let summary = await relayForwarder.forwardDue()
+        if summary.accepted > 0 {
+            await syncRelayDeliveryStatus()
+        }
         receivedInbox = receivedInboxStore.list()
     }
 

@@ -46,10 +46,12 @@ public final class MeshV2Node: @unchecked Sendable {
     public var broadcastVerifier: ((ServerBroadcast) -> Bool)?
     public var broadcastNotifier: ((ServerBroadcast) -> Void)?
     public var locationProvider: (() -> (Double, Double)?)?
+    public var relayDeliveryCounter: RelayDeliveryCounterPort?
 
-    public init(outbox: SosOutboxService, relayIdHex: String, receiptKeySpkiBase64: String, directory: URL?, nowMs: Int64) {
+    public init(outbox: SosOutboxService, relayIdHex: String, receiptKeySpkiBase64: String, directory: URL?, nowMs: Int64, relayDeliveryCounter: RelayDeliveryCounterPort? = nil) {
         self.outbox = outbox
         self.relayIdHex = relayIdHex
+        self.relayDeliveryCounter = relayDeliveryCounter
         deviceHash = MeshV2.sha256Hex(Data(relayIdHex.utf8))
         verifier = TombstoneVerifier(publicKeySpkiBase64: receiptKeySpkiBase64)
         hops = GatewayHopsTracker(selfKey: MeshInfo.selfKey(relayIdHex: relayIdHex, nowMs: nowMs))
@@ -198,6 +200,7 @@ public final class MeshV2Node: @unchecked Sendable {
         let digest = BleProtocol.calculateSHA256(l2).base64EncodedString()
         do {
             try outbox.enqueueRelayEnvelope(sosId: env.messageId, digest: digest, envelope: blob, nowMs: nowMs)
+            relayDeliveryCounter?.recordCarriedMessage(messageId: env.messageId)
         } catch {
             return .unknown
         }
@@ -258,17 +261,22 @@ public final class MeshV2Node: @unchecked Sendable {
     /// SERVER_ACCEPTED and keeps its history. A hash mismatch keeps the copy.
     public func applyVerified(_ t: DeliveryTombstone, nowMs: Int64) {
         let entries = ((try? outbox.listEntries()) ?? []).filter { $0.sosId == t.messageId }
+        var carriedAndVerified = false
         for entry in entries {
             guard let blob = Data(base64Encoded: entry.encryptedBlobBase64) else { continue }
             if entry.origin == SosOutboxService.relayOrigin {
                 guard let decoded = MeshCarry.decodeStored(blob, nowMs: nowMs),
                       MeshV2.sha256Hex(decoded.l2) == t.packetHash else { continue }
+                carriedAndVerified = true
                 _ = try? outbox.removeEntry(sosId: entry.sosId, digest: entry.digest)
             } else {
                 guard MeshV2.sha256Hex(blob) == t.packetHash,
                       entry.state == "LOCAL_SAVED" || entry.state == "PEER_RECEIVED" else { continue }
                 _ = try? outbox.markServerAccepted(sosId: entry.sosId, digest: entry.digest, fromState: entry.state, nowMs: nowMs)
             }
+        }
+        if carriedAndVerified {
+            relayDeliveryCounter?.markCarriedMessagesDelivered([t.messageId])
         }
         seen.mark(t.messageKey, state: .delivered, nowMs: nowMs)
     }

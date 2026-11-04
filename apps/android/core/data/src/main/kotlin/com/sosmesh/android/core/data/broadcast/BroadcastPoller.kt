@@ -84,6 +84,10 @@ class BroadcastPoller
                         } catch (_: SecurityException) {
                         }
 
+                        if (broadcast.kind == "relay_request") {
+                            foregroundDialogHandler?.invoke(broadcast)
+                        }
+
                         val historyItem =
                             com.sosmesh.android.core.data.notifications.NotificationHistoryItem(
                                 id = broadcast.id,
@@ -112,6 +116,10 @@ class BroadcastPoller
             /** Set by the app module to hand verified broadcasts to the mesh relay (core:data can't depend on mesh-v2). */
             @Volatile
             var meshSink: ((ServerBroadcast, Long) -> Unit)? = null
+
+            /** Set by the app module to show foreground dialog for relay_request broadcasts. */
+            @Volatile
+            var foregroundDialogHandler: ((ServerBroadcast) -> Unit)? = null
         }
 
         private fun getLastKnownLocation(): Location? {

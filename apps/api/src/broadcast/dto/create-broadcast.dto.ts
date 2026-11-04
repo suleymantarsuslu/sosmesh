@@ -6,6 +6,11 @@ export enum BroadcastSeverity {
   critical = 'critical',
 }
 
+export enum BroadcastKind {
+  standard = 'standard',
+  relay_request = 'relay_request',
+}
+
 export type SelectedRegion = {
   label: string;
   lat: number;
@@ -26,6 +31,10 @@ export class CreateBroadcastDto {
 
   @IsEnum(BroadcastSeverity)
   severity!: BroadcastSeverity;
+
+  @IsOptional()
+  @IsEnum(BroadcastKind)
+  kind?: BroadcastKind;
 
   @IsNumber()
   @Min(1)

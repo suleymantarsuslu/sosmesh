@@ -56,12 +56,12 @@ struct RelayView: View {
                                     .font(.system(size: 24))
                                     .foregroundStyle(DesignSystem.Colors.successGreen)
                                     .accessibilityHidden(true)
-                                Text(String(format: NSLocalizedString("relay.delivered.count", comment: ""), appModel.relayDiagnostics.relayDeliveredCount))
+                                Text(relayDeliveredCountText(count: appModel.relayDiagnostics.relayDeliveredCount))
                                     .font(DesignSystem.Typography.callout)
                                     .foregroundStyle(DesignSystem.Colors.textPrimary)
                             }
                         }
-                        .accessibilityLabel(Text(String(format: NSLocalizedString("relay.delivered.count", comment: ""), appModel.relayDiagnostics.relayDeliveredCount)))
+                        .accessibilityLabel(Text(relayDeliveredCountText(count: appModel.relayDiagnostics.relayDeliveredCount)))
                     }
                     
                     diagnosticsSection
@@ -150,6 +150,15 @@ struct RelayView: View {
     private func timeText(_ ms: Int64?) -> Text {
         guard let ms else { return Text("relay.diag.none") }
         return Text(Date(timeIntervalSince1970: TimeInterval(ms) / 1000), style: .relative)
+    }
+    
+    private func relayDeliveredCountText(count: Int) -> String {
+        let key = count == 1 ? "relay.delivered.count.one" : "relay.delivered.count.other"
+        if count == 1 {
+            return NSLocalizedString(key, comment: "")
+        } else {
+            return String(format: NSLocalizedString(key, comment: ""), count)
+        }
     }
 
     private var infoSection: some View {

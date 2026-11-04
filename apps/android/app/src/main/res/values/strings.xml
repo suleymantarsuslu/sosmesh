@@ -126,4 +126,6 @@
     <string name="widget_app_name">Emergency Network</string>
     <string name="widget_sos_label">SOS</string>
     <string name="widget_description">Quick access to send SOS</string>
+    <string name="broadcast_relay_request_action_enable">Turn on relay</string>
+    <string name="broadcast_relay_request_action_cancel">Cancel</string>
 </resources>

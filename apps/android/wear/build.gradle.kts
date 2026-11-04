@@ -8,7 +8,8 @@ android {
     compileSdk = 35
 
     defaultConfig {
-        applicationId = "com.sosmesh.android.wear"
+        // Must equal the phone app id + signing for Wearable Data Layer delivery.
+        applicationId = "com.sosmesh.android"
         minSdk = 30
         targetSdk = 35
         versionCode = 1
@@ -40,11 +41,13 @@ android {
         release {
             isMinifyEnabled = false
             val wearSigning = signingConfigs.getByName("wearRelease")
+            val allowDebugSignedRelease =
+                (findProperty("sosmesh.allowDebugSignedRelease") as String?) == "true"
             signingConfig =
-                if (wearSigning.storeFile != null) {
-                    wearSigning
-                } else {
-                    null
+                when {
+                    wearSigning.storeFile != null -> wearSigning
+                    allowDebugSignedRelease -> signingConfigs.getByName("debug")
+                    else -> null
                 }
         }
     }

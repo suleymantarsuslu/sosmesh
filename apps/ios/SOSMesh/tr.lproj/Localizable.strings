@@ -107,6 +107,11 @@
 "sos.sent.action.status" = "Durum ekranına git";
 "notification.sos.delivered.title" = "Mesajınız gönderildi";
 "notification.sos.delivered.body" = "SOS mesajınız sunucuya ulaştı.";
+"sos.delivered.title" = "Yardım talebiniz iletildi";
+"sos.delivered.message" = "Bu, 112'nin yerine geçmez. Acil yardım için 112'yi arayın.";
+"sos.followup.title" = "Mesajınız gönderildi. Eklemek istediğiniz bir şey varsa ekleyin";
+"sos.followup.send" = "Ek mesaj gönder";
+"relay.delivered.count" = "Sizin aracılığınızla %d adet yardım mesajı iletilmiştir";
 
 /* Relay diagnostics (counters only) */
 "relay.diag.title" = "Relay tanılama";

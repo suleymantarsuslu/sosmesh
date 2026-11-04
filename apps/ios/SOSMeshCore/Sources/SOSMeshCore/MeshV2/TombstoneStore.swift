@@ -93,6 +93,11 @@ public final class TombstoneStore: @unchecked Sendable {
         lock.lock(); defer { lock.unlock() }
         return items.count
     }
+    
+    public func allTombstones() -> [DeliveryTombstone] {
+        lock.lock(); defer { lock.unlock() }
+        return items.values.map { $0.tombstone }
+    }
 
     public func purge(nowMs: Int64) {
         lock.lock(); purgeUnlocked(nowMs: nowMs); lock.unlock()

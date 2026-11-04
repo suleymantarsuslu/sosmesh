@@ -107,6 +107,11 @@
 "sos.sent.action.status" = "Go to status";
 "notification.sos.delivered.title" = "Your message has been delivered";
 "notification.sos.delivered.body" = "Your SOS message has reached the server.";
+"sos.delivered.title" = "Your help request was delivered";
+"sos.delivered.message" = "This does not replace 112. Call 112 for immediate emergency response.";
+"sos.followup.title" = "Your message was sent. Add anything you want to add";
+"sos.followup.send" = "Send follow-up";
+"relay.delivered.count" = "%d help messages were delivered through you";
 
 /* Relay diagnostics (counters only) */
 "relay.diag.title" = "Relay diagnostics";

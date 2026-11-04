@@ -30,6 +30,10 @@ export class BroadcastService {
     const now = new Date();
     const expiresAt = new Date(now.getTime() + dto.expiryHours * 60 * 60 * 1000);
 
+    // Round to the DB precision (Decimal(10,7)) so the signed values match what devices receive.
+    const regionLatitude = dto.regionLatitude != null ? Number(dto.regionLatitude.toFixed(7)) : dto.regionLatitude;
+    const regionLongitude = dto.regionLongitude != null ? Number(dto.regionLongitude.toFixed(7)) : dto.regionLongitude;
+
     const id = crypto.randomUUID();
     const signature = this.signer.signBroadcast(
       id,
@@ -38,8 +42,8 @@ export class BroadcastService {
       dto.severity,
       now,
       expiresAt,
-      dto.regionLatitude,
-      dto.regionLongitude,
+      regionLatitude,
+      regionLongitude,
       dto.regionRadiusKm
     );
 
@@ -52,8 +56,8 @@ export class BroadcastService {
         createdById: userId,
         createdAt: now,
         expiresAt,
-        regionLatitude: dto.regionLatitude,
-        regionLongitude: dto.regionLongitude,
+        regionLatitude,
+        regionLongitude,
         regionRadiusKm: dto.regionRadiusKm,
         signature,
       },

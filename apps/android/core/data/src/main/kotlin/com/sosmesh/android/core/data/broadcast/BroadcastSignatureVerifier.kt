@@ -1,38 +1,42 @@
 package com.sosmesh.android.core.data.broadcast
 
 import android.util.Base64
-import java.security.KeyFactory
-import java.security.PublicKey
-import java.security.Signature
-import java.security.spec.X509EncodedKeySpec
+import com.google.crypto.tink.subtle.Ed25519Verify
 
 class BroadcastSignatureVerifier(publicKeyBase64: String) {
-    private val publicKey: PublicKey
-
-    init {
-        val keyBytes = Base64.decode(publicKeyBase64, Base64.NO_WRAP)
-        val keySpec = X509EncodedKeySpec(keyBytes)
-        val keyFactory = KeyFactory.getInstance("Ed25519")
-        publicKey = keyFactory.generatePublic(keySpec)
-    }
+    // Raw 32-byte Ed25519 key from the 44-byte SPKI. Tink is used because the platform
+    // "Ed25519" KeyFactory only exists on Android 13+; a bad key fails closed in verify().
+    private val rawPublicKey: ByteArray? =
+        runCatching { Base64.decode(publicKeyBase64, Base64.NO_WRAP) }
+            .getOrNull()
+            ?.takeIf { it.size == SPKI_LENGTH }
+            ?.copyOfRange(SPKI_LENGTH - RAW_KEY_LENGTH, SPKI_LENGTH)
 
     fun verify(broadcast: ServerBroadcast): Boolean {
         return try {
             val regionPart = if (broadcast.regionLat != null && broadcast.regionLng != null && broadcast.regionRadiusKm != null) {
-                "|${broadcast.regionLat}|${broadcast.regionLng}|${broadcast.regionRadiusKm}"
+                "|${jsNumber(broadcast.regionLat)}|${jsNumber(broadcast.regionLng)}|${jsNumber(broadcast.regionRadiusKm)}"
             } else {
                 ""
             }
             val payload =
                 "BROADCAST|${broadcast.id}|${broadcast.title}|${broadcast.body}|${broadcast.severity}|${broadcast.createdAt}|${broadcast.expiresAt}$regionPart"
             val signatureBytes = Base64.decode(broadcast.signature, Base64.NO_WRAP)
-            val sig = Signature.getInstance("Ed25519")
-            sig.initVerify(publicKey)
-            sig.update(payload.toByteArray(Charsets.UTF_8))
-            sig.verify(signatureBytes)
+            val key = rawPublicKey ?: return false
+            Ed25519Verify(key).verify(signatureBytes, payload.toByteArray(Charsets.UTF_8))
+            true
         } catch (e: Exception) {
             false
         }
+    }
+
+    // The server signs with JavaScript number formatting, where 50.0 is written as "50".
+    private fun jsNumber(value: Double): String =
+        if (value % 1.0 == 0.0 && kotlin.math.abs(value) < 1e15) value.toLong().toString() else value.toString()
+
+    private companion object {
+        const val SPKI_LENGTH = 44
+        const val RAW_KEY_LENGTH = 32
     }
 }
 

@@ -13,7 +13,7 @@ public struct BroadcastSignatureVerifier {
     public func verify(broadcast: ServerBroadcast) -> Bool {
         let regionPart: String
         if let lat = broadcast.regionLat, let lng = broadcast.regionLng, let radius = broadcast.regionRadiusKm {
-            regionPart = "|\(lat)|\(lng)|\(radius)"
+            regionPart = "|\(Self.jsNumber(lat))|\(Self.jsNumber(lng))|\(Self.jsNumber(radius))"
         } else {
             regionPart = ""
         }
@@ -25,5 +25,13 @@ public struct BroadcastSignatureVerifier {
         }
         
         return publicKey.isValidSignature(signatureData, for: payloadData)
+    }
+
+    // The server signs with JavaScript number formatting, where 50.0 is written as "50".
+    static func jsNumber(_ value: Double) -> String {
+        if value.truncatingRemainder(dividingBy: 1) == 0, abs(value) < 1e15 {
+            return String(Int64(value))
+        }
+        return "\(value)"
     }
 }

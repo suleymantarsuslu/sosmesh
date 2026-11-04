@@ -227,8 +227,11 @@ export class RegionsService {
         lat: n.lat,
         lon: n.lon,
         boundingBox: n.boundingBox as [number, number, number, number],
-      }));
-      
+      }))
+        // Some OSM features are tagged with a placeholder name like "mahalle"; drop those.
+        .filter((n: RegionArea) => !/^mahalle(si)?$/i.test(n.name.trim()))
+        .sort((a: RegionArea, b: RegionArea) => a.name.localeCompare(b.name, 'tr'));
+
       this.successCache.set(cacheKey, result);
       return result;
     }

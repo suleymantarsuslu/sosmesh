@@ -16,6 +16,11 @@ public struct RelayDiagnosticsSnapshot: Equatable {
     public var pendingForward = 0
     public var forwardedCount = 0
     public var lastErrorCode: String?
+    /// Mesh v2: hops to gateway (0xFF offline), fresh neighbours, carried copies, tombstones.
+    public var hopsToGateway: UInt8 = 0xFF
+    public var meshPeers = 0
+    public var carriedCopies = 0
+    public var tombstones = 0
 
     public init() {}
 }
@@ -47,6 +52,15 @@ public final class RelayDiagnostics: @unchecked Sendable {
         update {
             $0.lastReceivedAtMs = nowMs
             $0.lastReceivedShortHash = hash
+        }
+    }
+
+    public func recordMesh(_ stats: MeshV2Node.Stats) {
+        update {
+            $0.hopsToGateway = stats.hops
+            $0.meshPeers = stats.peers
+            $0.carriedCopies = stats.carried
+            $0.tombstones = stats.tombstones
         }
     }
 

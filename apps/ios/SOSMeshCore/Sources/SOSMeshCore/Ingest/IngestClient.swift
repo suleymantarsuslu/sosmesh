@@ -41,6 +41,15 @@ public struct ServerAcceptedReceipt: Codable {
     public let timestamp: String
     public let signature: String
     public let uploadToken: String?
+
+    public init(ackType: String, messageId: String, packetHash: String, timestamp: String, signature: String, uploadToken: String?) {
+        self.ackType = ackType
+        self.messageId = messageId
+        self.packetHash = packetHash
+        self.timestamp = timestamp
+        self.signature = signature
+        self.uploadToken = uploadToken
+    }
 }
 
 public struct IngestResponse: Codable {

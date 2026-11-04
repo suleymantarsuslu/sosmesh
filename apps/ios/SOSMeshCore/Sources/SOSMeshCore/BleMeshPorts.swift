@@ -163,13 +163,18 @@ public final class BleIncomingPayloadRouter: BleTransferReceiver.Listener {
     private let nowMs: () -> Int64
     private let store: ReceivedEnvelopeStoring?
     private let diagnostics: RelayDiagnostics?
+    /// Mesh v2: when set, every completed payload goes through the node (envelopes, tombstone
+    /// batches, bare v1 messages). Only public outer fields are read.
+    public var node: MeshV2Node?
 
     public init(
         inbox: ReceivedSosInbox,
         store: ReceivedEnvelopeStoring? = nil,
         diagnostics: RelayDiagnostics? = nil,
+        node: MeshV2Node? = nil,
         nowMs: @escaping () -> Int64 = { Int64(Date().timeIntervalSince1970 * 1000) }
     ) {
+        self.node = node
         self.inbox = inbox
         self.store = store
         self.diagnostics = diagnostics
@@ -177,6 +182,10 @@ public final class BleIncomingPayloadRouter: BleTransferReceiver.Listener {
     }
 
     public func onCompleted(payload: Data) {
+        if let node {
+            receiveV2(payload: payload, node: node)
+            return
+        }
         // Only the outer wire JSON is parsed (to read the message id); the encrypted payload
         // inside stays opaque.
         guard let json = String(data: payload, encoding: .utf8),
@@ -195,6 +204,27 @@ public final class BleIncomingPayloadRouter: BleTransferReceiver.Listener {
             try store?.storeReceivedEnvelope(sosId: sosId, digest: digest, envelope: payload, nowMs: now)
         } catch {
             diagnostics?.recordError(code: "relay_store_failed")
+        }
+    }
+
+    private func receiveV2(payload: Data, node: MeshV2Node) {
+        let now = nowMs()
+        let outcome = node.receive(payload: payload, nowMs: now)
+        switch outcome {
+        case .stored:
+            let received: (String, Data)?
+            switch MeshCarry.classify(payload) {
+            case .envelope(let env, let l2): received = (env.messageId, l2)
+            case .bareV1(let id, let l2): received = (id, l2)
+            default: received = nil
+            }
+            guard let (sosId, l2) = received else { return }
+            inbox.append(sosId: sosId, digest: BleProtocol.calculateSHA256(l2).base64EncodedString(), envelope: l2, nowMs: now)
+            diagnostics?.recordReceived(sosId: sosId, nowMs: now)
+        case .dropped(let reason):
+            diagnostics?.recordError(code: "drop_\(reason.rawValue.lowercased())")
+        case .duplicate, .delivered, .tombstones, .unknown:
+            break
         }
     }
 

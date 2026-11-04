@@ -9,6 +9,26 @@ public protocol RelayIngestUploading: AnyObject {
         encryptedBlobBase64: String,
         sosMessageJson: [String: Any]
     ) async -> IngestUploadResult
+
+    func upload(
+        sosId: String,
+        digest: String,
+        encryptedBlobBase64: String,
+        sosMessageJson: [String: Any],
+        hopCount: Int
+    ) async -> IngestUploadResult
+}
+
+public extension RelayIngestUploading {
+    func upload(
+        sosId: String,
+        digest: String,
+        encryptedBlobBase64: String,
+        sosMessageJson: [String: Any],
+        hopCount: Int
+    ) async -> IngestUploadResult {
+        await upload(sosId: sosId, digest: digest, encryptedBlobBase64: encryptedBlobBase64, sosMessageJson: sosMessageJson)
+    }
 }
 
 extension IngestUploader: RelayIngestUploading {}
@@ -51,6 +71,8 @@ public final class RelayForwarder: @unchecked Sendable {
     private let uploader: RelayIngestUploading
     private let diagnostics: RelayDiagnostics?
     private let nowMs: () -> Int64
+    private let node: MeshV2Node?
+    private let lookup: ReceiptLookupPort?
     private let lock = NSLock()
     private var running = false
 
@@ -59,8 +81,12 @@ public final class RelayForwarder: @unchecked Sendable {
         inbox: ReceivedSosInbox,
         uploader: RelayIngestUploading,
         diagnostics: RelayDiagnostics? = nil,
+        node: MeshV2Node? = nil,
+        lookup: ReceiptLookupPort? = nil,
         nowMs: @escaping () -> Int64 = { Int64(Date().timeIntervalSince1970 * 1000) }
     ) {
+        self.node = node
+        self.lookup = lookup
         self.outbox = outbox
         self.inbox = inbox
         self.uploader = uploader
@@ -95,29 +121,45 @@ public final class RelayForwarder: @unchecked Sendable {
         var summary = RelayForwardSummary()
         guard beginRun() else { return summary }
         defer { endRun() }
-        let entries = (try? outbox.listEntries()) ?? []
+        await purgeDeliveredViaLookup()
+        // Own SOS uploads run first (AppModel); carried copies follow by priority, then age.
+        let entries = MeshUploadOrdering.ordered((try? outbox.listEntries()) ?? [])
         for entry in entries {
             let now = nowMs()
             guard entry.origin == SosOutboxService.relayOrigin,
                   entry.state == "LOCAL_SAVED",
                   entry.retryAtMs <= now else { continue }
-            guard let wire = Data(base64Encoded: entry.encryptedBlobBase64),
-                  let object = try? JSONSerialization.jsonObject(with: wire) as? [String: Any],
+            guard let stored = Data(base64Encoded: entry.encryptedBlobBase64),
+                  let decoded = MeshCarry.decodeStored(stored, nowMs: now),
+                  decoded.envelope.messageId == entry.sosId,
+                  let object = try? JSONSerialization.jsonObject(with: decoded.l2) as? [String: Any],
                   (object["id"] as? String) == entry.sosId else {
                 park(entry, reason: "invalid_envelope")
+                continue
+            }
+            if MeshCarry.isExpired(decoded.envelope, nowMs: now) {
+                _ = try? outbox.removeEntry(sosId: entry.sosId, digest: entry.digest)
                 continue
             }
             summary.attempted += 1
             let result = await uploader.upload(
                 sosId: entry.sosId,
                 digest: entry.digest,
-                encryptedBlobBase64: entry.encryptedBlobBase64,
-                sosMessageJson: object
+                encryptedBlobBase64: decoded.l2.base64EncodedString(),
+                sosMessageJson: object,
+                hopCount: decoded.envelope.hopCount + 1
             )
             switch result {
-            case .success:
+            case .success(let receipt):
                 let acceptedAt = nowMs()
-                if (try? outbox.markServerAccepted(
+                node?.hops.noteInternetSuccess(nowMs: acceptedAt)
+                if let node {
+                    // The receipt becomes the delivery tombstone: the carried copy is deleted.
+                    node.recordServerReceipt(receipt, nowMs: acceptedAt)
+                    inbox.markForwarded(sosId: entry.sosId, digest: entry.digest, nowMs: acceptedAt)
+                    diagnostics?.recordForwarded()
+                    summary.accepted += 1
+                } else if (try? outbox.markServerAccepted(
                     sosId: entry.sosId,
                     digest: entry.digest,
                     fromState: entry.state,
@@ -128,12 +170,14 @@ public final class RelayForwarder: @unchecked Sendable {
                     summary.accepted += 1
                 }
             case .noNetwork:
+                node?.hops.noteInternetFailure()
                 retry(entry, after: RelayForwarder.noNetworkBackoffMs, reason: "no_network")
                 return summary
             case .invalidReceipt:
                 retry(entry, after: RelayForwarder.errorBackoffMs, reason: "invalid_receipt")
                 return summary
             case .httpError(let code, _):
+                node?.hops.noteInternetSuccess(nowMs: nowMs())
                 if code == 409 {
                     park(entry, reason: "needs_review")
                 } else if (400 ..< 500).contains(code) && code != 429 {
@@ -148,6 +192,20 @@ public final class RelayForwarder: @unchecked Sendable {
             }
         }
         return summary
+    }
+
+    /// Before uploading, ask the server which carried packets it already accepted (§6).
+    private func purgeDeliveredViaLookup() async {
+        guard let node, let lookup else { return }
+        let now = nowMs()
+        let items: [(messageId: String, packetHash: String)] = node.carried().prefix(64).compactMap { entry in
+            guard let blob = Data(base64Encoded: entry.encryptedBlobBase64),
+                  let decoded = MeshCarry.decodeStored(blob, nowMs: now) else { return nil }
+            return (entry.sosId, MeshV2.sha256Hex(decoded.l2))
+        }
+        for tombstone in await lookup.lookup(items: items, nowMs: now) {
+            node.ingestTombstone(tombstone, nowMs: now)
+        }
     }
 
     private func retry(_ entry: OutboxEntryMeta, after delayMs: Int64, reason: String) {

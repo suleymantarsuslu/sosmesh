@@ -6,6 +6,10 @@ import { Icon } from '../../../../../features/cases/detail/icons';
 type RegionArea = {
   osmId: string;
   name: string;
+  displayName: string;
+  lat: number;
+  lon: number;
+  boundingBox: [number, number, number, number];
 };
 
 type Props = {

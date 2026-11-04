@@ -28,7 +28,7 @@ export function ConfirmBroadcastModal({
   onConfirm,
   onCancel,
 }: Props) {
-  const { t, locale } = useOperatorPreferences();
+  const { t } = useOperatorPreferences();
   const modalRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -58,8 +58,6 @@ export function ConfirmBroadcastModal({
     const key = `web.broadcasts.severity${severity.charAt(0).toUpperCase() + severity.slice(1)}`;
     return t(key);
   };
-
-  const brandName = locale === 'tr' ? 'Acil Durum Ağı' : 'SOSMesh';
 
   return (
     <div

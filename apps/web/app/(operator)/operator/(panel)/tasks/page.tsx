@@ -1,4 +1,5 @@
-import { TasksView, type TaskRow, type TeamName } from '../../../../../features/tasks/TasksView';
+import { type TaskRow, type TeamName } from '../../../../../features/tasks/TasksView';
+import { TasksPageClient } from '../../../../../features/tasks/TasksPageClient';
 import { fetchWithSession } from '../../../../../lib/session';
 
 export default async function OperatorTasksPage({
@@ -21,5 +22,12 @@ export default async function OperatorTasksPage({
     const body = (await teamsRes.json()) as { items: TeamName[] };
     teams = (body.items ?? []).map((team) => ({ id: team.id, name: team.name }));
   }
-  return <TasksView tasks={items} teams={teams} focusTaskId={task} error={!res.ok} />;
+  return (
+    <TasksPageClient
+      initialTasks={items}
+      teams={teams}
+      focusTaskId={task}
+      error={!res.ok}
+    />
+  );
 }

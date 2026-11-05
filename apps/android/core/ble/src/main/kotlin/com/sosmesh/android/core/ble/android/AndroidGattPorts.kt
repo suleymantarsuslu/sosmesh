@@ -84,8 +84,16 @@ class AndroidGattServerPort
                                 offset: Int,
                                 characteristic: BluetoothGattCharacteristic?,
                             ) {
-                                val target = device ?: return
-                                val uuid = characteristic?.uuid?.toString()?.uppercase() ?: return
+                                if (device == null || characteristic == null) {
+                                    // Must send error response even when parameters are invalid to unblock GATT queue.
+                                    device?.let {
+                                        try {
+                                            gattServer?.sendResponse(it, requestId, BluetoothGatt.GATT_FAILURE, 0, null)
+                                        } catch (_: SecurityException) {}
+                                    }
+                                    return
+                                }
+                                val uuid = characteristic.uuid?.toString()?.uppercase() ?: ""
                                 val value =
                                     if (uuid == MeshV2Hooks.MESH_INFO_CHAR_UUID.uppercase()) {
                                         MeshV2Hooks.hooks?.meshInfo(System.currentTimeMillis()) ?: ByteArray(0)
@@ -94,7 +102,7 @@ class AndroidGattServerPort
                                     }
                                 val slice = if (offset in 0..value.size) value.copyOfRange(offset, value.size) else ByteArray(0)
                                 try {
-                                    sendResponseInternal(target, requestId, offset, slice)
+                                    sendResponseInternal(device, requestId, offset, slice)
                                 } catch (_: SecurityException) {
                                     // Permission revoked mid-session.
                                 }
@@ -109,17 +117,25 @@ class AndroidGattServerPort
                                 offset: Int,
                                 value: ByteArray?,
                             ) {
-                                val address = device?.address ?: return
-                                val uuid = characteristic?.uuid?.toString()?.uppercase() ?: return
-                                val bytes = value ?: return
-                                if (responseNeeded && device != null) {
+                                if (device == null || characteristic == null || value == null) {
+                                    // Must send error response even when parameters are invalid to unblock GATT queue.
+                                    if (responseNeeded && device != null) {
+                                        try {
+                                            gattServer?.sendResponse(device, requestId, BluetoothGatt.GATT_FAILURE, 0, null)
+                                        } catch (_: SecurityException) {}
+                                    }
+                                    return
+                                }
+                                val address = device.address
+                                val uuid = characteristic.uuid?.toString()?.uppercase() ?: ""
+                                if (responseNeeded) {
                                     try {
-                                        sendResponseInternal(device, requestId, offset, bytes)
+                                        sendResponseInternal(device, requestId, offset, value)
                                     } catch (_: SecurityException) {
                                         // Permission revoked mid-session; ignore stray writes.
                                     }
                                 }
-                                writeListener?.onCharacteristicWrite(uuid, bytes, address)
+                                writeListener?.onCharacteristicWrite(uuid, value, address)
                             }
 
                             // iOS centrals wait for the CCCD (notification subscribe) write to be acknowledged

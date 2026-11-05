@@ -34,6 +34,15 @@ class BleTransferReceiver(
 
     fun getReceivedChunkSeqs(): List<Int> = chunks.keys.sorted()
 
+    fun resetToIdle() {
+        chunks.clear()
+        expectedTotal = 0
+        receivedDigest = null
+        negotiatedMtu = 0
+        currentTransferId = null
+        state = TransferState.IDLE
+    }
+
     fun requestResume() {
         val transferId = currentTransferId ?: return
         val canResume =
@@ -59,9 +68,18 @@ class BleTransferReceiver(
     private fun handleData(data: ByteArray) {
         if (data.isEmpty()) return
         val msgType = data[0].toInt() and 0xff
-        if (msgType == MessageType.HELLO.wire && state == TransferState.IDLE) {
-            handleHello(data)
-        } else if (
+        if (msgType == MessageType.HELLO.wire) {
+            when (state) {
+                TransferState.IDLE -> handleHello(data)
+                TransferState.COMPLETED, TransferState.FAILED, TransferState.RESUMING -> {
+                    resetToIdle()
+                    handleHello(data)
+                }
+                else -> Unit
+            }
+            return
+        }
+        if (
             msgType != MessageType.TRANSFER_VERIFIED.wire &&
             msgType != MessageType.HELLO.wire &&
             msgType != MessageType.HELLO_ACK.wire &&

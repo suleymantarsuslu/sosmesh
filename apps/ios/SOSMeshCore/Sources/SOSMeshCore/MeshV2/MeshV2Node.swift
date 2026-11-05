@@ -330,6 +330,15 @@ public final class MeshV2Node: @unchecked Sendable {
         seen.recordSent(MeshV2.messageKey(messageId), to: peerId, nowMs: nowMs)
     }
 
+    /// A peer answered HAVE for our own SOS: it already holds the copy, which is a peer ACK (never server acceptance).
+    public func notePeerHolds(messageId: String, nowMs: Int64) {
+        let entries = (try? outbox.listEntries()) ?? []
+        guard let entry = entries.first(where: {
+            $0.sosId == messageId && $0.origin != SosOutboxService.relayOrigin && $0.state == "LOCAL_SAVED"
+        }) else { return }
+        _ = try? outbox.updateState(sosId: entry.sosId, digest: entry.digest, state: "PEER_RECEIVED", nowMs: nowMs, lastError: nil)
+    }
+
     public func tombstoneBatch(for peerId: String, nowMs: Int64) -> (payload: Data, ids: [String])? {
         let pending = tombstones.pending(for: peerId, nowMs: nowMs)
         guard !pending.isEmpty, let data = try? JSONEncoder().encode(TombstoneBatchV2(items: pending)) else { return nil }

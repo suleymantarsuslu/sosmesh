@@ -111,7 +111,9 @@ public final class MeshV2CentralSession {
             let status = index < statuses.count ? statuses[index] : .want
             switch status {
             case .want: wanted.append(candidate)
-            case .have: node.noteSent(messageId: candidate.messageId, to: peerId, nowMs: nowMs)
+            case .have:
+                node.noteSent(messageId: candidate.messageId, to: peerId, nowMs: nowMs)
+                if candidate.isOwn { node.notePeerHolds(messageId: candidate.messageId, nowMs: nowMs) }
             case .delivered:
                 node.noteSent(messageId: candidate.messageId, to: peerId, nowMs: nowMs)
                 deliveredKeys.append(candidate.key)

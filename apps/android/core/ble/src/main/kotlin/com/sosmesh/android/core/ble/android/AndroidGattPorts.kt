@@ -112,6 +112,43 @@ class AndroidGattServerPort
                                 }
                                 writeListener?.onCharacteristicWrite(uuid, bytes, address)
                             }
+
+                            override fun onDescriptorReadRequest(
+                                device: BluetoothDevice?,
+                                requestId: Int,
+                                offset: Int,
+                                descriptor: BluetoothGattDescriptor?,
+                            ) {
+                                val target = device ?: return
+                                val value = descriptor?.value ?: ByteArray(2)
+                                val slice = if (offset in 0..value.size) value.copyOfRange(offset, value.size) else ByteArray(0)
+                                try {
+                                    sendResponseInternal(target, requestId, offset, slice)
+                                } catch (_: SecurityException) {
+                                    // Permission revoked mid-session.
+                                }
+                            }
+
+                            override fun onDescriptorWriteRequest(
+                                device: BluetoothDevice?,
+                                requestId: Int,
+                                descriptor: BluetoothGattDescriptor?,
+                                preparedWrite: Boolean,
+                                responseNeeded: Boolean,
+                                offset: Int,
+                                value: ByteArray?,
+                            ) {
+                                val target = device ?: return
+                                val bytes = value ?: return
+                                descriptor?.value = bytes
+                                if (responseNeeded) {
+                                    try {
+                                        sendResponseInternal(target, requestId, offset, bytes)
+                                    } catch (_: SecurityException) {
+                                        // Permission revoked mid-session.
+                                    }
+                                }
+                            }
                         },
                     )
                 val service = BluetoothGattService(UUID.fromString(serviceUuid), BluetoothGattService.SERVICE_TYPE_PRIMARY)

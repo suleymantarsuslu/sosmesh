@@ -53,6 +53,18 @@ paths:
       responses:
         "201":
           description: ""
+  /v1/device/attachments/relayed:
+    post:
+      operationId: DeviceAttachmentsController_uploadRelayedAttachment
+      parameters:
+        - name: x-upload-token
+          required: true
+          in: header
+          schema:
+            type: string
+      responses:
+        "201":
+          description: ""
   /v1/operator/organization/context:
     get:
       operationId: OrganizationController_context

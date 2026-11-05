@@ -1,6 +1,6 @@
 # SOSMesh Android App
 
-**Status:** ADIM 12+ — Compose shell, **startup permission gate**, Room outbox, BLE SOS peer delivery wiring (JVM-tested), CI unit/lint
+**Status:** Compose app with **startup permission gate**, Room outbox, BLE SOS fan-out to nearby peers, volunteer relay, notifications (FCM), TR/EN, Wear OS module. Physical BLE results come only from real-device tests.
 
 ## Tech stack
 
@@ -21,8 +21,11 @@ apps/android/
   core/ble/            # BleMeshRadio + GATT
   core/protocol/       # BleTransferEngine, SosPeerDeliveryOrchestrator
   feature-sos/         # SOS compose → outbox → peer delivery kickoff
+  core/design/ core/platform/ core/wear-companion/
   feature-relay/       # Relay receive + mesh-v2 forward orchestrator
+  feature-status/
   mesh-v2/
+  wear/                # Wear OS app (:wear)
 ```
 
 ## Build & verify

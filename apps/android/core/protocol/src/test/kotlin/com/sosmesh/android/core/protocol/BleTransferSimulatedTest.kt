@@ -23,6 +23,44 @@ class BleTransferSimulatedTest {
     }
 
     @Test
+    fun receiverAcceptsSecondHelloAfterCompletion() {
+        val payload1 = "FIRST_TRANSFER".toByteArray()
+        val payload2 = "SECOND_TRANSFER".toByteArray()
+        val clock = SimulatedBleTransferClock()
+        val rng = SeededBleTransferRng(1)
+        val channel = MockBleTransferChannel(0.0, 0.0, rng)
+        val (senderT, receiverT) = channel.createTransportPair()
+        val sender = BleTransferSender(senderT, TransferConfig(maxRetries = 5, chunkTimeoutMs = 400L), clock, rng)
+        val receiver = BleTransferReceiver(receiverT, TransferConfig(maxRetries = 5, chunkTimeoutMs = 400L), clock)
+        val received = mutableListOf<ByteArray>()
+        receiver.setListener(
+            object : BleTransferReceiver.Listener {
+                override fun onCompleted(payload: ByteArray) {
+                    received.add(payload)
+                }
+
+                override fun onFailed(code: ErrorCode, message: String) {}
+            },
+        )
+        sender.startTransfer(payload1)
+        repeat(300) {
+            clock.advance(10)
+            channel.deliverAll()
+        }
+        assertEquals(TransferState.COMPLETED, receiver.getState())
+        assertEquals(1, received.size)
+        assertArrayEquals(payload1, received[0])
+        sender.startTransfer(payload2)
+        repeat(300) {
+            clock.advance(10)
+            channel.deliverAll()
+        }
+        assertEquals(TransferState.COMPLETED, receiver.getState())
+        assertEquals(2, received.size)
+        assertArrayEquals(payload2, received[1])
+    }
+
+    @Test
     fun senderCompleted_onlyAfterTransferVerified() {
         val payload = "PEER_ACK_GATE".toByteArray()
         val clock = SimulatedBleTransferClock()

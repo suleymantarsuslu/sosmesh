@@ -32,12 +32,12 @@ class SosSubmitRepository
                 if (row.state == "LOCAL_SAVED" && row.lastError?.startsWith("http_") != true) outbox.deleteEntry(sosId, digest) else false
             }
 
-        suspend fun submit(request: SosComposeRequest): ComposedSosMessage =
+        suspend fun submit(request: SosComposeRequest, queuedRetryAt: Long? = null): ComposedSosMessage =
             withContext(ioDispatcher) {
                 // mesh-v2 inner payload; if the secure store is unavailable, fall back to v1 inner (SOS never blocked).
                 val sender = request.sender ?: senderContext.nextSenderContextOrNull()
                 val composed = composer.compose(request.copy(sender = sender))
-                outbox.enqueue(
+                val entry = outbox.enqueue(
                     EnqueueInput(
                         sosId = composed.message.id,
                         digest = composed.digest,
@@ -46,6 +46,9 @@ class SosSubmitRepository
                     ),
                     request.nowMs,
                 )
+                if (queuedRetryAt != null && queuedRetryAt > request.nowMs) {
+                    outbox.setRetryAt(entry.sosId, entry.digest, queuedRetryAt, "rate_limited")
+                }
                 uploadScheduler.scheduleUpload(request.nowMs, delayMs = 1_000L)
                 composed
             }

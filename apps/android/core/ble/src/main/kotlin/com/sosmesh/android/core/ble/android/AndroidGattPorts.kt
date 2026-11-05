@@ -45,6 +45,11 @@ class AndroidGattServerPort
         // BluetoothGattServer.getConnectedDevices() always throws UnsupportedOperationException; track centrals ourselves.
         private val connectedDevices = java.util.concurrent.ConcurrentHashMap<String, BluetoothDevice>()
 
+        // Notification queue: Android drops back-to-back notifications; serialize with onNotificationSent.
+        private data class PendingNotification(val device: BluetoothDevice, val characteristic: BluetoothGattCharacteristic)
+        private val notificationQueue = java.util.concurrent.ConcurrentLinkedQueue<PendingNotification>()
+        @Volatile private var notificationInFlight = false
+
         override fun start(
             serviceUuid: String,
             specs: List<GattCharacteristicSpec>,
@@ -71,7 +76,13 @@ class AndroidGattServerPort
                                 val connected = newState == BluetoothProfile.STATE_CONNECTED
                                 connectedAddress = if (connected) address else null
                                 if (address != null && device != null) {
-                                    if (connected) connectedDevices[address] = device else connectedDevices.remove(address)
+                                    if (connected) {
+                                        connectedDevices[address] = device
+                                    } else {
+                                        connectedDevices.remove(address)
+                                        // Clear pending notifications for this device to prevent stale sends.
+                                        notificationQueue.removeIf { it.device.address == address }
+                                    }
                                 }
                                 if (address != null) {
                                     connectionListener?.onConnectionStateChanged(address, connected)
@@ -84,8 +95,16 @@ class AndroidGattServerPort
                                 offset: Int,
                                 characteristic: BluetoothGattCharacteristic?,
                             ) {
-                                val target = device ?: return
-                                val uuid = characteristic?.uuid?.toString()?.uppercase() ?: return
+                                if (device == null || characteristic == null) {
+                                    // Must send error response even when parameters are invalid to unblock GATT queue.
+                                    device?.let {
+                                        try {
+                                            gattServer?.sendResponse(it, requestId, BluetoothGatt.GATT_FAILURE, 0, null)
+                                        } catch (_: SecurityException) {}
+                                    }
+                                    return
+                                }
+                                val uuid = characteristic.uuid?.toString()?.uppercase() ?: ""
                                 val value =
                                     if (uuid == MeshV2Hooks.MESH_INFO_CHAR_UUID.uppercase()) {
                                         MeshV2Hooks.hooks?.meshInfo(System.currentTimeMillis()) ?: ByteArray(0)
@@ -94,7 +113,7 @@ class AndroidGattServerPort
                                     }
                                 val slice = if (offset in 0..value.size) value.copyOfRange(offset, value.size) else ByteArray(0)
                                 try {
-                                    sendResponseInternal(target, requestId, offset, slice)
+                                    sendResponseInternal(device, requestId, offset, slice)
                                 } catch (_: SecurityException) {
                                     // Permission revoked mid-session.
                                 }
@@ -109,17 +128,25 @@ class AndroidGattServerPort
                                 offset: Int,
                                 value: ByteArray?,
                             ) {
-                                val address = device?.address ?: return
-                                val uuid = characteristic?.uuid?.toString()?.uppercase() ?: return
-                                val bytes = value ?: return
-                                if (responseNeeded && device != null) {
+                                if (device == null || characteristic == null || value == null) {
+                                    // Must send error response even when parameters are invalid to unblock GATT queue.
+                                    if (responseNeeded && device != null) {
+                                        try {
+                                            gattServer?.sendResponse(device, requestId, BluetoothGatt.GATT_FAILURE, 0, null)
+                                        } catch (_: SecurityException) {}
+                                    }
+                                    return
+                                }
+                                val address = device.address
+                                val uuid = characteristic.uuid?.toString()?.uppercase() ?: ""
+                                if (responseNeeded) {
                                     try {
-                                        sendResponseInternal(device, requestId, offset, bytes)
+                                        sendResponseInternal(device, requestId, offset, value)
                                     } catch (_: SecurityException) {
                                         // Permission revoked mid-session; ignore stray writes.
                                     }
                                 }
-                                writeListener?.onCharacteristicWrite(uuid, bytes, address)
+                                writeListener?.onCharacteristicWrite(uuid, value, address)
                             }
 
                             // iOS centrals wait for the CCCD (notification subscribe) write to be acknowledged
@@ -159,6 +186,15 @@ class AndroidGattServerPort
                                 } catch (_: SecurityException) {
                                     // Permission revoked mid-session.
                                 }
+                            }
+
+                            override fun onNotificationSent(
+                                device: BluetoothDevice?,
+                                status: Int,
+                            ) {
+                                // Notification sent (or failed); send next queued notification if any.
+                                notificationInFlight = false
+                                processNotificationQueue()
                             }
                         },
                     )
@@ -209,6 +245,8 @@ class AndroidGattServerPort
             characteristics.clear()
             connectedDevices.clear()
             connectedAddress = null
+            notificationQueue.clear()
+            notificationInFlight = false
         }
 
         override fun setWriteListener(listener: GattServerWriteListener?) {
@@ -232,11 +270,31 @@ class AndroidGattServerPort
             val target =
                 deviceAddress?.let { addr -> connectedDevices[addr] } ?: connectedDevices.values.firstOrNull()
             val device = target ?: return Result.failure(IllegalStateException("No connected device"))
-            return try {
-                val ok = notifyInternal(device, characteristic) ?: false
-                if (ok) Result.success(Unit) else Result.failure(IllegalStateException("notify failed"))
-            } catch (securityException: SecurityException) {
-                Result.failure(securityException)
+            // Queue notification; Android drops concurrent calls. onNotificationSent drains the queue.
+            notificationQueue.offer(PendingNotification(device, characteristic))
+            processNotificationQueue()
+            return Result.success(Unit)
+        }
+
+        private fun processNotificationQueue() {
+            // Send next notification if no notification is in flight and queue is not empty.
+            if (notificationInFlight || notificationQueue.isEmpty()) return
+            val pending = notificationQueue.poll() ?: return
+            notificationInFlight = true
+            if (!hasConnectPermission()) {
+                notificationInFlight = false
+                return
+            }
+            try {
+                val ok = notifyInternal(pending.device, pending.characteristic) ?: false
+                if (!ok) {
+                    // notifyCharacteristicChanged returned false; mark as not in flight and try next.
+                    notificationInFlight = false
+                    processNotificationQueue()
+                }
+                // If ok, onNotificationSent will mark as not in flight and process next.
+            } catch (_: SecurityException) {
+                notificationInFlight = false
             }
         }
 

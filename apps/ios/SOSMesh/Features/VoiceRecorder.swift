@@ -30,9 +30,11 @@ final class VoiceRecorder: NSObject, ObservableObject {
         
         let settings: [String: Any] = [
             AVFormatIDKey: Int(kAudioFormatMPEG4AAC),
-            AVSampleRateKey: 44100,
+            // Speech-grade mono AAC (16 kHz, 24 kbps): small enough to also travel over BLE and fine for ASR.
+            AVSampleRateKey: 16000,
             AVNumberOfChannelsKey: 1,
-            AVEncoderAudioQualityKey: AVAudioQuality.high.rawValue
+            AVEncoderBitRateKey: 24000,
+            AVEncoderAudioQualityKey: AVAudioQuality.medium.rawValue
         ]
         
         audioRecorder = try AVAudioRecorder(url: url, settings: settings)

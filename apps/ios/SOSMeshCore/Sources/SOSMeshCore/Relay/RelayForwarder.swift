@@ -75,6 +75,8 @@ public final class RelayForwarder: @unchecked Sendable {
     private let lookup: ReceiptLookupPort?
     private let lock = NSLock()
     private var running = false
+    /// §2.5: carried attachment copies go up with the upload token of the SOS ingest below.
+    public var attachmentUploader: RelayAttachmentUploader?
 
     public init(
         outbox: SosOutboxService,
@@ -122,6 +124,7 @@ public final class RelayForwarder: @unchecked Sendable {
         guard beginRun() else { return summary }
         defer { endRun() }
         await purgeDeliveredViaLookup()
+        await attachmentUploader?.retryAll()
         // Own SOS uploads run first (AppModel); carried copies follow by priority, then age.
         let entries = MeshUploadOrdering.ordered((try? outbox.listEntries()) ?? [])
         for entry in entries {
@@ -152,6 +155,7 @@ public final class RelayForwarder: @unchecked Sendable {
             switch result {
             case .success(let receipt):
                 let acceptedAt = nowMs()
+                await attachmentUploader?.onSosUploaded(sosId: entry.sosId, uploadToken: receipt.uploadToken)
                 node?.hops.noteInternetSuccess(nowMs: acceptedAt)
                 if let node {
                     // The receipt becomes the delivery tombstone: the carried copy is deleted.

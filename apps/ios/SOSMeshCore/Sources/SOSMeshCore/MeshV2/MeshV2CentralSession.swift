@@ -18,11 +18,13 @@ public final class MeshV2CentralSession {
     }
 
     private enum Phase { case idle, awaitingReply, transferring, done }
-    private enum Item { case candidate(MeshV2Node.Candidate), tombstones(Data, [String]), broadcast(ServerBroadcast) }
+    private enum Item { case candidate(MeshV2Node.Candidate), tombstones(Data, [String]), broadcast(ServerBroadcast), attachment(BleAttachmentBlob) }
 
     private let node: MeshV2Node
     public let peerId: String
     private let peerInfo: MeshInfo?
+    /// Own photo/voice copies follow the SOS on the same link (§2.5). nil = none.
+    private let attachments: BleAttachmentProviding?
     private var phase: Phase = .idle
     private var offered: [MeshV2Node.Candidate] = []
     private var queue: [Item] = []
@@ -31,7 +33,8 @@ public final class MeshV2CentralSession {
     private var awaitingTombstones = 0
     private var tombstoneDeadlineMs: Int64 = 0
 
-    public init(node: MeshV2Node, peerId: String, peerInfo: MeshInfo?) {
+    public init(node: MeshV2Node, peerId: String, peerInfo: MeshInfo?, attachments: BleAttachmentProviding? = nil) {
+        self.attachments = attachments
         self.node = node
         self.peerId = peerId
         self.peerInfo = peerInfo
@@ -51,6 +54,7 @@ public final class MeshV2CentralSession {
         if offered.isEmpty {
             phase = .transferring
             if let batch = node.tombstoneBatch(for: peerId, nowMs: nowMs) { queue = [.tombstones(batch.payload, batch.ids)] }
+            queue += attachmentItems(blockedSosIds: [])
             return next(nowMs: nowMs)
         }
         guard let frame = MeshV2Frame.offer(offered.map(\.key)).encode() else { return finish() }
@@ -96,10 +100,15 @@ public final class MeshV2CentralSession {
                 node.tombstones.markPushed(ids, to: peerId)
             case .broadcast:
                 break
+            case .attachment(let blob):
+                attachments?.markDelivered(sosId: blob.sosId, attachmentId: blob.attachmentId, peerId: peerId)
             }
             return next(nowMs: nowMs)
         }
         // A failed transfer ends the visit; the link is probably gone.
+        if case .attachment(let blob) = item {
+            attachments?.markFailed(sosId: blob.sosId, attachmentId: blob.attachmentId, peerId: peerId)
+        }
         return finish()
     }
 
@@ -107,6 +116,7 @@ public final class MeshV2CentralSession {
         var actions: [Action] = []
         var deliveredKeys: [Data] = []
         var wanted: [MeshV2Node.Candidate] = []
+        var blockedSosIds = Set<String>()
         for (index, candidate) in offered.enumerated() {
             let status = index < statuses.count ? statuses[index] : .want
             switch status {
@@ -117,7 +127,9 @@ public final class MeshV2CentralSession {
             case .delivered:
                 node.noteSent(messageId: candidate.messageId, to: peerId, nowMs: nowMs)
                 deliveredKeys.append(candidate.key)
-            case .full, .refused: break
+                blockedSosIds.insert(candidate.messageId)
+            case .full, .refused:
+                blockedSosIds.insert(candidate.messageId)
             }
         }
         if !deliveredKeys.isEmpty, let frame = MeshV2Frame.tombstoneRequest(deliveredKeys).encode() {
@@ -131,6 +143,7 @@ public final class MeshV2CentralSession {
         if let broadcast = node.takeBroadcastFor(peerId: peerId, nowMs: nowMs) {
             queue.append(.broadcast(broadcast))
         }
+        queue += attachmentItems(blockedSosIds: blockedSosIds)
         phase = .transferring
         return actions + next(nowMs: nowMs)
     }
@@ -149,7 +162,17 @@ public final class MeshV2CentralSession {
         case .broadcast(let b):
             guard let payload = MeshV2Frame.broadcast(b).encode() else { return next(nowMs: nowMs) }
             return [.transfer(sosId: "broadcast-\(b.id)", digest: "", payload: payload)]
+        case .attachment(let blob):
+            return [.transfer(sosId: "att-\(blob.attachmentId)", digest: "", payload: blob.payload)]
         }
+    }
+
+    /// Attachment copies this peer still lacks, except for SOS the peer refused / already delivered (it would drop them).
+    private func attachmentItems(blockedSosIds: Set<String>) -> [Item] {
+        guard peerInfo != nil, let attachments else { return [] }
+        return attachments.pendingBlobs(forPeer: peerId)
+            .filter { !blockedSosIds.contains($0.sosId) }
+            .map { .attachment($0) }
     }
 
     private func finish() -> [Action] {

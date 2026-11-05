@@ -60,6 +60,14 @@ public final class LiveBleMeshRadio: NSObject, BleMeshRadioPort, CBCentralManage
 
     public var transferEngine: BleTransferEngine { session.engine }
 
+    /// §2.5: the sender's own photo/voice copies, sent after the SOS on the same link.
+    public var attachmentProvider: BleAttachmentProviding?
+
+    /// §2.5: relay side, receives raw `SOSATT1` transfer payloads.
+    public func setAttachmentSink(_ sink: @escaping (Data) -> Void) {
+        router.attachmentSink = sink
+    }
+
     public init(
         outbox: SosOutboxService,
         inbox: ReceivedSosInbox,
@@ -146,7 +154,7 @@ public final class LiveBleMeshRadio: NSObject, BleMeshRadioPort, CBCentralManage
             }
         )
         session.engine.peerDeliveryTracker.onTransferComplete = { [weak self] sosId, digest, peerId, success in
-            guard let self, success, let peerId else { return }
+            guard let self, success, let peerId, !sosId.hasPrefix("att-") else { return }
             let work: () -> Void = { [weak self] in
                 self?.recordFanoutDelivery(sosId: sosId, digest: digest, peerId: peerId)
             }
@@ -343,7 +351,8 @@ public final class LiveBleMeshRadio: NSObject, BleMeshRadioPort, CBCentralManage
             // Route toward the lowest `h`; only peers we still have something for (§4.3).
             let eligible = peers.values.filter { peer in
                 nowMs - peer.lastAttemptMs >= LiveBleMeshRadio.peerRetryMs
-                    && !node.candidates(forPeer: peer.peripheral.identifier.uuidString, peerHops: peer.hops, nowMs: nowMs).isEmpty
+                    && (!node.candidates(forPeer: peer.peripheral.identifier.uuidString, peerHops: peer.hops, nowMs: nowMs).isEmpty
+                        || self.attachmentProvider?.pendingBlobs(forPeer: peer.peripheral.identifier.uuidString).isEmpty == false)
             }
             guard let best = eligible.min(by: { ($0.hops, $0.lastAttemptMs) < ($1.hops, $1.lastAttemptMs) }) else {
                 return .success(())
@@ -542,7 +551,7 @@ public final class LiveBleMeshRadio: NSObject, BleMeshRadioPort, CBCentralManage
         guard let node, gattReady, centralSession == nil, let peripheral = connectedPeripheral,
               let info = peerInfoResult else { return }
         let nowMs = Int64(Date().timeIntervalSince1970 * 1000)
-        let central = MeshV2CentralSession(node: node, peerId: peripheral.identifier.uuidString, peerInfo: info)
+        let central = MeshV2CentralSession(node: node, peerId: peripheral.identifier.uuidString, peerInfo: info, attachments: attachmentProvider)
         centralSession = central
         perform(central.start(nowMs: nowMs))
     }

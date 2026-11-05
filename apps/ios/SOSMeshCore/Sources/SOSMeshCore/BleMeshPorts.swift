@@ -166,6 +166,8 @@ public final class BleIncomingPayloadRouter: BleTransferReceiver.Listener {
     /// Mesh v2: when set, every completed payload goes through the node (envelopes, tombstone
     /// batches, bare v1 messages). Only public outer fields are read.
     public var node: MeshV2Node?
+    /// §2.5: opaque encrypted attachment copies (`SOSATT1`) are handed to the relay's attachment store.
+    public var attachmentSink: ((Data) -> Void)?
 
     public init(
         inbox: ReceivedSosInbox,
@@ -182,6 +184,10 @@ public final class BleIncomingPayloadRouter: BleTransferReceiver.Listener {
     }
 
     public func onCompleted(payload: Data) {
+        if BleAttachmentWire.isAttachment(payload) {
+            attachmentSink?(payload)
+            return
+        }
         if let node {
             receiveV2(payload: payload, node: node)
             return

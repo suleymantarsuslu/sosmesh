@@ -71,6 +71,8 @@ final class AppModel: ObservableObject {
     private var uploadsInFlight = Set<String>()
     private var attachmentCoordinator: AttachmentUploadCoordinator?
     private var attachmentQueue: AttachmentQueue?
+    /// Mesh v2 §2.5: shrunk + encrypted copies of the own photo/voice, sent to peers after the SOS.
+    private var bleAttachmentSender: BleAttachmentSender?
     private var backgroundTaskId: UIBackgroundTaskIdentifier = .invalid
     /// Mesh v2 state (docs/protocol/mesh-v2.md).
     private(set) var meshNode: MeshV2Node?
@@ -696,6 +698,7 @@ final class AppModel: ObservableObject {
             lookup: ReceiptLookupClient(baseURL: config.baseURL, receiptKeySpkiBase64: config.receiptVerifyPublicKeySpkiBase64)
         )
         relayForwarder?.restoreInbox()
+        wireBleAttachments(node: node, baseURL: config.baseURL, directory: meshDirectory)
         restartDiscoveryForCurrentMode()
         receivedInbox = receivedInboxStore.list()
         meshTickTimer?.invalidate()
@@ -710,6 +713,7 @@ final class AppModel: ObservableObject {
                 // Own SOS first, then carried copies (mesh v2 §9).
                 await self.retryPendingServerUploads()
                 await self.forwardReceivedEnvelopes()
+                await self.bleAttachmentSender?.prepareAll()
                 self.refreshRelayDiagnostics()
             }
         }
@@ -717,6 +721,37 @@ final class AppModel: ObservableObject {
 }
 
 extension AppModel {
+    /// Photo/voice over BLE (mesh-v2 §2.5): relay side stores opaque copies and uploads them with the SOS upload
+    /// token; sender side shrinks + encrypts its own queued attachments for peers.
+    fileprivate func wireBleAttachments(node: MeshV2Node, baseURL: String, directory: URL?) {
+        let root = directory ?? FileManager.default.temporaryDirectory
+        let store = RelayAttachmentStore(directory: root)
+        let uploader = RelayAttachmentUploader(store: store, baseURL: baseURL)
+        relayForwarder?.attachmentUploader = uploader
+        guard let live = meshRadio as? LiveBleMeshRadio, let outbox = outboxService else { return }
+        live.setAttachmentSink { [weak node] payload in
+            guard let node, node.relayEnabled, let parsed = BleAttachmentWire.decode(payload) else { return }
+            // Only for an SOS this relay carries (or already uploaded): nothing is hoarded for unknown ids.
+            guard node.carried().contains(where: { $0.sosId == parsed.sosId }) || store.uploadToken(sosId: parsed.sosId) != nil,
+                  store.save(payload) != nil else { return }
+            Task { await uploader.onAttachmentStored(sosId: parsed.sosId) }
+        }
+        if let queue = attachmentQueue {
+            let sender = BleAttachmentSender(
+                queue: queue,
+                config: CryptoConfigProvider.makeConfig(),
+                workDir: FileManager.default.temporaryDirectory.appendingPathComponent("ble_att", isDirectory: true),
+                activeSosIds: {
+                    Set(((try? outbox.listEntries()) ?? [])
+                        .filter { $0.origin != SosOutboxService.relayOrigin && ($0.state == "LOCAL_SAVED" || $0.state == "PEER_RECEIVED") }
+                        .map(\.sosId))
+                }
+            )
+            bleAttachmentSender = sender
+            live.attachmentProvider = sender
+        }
+    }
+
     /// (Re)plans scan/advertise for the current relay switch and pending own SOS.
     func restartDiscoveryForCurrentMode() {
         guard let meshRadio else { return }

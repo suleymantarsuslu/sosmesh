@@ -42,6 +42,19 @@ class AndroidGattServerPort
         private val characteristics = mutableMapOf<String, BluetoothGattCharacteristic>()
         private var connectedAddress: String? = null
 
+        // Notifications must be sent one at a time (wait for onNotificationSent), otherwise the stack drops the
+        // later ones (e.g. the final ACK right before TRANSFER_VERIFIED).
+        private class PendingNotification(
+            val device: BluetoothDevice,
+            val characteristic: BluetoothGattCharacteristic,
+            val value: ByteArray,
+        )
+
+        private val notifyLock = Any()
+        private val notifyQueue = java.util.ArrayDeque<PendingNotification>()
+        private var notifyInFlight = false
+        private var notifyStartedAtMs = 0L
+
         // BluetoothGattServer.getConnectedDevices() always throws UnsupportedOperationException; track centrals ourselves.
         private val connectedDevices = java.util.concurrent.ConcurrentHashMap<String, BluetoothDevice>()
 
@@ -58,6 +71,7 @@ class AndroidGattServerPort
             return try {
                 closeServerInternal()
                 connectedDevices.clear()
+                clearNotifications()
                 gattServer =
                     openGattServerInternal(
                         manager,
@@ -73,6 +87,7 @@ class AndroidGattServerPort
                                 if (address != null && device != null) {
                                     if (connected) connectedDevices[address] = device else connectedDevices.remove(address)
                                 }
+                                if (!connected) clearNotifications()
                                 if (address != null) {
                                     connectionListener?.onConnectionStateChanged(address, connected)
                                 }
@@ -120,6 +135,14 @@ class AndroidGattServerPort
                                     }
                                 }
                                 writeListener?.onCharacteristicWrite(uuid, bytes, address)
+                            }
+
+                            override fun onNotificationSent(
+                                device: BluetoothDevice?,
+                                status: Int,
+                            ) {
+                                synchronized(notifyLock) { notifyInFlight = false }
+                                pumpNotifications()
                             }
 
                             // iOS centrals wait for the CCCD (notification subscribe) write to be acknowledged
@@ -208,6 +231,7 @@ class AndroidGattServerPort
             gattServer = null
             characteristics.clear()
             connectedDevices.clear()
+            clearNotifications()
             connectedAddress = null
         }
 
@@ -228,15 +252,42 @@ class AndroidGattServerPort
                 return Result.failure(SecurityException("BLUETOOTH_CONNECT not granted"))
             }
             val characteristic = characteristics[uuid.uppercase()] ?: return Result.failure(IllegalStateException("Unknown char"))
-            characteristic.value = value
             val target =
                 deviceAddress?.let { addr -> connectedDevices[addr] } ?: connectedDevices.values.firstOrNull()
             val device = target ?: return Result.failure(IllegalStateException("No connected device"))
-            return try {
-                val ok = notifyInternal(device, characteristic) ?: false
-                if (ok) Result.success(Unit) else Result.failure(IllegalStateException("notify failed"))
-            } catch (securityException: SecurityException) {
-                Result.failure(securityException)
+            synchronized(notifyLock) { notifyQueue.add(PendingNotification(device, characteristic, value.copyOf())) }
+            pumpNotifications()
+            return Result.success(Unit)
+        }
+
+        private fun clearNotifications() {
+            synchronized(notifyLock) {
+                notifyQueue.clear()
+                notifyInFlight = false
+            }
+        }
+
+        private fun pumpNotifications() {
+            while (true) {
+                val next =
+                    synchronized(notifyLock) {
+                        val now = System.currentTimeMillis()
+                        if (notifyInFlight && now - notifyStartedAtMs > NOTIFY_STALL_MS) notifyInFlight = false
+                        if (notifyInFlight) return
+                        val pending = notifyQueue.poll() ?: return
+                        notifyInFlight = true
+                        notifyStartedAtMs = now
+                        pending
+                    }
+                val started =
+                    try {
+                        next.characteristic.value = next.value
+                        notifyInternal(next.device, next.characteristic) ?: false
+                    } catch (_: SecurityException) {
+                        false
+                    }
+                if (started) return
+                synchronized(notifyLock) { notifyInFlight = false }
             }
         }
 
@@ -281,6 +332,77 @@ class AndroidGattClientPort
         private var dataListener: GattClientCallbackPort? = null
         private val charMap = mutableMapOf<String, BluetoothGattCharacteristic>()
 
+        // BluetoothGatt allows one outstanding operation: a second writeCharacteristic/writeDescriptor issued before
+        // the callback returns false and the data is lost. All writes go through this queue.
+        private sealed class GattOp {
+            class WriteCharacteristic(
+                val characteristic: BluetoothGattCharacteristic,
+                val value: ByteArray,
+            ) : GattOp()
+
+            class WriteDescriptor(
+                val descriptor: BluetoothGattDescriptor,
+            ) : GattOp()
+        }
+
+        private val opLock = Any()
+        private val opQueue = java.util.ArrayDeque<GattOp>()
+        private var opInFlight = false
+        private var opStartedAtMs = 0L
+        private var ackNotificationsRequested = false
+
+        private fun clearOps() {
+            synchronized(opLock) {
+                opQueue.clear()
+                opInFlight = false
+                ackNotificationsRequested = false
+            }
+        }
+
+        private fun enqueueOp(op: GattOp) {
+            synchronized(opLock) { opQueue.add(op) }
+            pumpOps()
+        }
+
+        private fun opCompleted() {
+            synchronized(opLock) { opInFlight = false }
+            pumpOps()
+        }
+
+        private fun pumpOps() {
+            while (true) {
+                val op =
+                    synchronized(opLock) {
+                        val now = System.currentTimeMillis()
+                        if (opInFlight && now - opStartedAtMs > OP_STALL_MS) opInFlight = false
+                        if (opInFlight) return
+                        val next = opQueue.poll() ?: return
+                        opInFlight = true
+                        opStartedAtMs = now
+                        next
+                    }
+                val started =
+                    try {
+                        startOp(op)
+                    } catch (_: SecurityException) {
+                        false
+                    }
+                if (started) return
+                synchronized(opLock) { opInFlight = false }
+            }
+        }
+
+        @RequiresPermission(Manifest.permission.BLUETOOTH_CONNECT)
+        private fun startOp(op: GattOp): Boolean =
+            when (op) {
+                is GattOp.WriteCharacteristic -> {
+                    op.characteristic.writeType = BluetoothGattCharacteristic.WRITE_TYPE_DEFAULT
+                    op.characteristic.value = op.value
+                    gatt?.writeCharacteristic(op.characteristic) ?: false
+                }
+                is GattOp.WriteDescriptor -> gatt?.writeDescriptor(op.descriptor) ?: false
+            }
+
         override fun connect(
             peerAddress: String,
             serviceUuid: String,
@@ -289,6 +411,7 @@ class AndroidGattClientPort
             if (!hasConnectPermission()) {
                 return Result.failure(SecurityException("BLUETOOTH_CONNECT not granted"))
             }
+            clearOps()
             sessionCallback = callback
             val manager = context.getSystemService(Context.BLUETOOTH_SERVICE) as? BluetoothManager
             val adapter = manager?.adapter ?: return Result.failure(IllegalStateException("No BT adapter"))
@@ -355,6 +478,7 @@ class AndroidGattClientPort
             }
             gatt = null
             charMap.clear()
+            clearOps()
             sessionCallback?.onConnectionStateChanged(GattConnectionState.DISCONNECTED)
             sessionCallback = null
         }
@@ -367,15 +491,8 @@ class AndroidGattClientPort
                 return Result.failure(SecurityException("BLUETOOTH_CONNECT not granted"))
             }
             val characteristic = charMap[uuid.uppercase()] ?: return Result.failure(IllegalStateException("Characteristic not ready"))
-            return try {
-                if (writeCharacteristicInternal(characteristic, value)) {
-                    Result.success(Unit)
-                } else {
-                    Result.failure(IllegalStateException("write failed"))
-                }
-            } catch (securityException: SecurityException) {
-                Result.failure(securityException)
-            }
+            enqueueOp(GattOp.WriteCharacteristic(characteristic, value.copyOf()))
+            return Result.success(Unit)
         }
 
         override fun enableAckNotifications(): Result<Unit> {
@@ -411,22 +528,21 @@ class AndroidGattClientPort
         }
 
         @RequiresPermission(Manifest.permission.BLUETOOTH_CONNECT)
-        private fun writeCharacteristicInternal(
-            characteristic: BluetoothGattCharacteristic,
-            value: ByteArray,
-        ): Boolean {
-            characteristic.writeType = BluetoothGattCharacteristic.WRITE_TYPE_DEFAULT
-            characteristic.value = value
-            return gatt?.writeCharacteristic(characteristic) ?: false
-        }
-
-        @RequiresPermission(Manifest.permission.BLUETOOTH_CONNECT)
         private fun enableAckNotificationsInternal(characteristic: BluetoothGattCharacteristic) {
+            synchronized(opLock) {
+                if (ackNotificationsRequested) return
+                ackNotificationsRequested = true
+            }
             val ok = gatt?.setCharacteristicNotification(characteristic, true) ?: false
-            if (!ok) throw IllegalStateException("setCharacteristicNotification failed")
+            if (!ok) {
+                synchronized(opLock) { ackNotificationsRequested = false }
+                throw IllegalStateException("setCharacteristicNotification failed")
+            }
             val descriptor = characteristic.getDescriptor(UUID.fromString("00002902-0000-1000-8000-00805f9b34fb"))
-            descriptor?.value = BluetoothGattDescriptor.ENABLE_NOTIFICATION_VALUE
-            gatt?.writeDescriptor(descriptor)
+            if (descriptor != null) {
+                descriptor.value = BluetoothGattDescriptor.ENABLE_NOTIFICATION_VALUE
+                enqueueOp(GattOp.WriteDescriptor(descriptor))
+            }
         }
 
         @RequiresPermission(Manifest.permission.BLUETOOTH_CONNECT)
@@ -459,6 +575,7 @@ class AndroidGattClientPort
                             sessionCallback?.onConnectionStateChanged(GattConnectionState.CONNECTED)
                         }
                         BluetoothProfile.STATE_DISCONNECTED -> {
+                            clearOps()
                             sessionCallback?.onConnectionStateChanged(GattConnectionState.DISCONNECTED)
                         }
                     }
@@ -482,6 +599,25 @@ class AndroidGattClientPort
                     sessionCallback?.onServicesDiscovered()
                 }
 
+                override fun onCharacteristicWrite(
+                    gatt: BluetoothGatt?,
+                    characteristic: BluetoothGattCharacteristic?,
+                    status: Int,
+                ) {
+                    opCompleted()
+                }
+
+                override fun onDescriptorWrite(
+                    gatt: BluetoothGatt?,
+                    descriptor: BluetoothGattDescriptor?,
+                    status: Int,
+                ) {
+                    if (status != BluetoothGatt.GATT_SUCCESS) {
+                        synchronized(opLock) { ackNotificationsRequested = false }
+                    }
+                    opCompleted()
+                }
+
                 override fun onMtuChanged(
                     gatt: BluetoothGatt?,
                     mtu: Int,
@@ -503,3 +639,6 @@ class AndroidGattClientPort
                 }
             }
     }
+
+private const val NOTIFY_STALL_MS = 1_000L
+private const val OP_STALL_MS = 3_000L

@@ -553,7 +553,9 @@ public final class LiveBleMeshRadio: NSObject, BleMeshRadioPort, CBCentralManage
             case .writeControl(let frame):
                 clientBridge.writeCharacteristic(uuid: BleMeshConstants.controlCharacteristicUUID, value: frame)
             case .transfer(let sosId, let digest, let payload):
-                if !session.sendPayload(sosId: sosId, digest: digest, payload: payload) {
+                // The peer id lets the fan-out bookkeeping mark PEER_RECEIVED once this transfer is VERIFIED.
+                let peerId = connectedPeripheral?.identifier.uuidString
+                if !session.sendPayload(sosId: sosId, digest: digest, payload: payload, peerId: peerId) {
                     diagnostics.recordError(code: "send_busy")
                 }
             case .finished:

@@ -171,21 +171,20 @@ class SosFormViewModel
             // mesh-v2 §8.1: never refuse. Replace an unsent previous SOS (new messageId) or queue until the window opens.
             val decision = rateLimiter.decide(nowMs, lastOwnMessageId, lastOwnLeftDevice)
             viewModelScope.launch {
-                var saveAt = nowMs
-                if (decision is com.sosmesh.android.meshv2.v2.SosRateLimiter.Decision.Queue) {
-                    _uiState.update { it.copy(queuedUntilMs = decision.releaseAtMs) }
-                    kotlinx.coroutines.delay((decision.releaseAtMs - nowMs).coerceAtLeast(0L))
-                    saveAt = System.currentTimeMillis()
-                    rateLimiter.recordRelease(saveAt)
-                    _uiState.update { it.copy(queuedUntilMs = null) }
-                }
                 val replaced =
                     (decision as? com.sosmesh.android.meshv2.v2.SosRateLimiter.Decision.ReplacePrevious)?.let { r ->
                         lastOwnDigest?.let { d -> r.previousMessageId to d }
                     }
+                if (decision is com.sosmesh.android.meshv2.v2.SosRateLimiter.Decision.Queue) {
+                    _uiState.update { it.copy(queuedUntilMs = decision.releaseAtMs) }
+                }
                 runCatching {
-                    performSaveAfterPreview(saveAt)
+                    performSaveAfterPreview(nowMs, queuedRetryAt = (decision as? com.sosmesh.android.meshv2.v2.SosRateLimiter.Decision.Queue)?.releaseAtMs)
                     replaced?.let { (id, digest) -> submitRepository.deleteIfUnsent(id, digest) }
+                    if (decision is com.sosmesh.android.meshv2.v2.SosRateLimiter.Decision.Queue) {
+                        rateLimiter.recordRelease(decision.releaseAtMs)
+                        _uiState.update { it.copy(queuedUntilMs = null) }
+                    }
                 }
                     .onFailure { throwable ->
                         if (throwable is CancellationException) throw throwable
@@ -194,7 +193,7 @@ class SosFormViewModel
             }
         }
 
-        internal suspend fun performSaveAfterPreview(nowMs: Long) {
+        internal suspend fun performSaveAfterPreview(nowMs: Long, queuedRetryAt: Long? = null) {
             val state = _uiState.value
             val location = resolvedLocation(state)
             val personCount = SosDraftValidator.parsedPersonCount(state.toDraftInput())
@@ -209,6 +208,7 @@ class SosFormViewModel
                         languageTag = language,
                         nowMs = nowMs,
                     ),
+                    queuedRetryAt = queuedRetryAt,
                 )
             
             state.photoUri?.let { uri ->

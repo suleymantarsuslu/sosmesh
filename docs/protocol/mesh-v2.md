@@ -88,6 +88,15 @@ The reassembled ble-v1 transfer payload is UTF-8 JSON, classified in this order:
 3. `version == 1` and `id` ⇒ bare L2 v1 message
 4. anything else ⇒ discard (transfer still VERIFIED at L0; no store).
 
+### 2.5 Attachment copies (photo / voice) over BLE
+
+Attachments follow the SOS on the same link as **separate ble-v1 transfers**, only after the peer holds the SOS (the sender sees `HAVE` / its own transfer VERIFIED). They are not offered, not carried onward (single hop sender → relay) and never part of L1/L2.
+
+* Wire: `SOSATT1\n` + one-line UTF-8 JSON header `{sosId, attachmentId, kind: "image"|"audio", nonce, ephemeralPublicKey, keyId}` + `\n` + raw ciphertext. Receivers that do not know the prefix discard it (§2.4 rule 4).
+* Ciphertext: existing server-key scheme (X25519 + HKDF-SHA256 + ChaCha20-Poly1305). Plaintext JSON `{mime, sha256, data(base64)}`; `sha256` is of the sender's **original** file. AAD envelope `{purpose:"attachment", sosId, attachmentId, kind}`: a copy cannot be re-bound to another SOS/attachment/kind. Relays store it verbatim and never decrypt.
+* Sender shrinks only the BLE copy: image longest edge 1280 → 1024 → 800 → 640 (→ 480 → 320), JPEG quality 70 → 50 → 35, EXIF/GPS dropped, cap **160 KB**; audio mono 16 kHz AAC ~24 kbps, trimmed (not dropped) to **128 KB**. At most 4 copies per SOS, ≤ 300 KB ciphertext each.
+* Relay: keeps up to 4 copies/SOS (24 MB total, oldest evicted, 72 h), uploads each with the upload token of its own SOS ingest to `POST /v1/device/attachments/relayed` (multipart: `file` = ciphertext, `kind`, `attachmentId`, `nonce`, `ephemeralPublicKey`, `keyId`). The server decrypts, stores the shrunk copy and records the **original** sha256, so the sender's own later direct upload of the original (or a second relay) dedups against it: first arrival wins.
+
 ---
 
 ## 3. Device state

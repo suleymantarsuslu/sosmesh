@@ -26,8 +26,10 @@ class VoiceRecorder(private val context: Context) {
             setAudioSource(MediaRecorder.AudioSource.MIC)
             setOutputFormat(MediaRecorder.OutputFormat.MPEG_4)
             setAudioEncoder(MediaRecorder.AudioEncoder.AAC)
-            setAudioSamplingRate(44100)
-            setAudioEncodingBitRate(96000)
+            // Speech-grade mono AAC (16 kHz, 24 kbps): small enough to also travel over BLE and fine for ASR.
+            setAudioChannels(1)
+            setAudioSamplingRate(16000)
+            setAudioEncodingBitRate(24000)
             setMaxDuration(600_000)
             setOutputFile(file.absolutePath)
             

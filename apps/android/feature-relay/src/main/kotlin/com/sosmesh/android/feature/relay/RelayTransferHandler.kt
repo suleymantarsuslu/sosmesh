@@ -1,13 +1,19 @@
 package com.sosmesh.android.feature.relay
 
 import com.sosmesh.android.core.data.di.OutboxIoScope
+import com.sosmesh.android.core.protocol.BleAttachmentWire
 import com.sosmesh.android.core.protocol.BleTransferReceiver
+import com.sosmesh.android.feature.relay.attachments.RelayAttachmentStore
+import com.sosmesh.android.feature.relay.attachments.RelayAttachmentUploader
 import com.sosmesh.android.core.protocol.ErrorCode
 import com.sosmesh.android.meshv2.v2.CarryMetaStore
 import com.sosmesh.android.meshv2.v2.MeshV2Payload
 import com.sosmesh.android.meshv2.v2.MeshV2Runtime
 import com.sosmesh.android.meshv2.v2.MeshV2Wire
 import com.sosmesh.android.meshv2.v2.SeenState
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.jsonObject
 import kotlinx.serialization.json.jsonPrimitive
@@ -26,10 +32,16 @@ class RelayTransferHandler
         private val registrar: RelayEnvelopeRegistrar,
         private val meshV2: MeshV2Runtime,
         private val outboxIoScope: OutboxIoScope,
+        private val attachmentStore: RelayAttachmentStore? = null,
+        private val attachmentUploader: RelayAttachmentUploader? = null,
     ) : BleTransferReceiver.Listener {
         override fun onCompleted(payload: ByteArray) {
             outboxIoScope.launchOutboxWork {
                 val nowMs = System.currentTimeMillis()
+                if (BleAttachmentWire.isAttachment(payload)) {
+                    storeAttachment(payload)
+                    return@launchOutboxWork
+                }
                 if (meshV2.onTransferPayloadTombstones(payload, nowMs)) return@launchOutboxWork
                 
                 val decoded = com.sosmesh.android.meshv2.v2.MeshV2FrameCodec.decode(payload)
@@ -69,6 +81,17 @@ class RelayTransferHandler
                     else -> Unit
                 }
             }
+        }
+
+        /** mesh-v2 §2.5: opaque encrypted attachment copy; only kept for an SOS this relay carries (or already uploaded). */
+        private fun storeAttachment(payload: ByteArray) {
+            val store = attachmentStore ?: return
+            if (!meshV2.node.relayEnabled) return
+            val header = BleAttachmentWire.decode(payload) ?: return
+            if (meshV2.carryMeta.get(header.sosId) == null && store.uploadToken(header.sosId) == null) return
+            val saved = store.save(payload) ?: return
+            // Network upload never blocks the (serial) outbox scope.
+            attachmentUploader?.let { up -> CoroutineScope(Dispatchers.IO).launch { up.onAttachmentStored(saved.sosId) } }
         }
 
         private suspend fun storeCopy(

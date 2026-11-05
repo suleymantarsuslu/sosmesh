@@ -40,6 +40,7 @@ class RelayUploadExecutor
         private val visibilityTracker: com.sosmesh.android.feature.sos.notification.AppVisibilityTracker?,
         private val deliveryCounter: RelayDeliveryCounter,
         private val pendingAttachmentQuery: com.sosmesh.android.core.data.attachment.PendingAttachmentQuery?,
+        private val relayAttachmentUploader: com.sosmesh.android.feature.relay.attachments.RelayAttachmentUploader? = null,
     ) {
         suspend fun runOwnSosUploadCycle(
             nowMs: Long,
@@ -164,6 +165,7 @@ class RelayUploadExecutor
             if (!settings.isRelayEnabled()) {
                 return RelayUploadRunSummary(0, 0, RelayPauseReason.UserDisabled, null, 0)
             }
+            if (networkConnected) relayAttachmentUploader?.retryAll()
             val due = outboxReader.listDueRelayUpload(nowMs)
             if (due.isEmpty()) {
                 return RelayUploadRunSummary(0, 0, null, null, 0)
@@ -229,6 +231,8 @@ class RelayUploadExecutor
                         
                         if (entry.origin == "relay") {
                             deliveryCounter.markMessageDelivered(entry.sosId)
+                            // Opaque attachment copies carried over BLE go up with this SOS's token (no-op without any).
+                            relayAttachmentUploader?.onSosUploaded(entry.sosId, result.uploadToken)
                         }
                     }
                     is RelayIngestResult.InvalidReceipt -> {

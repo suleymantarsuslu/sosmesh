@@ -54,6 +54,7 @@ class SosPeerDeliveryOrchestrator
         private val peerDeliveryTracker: SosPeerDeliveryTracker,
         private val peerRecordStore: PeerDeliveryRecordStore,
         @IoDispatcher private val ioDispatcher: CoroutineDispatcher,
+        private val attachmentSource: BleAttachmentSource? = null,
     ) {
         @Volatile
         private var discoveryActive: Boolean = false
@@ -61,28 +62,54 @@ class SosPeerDeliveryOrchestrator
         private val cycleMutex = Mutex()
         private val attemptedPeers = mutableMapOf<String, MutableSet<String>>()
 
+        /** Peers that only speak ble-v1: they cannot take attachment transfers, so never wait for them. */
+        private val v1Peers = mutableSetOf<String>()
+
         init {
             peerDeliveryTracker.setCompletionCallback { sosId, digest, peerId, success ->
                 if (success && peerId != null) {
                     CoroutineScope(ioDispatcher).launch {
-                        val allPeers = getAllDiscoveredPeerIds()
                         val delivered = peerRecordStore.getDeliveredPeers(sosId)
-                        val remaining = allPeers - delivered
-                        
                         if (delivered.size == 1) {
                             outbox.updateState(sosId, digest, "PEER_RECEIVED", System.currentTimeMillis(), null)
                         }
-                        
-                        if (remaining.isEmpty() && allPeers.isNotEmpty()) {
-                            peerRecordStore.clearMessageRecords(sosId)
-                            outbox.setRetryAt(sosId, digest, Long.MAX_VALUE, null)
-                        } else if (remaining.isNotEmpty()) {
-                            val entry = outbox.getByKey(sosId, digest)
-                            if (entry != null) {
-                                outbox.setRetryAt(sosId, digest, System.currentTimeMillis() + 500L, "continue_fanout")
-                            }
+                        // The peer holds the SOS now: its attachments follow on the same link before fan-out moves on.
+                        if (peerId !in v1Peers && attachmentSource?.hasPending(sosId, peerId) == true) {
+                            outbox.setRetryAt(sosId, digest, System.currentTimeMillis() + 300L, "send_attachments")
+                        } else {
+                            advanceFanout(sosId, digest)
                         }
                     }
+                }
+            }
+            peerDeliveryTracker.setAttachmentCallback { sosId, digest, attachmentId, peerId, success ->
+                if (peerId == null) return@setAttachmentCallback
+                CoroutineScope(ioDispatcher).launch {
+                    val source = attachmentSource ?: return@launch
+                    if (success) source.markDelivered(sosId, attachmentId, peerId) else source.markFailed(sosId, attachmentId, peerId)
+                    if (success && source.hasPending(sosId, peerId)) {
+                        outbox.setRetryAt(sosId, digest, System.currentTimeMillis() + 300L, "send_attachments")
+                    } else {
+                        advanceFanout(sosId, digest)
+                    }
+                }
+            }
+        }
+
+        private suspend fun advanceFanout(
+            sosId: String,
+            digest: String,
+        ) {
+            val allPeers = getAllDiscoveredPeerIds()
+            val delivered = peerRecordStore.getDeliveredPeers(sosId)
+            val remaining = allPeers - delivered
+            if (remaining.isEmpty() && allPeers.isNotEmpty()) {
+                peerRecordStore.clearMessageRecords(sosId)
+                outbox.setRetryAt(sosId, digest, Long.MAX_VALUE, null)
+            } else if (remaining.isNotEmpty()) {
+                val entry = outbox.getByKey(sosId, digest)
+                if (entry != null) {
+                    outbox.setRetryAt(sosId, digest, System.currentTimeMillis() + 500L, "continue_fanout")
                 }
             }
         }
@@ -128,7 +155,10 @@ class SosPeerDeliveryOrchestrator
             var status = radio.refreshStatus()
             val triedForThisMessage = attemptedPeers.getOrPut(due.sosId) { mutableSetOf() }
             val deliveredPeers = peerRecordStore.getDeliveredPeers(due.sosId)
-            val excludePeers = triedForThisMessage + deliveredPeers
+            val excludePeers = (triedForThisMessage + deliveredPeers).filterNot { peer ->
+                // A peer that has the SOS but still lacks attachments must stay connectable.
+                attachmentSource?.hasPending(due.sosId, peer) == true
+            }.toSet()
             if (status.gattState != GattUiConnectionState.READY) {
                 if (status.peerCount == 0 && radio.peerHops().isEmpty()) {
                     scheduleRetry(due, nowMs + 5_000L, "no_peer")
@@ -162,10 +192,19 @@ class SosPeerDeliveryOrchestrator
             engine.onGattReady()
             val peerId = radio.connectedPeerId()
             when (val pre = MeshV2CentralSession.preflight(engine, peerId, listOf(due.sosId), nowMs)) {
-                MeshV2Preflight.V1Peer -> Unit
+                MeshV2Preflight.V1Peer -> { if (peerId != null) v1Peers.add(peerId) }
                 MeshV2Preflight.TombstoneBatchSent -> return SosPeerDeliveryCycleResult.TransferStarted
                 is MeshV2Preflight.Statuses ->
                     if (!pre.wants(due.sosId)) {
+                        if (peerId != null) {
+                            val blob = attachmentSource?.nextFor(due.sosId, peerId)
+                            if (blob != null) {
+                                peerDeliveryTracker.active =
+                                    SosPeerDeliveryTracker.ActiveTransfer(due.sosId, due.digest, peerId, blob.attachmentId)
+                                engine.sendOutbound(due.sosId, blob.digest, blob.bytes)
+                                return SosPeerDeliveryCycleResult.TransferStarted
+                            }
+                        }
                         if (peerId != null) {
                             triedForThisMessage.add(peerId)
                             peerRecordStore.recordDelivery(due.sosId, peerId)

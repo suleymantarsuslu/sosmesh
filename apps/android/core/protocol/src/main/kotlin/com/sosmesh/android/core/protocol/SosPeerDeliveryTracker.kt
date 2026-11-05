@@ -21,12 +21,20 @@ class SosPeerDeliveryTracker
             val sosId: String,
             val digest: String,
             val peerId: String?,
+            /** Non-null while an attachment copy (not the SOS itself) is on the wire. */
+            val attachmentId: String? = null,
         )
 
         @Volatile
         var active: ActiveTransfer? = null
 
         private var completionCallback: ((String, String, String?, Boolean) -> Unit)? = null
+
+        private var attachmentCallback: ((sosId: String, digest: String, attachmentId: String, peerId: String?, success: Boolean) -> Unit)? = null
+
+        fun setAttachmentCallback(callback: (sosId: String, digest: String, attachmentId: String, peerId: String?, success: Boolean) -> Unit) {
+            attachmentCallback = callback
+        }
 
         fun setCompletionCallback(callback: (sosId: String, digest: String, peerId: String?, success: Boolean) -> Unit) {
             completionCallback = callback
@@ -37,6 +45,13 @@ class SosPeerDeliveryTracker
                 object : BleTransferSender.Listener {
                     override fun onCompleted() {
                         val ctx = active ?: return
+                        if (ctx.attachmentId != null) {
+                            outboxIoScope.launchOutboxWork {
+                                attachmentCallback?.invoke(ctx.sosId, ctx.digest, ctx.attachmentId, ctx.peerId, true)
+                            }
+                            active = null
+                            return
+                        }
                         outboxIoScope.launchOutboxWork {
                             if (ctx.peerId != null) {
                                 peerRecordStore.recordDelivery(ctx.sosId, ctx.peerId)
@@ -52,7 +67,11 @@ class SosPeerDeliveryTracker
                     ) {
                         val ctx = active ?: return
                         outboxIoScope.launchOutboxWork {
-                            completionCallback?.invoke(ctx.sosId, ctx.digest, ctx.peerId, false)
+                            if (ctx.attachmentId != null) {
+                                attachmentCallback?.invoke(ctx.sosId, ctx.digest, ctx.attachmentId, ctx.peerId, false)
+                            } else {
+                                completionCallback?.invoke(ctx.sosId, ctx.digest, ctx.peerId, false)
+                            }
                             outbox.setRetryAt(
                                 ctx.sosId,
                                 ctx.digest,

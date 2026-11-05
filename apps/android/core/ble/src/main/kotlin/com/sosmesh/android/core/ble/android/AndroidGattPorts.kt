@@ -45,6 +45,11 @@ class AndroidGattServerPort
         // BluetoothGattServer.getConnectedDevices() always throws UnsupportedOperationException; track centrals ourselves.
         private val connectedDevices = java.util.concurrent.ConcurrentHashMap<String, BluetoothDevice>()
 
+        // Notification queue: Android drops back-to-back notifications; serialize with onNotificationSent.
+        private data class PendingNotification(val device: BluetoothDevice, val characteristic: BluetoothGattCharacteristic)
+        private val notificationQueue = java.util.concurrent.ConcurrentLinkedQueue<PendingNotification>()
+        @Volatile private var notificationInFlight = false
+
         override fun start(
             serviceUuid: String,
             specs: List<GattCharacteristicSpec>,
@@ -71,7 +76,13 @@ class AndroidGattServerPort
                                 val connected = newState == BluetoothProfile.STATE_CONNECTED
                                 connectedAddress = if (connected) address else null
                                 if (address != null && device != null) {
-                                    if (connected) connectedDevices[address] = device else connectedDevices.remove(address)
+                                    if (connected) {
+                                        connectedDevices[address] = device
+                                    } else {
+                                        connectedDevices.remove(address)
+                                        // Clear pending notifications for this device to prevent stale sends.
+                                        notificationQueue.removeIf { it.device.address == address }
+                                    }
                                 }
                                 if (address != null) {
                                     connectionListener?.onConnectionStateChanged(address, connected)
@@ -176,6 +187,15 @@ class AndroidGattServerPort
                                     // Permission revoked mid-session.
                                 }
                             }
+
+                            override fun onNotificationSent(
+                                device: BluetoothDevice?,
+                                status: Int,
+                            ) {
+                                // Notification sent (or failed); send next queued notification if any.
+                                notificationInFlight = false
+                                processNotificationQueue()
+                            }
                         },
                     )
                 val service = BluetoothGattService(UUID.fromString(serviceUuid), BluetoothGattService.SERVICE_TYPE_PRIMARY)
@@ -225,6 +245,8 @@ class AndroidGattServerPort
             characteristics.clear()
             connectedDevices.clear()
             connectedAddress = null
+            notificationQueue.clear()
+            notificationInFlight = false
         }
 
         override fun setWriteListener(listener: GattServerWriteListener?) {
@@ -248,11 +270,31 @@ class AndroidGattServerPort
             val target =
                 deviceAddress?.let { addr -> connectedDevices[addr] } ?: connectedDevices.values.firstOrNull()
             val device = target ?: return Result.failure(IllegalStateException("No connected device"))
-            return try {
-                val ok = notifyInternal(device, characteristic) ?: false
-                if (ok) Result.success(Unit) else Result.failure(IllegalStateException("notify failed"))
-            } catch (securityException: SecurityException) {
-                Result.failure(securityException)
+            // Queue notification; Android drops concurrent calls. onNotificationSent drains the queue.
+            notificationQueue.offer(PendingNotification(device, characteristic))
+            processNotificationQueue()
+            return Result.success(Unit)
+        }
+
+        private fun processNotificationQueue() {
+            // Send next notification if no notification is in flight and queue is not empty.
+            if (notificationInFlight || notificationQueue.isEmpty()) return
+            val pending = notificationQueue.poll() ?: return
+            notificationInFlight = true
+            if (!hasConnectPermission()) {
+                notificationInFlight = false
+                return
+            }
+            try {
+                val ok = notifyInternal(pending.device, pending.characteristic) ?: false
+                if (!ok) {
+                    // notifyCharacteristicChanged returned false; mark as not in flight and try next.
+                    notificationInFlight = false
+                    processNotificationQueue()
+                }
+                // If ok, onNotificationSent will mark as not in flight and process next.
+            } catch (_: SecurityException) {
+                notificationInFlight = false
             }
         }
 

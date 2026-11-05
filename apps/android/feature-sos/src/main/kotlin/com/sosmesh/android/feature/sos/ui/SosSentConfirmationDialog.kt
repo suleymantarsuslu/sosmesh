@@ -15,6 +15,7 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.CheckCircle
 import androidx.compose.material.icons.filled.Close
+import androidx.compose.material.icons.filled.Info
 import androidx.compose.material.icons.filled.Phone
 import androidx.compose.material.icons.filled.Warning
 import androidx.compose.material3.Button
@@ -46,12 +47,13 @@ import com.sosmesh.android.feature.sos.R
 @Composable
 fun SosSentConfirmationDialog(
     sosId: String,
+    hasAttachments: Boolean = false,
     onDismiss: () -> Unit,
     onNavigateToStatus: () -> Unit,
 ) {
     val context = LocalContext.current
     val emergencyNumber = EmergencyNumberProvider.getEmergencyNumber(context)
-    var isOnline by remember { mutableStateOf(false) }
+    var isOnline by remember { mutableStateOf(checkNetworkStatus(context)) }
 
     LaunchedEffect(Unit) {
         isOnline = checkNetworkStatus(context)
@@ -127,6 +129,23 @@ fun SosSentConfirmationDialog(
                                 ),
                             style = MaterialTheme.typography.bodyMedium,
                         )
+                    }
+
+                    if (hasAttachments && !isOnline) {
+                        Row(
+                            horizontalArrangement = Arrangement.spacedBy(SosSpacing.sm),
+                            verticalAlignment = Alignment.Top,
+                        ) {
+                            Icon(
+                                imageVector = Icons.Default.Info,
+                                contentDescription = null,
+                                tint = MaterialTheme.colorScheme.primary,
+                            )
+                            Text(
+                                text = stringResource(R.string.sos_sent_media_online_only),
+                                style = MaterialTheme.typography.bodyMedium,
+                            )
+                        }
                     }
 
                     HorizontalDivider()

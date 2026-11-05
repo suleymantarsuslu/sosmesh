@@ -19,6 +19,7 @@ struct SosFollowUpView: View {
     @State private var attachmentIds: [String] = []
     @State private var showConfirmation = false
     @State private var sentSosId: String?
+    @State private var sentHadAttachments = false
     @Environment(\.dismiss) private var dismiss
 
     var body: some View {
@@ -254,7 +255,7 @@ struct SosFollowUpView: View {
         }
         .sheet(isPresented: $showConfirmation) {
             if let sosId = sentSosId {
-                SosSentConfirmationView(sosId: sosId, navigateToStatus: navigateToStatus)
+                SosSentConfirmationView(sosId: sosId, hasAttachments: sentHadAttachments, navigateToStatus: navigateToStatus)
             }
         }
     }
@@ -300,6 +301,7 @@ struct SosFollowUpView: View {
             let lang = Locale.current.language.languageCode?.identifier ?? "en"
             let sosId = try await appModel.submitSos(note: note, languageTag: lang)
             
+            sentHadAttachments = selectedPhoto != nil || voiceRecorder.recordedURL != nil
             await queueAttachments(sosMessageId: sosId)
             
             await SosNotificationManager.shared.trackPendingSos(sosId: sosId)

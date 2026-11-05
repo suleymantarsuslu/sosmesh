@@ -56,6 +56,7 @@
     <string name="sos_sent_title">SOS Gönderiliyor</string>
     <string name="sos_sent_online">Mesajınız sunucuya gönderiliyor.</string>
     <string name="sos_sent_offline">Mesajınız cihazda kaydedildi ve yakındaki cihazlar üzerinden aktarılacak veya internet bağlantısı kurulduğunda gönderilecek.</string>
+    <string name="sos_sent_media_online_only">Ses ve görüntü ancak çevrimiçi olduğunuzda aktarılabilir. Mesajınız çevrimdışı ağ üzerinden iletilecek.</string>
     <string name="sos_sent_not112">SOSMesh, %1$s\'nin yerine geçmez.</string>
     <string name="sos_sent_action_ok">Tamam</string>
     <string name="notification_sos_delivered_title">Mesajınız gönderildi</string>

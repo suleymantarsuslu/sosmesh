@@ -45,6 +45,7 @@
     <string name="sos_sent_title">SOS Being Sent</string>
     <string name="sos_sent_online">Your message is being sent to the server.</string>
     <string name="sos_sent_offline">Your message has been saved on your device and will be relayed via nearby devices or sent when internet connection is restored.</string>
+    <string name="sos_sent_media_online_only">Photos and voice recordings can only be sent when you\'re online. Your message will be relayed over the offline network.</string>
     <string name="sos_sent_not112">SOSMesh does not replace %1$s.</string>
     <string name="sos_sent_action_ok">OK</string>
     <string name="notification_sos_delivered_title">Your message has been delivered</string>

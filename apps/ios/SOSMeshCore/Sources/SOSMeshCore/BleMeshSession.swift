@@ -59,9 +59,9 @@ public final class BleMeshSession {
     }
 
     /// Starts one mesh v2 transfer (own L1, carried L1, tombstone batch or bare v1).
-    public func sendPayload(sosId: String, digest: String, payload: Data) -> Bool {
+    public func sendPayload(sosId: String, digest: String, payload: Data, peerId: String? = nil) -> Bool {
         guard engine.prepareSenderForNextTransfer() else { return false }
-        engine.sendOutbound(sosId: sosId, digest: digest, payload: payload)
+        engine.sendOutbound(sosId: sosId, digest: digest, payload: payload, peerId: peerId)
         return true
     }
 

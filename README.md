@@ -91,11 +91,15 @@ flowchart LR
   neighbourhood → street), with confirm step and history. Broadcasts are signed by the server and verified on devices.
 - TR/EN UI.
 
-**Server-side AI (optional, off by default)**
-- The API contains an AI pipeline (triage, transcription, photo analysis, translation, fusion, mission copilot) behind
-  `AI_ENABLED` (default `false` in `.env.example` and the production compose file). Everything is advisory: **AI never makes
-  rescue, treatment or triage decisions for operators**, and the offline mesh does not depend on it. See
-  [docs/META_AI_INTEGRATION.md](docs/META_AI_INTEGRATION.md).
+**Server-side AI (Meta models, enabled in production)**
+- The API's AI pipeline (triage, transcription, photo analysis, translation, fusion, mission copilot) calls the Meta Model API
+  (`https://api.meta.ai/v1`) through `apps/api/src/ai/meta-model-client.ts`, using Standard-mode models (never `-contributor`):
+  - `muse-spark-1.3`: SOS pre-assessment, operator copilot, incident fusion, message translation and image understanding.
+  - `muse-voice-transcribe-1.0`: voice-note transcription.
+  - `sam-3.1`: image segmentation for photo analysis.
+- It is switched by `AI_ENABLED` (on in the production deployment; `.env.example` ships it off so local dev needs no key).
+  Everything is advisory: **AI never makes rescue, treatment or triage decisions for operators**, and the offline mesh does not
+  depend on it. See [docs/META_AI_INTEGRATION.md](docs/META_AI_INTEGRATION.md).
 
 ## Repository layout
 
@@ -172,7 +176,7 @@ variables by Coolify and are never committed. Details: [infra/deploy/README.md](
   BLE hardware. Cross-device results are tracked in `docs/tests/` and `docs/compat/`.
 - Photos and voice are not carried over the mesh; they upload only from the sender when it is online.
 - A peer ACK means "a nearby device received it", not that the server or an operator has seen it.
-- **AI never decides** rescue, treatment or triage on behalf of operators; it is optional and disabled by default.
+- **AI never decides** rescue, treatment or triage on behalf of operators; it is advisory only.
 - Project status and open items: [docs/handover/status.json](docs/handover/status.json),
   [docs/handover/tech-debt.md](docs/handover/tech-debt.md).
 

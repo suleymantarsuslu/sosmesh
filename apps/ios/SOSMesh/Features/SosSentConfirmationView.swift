@@ -4,9 +4,11 @@ import Network
 struct SosSentConfirmationView: View {
     @Environment(\.dismiss) private var dismiss
     let sosId: String
+    var hasAttachments: Bool = false
     let navigateToStatus: () -> Void
     
     @State private var isOnline = false
+    @State private var networkChecked = false
     
     var body: some View {
         let emergencyNumber = EmergencyNumberProvider.getEmergencyNumber()
@@ -36,6 +38,20 @@ struct SosSentConfirmationView: View {
                                     .font(DesignSystem.Typography.body)
                                     .foregroundStyle(DesignSystem.Colors.textPrimary)
                                     .fixedSize(horizontal: false, vertical: true)
+                            }
+                            
+                            if hasAttachments && networkChecked && !isOnline {
+                                HStack(alignment: .top, spacing: DesignSystem.Spacing.sm) {
+                                    Image(systemName: "info.circle.fill")
+                                        .font(.system(size: 20))
+                                        .foregroundStyle(DesignSystem.Colors.accentBlue)
+                                        .accessibilityHidden(true)
+                                    
+                                    Text("sos.sent.media.online_only")
+                                        .font(DesignSystem.Typography.callout)
+                                        .foregroundStyle(DesignSystem.Colors.textPrimary)
+                                        .fixedSize(horizontal: false, vertical: true)
+                                }
                             }
                             
                             Divider()
@@ -106,6 +122,7 @@ struct SosSentConfirmationView: View {
         monitor.pathUpdateHandler = { path in
             DispatchQueue.main.async {
                 isOnline = path.status == .satisfied
+                networkChecked = true
             }
         }
         monitor.start(queue: queue)

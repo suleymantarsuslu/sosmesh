@@ -102,6 +102,7 @@
 "sos.sent.title" = "SOS Gönderiliyor";
 "sos.sent.online" = "Mesajınız sunucuya gönderiliyor.";
 "sos.sent.offline" = "Mesajınız cihazda kaydedildi ve yakındaki cihazlar üzerinden aktarılacak veya internet bağlantısı kurulduğunda gönderilecek.";
+"sos.sent.media.online_only" = "Ses ve görüntü ancak çevrimiçi olduğunuzda aktarılabilir. Mesajınız çevrimdışı ağ üzerinden iletilecek.";
 "sos.sent.not112" = "SOSMesh, %@'nin yerine geçmez.";
 "sos.sent.action.ok" = "Tamam";
 "sos.sent.action.status" = "Durum ekranına git";

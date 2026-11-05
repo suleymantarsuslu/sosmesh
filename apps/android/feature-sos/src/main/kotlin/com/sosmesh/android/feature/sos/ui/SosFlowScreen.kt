@@ -139,6 +139,7 @@ fun SosFlowScreen(
         if (state.showConfirmationDialog && state.savedMessageId != null) {
             SosSentConfirmationDialog(
                 sosId = state.savedMessageId,
+                hasAttachments = state.photoUri != null || state.voiceFile != null,
                 onDismiss = onDismissConfirmation,
                 onNavigateToStatus = onNavigateToStatus,
             )

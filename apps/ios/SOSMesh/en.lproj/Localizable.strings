@@ -102,6 +102,7 @@
 "sos.sent.title" = "SOS Being Sent";
 "sos.sent.online" = "Your message is being sent to the server.";
 "sos.sent.offline" = "Your message has been saved on your device and will be relayed via nearby devices or sent when internet connection is restored.";
+"sos.sent.media.online_only" = "Photos and voice recordings can only be sent when you're online. Your message will be relayed over the offline network.";
 "sos.sent.not112" = "SOSMesh does not replace %@.";
 "sos.sent.action.ok" = "OK";
 "sos.sent.action.status" = "Go to status";

@@ -2,15 +2,39 @@
 
 **Offline-first emergency messaging over a Bluetooth LE mesh, with a central server and operator panel.**
 
-[![License](https://img.shields.io/badge/license-SEE%20LICENSE-blue.svg)](LICENSE)
+[![License: GPL-3.0](https://img.shields.io/badge/license-GPL--3.0-blue.svg)](LICENSE)
 [![Node](https://img.shields.io/badge/node-%3E%3D20.0.0-brightgreen.svg)](https://nodejs.org)
 [![pnpm](https://img.shields.io/badge/pnpm-%3E%3D9.0.0-orange.svg)](https://pnpm.io)
 
 > ⚠️ **SOSMesh does NOT replace 112 (Turkey) or 911 (USA) or any official emergency service.**
 > It is an experimental emergency-communication prototype. Always call the official number first when you can.
 
+> [!IMPORTANT]
+> **Project status / Proje durumu**
+>
+> **EN**
+> - **Experimental prototype.** Technology readiness level is **at most TRL 4** (lab / limited real-device validation). Not production-grade.
+> - **Does not replace 112, 911 or any emergency service.**
+> - **Central server dependency:** today, SOS messages reach operators only through the central server. The BLE mesh carries
+>   messages between phones, but delivery to an operator needs a device that reaches the server.
+> - **Encryption is device-to-server, not end-to-end:** SOS content is encrypted on the phone for the server; relay phones cannot
+>   read it, but the server decrypts it so operators can see it.
+> - **Meta AI and Firebase are optional add-ons.** The core (offline BLE mesh, server, operator panel) works without them. They
+>   will **not** be part of the OTF-funded open-source version, which keeps them off / optional.
+>
+> **TR**
+> - **Deneysel bir prototiptir.** Teknoloji hazırlık seviyesi (THS) **en fazla 4**'tür (laboratuvar / sınırlı gerçek cihaz
+>   doğrulaması). Üretim seviyesinde değildir.
+> - **112'nin, 911'in veya herhangi bir acil durum hizmetinin yerini tutmaz.**
+> - **Merkezi sunucu bağımlılığı:** Bugün SOS mesajları operatöre yalnızca merkezi sunucu üzerinden ulaşır. BLE mesh mesajı
+>   telefonlar arasında taşır; operatöre ulaşması için sunucuya bağlanabilen bir cihaz gerekir.
+> - **Şifreleme sunucuya kadardır, uçtan uca değildir:** SOS içeriği telefonda sunucu için şifrelenir; röle telefonlar içeriği
+>   okuyamaz, ancak operatörlerin görebilmesi için sunucu mesajı çözer.
+> - **Meta AI ve Firebase isteğe bağlı eklentilerdir.** Çekirdek sistem (çevrimdışı BLE mesh, sunucu, operatör paneli) bunlar
+>   olmadan çalışır. OTF fonlu açık kaynak sürümde **yer almayacak**, kapalı / isteğe bağlı kalacaktır.
+
 **Türkçe özet:** SOSMesh (Türkçe adı **"Acil Durum Ağı"**), internet olmadığında bile SOS mesajını yakındaki telefonlar
-üzerinden Bluetooth LE ile ileten bir prototiptir. Mesaj şifrelidir; gönüllü röle telefonu içeriği okuyamaz. İnternete
+üzerinden Bluetooth LE ile ileten bir prototiptir. Mesaj sunucuya kadar şifrelidir (uçtan uca değil); gönüllü röle telefonu içeriği okuyamaz. İnternete
 ulaşan bir cihaz mesajı sunucuya iletir ve operatör panelinde görünür. **112'nin yerini tutmaz**; iOS arka plan/force-quit
 için mesh garantisi verilmez; fiziksel BLE başarısı yalnızca gerçek cihaz testleriyle kanıtlanır. Ayrıntılar aşağıda
 (bkz. [Limitations](#limitations--known-limits)).
@@ -26,7 +50,8 @@ için mesh garantisi verilmez; fiziksel BLE başarısı yalnızca gerçek cihaz 
   24 h time-to-live).
 - **Wear OS watch** (`apps/android/wear`) and **Apple Watch** (`apps/watchos`) companions (watch SOS; Wear OS also has a relay toggle screen).
 - **Central server** at <https://sosmesh.antiosoft.com>: API, operator web panel, background worker and PostgreSQL.
-- **Encrypted SOS:** only the origin device and the server hold plaintext. Relays handle opaque bytes and cannot read the SOS.
+- **Encrypted SOS (device-to-server, not end-to-end):** only the origin device and the server hold plaintext. Relays handle
+  opaque bytes and cannot read the SOS.
 
 ### Safety invariants (see [docs/protocol/mesh-v2.md](docs/protocol/mesh-v2.md) §0)
 
@@ -78,7 +103,7 @@ flowchart LR
   relayed over the mesh and is not blocked. Attachments are not carried by relays.
 - Notifications page and broadcast handling, including the **relay request** notification with **"Röleyi aç"** (turn relay on) and
   **"İptal"** (cancel) actions.
-- Notifications: **Android uses FCM**; **iOS uses local notifications** (the app polls for active broadcasts; no APNs push is required).
+- Notifications: **Android uses FCM** (Firebase, optional); **iOS uses local notifications** (the app polls for active broadcasts; no APNs push is required).
 - Full **Turkish / English** localization (Android resources, iOS `Localizable.strings`, operator panel i18n).
 - 112 call button on SOS screens.
 
@@ -91,13 +116,14 @@ flowchart LR
   neighbourhood → street), with confirm step and history. Broadcasts are signed by the server and verified on devices.
 - TR/EN UI.
 
-**Server-side AI (Meta models, enabled in production)**
+**Optional add-on: server-side AI assistance (Meta models)**
+- This is an optional add-on, not part of the core emergency path; the OTF-funded open-source version keeps it off / optional.
 - The API's AI pipeline (triage, transcription, photo analysis, translation, fusion, mission copilot) calls the Meta Model API
   (`https://api.meta.ai/v1`) through `apps/api/src/ai/meta-model-client.ts`, using Standard-mode models (never `-contributor`):
   - `muse-spark-1.3`: SOS pre-assessment, operator copilot, incident fusion, message translation and image understanding.
   - `muse-voice-transcribe-1.0`: voice-note transcription.
   - `sam-3.1`: image segmentation for photo analysis.
-- It is switched by `AI_ENABLED` (on in the production deployment; `.env.example` ships it off so local dev needs no key).
+- It is switched by `AI_ENABLED` (currently on in the prototype's production deployment; `.env.example` ships it off so local dev needs no key).
   Everything is advisory: **AI never makes rescue, treatment or triage decisions for operators**, and the offline mesh does not
   depend on it. See [docs/META_AI_INTEGRATION.md](docs/META_AI_INTEGRATION.md).
 
@@ -168,7 +194,8 @@ variables by Coolify and are never committed. Details: [infra/deploy/README.md](
 
 ## Limitations / known limits
 
-- **Not a replacement for 112/911.** Prototype; no delivery guarantee.
+- **Not a replacement for 112/911.** Experimental prototype (TRL at most 4); no delivery guarantee.
+- **Depends on the central server** for delivery to operators; encryption is device-to-server, **not end-to-end**.
 - **No guarantee of iOS background or force-quit mesh behaviour.** iPhones are not 24/7 relays; Apple background limits apply
   (see `docs/research/ios-multihop.md`, `docs/compat/ios-background-matrix.csv`). iOS multi-hop forwarding is behind an
   experimental setting that is off by default.
@@ -185,12 +212,17 @@ variables by Coolify and are never committed. Details: [infra/deploy/README.md](
 - [ARCHITECTURE.md](ARCHITECTURE.md) · [docs/architecture/system-diagram.md](docs/architecture/system-diagram.md) ·
   [docs/architecture/requirements-map.md](docs/architecture/requirements-map.md) · [docs/adr/](docs/adr/)
 - Protocols: [docs/protocol/ble-v1.md](docs/protocol/ble-v1.md), [docs/protocol/mesh-v2.md](docs/protocol/mesh-v2.md)
-- [HACKATHON_SUBMISSION.md](HACKATHON_SUBMISSION.md) · [DEMO_SCRIPT.md](DEMO_SCRIPT.md) · [docs/META_AI_INTEGRATION.md](docs/META_AI_INTEGRATION.md)
+- [DEMO_SCRIPT.md](DEMO_SCRIPT.md) · [docs/META_AI_INTEGRATION.md](docs/META_AI_INTEGRATION.md) (optional AI add-on)
+- Archive (historical hackathon material): [docs/archive/HACKATHON_SUBMISSION.md](docs/archive/HACKATHON_SUBMISSION.md) ·
+  [docs/archive/ai-architecture-audit.md](docs/archive/ai-architecture-audit.md)
 - [SECURITY.md](SECURITY.md) · [CONTRIBUTING.md](CONTRIBUTING.md) (Conventional Commits) · [CHANGELOG.md](CHANGELOG.md)
 
 ## License
 
-See [LICENSE](LICENSE).
+SOSMesh is licensed under the **GNU General Public License v3.0** (GPL-3.0). See [LICENSE](LICENSE) and
+[docs/decisions/LICENSE-decision.md](docs/decisions/LICENSE-decision.md).
+
+Lisans: **GPL-3.0** (GNU Genel Kamu Lisansı v3.0).
 
 ---
 

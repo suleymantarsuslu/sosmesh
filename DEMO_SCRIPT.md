@@ -448,7 +448,7 @@ A: Post-hackathon priorities:
 ### Upload
 - YouTube (unlisted or public)
 - Hackathon submission portal (if direct upload supported)
-- Include link in HACKATHON_SUBMISSION.md
+- Include link in docs/archive/HACKATHON_SUBMISSION.md
 
 ---
 

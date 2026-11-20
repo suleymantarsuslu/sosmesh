@@ -4,16 +4,26 @@
 
 Bu depo SOSMesh acil durum mesh prototipini içerir. **SOSMesh resmî 112 veya başka bir acil çağrı hizmetinin yerine geçmez.**
 
-## Güvenlik açığı bildirimi
+## Güvenlik açığı bildirimi / Reporting a vulnerability
 
-| Alan | Değer |
+**TR:** Bir güvenlik açığı bulduysanız lütfen herkese açık bir issue açmayın; ayrıntıları **[bilgi@edavam.com](mailto:bilgi@edavam.com)**
+adresine e-postayla gönderin (konu satırına `[SOSMesh security]` yazın). Raporu aldığımızı onaylar, düzeltme hazır olana kadar
+ayrıntıları gizli tutar ve uygun olursa düzeltme yayımlandığında katkınızı anarız. Lütfen sorunu düzeltmemize fırsat vermeden
+açıklamayın ve başkalarının verilerine erişmeyin.
+
+**EN:** If you find a security vulnerability, please do not open a public issue. Email the details to
+**[bilgi@edavam.com](mailto:bilgi@edavam.com)** (subject: `[SOSMesh security]`). We will acknowledge your report, keep the details
+private until a fix is ready, and credit you when the fix is released if you wish. Please give us reasonable time to fix the issue
+before any public disclosure, and do not access other people's data.
+
+| Alan / Field | Değer / Value |
 | --- | --- |
-| **Durum** | `BLOCKED_APPROVAL` — prod iletişim kanalı henüz onaylanmadı |
-| **E-posta (yer tutucu)** | `GUVENLIK_BILDIRIM_TBD` |
-| **PGP (opsiyonel)** | Anahtar yayımlanmadı — `BLOCKED_APPROVAL` |
-| **Yanıt hedefi** | İlk yanıt: 5 iş günü (hedef; prod SLA onayı gerekir) |
+| **E-posta / Email** | [bilgi@edavam.com](mailto:bilgi@edavam.com) |
+| **PGP (opsiyonel / optional)** | Anahtar yayımlanmadı / Not published yet |
+| **Yanıt hedefi / Response target** | İlk yanıt: 5 iş günü (hedef) / First response: 5 business days (target) |
 
 Lütfen raporlarda **gerçek GPS, telefon, sağlık veya kimlik verisi** eklemeyin; sentetik veya redakte edilmiş örnekler kullanın.
+Please do not include **real GPS, phone, health or identity data** in reports; use synthetic or redacted examples.
 
 ### Beklenen bilgiler
 

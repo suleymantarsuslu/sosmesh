@@ -449,10 +449,10 @@ _Team members, roles, and contact info to be filled in by user._
 
 - **GitHub Repository:** https://github.com/suleymantarsuslu/sosmesh
 - **README:** [README.md](README.md)
-- **Architecture:** [ARCHITECTURE.md](ARCHITECTURE.md)
-- **Meta AI Integration:** [docs/META_AI_INTEGRATION.md](docs/META_AI_INTEGRATION.md)
-- **Test Results:** [TEST_RESULTS.md](TEST_RESULTS.md)
-- **Demo Script:** [DEMO_SCRIPT.md](DEMO_SCRIPT.md)
+- **Architecture:** [ARCHITECTURE.md](../../ARCHITECTURE.md)
+- **Meta AI Integration:** [docs/META_AI_INTEGRATION.md](../../docs/META_AI_INTEGRATION.md)
+- **Test Results:** [TEST_RESULTS.md](../../TEST_RESULTS.md)
+- **Demo Script:** [DEMO_SCRIPT.md](../../DEMO_SCRIPT.md)
 
 ### Live Demo
 

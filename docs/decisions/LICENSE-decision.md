@@ -1,7 +1,8 @@
-# License Decision - Awaiting User Input
+# License Decision - GPL-3.0
 
-**Status:** PENDING  
-**Date:** 2026-10-29  
+**Status:** DECIDED  
+**Date:** 2026-11-20 (opened 2026-10-29)  
+**Decided by:** Project owner  
 **Context:** ADIM 05 (Monorepo Skeleton)
 
 ---
@@ -82,17 +83,24 @@ Given SOSMesh's public safety mission, we recommend:
 
 ## Decision
 
-**Awaiting project owner input.**
+**GPL-3.0** (GNU General Public License v3.0), decided by the project owner on **2026-11-20**.
+
+- The `LICENSE` file now contains the full, unmodified official GPL-3.0 text from <https://www.gnu.org/licenses/gpl-3.0.txt>.
+- The README license badge and License section point to GPL-3.0.
+- The earlier recommendation above (permissive MIT/Apache) is kept for the record; the owner chose strong copyleft
+  so that derivatives of this public-safety software stay open source.
+
+**Karar (TR):** Proje sahibi 2026-11-20 tarihinde lisansı **GPL-3.0** olarak belirledi.
 
 ---
 
 ## Next Steps
 
-1. Project owner selects license type
-2. Update `LICENSE` file with chosen license text
+1. ~~Project owner selects license type~~ (done 2026-11-20: GPL-3.0)
+2. ~~Update `LICENSE` file with chosen license text~~ (done)
 3. Add license headers to source files (if required by chosen license)
 4. Update `package.json` `license` field
-5. Document decision in this file
+5. ~~Document decision in this file~~ (done)
 
 ---
 

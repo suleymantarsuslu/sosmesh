@@ -890,7 +890,9 @@ sosmesh/
 │       └── SOSMesh/
 ├── docs/
 │   ├── META_AI_INTEGRATION.md
-│   ├── ai-architecture-audit.md
+│   ├── archive/
+│   │   ├── HACKATHON_SUBMISSION.md
+│   │   └── ai-architecture-audit.md
 │   ├── architecture/
 │   │   └── system-diagram.md
 │   └── tests/
@@ -899,7 +901,6 @@ sosmesh/
 │   └── deploy/compose/
 │       └── docker-compose.vulut.yml
 ├── ARCHITECTURE.md (this file)
-├── HACKATHON_SUBMISSION.md
 ├── TEST_RESULTS.md
 └── DEMO_SCRIPT.md
 ```

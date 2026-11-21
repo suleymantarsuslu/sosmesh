@@ -4,7 +4,7 @@
   "private": true,
   "description": "SOSMesh emergency mesh network monorepo",
   "author": "SOSMesh Team",
-  "license": "SEE LICENSE FILE",
+  "license": "GPL-3.0-only",
   "packageManager": "pnpm@9.0.0",
   "engines": {
     "node": ">=20.0.0",

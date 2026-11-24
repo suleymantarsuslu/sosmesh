@@ -593,7 +593,11 @@ jobs:
           cd apps/ios/SOSMeshCore
           export SOURCE_ROOT="${GITHUB_WORKSPACE}"
           set +e
-          swift test 2>&1 | tee "${GITHUB_WORKSPACE}/swift-sosmeshcore-test.log"
+          if [ "$(uname -s)" = "Darwin" ]; then
+            swift test -Xswiftc -sdk -Xswiftc "$(xcrun --sdk iphonesimulator --show-sdk-path)" -Xswiftc -target -Xswiftc arm64-apple-ios17.0-simulator 2>&1 | tee "${GITHUB_WORKSPACE}/swift-sosmeshcore-test.log"
+          else
+            swift test 2>&1 | tee "${GITHUB_WORKSPACE}/swift-sosmeshcore-test.log"
+          fi
           swift_status=${PIPESTATUS[0]}
           set -e
           passed_count=$(awk '/Test Case.*passed/{c++} END{print c+0}' "${GITHUB_WORKSPACE}/swift-sosmeshcore-test.log")

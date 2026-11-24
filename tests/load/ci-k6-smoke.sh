@@ -237,19 +237,28 @@ install_k6_linux_arm64_runner_temp() {
   export PATH="${k6_dir}:${PATH}"
 }
 
+install_k6_linux_amd64_runner_temp() {
+  local k6_version="0.55.0"
+  local k6_sha256="47a43a8dbb4c1f5d5bd7b8ed6a1b8c83b35546acf989b78400b4e6ce3adaf628"
+  local k6_dir="${RUNNER_TEMP:-/tmp}/k6-v${k6_version}-linux-amd64"
+  local archive="${k6_dir}/k6-v${k6_version}-linux-amd64.tar.gz"
+  mkdir -p "$k6_dir"
+  if [[ ! -x "${k6_dir}/k6" ]]; then
+    echo "Downloading k6 v${k6_version} (linux-amd64) to ${k6_dir}" >&2
+    curl -fsSL -o "$archive" \
+      "https://github.com/grafana/k6/releases/download/v${k6_version}/k6-v${k6_version}-linux-amd64.tar.gz"
+    echo "${k6_sha256}  ${archive}" | sha256sum -c -
+    tar -xzf "$archive" -C "$k6_dir" --strip-components=1
+  fi
+  export PATH="${k6_dir}:${PATH}"
+}
+
 if ! command -v k6 >/dev/null 2>&1; then
   if [ -x /tmp/k6bin/k6 ]; then
     export PATH="/tmp/k6bin:${PATH}"
   elif [ -n "${GITHUB_ACTIONS:-}" ] && [ "$(uname -m)" = "x86_64" ] && command -v sudo >/dev/null 2>&1; then
-    echo "Installing k6 via apt (GitHub Actions ubuntu-latest only)." >&2
-    sudo gpg -k >/dev/null 2>&1
-    sudo gpg --no-default-keyring --keyring /usr/share/keyrings/k6-archive-keyring.gpg \
-      --keyserver hkp://keyserver.ubuntu.com:80 \
-      --recv-keys C5AD17C747E3415A3642D57D77C6C491D6AC1D69
-    echo "deb [signed-by=/usr/share/keyrings/k6-archive-keyring.gpg] https://dl.k6.io/deb stable main" \
-      | sudo tee /etc/apt/sources.list.d/k6.list >/dev/null
-    sudo apt-get update
-    sudo apt-get install -y k6
+    echo "Installing k6 via pinned binary (GitHub Actions ubuntu-latest x86_64)." >&2
+    install_k6_linux_amd64_runner_temp
   elif [ -n "${GITHUB_ACTIONS:-}" ] && [ "$(uname -m)" = "aarch64" ]; then
     install_k6_linux_arm64_runner_temp
   else

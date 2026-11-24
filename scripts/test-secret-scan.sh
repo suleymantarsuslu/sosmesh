@@ -3,6 +3,7 @@
 # Her pattern için sahte örnek oluşturur ve taramamın bulduğunu doğrular
 
 set -e
+SCANNER="$(pwd)/scripts/secret-scan.sh"
 
 echo "=== Secret Scan Negatif Test ==="
 echo ""
@@ -22,7 +23,7 @@ test_pattern() {
   local TEST_FILE="$TEMP_DIR/test-$(date +%s%N).txt"
   echo "$CONTENT" > "$TEST_FILE"
   
-  if bash scripts/secret-scan.sh "$TEST_FILE" > /dev/null 2>&1; then
+  if bash "$SCANNER" "$TEST_FILE" > /dev/null 2>&1; then
     DETECTED=0
   else
     DETECTED=1
@@ -105,6 +106,133 @@ test_pattern "openssl rand ataması atlanmalı" 'JWT_SECRET=$(openssl rand -base
 test_pattern "varsayılan parola (\${X:-...}) yakalanmalı" 'PASSWORD=${X:-hunter2longsecret}' 1
 test_pattern "sabit PASSWORD değeri yakalanmalı" 'PASSWORD=Sup3rS3cretValue' 1
 test_pattern "API_KEY=\$(echo sabit) yakalanmalı" 'API_KEY=$(echo sabitSecret)' 1
+
+echo ""
+
+# Fixture tests for Greptile P1 cases
+
+# 1) Special / quoted filename
+{
+  REPO="$TEMP_DIR/fixture_quoted"
+  mkdir -p "$REPO"
+  git -C "$REPO" init -q
+  git -C "$REPO" config user.email "test@example.com"
+  git -C "$REPO" config user.name "Test"
+  # Dummy initial commit
+  touch "$REPO/dummy.txt"
+  git -C "$REPO" add "$REPO/dummy.txt"
+  git -C "$REPO" commit -m "initial commit" -q
+  FILE="$REPO/quoted file.txt"
+  echo "API_KEY=quotedsecret" > "$FILE"
+  git -C "$REPO" add "$FILE"
+  git -C "$REPO" commit -m "add quoted file" -q
+  # Ensure CI env vars are unset before scanning
+  unset SECRET_SCAN_BASE_SHA SECRET_SCAN_HEAD_SHA GITHUB_EVENT_NAME GITHUB_BASE_REF
+  STATUS=0
+  OUT=$(cd "$REPO" && bash "$SCANNER" 2>&1) || STATUS=$?
+  if [ $STATUS -ne 0 ] && echo "$OUT" | grep -q "quoted file.txt"; then
+    DETECTED=1
+  else
+    DETECTED=0
+  fi
+  if [ "$DETECTED" -eq 1 ]; then
+    echo "✅ Special / quoted filename"
+    TEST_PASSED=$((TEST_PASSED + 1))
+  else
+    echo "❌ Special / quoted filename (expected detection)"
+    TEST_FAILED=$((TEST_FAILED + 1))
+  fi
+}
+
+# 2) Type change (T)
+{
+  REPO="$TEMP_DIR/fixture_type_change"
+  mkdir -p "$REPO"
+  git -C "$REPO" init -q
+  git -C "$REPO" config user.email "test@example.com"
+  git -C "$REPO" config user.name "Test"
+  SYMLINK="$REPO/linkfile"
+  ln -s /dev/null "$SYMLINK"
+  git -C "$REPO" add "$SYMLINK"
+  git -C "$REPO" commit -m "add symlink" -q
+  # Replace symlink with regular file containing secret
+  rm "$SYMLINK"
+  echo "API_KEY=typechangesecret" > "$SYMLINK"
+  git -C "$REPO" add -A
+  git -C "$REPO" commit -m "replace with file containing secret" -q
+  # Ensure CI env vars are unset before scanning
+  unset SECRET_SCAN_BASE_SHA SECRET_SCAN_HEAD_SHA GITHUB_EVENT_NAME GITHUB_BASE_REF
+  STATUS=0
+  OUT=$(cd "$REPO" && bash "$SCANNER" 2>&1) || STATUS=$?
+  if [ $STATUS -ne 0 ] && echo "$OUT" | grep -q "linkfile"; then
+    DETECTED=1
+  else
+    DETECTED=0
+  fi
+  if [ "$DETECTED" -eq 1 ]; then
+    echo "✅ Type change (T) detection"
+    TEST_PASSED=$((TEST_PASSED + 1))
+  else
+    echo "❌ Type change (T) detection (expected detection)"
+    TEST_FAILED=$((TEST_FAILED + 1))
+  fi
+}
+
+# 3) Merge-commit fallback
+{
+  REPO="$TEMP_DIR/fixture_merge"
+  mkdir -p "$REPO"
+  git -C "$REPO" init -b main -q
+  git -C "$REPO" config user.email "test@example.com"
+  git -C "$REPO" config user.name "Test"
+  # Base commit without secret
+  echo "no secret" > "$REPO/base.txt"
+  git -C "$REPO" add "$REPO/base.txt"
+  git -C "$REPO" commit -m "base commit" -q
+  # Feature branch with secret
+  git -C "$REPO" checkout -b feature -q
+  echo "API_KEY=featuresecret" > "$REPO/secret.txt"
+  git -C "$REPO" add "$REPO/secret.txt"
+  git -C "$REPO" commit -m "add secret on feature" -q
+  # Merge feature into main
+  git -C "$REPO" checkout main -q
+  unset SECRET_SCAN_BASE_SHA SECRET_SCAN_HEAD_SHA GITHUB_EVENT_NAME
+  git -C "$REPO" merge feature --no-ff -m "merge feature" -q
+  # Ensure CI env vars are unset before scanning
+  unset SECRET_SCAN_BASE_SHA SECRET_SCAN_HEAD_SHA GITHUB_EVENT_NAME GITHUB_BASE_REF
+  STATUS=0
+  OUT=$(cd "$REPO" && bash "$SCANNER" 2>&1) || STATUS=$?
+  if [ $STATUS -ne 0 ] && echo "$OUT" | grep -q "secret.txt"; then
+    DETECTED=1
+  else
+    DETECTED=0
+  fi
+  if [ "$DETECTED" -eq 1 ]; then
+    echo "✅ Merge-commit fallback detection"
+    TEST_PASSED=$((TEST_PASSED + 1))
+  else
+    echo "❌ Merge-commit fallback detection (expected detection)"
+    TEST_FAILED=$((TEST_FAILED + 1))
+  fi
+}
+
+# 4) Fail-closed when no comparison possible
+{
+  DIR="$TEMP_DIR/fail_closed"
+  mkdir -p "$DIR"
+  git -C "$DIR" init -q
+  git -C "$DIR" config user.email "test@example.com"
+  git -C "$DIR" config user.name "Test"
+  # Ensure CI env vars are unset before scanning
+  unset SECRET_SCAN_BASE_SHA SECRET_SCAN_HEAD_SHA GITHUB_EVENT_NAME GITHUB_BASE_REF
+  if (cd "$DIR" && bash "$SCANNER" > /dev/null 2>&1); then
+    echo "❌ Fail-closed test (expected non-zero exit)"
+    TEST_FAILED=$((TEST_FAILED + 1))
+  else
+    echo "✅ Fail-closed test"
+    TEST_PASSED=$((TEST_PASSED + 1))
+  fi
+}
 
 echo ""
 echo "=== Test Özeti ==="

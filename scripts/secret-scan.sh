@@ -72,33 +72,36 @@ else
   DIFF_MODE=""
 
   if [ -n "$SECRET_SCAN_BASE_SHA" ] && [ -n "$SECRET_SCAN_HEAD_SHA" ] && ! [[ "$SECRET_SCAN_BASE_SHA" =~ ^0+$ ]]; then
-    DIFF_OUTPUT=$(git diff --name-only --diff-filter=ACMR "$SECRET_SCAN_BASE_SHA" "$SECRET_SCAN_HEAD_SHA")
-    DIFF_STATUS=$?
+    DIFF_CMD=(git diff --name-only -z --diff-filter=ACMRT "$SECRET_SCAN_BASE_SHA" "$SECRET_SCAN_HEAD_SHA")
     DIFF_MODE="env SHAs diff"
   elif [ "$GITHUB_EVENT_NAME" = "pull_request" ] && [ -n "$GITHUB_BASE_REF" ]; then
     # Compare against the base branch of the PR
-    DIFF_OUTPUT=$(git diff --name-only --diff-filter=ACMR "origin/$GITHUB_BASE_REF" "$GITHUB_SHA")
-    DIFF_STATUS=$?
+    DIFF_CMD=(git diff --name-only -z --diff-filter=ACMRT "origin/$GITHUB_BASE_REF" "$GITHUB_SHA")
     DIFF_MODE="pull request diff"
   else
-    DIFF_OUTPUT=$(git diff-tree --no-commit-id --name-only -r HEAD)
-    DIFF_STATUS=$?
+    DIFF_CMD=(git diff-tree --no-commit-id --name-only -z --diff-filter=ACMRT -m --first-parent -r HEAD)
     DIFF_MODE="HEAD commit diff"
   fi
 
-  while IFS= read -r FILE; do
+  # Execute diff command (NUL‑separated output) and capture git exit status
+  tmp_diff_file=$(mktemp)
+  "${DIFF_CMD[@]}" >"$tmp_diff_file"
+  DIFF_STATUS=$?
+  mapfile -d '' -t DIFF_FILES <"$tmp_diff_file"
+  rm -f "$tmp_diff_file"
+
+  if [ $DIFF_STATUS -ne 0 ]; then
+    echo "Error: git $DIFF_MODE command failed."
+    exit 1
+  fi
+
+  for FILE in "${DIFF_FILES[@]}"; do
     [ -z "$FILE" ] && continue
     if [[ "$FILE" == scripts/test-*.sh ]] || [[ "$FILE" == "pnpm-lock.yaml" ]]; then
       continue
     fi
     FILES+=("$FILE")
-  done <<< "$DIFF_OUTPUT"
-
-  # If the git diff command failed, treat as CI misconfiguration
-  if [ ${DIFF_STATUS:-0} -ne 0 ]; then
-    echo "Error: git $DIFF_MODE command failed."
-    exit 1
-  fi
+  done
 
   if [ ${#FILES[@]} -eq 0 ]; then
     echo "nothing to scan"

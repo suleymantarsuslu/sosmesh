@@ -587,6 +587,34 @@ jobs:
             exit "$swift_status"
           fi
 
+      - name: Resolve iOS Simulator for SOSMeshCore tests
+        if: runner.os == 'macOS'
+        id: sosmeshcore_sim
+        run: |
+          set -euo pipefail
+          SIM_ID=$(python3 <<'PY'
+          import json, subprocess, sys
+          out = subprocess.check_output(["xcrun", "simctl", "list", "devices", "available", "-j"], text=True)
+          data = json.loads(out)
+          candidates = []
+          for runtime, devices in data.get("devices", {}).items():
+              if "iOS" not in runtime:
+                  continue
+              for d in devices:
+                  if not d.get("isAvailable"):
+                      continue
+                  name = d.get("name", "")
+                  if name.startswith("iPhone"):
+                      candidates.append((name, d["udid"]))
+          if not candidates:
+              sys.exit("No available iPhone simulators")
+          candidates.sort(key=lambda x: x[0])
+          print(candidates[-1][1])
+          PY
+          )
+          echo "id=${SIM_ID}" >> "$GITHUB_OUTPUT"
+          echo "Using simulator id ${SIM_ID}"
+
       - name: Run SOSMeshCore Swift tests
         run: |
           set -euo pipefail
@@ -594,11 +622,16 @@ jobs:
           export SOURCE_ROOT="${GITHUB_WORKSPACE}"
           set +e
           if [ "$(uname -s)" = "Darwin" ]; then
-            swift test -Xswiftc -sdk -Xswiftc "$(xcrun --sdk iphonesimulator --show-sdk-path)" -Xswiftc -target -Xswiftc arm64-apple-ios17.0-simulator 2>&1 | tee "${GITHUB_WORKSPACE}/swift-sosmeshcore-test.log"
+            xcodebuild test \
+              -scheme SOSMeshCore \
+              -destination "platform=iOS Simulator,id=${{ steps.sosmeshcore_sim.outputs.id }}" \
+              CODE_SIGNING_ALLOWED=NO \
+              2>&1 | tee "${GITHUB_WORKSPACE}/swift-sosmeshcore-test.log"
+            swift_status=${PIPESTATUS[0]}
           else
             swift test 2>&1 | tee "${GITHUB_WORKSPACE}/swift-sosmeshcore-test.log"
+            swift_status=${PIPESTATUS[0]}
           fi
-          swift_status=${PIPESTATUS[0]}
           set -e
           passed_count=$(awk '/Test Case.*passed/{c++} END{print c+0}' "${GITHUB_WORKSPACE}/swift-sosmeshcore-test.log")
           echo "SOSMeshCore test lines: ${passed_count:-0}"

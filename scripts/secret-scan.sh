@@ -67,17 +67,45 @@ if [ $# -gt 0 ]; then
   FILES=("$@")
   echo "Taranıyor: ${#FILES[@]} dosya (custom list)"
 else
-  # git ls-files'tan yalnız test script'leri ve lockfile'ları hariç tut
-  mapfile -d '' ALL_FILES < <(git ls-files -z 2>/dev/null || find . -type f -print0)
+  # Determine files to scan based on CI context or diff
   FILES=()
-  for FILE in "${ALL_FILES[@]}"; do
-    # Yalnız scripts/test-*.sh ve pnpm-lock.yaml hariç tut (ADR-004 dahil tüm md'ler taranmalı)
+  DIFF_MODE=""
+
+  if [ -n "$SECRET_SCAN_BASE_SHA" ] && [ -n "$SECRET_SCAN_HEAD_SHA" ] && ! [[ "$SECRET_SCAN_BASE_SHA" =~ ^0+$ ]]; then
+    DIFF_OUTPUT=$(git diff --name-only --diff-filter=ACMR "$SECRET_SCAN_BASE_SHA" "$SECRET_SCAN_HEAD_SHA")
+    DIFF_STATUS=$?
+    DIFF_MODE="env SHAs diff"
+  elif [ "$GITHUB_EVENT_NAME" = "pull_request" ] && [ -n "$GITHUB_BASE_REF" ]; then
+    # Compare against the base branch of the PR
+    DIFF_OUTPUT=$(git diff --name-only --diff-filter=ACMR "origin/$GITHUB_BASE_REF" "$GITHUB_SHA")
+    DIFF_STATUS=$?
+    DIFF_MODE="pull request diff"
+  else
+    DIFF_OUTPUT=$(git diff-tree --no-commit-id --name-only -r HEAD)
+    DIFF_STATUS=$?
+    DIFF_MODE="HEAD commit diff"
+  fi
+
+  while IFS= read -r FILE; do
+    [ -z "$FILE" ] && continue
     if [[ "$FILE" == scripts/test-*.sh ]] || [[ "$FILE" == "pnpm-lock.yaml" ]]; then
       continue
     fi
     FILES+=("$FILE")
-  done
-  echo "Taranıyor: git ls-files (${#FILES[@]} dosya, test script'ler hariç)"
+  done <<< "$DIFF_OUTPUT"
+
+  # If the git diff command failed, treat as CI misconfiguration
+  if [ ${DIFF_STATUS:-0} -ne 0 ]; then
+    echo "Error: git $DIFF_MODE command failed."
+    exit 1
+  fi
+
+  if [ ${#FILES[@]} -eq 0 ]; then
+    echo "nothing to scan"
+    exit 0
+  fi
+
+  echo "Scanning ${#FILES[@]} files ($DIFF_MODE)"
 fi
 
 echo ""

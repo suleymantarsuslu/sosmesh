@@ -87,13 +87,17 @@ else
   tmp_diff_file=$(mktemp)
   "${DIFF_CMD[@]}" >"$tmp_diff_file"
   DIFF_STATUS=$?
-  mapfile -d '' -t DIFF_FILES <"$tmp_diff_file"
-  rm -f "$tmp_diff_file"
-
   if [ $DIFF_STATUS -ne 0 ]; then
     echo "Error: git $DIFF_MODE command failed."
+    rm -f "$tmp_diff_file"
     exit 1
   fi
+
+  DIFF_FILES=()
+  while IFS= read -r -d '' FILE; do
+    DIFF_FILES+=("$FILE")
+  done <"$tmp_diff_file"
+  rm -f "$tmp_diff_file"
 
   for FILE in "${DIFF_FILES[@]}"; do
     [ -z "$FILE" ] && continue

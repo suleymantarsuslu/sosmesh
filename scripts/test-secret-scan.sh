@@ -126,10 +126,14 @@ echo ""
   echo "API_KEY=quotedsecret" > "$FILE"
   git -C "$REPO" add "$FILE"
   git -C "$REPO" commit -m "add quoted file" -q
-  if (cd "$REPO" && bash "$SCANNER" > /dev/null 2>&1); then
-    DETECTED=0
-  else
+  # Ensure CI env vars are unset before scanning
+  unset SECRET_SCAN_BASE_SHA SECRET_SCAN_HEAD_SHA GITHUB_EVENT_NAME GITHUB_BASE_REF
+  STATUS=0
+  OUT=$(cd "$REPO" && bash "$SCANNER" 2>&1) || STATUS=$?
+  if [ $STATUS -ne 0 ] && echo "$OUT" | grep -q "quoted file.txt"; then
     DETECTED=1
+  else
+    DETECTED=0
   fi
   if [ "$DETECTED" -eq 1 ]; then
     echo "✅ Special / quoted filename"
@@ -156,10 +160,14 @@ echo ""
   echo "API_KEY=typechangesecret" > "$SYMLINK"
   git -C "$REPO" add -A
   git -C "$REPO" commit -m "replace with file containing secret" -q
-  if (cd "$REPO" && bash "$SCANNER" > /dev/null 2>&1); then
-    DETECTED=0
-  else
+  # Ensure CI env vars are unset before scanning
+  unset SECRET_SCAN_BASE_SHA SECRET_SCAN_HEAD_SHA GITHUB_EVENT_NAME GITHUB_BASE_REF
+  STATUS=0
+  OUT=$(cd "$REPO" && bash "$SCANNER" 2>&1) || STATUS=$?
+  if [ $STATUS -ne 0 ] && echo "$OUT" | grep -q "linkfile"; then
     DETECTED=1
+  else
+    DETECTED=0
   fi
   if [ "$DETECTED" -eq 1 ]; then
     echo "✅ Type change (T) detection"
@@ -190,10 +198,14 @@ echo ""
   git -C "$REPO" checkout main -q
   unset SECRET_SCAN_BASE_SHA SECRET_SCAN_HEAD_SHA GITHUB_EVENT_NAME
   git -C "$REPO" merge feature --no-ff -m "merge feature" -q
-  if (cd "$REPO" && bash "$SCANNER" > /dev/null 2>&1); then
-    DETECTED=0
-  else
+  # Ensure CI env vars are unset before scanning
+  unset SECRET_SCAN_BASE_SHA SECRET_SCAN_HEAD_SHA GITHUB_EVENT_NAME GITHUB_BASE_REF
+  STATUS=0
+  OUT=$(cd "$REPO" && bash "$SCANNER" 2>&1) || STATUS=$?
+  if [ $STATUS -ne 0 ] && echo "$OUT" | grep -q "secret.txt"; then
     DETECTED=1
+  else
+    DETECTED=0
   fi
   if [ "$DETECTED" -eq 1 ]; then
     echo "✅ Merge-commit fallback detection"
@@ -211,6 +223,8 @@ echo ""
   git -C "$DIR" init -q
   git -C "$DIR" config user.email "test@example.com"
   git -C "$DIR" config user.name "Test"
+  # Ensure CI env vars are unset before scanning
+  unset SECRET_SCAN_BASE_SHA SECRET_SCAN_HEAD_SHA GITHUB_EVENT_NAME GITHUB_BASE_REF
   if (cd "$DIR" && bash "$SCANNER" > /dev/null 2>&1); then
     echo "❌ Fail-closed test (expected non-zero exit)"
     TEST_FAILED=$((TEST_FAILED + 1))
